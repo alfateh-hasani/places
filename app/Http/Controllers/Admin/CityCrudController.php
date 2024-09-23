@@ -21,25 +21,40 @@ class CityCrudController extends CrudController
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
-     * 
+     *
      * @return void
      */
     public function setup()
     {
         CRUD::setModel(\App\Models\City::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/city');
-        CRUD::setEntityNameStrings('city', 'cities');
+
+        CRUD::setEntityNameStrings('المدينة', 'المدن');
     }
 
     /**
      * Define what happens when the List operation is loaded.
-     * 
+     *
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
     protected function setupListOperation()
     {
-        CRUD::setFromDb(); // set columns from db columns.
+        CRUD::addColumn([
+            'name' => 'name_ar',
+            'type' => 'text',
+            'label' => 'الاسم بالعربي',
+        ]);
+        CRUD::addColumn([
+            'name' => 'name_en',
+            'type' => 'text',
+            'label' => 'الاسم بالانجليزي',
+        ]);
+        CRUD::addColumn([
+            'name' => 'sort_order',
+            'type' => 'number',
+            'label' => 'الترتيب',
+        ]);
 
         /**
          * Columns can be defined using the fluent syntax:
@@ -49,24 +64,54 @@ class CityCrudController extends CrudController
 
     /**
      * Define what happens when the Create operation is loaded.
-     * 
+     *
      * @see https://backpackforlaravel.com/docs/crud-operation-create
      * @return void
      */
     protected function setupCreateOperation()
     {
         CRUD::setValidation(CityRequest::class);
-        CRUD::setFromDb(); // set fields from db columns.
 
-        /**
-         * Fields can be defined using the fluent syntax:
-         * - CRUD::field('price')->type('number');
-         */
+
+        $this->crud->addField([
+            'name' => 'name_ar',
+            'type' => 'text',
+            'label' => 'الاسم بالعربي',
+            'attributes' => [
+                'placeholder' =>  'الاسم بالعربي',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'name_en',
+            'type' => 'text',
+            'label' => 'الاسم بالانجليزي',
+            'attributes' => [
+                'placeholder' =>  'الاسم بالانجليزي',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'sort_order',
+            'type' => 'number',
+            'label' => 'الترتيب',
+            'attributes' => [
+                'placeholder' =>  'الترتيب',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
     }
 
     /**
      * Define what happens when the Update operation is loaded.
-     * 
+     *
      * @see https://backpackforlaravel.com/docs/crud-operation-update
      * @return void
      */

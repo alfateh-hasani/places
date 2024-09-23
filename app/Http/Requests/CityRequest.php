@@ -25,7 +25,9 @@ class CityRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
+            'name_ar' => 'required|min:5|max:255',
+            'name_en' => 'required|min:5|max:255',
+            'sort_order' => 'nullable|integer',
         ];
     }
 
@@ -37,7 +39,7 @@ class CityRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            ''
         ];
     }
 

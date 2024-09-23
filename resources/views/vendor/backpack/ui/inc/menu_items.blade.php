@@ -7,3 +7,4 @@
 <x-backpack::menu-item title="Apartments" icon="la la-question" :link="backpack_url('apartment')" />
 <x-backpack::menu-item title="Features" icon="la la-question" :link="backpack_url('feature')" />
 <x-backpack::menu-item title="Policies" icon="la la-question" :link="backpack_url('policy')" />
+<x-backpack::menu-item title="{{__('nav.cities')}}" icon="la la-question" :link="backpack_url('city')" />

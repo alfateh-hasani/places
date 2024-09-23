@@ -1,0 +1,15 @@
+body {
+    direction: rtl;
+    text-align: right;
+}
+
+ .sidebar {
+    float: right;
+}
+
+.content-wrapper {
+    margin-right: 0;
+    margin-left: 250px;
+}
+
+

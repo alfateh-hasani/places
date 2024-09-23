@@ -41,6 +41,8 @@ return [
     'styles' => [
         base_path('vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css'),
         base_path('vendor/backpack/theme-tabler/resources/assets/css/colors.css'),
+         'css/tabler.rtl.min.css',
+        'css/custom-rtl.css',
     ],
 
     /**
