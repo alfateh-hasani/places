@@ -1,0 +1,3 @@
+
+Route::post('admin/lock/{id}/unlock', [LockCrudController::class, 'unlock'])->name('lock.unlock');
+Route::post('admin/lock/{id}/add-passcode', [LockCrudController::class, 'addPasscode'])->name('lock.add_passcode');
