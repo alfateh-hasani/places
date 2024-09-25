@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('apartment_id')->constrained();
             $table->foreignId('feature_id')->constrained();
+
         });
 
         Schema::enableForeignKeyConstraints();

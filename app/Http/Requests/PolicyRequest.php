@@ -25,7 +25,7 @@ class PolicyRequest extends FormRequest
     public function rules()
     {
         return [
-            'description_ar' => 'nullable|string',
+            'description_ar' => 'required|string',
             'description_en' => 'nullable|string',
         ];
     }

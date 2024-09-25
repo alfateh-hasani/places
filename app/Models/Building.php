@@ -3,15 +3,15 @@
 namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Building extends Model
+class Building extends Model implements HasMedia
 {
     use CrudTrait;
-    use HasFactory;
-
+    use InteractsWithMedia;
     /**
      * The attributes that are mass assignable.
      *
@@ -37,5 +37,16 @@ class Building extends Model
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('image')->singleFile();
+    }
+
+
+    public function getImageAttribute()
+    {
+        return $this->getFirstMediaUrl('image');
     }
 }

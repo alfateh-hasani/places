@@ -2,11 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\LockCrudController;
-// --------------------------
-// Custom Backpack Routes
-// --------------------------
-// This route file is loaded automatically by Backpack\CRUD.
-// Routes you generate using Backpack\Generators will be placed here.
+
 
 Route::group([
     'prefix' => config('backpack.base.route_prefix', 'admin'),
@@ -15,16 +11,17 @@ Route::group([
         (array) config('backpack.base.middleware_key', 'admin')
     ),
     'namespace' => 'App\Http\Controllers\Admin',
-], function () { // custom admin routes
+], function () {
     Route::crud('lock', 'LockCrudController');
-    Route::crud('city', 'CityCrudController');
-}); // this should be the absolute last line of this file
+    Route::crud('city', 'CityController');
+    Route::crud('feature', 'FeatureController');
+    Route::crud('apartment', 'ApartmentController');
+    Route::crud('building', 'BuildingController');
+    Route::crud('policy', 'PolicyController');
+    Route::crud('buildings', 'BuildingController');
+});
+
 
 
 Route::post('admin/lock/{id}/unlock', [LockCrudController::class, 'unlock'])->name('lock.unlock');
 Route::post('admin/lock/{id}/add-passcode', [LockCrudController::class, 'addPasscode'])->name('lock.add_passcode');
-
-
-/**
- * DO NOT ADD ANYTHING HERE.
- */

@@ -5,11 +5,13 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-class Feature extends Model
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+class Feature extends Model implements HasMedia
 {
     use CrudTrait;
     use HasFactory;
+    use InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -30,4 +32,14 @@ class Feature extends Model
     protected $casts = [
         'id' => 'integer',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('icon')->singleFile();
+    }
+
+    public function getIconAttribute()
+    {
+        return $this->getFirstMediaUrl('icon');
+    }
 }

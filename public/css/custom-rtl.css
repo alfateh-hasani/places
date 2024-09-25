@@ -12,4 +12,7 @@ body {
     margin-left: 250px;
 }
 
-
+#crudTable_wrapper #crudTable thead > tr > th:not(.sorting_disabled), #crudTable_wrapper #crudTable thead > tr > td, #crudTable_wrapper table.dataTable thead > tr > th:not(.sorting_disabled), #crudTable_wrapper table.dataTable thead > tr > tdĞ
+{
+    text-align: right !important;
+}
