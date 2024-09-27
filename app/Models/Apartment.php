@@ -51,4 +51,10 @@ class Apartment extends Model
     {
         return $this->belongsTo(Building::class);
     }
+
+    //features
+    public function features()
+    {
+        return $this->belongsToMany(Feature::class, 'apartment_features');
+    }
 }

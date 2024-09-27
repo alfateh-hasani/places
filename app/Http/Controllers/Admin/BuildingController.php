@@ -39,12 +39,31 @@ class BuildingController extends CrudController
      */
     protected function setupListOperation()
     {
-        CRUD::setFromDb(); // set columns from db columns.
 
-        /**
-         * Columns can be defined using the fluent syntax:
-         * - CRUD::column('price')->type('number');
-         */
+
+        $this->crud->addColumn([
+            'name' => 'name_ar',
+            'type' => 'text',
+            'label' => 'الاسم بالعربي',
+        ]);
+        $this->crud->addColumn([
+            'name' => 'name_en',
+            'type' => 'text',
+            'label' => 'الاسم بالانجليزي',
+        ]);
+        $this->crud->addColumn([
+            'name' => 'image',
+            'type' => 'image',
+            'label' => 'الصورة',
+        ]);
+        $this->crud->addColumn([
+            'name' => 'city_id',
+            'type' => 'select',
+            'label' => 'المدينة',
+            'entity' => 'city',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\City::class,
+        ]);
     }
 
     /**
@@ -56,12 +75,31 @@ class BuildingController extends CrudController
     protected function setupCreateOperation()
     {
         CRUD::setValidation(BuildingRequest::class);
+        //add image
+        CRUD::field('image')
+            ->label('الصورة')
+            ->type('image')
+            ->withMedia([
+                'collection' => 'image', // will pick the collection definition from your model
+            ]);
+
         $this->crud->addField([
-            'name' => 'name',
+            'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم',
+            'label' =>'الاسم بالعربي',
             'attributes' => [
-                'placeholder' => 'الاسم',
+                'placeholder' => 'الاسم بالعربي',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'name_en',
+            'type' => 'text',
+            'label' => 'الاسم بالانجليزي',
+            'attributes' => [
+                'placeholder' => 'الاسم بالانجليزي',
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
@@ -72,11 +110,12 @@ class BuildingController extends CrudController
             'type' => 'select2',
             'label' => 'المدينة',
             'entity' => 'city',
-            'attribute' => 'name',
+            'attribute' => 'name_ar',
             'model' => \App\Models\City::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
+            'placeholder' => 'اختر المدينة',
         ]);
         $this->crud->addField([
             'name' => 'address',
@@ -89,6 +128,8 @@ class BuildingController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
+
+
     }
 
     /**
@@ -100,5 +141,19 @@ class BuildingController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->setupListOperation();
+        CRUD::addColumn([
+            'name' => 'address',
+            'type' => 'textarea',
+            'label' => 'العنوان',
+            'max' => 19100,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-12',
+            ],
+        ]);
     }
 }

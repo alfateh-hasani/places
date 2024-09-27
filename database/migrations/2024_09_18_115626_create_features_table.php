@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name_ar')->charset('utf8mb4');
             $table->string('name_en')->charset('utf8mb4');
-            $table->text('icon')->nullable()->charset('utf8mb4');
             $table->timestamps();
         });
     }

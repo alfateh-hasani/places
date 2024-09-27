@@ -16,15 +16,4 @@ return [
     'add_passcode' => 'إضافة رمز',
     'city_id' => 'المدينة',
     'is_active' => 'مفعل',
-    'building_select2' =>'اختر المبنى',
-    'description_en' => 'الوصف بالانجليزي',
-    'description_ar' => 'الوصف بالعربي',
-    'name_en' => 'الاسم بالانجليزي',
-    'name_ar' => 'الاسم بالعربي',
-    'image' => 'الصورة',
-    'area' => 'المساحة',
-    'latitude' => 'خط العرض',
-    'longitude' => 'خط الطول',
-    'lock_id' => 'القفل',
-
 ];

@@ -28,7 +28,7 @@ class ApartmentController extends CrudController
     {
         CRUD::setModel(\App\Models\Apartment::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/apartment');
-        CRUD::setEntityNameStrings('apartment', 'apartments');
+        CRUD::setEntityNameStrings(__('cms.apartment'), __('cms.apartments'));
     }
 
     /**
@@ -42,17 +42,17 @@ class ApartmentController extends CrudController
         CRUD::addColumn([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي',
+            'label' =>  __('cms.name_ar'),
         ]);
         CRUD::addColumn([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي',
+            'label' => __('cms.name_en'),
         ]);
         CRUD::addColumn([
             'name' => 'image',
             'type' => 'image',
-            'label' => 'الصورة',
+            'label' =>  __('cms.image'),
             'height' => '50px',
             'width' => '50px',
         ]);
@@ -68,12 +68,166 @@ class ApartmentController extends CrudController
     protected function setupCreateOperation()
     {
         CRUD::setValidation(ApartmentRequest::class);
-        CRUD::setFromDb(); // set fields from db columns.
+        $this->crud->addField([
+            'name' => 'image',
+            'type' => 'image',
+            'label' =>  __('cms.image'),
+            'upload' => true,
+            'crop' => true,
+            'aspect_ratio' => 1,
+            'disk' => 'public',
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-8',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'name_ar',
+            'type' => 'text',
+            'label' =>  __('cms.name_ar'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'name_en',
+            'type' => 'text',
+            'label' => __('cms.name_en'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
 
-        /**
-         * Fields can be defined using the fluent syntax:
-         * - CRUD::field('price')->type('number');
-         */
+
+        $this->crud->addField([
+            'name' => 'description_ar',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_ar'),
+            'attributes' => [
+                'rows' => 5,
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'description_en',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_en'),
+            'attributes' => [
+                'rows' => 5,
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'building_id',
+            'type' => 'select2',
+            'label' => 'المبنى',
+            'entity' => 'building',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Building::class,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'placeholder' => __('cms.building_select2'),
+        ]);
+        $this->crud->addField([
+            'name' => 'num_rooms',
+            'type' => 'number',
+            'label' => 'عدد الغرف',
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'num_beds',
+            'type' => 'number',
+            'label' => 'عدد الاسرة',
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'area',
+            'type' => 'number',
+            'label' =>  __('cms.area'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'latitude',
+            'type' => 'text',
+            'label' =>  __('cms.latitude'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'longitude',
+            'type' => 'text',
+            'label' =>  __('cms.longitude'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+
+        $this->crud->addField([
+            'name' => 'smart_lock_id',
+            'type' => 'number',
+            'label' => __('cms.lock_id'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'is_active',
+            'type' => 'checkbox',
+            'label' => __('cms.is_active'),
+            'attributes' => [
+                'checked' => true,
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-8',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'features',
+            'type' => 'select2_multiple',
+            'label' => 'المميزات',
+            'entity' => 'features',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Feature::class,
+            'pivot' => true,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'placeholder' => 'اختر المميزات',
+        ]);
     }
 
     /**
