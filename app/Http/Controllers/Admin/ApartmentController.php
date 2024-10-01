@@ -68,16 +68,21 @@ class ApartmentController extends CrudController
     protected function setupCreateOperation()
     {
         CRUD::setValidation(ApartmentRequest::class);
+        CRUD::field('image')
+            ->label(__('cms.image'))
+            ->type('upload_multiple')
+            ->withMedia([
+                'collection' => 'image', // will pick the collection definition from your model
+            ]);
+
+
         $this->crud->addField([
-            'name' => 'image',
-            'type' => 'image',
-            'label' =>  __('cms.image'),
-            'upload' => true,
-            'crop' => true,
-            'aspect_ratio' => 1,
-            'disk' => 'public',
+            'name' => 'is_active',
+            'type' => 'select_from_array',
+            'label' => __('cms.is_active'),
+            'options' => [1 => __('csm.yes'), 0 => __('csm.no')],
             'wrapperAttributes' => [
-                'class' => 'form-group col-md-8',
+                'class' => 'form-group col-md-6',
             ],
         ]);
         $this->crud->addField([
@@ -105,31 +110,9 @@ class ApartmentController extends CrudController
 
 
         $this->crud->addField([
-            'name' => 'description_ar',
-            'type' => 'textarea',
-            'label' =>  __('cms.description_ar'),
-            'attributes' => [
-                'rows' => 5,
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
-            ],
-        ]);
-        $this->crud->addField([
-            'name' => 'description_en',
-            'type' => 'textarea',
-            'label' =>  __('cms.description_en'),
-            'attributes' => [
-                'rows' => 5,
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
-            ],
-        ]);
-        $this->crud->addField([
             'name' => 'building_id',
             'type' => 'select2',
-            'label' => 'المبنى',
+            'label' => __('cms.building'),
             'entity' => 'building',
             'attribute' => 'name_ar',
             'model' => \App\Models\Building::class,
@@ -141,7 +124,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'num_rooms',
             'type' => 'number',
-            'label' => 'عدد الغرف',
+            'label' =>  __('cms.num_rooms'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -152,7 +135,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'num_beds',
             'type' => 'number',
-            'label' => 'عدد الاسرة',
+            'label' =>  __('cms.num_beds'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -171,54 +154,11 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
-        $this->crud->addField([
-            'name' => 'latitude',
-            'type' => 'text',
-            'label' =>  __('cms.latitude'),
-            'attributes' => [
-                'required' => 'required',
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
-            ],
-        ]);
-        $this->crud->addField([
-            'name' => 'longitude',
-            'type' => 'text',
-            'label' =>  __('cms.longitude'),
-            'attributes' => [
-                'required' => 'required',
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
-            ],
-        ]);
-
 
         $this->crud->addField([
-            'name' => 'smart_lock_id',
-            'type' => 'number',
-            'label' => __('cms.lock_id'),
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
-            ],
-        ]);
-        $this->crud->addField([
-            'name' => 'is_active',
-            'type' => 'checkbox',
-            'label' => __('cms.is_active'),
-            'attributes' => [
-                'checked' => true,
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-8',
-            ],
-        ]);
-
-        $this->crud->addField([
-            'name' => 'features',
+            'name' => 'lock',
             'type' => 'select2_multiple',
-            'label' => 'المميزات',
+            'label' => __('cms.lock'),
             'entity' => 'features',
             'attribute' => 'name_ar',
             'model' => \App\Models\Feature::class,
@@ -226,8 +166,61 @@ class ApartmentController extends CrudController
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
-            'placeholder' => 'اختر المميزات',
+            'placeholder' => __('cms.lock_select2'),
         ]);
+        $this->crud->addField([
+            'name' => 'features',
+            'type' => 'select2_multiple',
+            'label' =>  __('cms.features'),
+            'entity' => 'features',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Feature::class,
+            'pivot' => true,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'placeholder' =>  __('cms.features_select2'),
+        ]);
+        $this->crud->addField([
+            'name' => 'policy_id',
+            'type' => 'select2',
+            'label' => __('cms.policy'),
+            'entity' => 'policy',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Policy::class,
+            'pivot' => true,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'placeholder' =>  __('cms.policy_select2'),
+        ]);
+
+
+
+
+        $this->crud->addField([
+            'name' => 'description_ar',
+            'type' => 'ckeditor',
+            'label' =>  __('cms.description_ar'),
+            'attributes' => [
+                'rows' => 5,
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-12',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'description_en',
+            'type' => 'ckeditor',
+            'label' =>  __('cms.description_en'),
+            'attributes' => [
+                'rows' => 5,
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-12',
+            ],
+        ]);
+
     }
 
     /**

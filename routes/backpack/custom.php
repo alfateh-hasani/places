@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\LockCrudController;
+use App\Http\Controllers\Admin\LockController;
 
 
 Route::group([
@@ -12,16 +12,18 @@ Route::group([
     ),
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () {
-    Route::crud('lock', 'LockCrudController');
+    Route::crud('lock', 'LockController');
     Route::crud('city', 'CityController');
     Route::crud('feature', 'FeatureController');
     Route::crud('apartment', 'ApartmentController');
     Route::crud('building', 'BuildingController');
     Route::crud('policy', 'PolicyController');
     Route::crud('buildings', 'BuildingController');
+    Route::crud('sliders', 'SliderController');
+    Route::crud('advantages', 'AdvantageController');
 });
 
 
 
-Route::post('admin/lock/{id}/unlock', [LockCrudController::class, 'unlock'])->name('lock.unlock');
-Route::post('admin/lock/{id}/add-passcode', [LockCrudController::class, 'addPasscode'])->name('lock.add_passcode');
+Route::post('admin/lock/{id}/unlock', [LockController::class, 'unlock'])->name('lock.unlock');
+Route::post('admin/lock/{id}/add-passcode', [LockController::class, 'addPasscode'])->name('lock.add_passcode');

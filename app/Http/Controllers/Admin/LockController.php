@@ -6,13 +6,7 @@ use App\Http\Requests\LockRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
-
-/**
- * Class LockCrudController   
- * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
- */
-class LockCrudController extends CrudController
+class LockController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -22,7 +16,7 @@ class LockCrudController extends CrudController
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
-     * 
+     *
      * @return void
      */
     public function setup()
@@ -34,13 +28,13 @@ class LockCrudController extends CrudController
 
     /**
      * Define what happens when the List operation is loaded.
-     * 
+     *
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
     protected function setupListOperation()
     {
-        CRUD::setFromDb(); // set columns from db columns.  
+        CRUD::setFromDb(); // set columns from db columns.
 
         // Add Unlock button with modal trigger
         CRUD::addButtonFromView('line', 'unlock', 'unlock_modal_button', 'beginning');
@@ -56,7 +50,7 @@ class LockCrudController extends CrudController
 
     /**
      * Define what happens when the Create operation is loaded.
-     * 
+     *
      * @see https://backpackforlaravel.com/docs/crud-operation-create
      * @return void
      */
@@ -73,7 +67,7 @@ class LockCrudController extends CrudController
 
     /**
      * Define what happens when the Update operation is loaded.
-     * 
+     *
      * @see https://backpackforlaravel.com/docs/crud-operation-update
      * @return void
      */
@@ -92,10 +86,10 @@ class LockCrudController extends CrudController
         // Call your service to unlock the lock
         $service = app(\App\Services\ScienerLockService::class);
         $response = $service->unlock($lock->lock_id);
-        
-       
+
+
         if ($response['success']) {
-  
+
             $curl = curl_init();
 
             curl_setopt_array($curl, array(
@@ -123,24 +117,24 @@ class LockCrudController extends CrudController
             return redirect()->back()->with('success', 'Lock unlocked successfully.');
         }
         dd($response);
-        
+
     }
 
     return redirect()->back()->with('error', 'Lock not found.');
 }
 
 public function addPasscode(Request $request , $id)
-{   
+{
 
-   
+
     $lock = \App\Models\Lock::find($id);
-    
+
     if ($lock) {
         $keyboardPwd = $request->input('keyboardPwd');
         // Return a view with a form to add a custom passcode
         $service = app(\App\Services\ScienerLockService::class);
         $response = $service->addCustomPasscode($lock->lock_id , $keyboardPwd);
-       
+
         if ($response['success']) {
         $curl = curl_init();
 
@@ -168,7 +162,7 @@ public function addPasscode(Request $request , $id)
             }
             dd($response);
 
-        
+
     }
 
     return redirect()->back()->with('error', 'Lock not found.');

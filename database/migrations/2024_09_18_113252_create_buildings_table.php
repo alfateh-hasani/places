@@ -19,6 +19,8 @@ return new class extends Migration
             $table->text('name_en')->charset('utf8mb4');
             $table->text('address')->nullable()->charset('utf8mb4');
             $table->foreignId('city_id')->nullable()->constrained()->index();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
             $table->timestamps();
         });
 

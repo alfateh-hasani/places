@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('policies', function (Blueprint $table) {
             $table->id();
+            $table->string('name_ar');
+            $table->string('name_en');
             $table->longText('description_ar')->nullable()->charset('utf8mb4');
             $table->longText('description_en')->nullable()->charset('utf8mb4');
             $table->timestamps();

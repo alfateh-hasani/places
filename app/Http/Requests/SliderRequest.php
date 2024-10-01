@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class FeatureRequest extends FormRequest
+class SliderRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,7 +27,8 @@ class FeatureRequest extends FormRequest
         return [
             'name_ar' => 'required|string',
             'name_en' => 'required|string',
-            'icon' => 'required',
+            'image_ar' => 'required',
+            'image_en' => 'required',
         ];
     }
 
@@ -39,9 +40,7 @@ class FeatureRequest extends FormRequest
     public function attributes()
     {
         return [
-            'name_ar' =>  __('cms.name_ar'),
-            'name_en' =>  __('cms.name_en'),
-            'icon' => __('cms.icon'),
+            //
         ];
     }
 
@@ -53,8 +52,7 @@ class FeatureRequest extends FormRequest
     public function messages()
     {
         return [
-            'icon.mimes' => __('cms.svg_only'),
-
+            //
         ];
     }
 }

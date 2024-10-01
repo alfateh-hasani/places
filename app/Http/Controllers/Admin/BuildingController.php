@@ -128,6 +128,28 @@ class BuildingController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
+        $this->crud->addField([
+            'name' => 'latitude',
+            'type' => 'text',
+            'label' =>  __('cms.latitude'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'longitude',
+            'type' => 'text',
+            'label' =>  __('cms.longitude'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
 
 
     }

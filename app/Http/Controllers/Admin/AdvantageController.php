@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\PolicyRequest;
+use App\Http\Requests\AdvantageRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
- * Class PolicyController
+ * Class FeatureController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
-class PolicyController extends CrudController
+class AdvantageController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -26,9 +26,12 @@ class PolicyController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Policy::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/policy');
-        CRUD::setEntityNameStrings('السياسة', 'السياسات');
+        CRUD::setModel(\App\Models\Advantage::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/advantages');
+        $slider = __('cms.advantage');
+        $sliders = __('cms.advantages');
+
+        CRUD::setEntityNameStrings($slider, $sliders);
     }
 
     /**
@@ -39,27 +42,23 @@ class PolicyController extends CrudController
      */
     protected function setupListOperation()
     {
+
         CRUD::addColumn([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي'
+            'label' => __('cms.name_ar'),
         ]);
         CRUD::addColumn([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي'
+            'label' =>  __('cms.name_en'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'icon',
+            'type' => 'image',
+            'label' =>  __('cms.icon'),
         ]);
 
-        CRUD::addColumn([
-            'name' => 'description_ar',
-            'type' => 'text',
-            'label' => 'الوصف بالعربي'
-        ]);
-        CRUD::addColumn([
-            'name' => 'description_en',
-            'type' => 'text',
-            'label' => 'الوصف بالانجليزي'
-        ]);
     }
 
     /**
@@ -70,54 +69,84 @@ class PolicyController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(PolicyRequest::class);
+        CRUD::setValidation(AdvantageRequest::class);
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي',
-            'placeholder' => 'الاسم بالعربي',
+            'label' =>  __('cms.name_ar'),
+            'attributes' => [
+                'required' => 'required'
+            ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6'
             ]
         ]);
-
         $this->crud->addField([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي',
-            'placeholder' => 'الاسم بالانجليزي',
+            'label' =>  __('cms.name_en'),
+            'attributes' => [
+                'required' => 'required'
+            ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6'
             ]
         ]);
         $this->crud->addField([
             'name' => 'description_ar',
-            'type' => 'ckeditor',
-            'label' => 'الوصف بالعربي',
-            'placeholder' => 'الوصف بالعربي',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_ar'),
+            'attributes' => [
+                'required' => 'required'
+            ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6'
             ]
         ]);
         $this->crud->addField([
             'name' => 'description_en',
-            'type' => 'ckeditor',
-            'label' => 'الوصف بالانجليزي',
-            'placeholder' => 'الوصف بالانجليزي',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_en'),
+            'attributes' => [
+                'required' => 'required'
+            ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6'
             ]
         ]);
+
+        CRUD::field('icon')
+            ->label( __('cms.icon'))
+            ->type('upload')
+            ->withMedia(['collection' => 'icon']);
     }
 
-
+    /**
+     * Define what happens when the Update operation is loaded.
+     *
+     * @see https://backpackforlaravel.com/docs/crud-operation-update
+     * @return void
+     */
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
     }
 
+    //showOperation
+
     protected function setupShowOperation()
     {
         $this->setupListOperation();
+       CRUD::addColumn([
+            'name' => 'description_ar',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_ar'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'description_en',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_en'),
+        ]);
+
     }
 }

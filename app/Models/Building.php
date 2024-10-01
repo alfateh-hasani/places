@@ -22,6 +22,8 @@ class Building extends Model implements HasMedia
         'name_en',
         'address',
         'city_id',
+        'latitude',
+        'longitude',
     ];
 
     /**

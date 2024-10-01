@@ -3,14 +3,15 @@
 namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Apartment extends Model
+class Apartment extends Model implements HasMedia
 {
     use CrudTrait;
-    use HasFactory;
+    use InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -56,5 +57,22 @@ class Apartment extends Model
     public function features()
     {
         return $this->belongsToMany(Feature::class, 'apartment_features');
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('image');
+    }
+
+    //belongsTo polices
+    public function policy()
+    {
+        return $this->belongsTo(Policy::class);
+    }
+
+    //lock_alias
+    public function lock()
+    {
+        return $this->belongsTo(Lock::class,'lock_alias');
     }
 }

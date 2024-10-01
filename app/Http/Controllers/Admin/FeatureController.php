@@ -72,7 +72,7 @@ class FeatureController extends CrudController
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي',
+            'label' =>  __('cms.name_ar'),
             'attributes' => [
                 'required' => 'required'
             ],
@@ -83,7 +83,7 @@ class FeatureController extends CrudController
         $this->crud->addField([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي',
+            'label' =>  __('cms.name_en'),
             'attributes' => [
                 'required' => 'required'
             ],
@@ -93,11 +93,10 @@ class FeatureController extends CrudController
         ]);
 
         CRUD::field('icon')
-            ->label('آيقونة')
-            ->type('image')
-            ->withMedia([
-                'collection' => 'icon', // will pick the collection definition from your model
-            ]);
+            ->label( __('cms.icon'))
+            ->type('upload')
+            ->withMedia(['collection' => 'icon'])
+            ;
     }
 
     /**

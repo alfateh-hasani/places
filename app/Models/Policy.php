@@ -19,6 +19,8 @@ class Policy extends Model
     protected $fillable = [
         'description_ar',
         'description_en',
+        'name_ar',
+        'name_en',
     ];
 
     /**

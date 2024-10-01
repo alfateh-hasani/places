@@ -18,13 +18,12 @@ return new class extends Migration
             $table->text('name_ar')->charset('utf8mb4');
             $table->text('name_en')->charset('utf8mb4');
             $table->foreignId('building_id')->nullable()->constrained()->index();
+            $table->foreignId('policy_id')->nullable()->constrained()->index();
             $table->longText('description_ar')->nullable()->charset('utf8mb4');
             $table->longText('description_en')->nullable()->charset('utf8mb4');
             $table->bigInteger('num_rooms')->index();
             $table->bigInteger('num_beds')->index() ;
             $table->decimal('area', 5, 2);
-            $table->string('latitude')->nullable();
-            $table->string('longitude')->nullable();
             $table->boolean('is_active')->default(true);
             $table->bigInteger('smart_lock_id')->nullable();
             $table->timestamps();

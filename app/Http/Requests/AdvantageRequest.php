@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class FeatureRequest extends FormRequest
+class AdvantageRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,6 +27,8 @@ class FeatureRequest extends FormRequest
         return [
             'name_ar' => 'required|string',
             'name_en' => 'required|string',
+            'description_ar' => 'required|string',
+            'description_en' => 'required|string',
             'icon' => 'required',
         ];
     }
@@ -39,9 +41,7 @@ class FeatureRequest extends FormRequest
     public function attributes()
     {
         return [
-            'name_ar' =>  __('cms.name_ar'),
-            'name_en' =>  __('cms.name_en'),
-            'icon' => __('cms.icon'),
+            //
         ];
     }
 
