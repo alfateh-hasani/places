@@ -13,7 +13,7 @@ class OtpNotification extends Notification
      * Create a new notification instance.
      */
     public function __construct(
-        protected string $otp
+        protected array $data
     )
     {
         //
@@ -35,7 +35,7 @@ class OtpNotification extends Notification
     public function toSms(object $notifiable): array
     {
         return [
-            'content' => "Hello  Your registration OTP is: {$this->otp}",
+            'content' => "Hello  Your registration OTP is: ".$this->data['code'],
         ];
     }
 

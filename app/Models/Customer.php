@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Customer extends Authenticatable implements HasMedia
 {
-    use HasApiTokens ,InteractsWithMedia;
+    use HasApiTokens ,InteractsWithMedia ,Notifiable,HasFactory;
     protected $fillable = [
         'first_name',
         'last_name',
@@ -23,5 +25,10 @@ class Customer extends Authenticatable implements HasMedia
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function routeNotificationForSms()
+    {
+        return $this->phone;
     }
 }
