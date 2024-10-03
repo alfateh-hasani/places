@@ -123,4 +123,11 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+
+
+    'api_secret_key' => env('API_SECRET_KEY'),
+    'locales' => [
+        'ar' => 'ar',
+        'en' => 'en',
+    ],
 ];

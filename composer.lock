@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "30a2c548937aa0d64aed0dd7a619bf7c",
+    "content-hash": "536506ed684cd4eb761f644f90770923",
     "packages": [
         {
             "name": "backpack/basset",
@@ -1781,6 +1781,59 @@
             "time": "2023-12-03T19:50:20+00:00"
         },
         {
+            "name": "hi-folks/rando-php",
+            "version": "v0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Hi-Folks/rando-php.git",
+                "reference": "fd1e1421effa441c652f1df25e4a55c934bb6709"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Hi-Folks/rando-php/zipball/fd1e1421effa441c652f1df25e4a55c934bb6709",
+                "reference": "fd1e1421effa441c652f1df25e4a55c934bb6709",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1|^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^7.0|^8.0|^9.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "HiFolks\\RandoPhp\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Roberto Butti",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Random generator Library for PHP",
+            "homepage": "https://github.com/hi-folks/rando-php",
+            "keywords": [
+                "draw",
+                "generator",
+                "hi-folks",
+                "library",
+                "rando-php",
+                "random",
+                "sequence"
+            ],
+            "support": {
+                "issues": "https://github.com/Hi-Folks/rando-php/issues",
+                "source": "https://github.com/Hi-Folks/rando-php/tree/v0.2.0"
+            },
+            "time": "2021-07-01T05:48:59+00:00"
+        },
+        {
             "name": "laravel/framework",
             "version": "v11.22.0",
             "source": {
@@ -2043,6 +2096,70 @@
                 "source": "https://github.com/laravel/prompts/tree/v0.1.25"
             },
             "time": "2024-08-12T22:06:33+00:00"
+        },
+        {
+            "name": "laravel/sanctum",
+            "version": "v4.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/sanctum.git",
+                "reference": "54aea9d13743ae8a6cdd3c28dbef128a17adecab"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/sanctum/zipball/54aea9d13743ae8a6cdd3c28dbef128a17adecab",
+                "reference": "54aea9d13743ae8a6cdd3c28dbef128a17adecab",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "illuminate/console": "^11.0",
+                "illuminate/contracts": "^11.0",
+                "illuminate/database": "^11.0",
+                "illuminate/support": "^11.0",
+                "php": "^8.2",
+                "symfony/console": "^7.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.6",
+                "orchestra/testbench": "^9.0",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^10.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Laravel\\Sanctum\\SanctumServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Sanctum\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Laravel Sanctum provides a featherweight authentication system for SPAs and simple APIs.",
+            "keywords": [
+                "auth",
+                "laravel",
+                "sanctum"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/sanctum/issues",
+                "source": "https://github.com/laravel/sanctum"
+            },
+            "time": "2024-09-27T14:55:41+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -4037,6 +4154,55 @@
                 }
             ],
             "time": "2024-04-27T21:32:50+00:00"
+        },
+        {
+            "name": "sadiqsalau/laravel-otp",
+            "version": "v1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sadiqsalau/laravel-otp.git",
+                "reference": "f322ef85df45a640f787d0c37d0c304a40ab09d9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sadiqsalau/laravel-otp/zipball/f322ef85df45a640f787d0c37d0c304a40ab09d9",
+                "reference": "f322ef85df45a640f787d0c37d0c304a40ab09d9",
+                "shasum": ""
+            },
+            "require": {
+                "hi-folks/rando-php": "^0.2.0",
+                "laravel/framework": "^9|^10|^11",
+                "php": "^8.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "SadiqSalau\\LaravelOtp\\OtpServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SadiqSalau\\LaravelOtp\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sadiq Salau",
+                    "email": "sadiqsalau888@gmail.com"
+                }
+            ],
+            "description": "OTP Package for Laravel",
+            "support": {
+                "issues": "https://github.com/sadiqsalau/laravel-otp/issues",
+                "source": "https://github.com/sadiqsalau/laravel-otp/tree/v1.0.6"
+            },
+            "time": "2024-03-20T21:20:33+00:00"
         },
         {
             "name": "spatie/image",

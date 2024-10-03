@@ -31,6 +31,7 @@ class Apartment extends Model implements HasMedia
         'longitude',
         'is_active',
         'smart_lock_id',
+        'price',
     ];
 
     /**
@@ -46,6 +47,7 @@ class Apartment extends Model implements HasMedia
         'area' => 'decimal:2',
         'is_active' => 'boolean',
         'smart_lock_id' => 'integer',
+        'price' => 'decimal:2',
     ];
 
     public function building(): BelongsTo

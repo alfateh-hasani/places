@@ -12,9 +12,9 @@ return new class extends Migration {
         }
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('email')->unique();
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('email')->unique()->nullable();
             $table->string('phone')->unique();
             $table->string('emergency_phone')->nullable();
             $table->boolean('account_verified')->default(false);

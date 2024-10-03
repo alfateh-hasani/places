@@ -21,6 +21,7 @@ Route::group([
     Route::crud('buildings', 'BuildingController');
     Route::crud('sliders', 'SliderController');
     Route::crud('advantages', 'AdvantageController');
+    Route::crud('pages', 'PageController');
 });
 
 
