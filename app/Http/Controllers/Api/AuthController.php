@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Otp\CustomerRegistrationOtp;
 use Illuminate\Http\Request;
@@ -26,9 +27,9 @@ class AuthController extends Controller
         try {
             $otp = Otp::identifier('otp_'.$request->phone)->send(
                 new CustomerRegistrationOtp(
-                    first_name : '',
+                    first_name:'',
                     last_name: '',
-                    email :'',
+                    email: '',
                     phone: $request->phone),
                 Notification::route('sms', $request->phone)
             );
@@ -51,52 +52,43 @@ class AuthController extends Controller
             $customer = Customer::where('phone', $request->phone)->first();
             $rules = [
                 'phone' => 'required|digits:9',
-                'otp'   => 'required|digits:4',
+                'otp'   => 'required|digits:6',
             ];
             if (!$customer) {
-                 $rules['first_name'] = 'required|string|max:255';
+                $rules['first_name'] = 'required|string|max:255';
                 $rules['last_name'] = 'required|string|max:255';
                 $rules['email'] = 'required|email|max:255|unique:customers';
+                $rules['phone'] = 'required|digits:9|unique:customers';
             }
 
-             $validatedData = $request->validate($rules);
-
+            $validatedData = $request->validate($rules);
         } catch (ValidationException $e) {
             return $this->errorResponse($e->errors(), trans('api.validation_exception'));
         }
-
         try {
-             $otp = Otp::identifier('otp_' . $request->phone)->attempt($request->otp);
-
-            if ($otp['status'] == Otp::OTP_MISMATCHED) {
+            $otp = Otp::identifier('otp_'.$request->phone)->attempt($request->otp);
+            Log::info('OTP Verified', ['otp' => $otp]);
+            if ($otp['status'] == Otp::OTP_MISMATCHED || $otp['status'] == Otp::OTP_EMPTY) {
                 return $this->errorResponse([], trans($otp['status']));
             }
-            if ($otp['status'] == Otp::OTP_EMPTY) {
-                return $this->errorResponse([], trans($otp['status']));
-            }
-
+            
             if ($otp['status'] == Otp::OTP_PROCESSED) {
-                 if (!$customer) {
+                if (!$customer) {
                     $customer = Customer::create([
-                        'phone' => $request->phone,
                         'first_name' => $request->first_name,
                         'last_name' => $request->last_name,
                         'email' => $request->email,
+                        'phone' => $request->phone,
                     ]);
                 }
-
-                $data = [
-                    'customer' => $customer
-                ];
+                $data['customer'] = new CustomerResource($customer);
                 return $this->successResponse($data, trans($otp['status']), 200);
             }
 
+            return $this->errorResponse([], trans('api.error_happened'));
         } catch (\Throwable $th) {
             return $this->errorResponse([], $th->getMessage(), 500);
         }
     }
-
-
-
 
 }
