@@ -12,7 +12,6 @@ use SadiqSalau\LaravelOtp\Facades\Otp;
 
 class AuthController extends Controller
 {
-
     public function requestOtp(Request $request){
         try {
             $validatedData = $request->validate([
