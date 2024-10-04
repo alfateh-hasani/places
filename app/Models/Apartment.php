@@ -18,21 +18,7 @@ class Apartment extends Model implements HasMedia
      *
      * @var array
      */
-    protected $fillable = [
-        'name_ar',
-        'name_en',
-        'building_id',
-        'description_ar',
-        'description_en',
-        'num_rooms',
-        'num_beds',
-        'area',
-        'latitude',
-        'longitude',
-        'is_active',
-        'smart_lock_id',
-        'price',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be cast to native types.
@@ -58,7 +44,7 @@ class Apartment extends Model implements HasMedia
     //features
     public function features()
     {
-        return $this->belongsToMany(Feature::class, 'apartment_features');
+        return $this->belongsToMany(Feature::class, 'apartment_features', 'apartment_id', 'feature_id');
     }
 
     public function registerMediaCollections(): void
@@ -75,6 +61,6 @@ class Apartment extends Model implements HasMedia
     //lock_alias
     public function lock()
     {
-        return $this->belongsTo(Lock::class,'lock_alias');
+        return $this->belongsTo(SmartLock::class);
     }
 }

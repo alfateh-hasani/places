@@ -17,8 +17,11 @@ class AuthController extends Controller
     public function requestOtp(Request $request)
     {
         try {
+            $request->merge([
+                'phone' => convertArabicNumbers($request->phone),
+            ]);
             $validatedData = $request->validate([
-                'phone'=> 'required|digits:9'
+                'phone'=> 'required|phone:SA',
             ]);
         } catch (ValidationException $e) {
             return $this->errorResponse([], $e->getMessage());
@@ -46,16 +49,20 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         try {
+            $request->merge([
+                'phone' => convertArabicNumbers($request->phone),
+                'otp' => convertArabicNumbers($request->otp),
+            ]);
             $customer = Customer::where('phone', $request->phone)->first();
             $rules = [
-                'phone' => 'required|digits:9',
-                'otp'   => 'required|digits:6',
+                'phone' => 'required|phone:SA',
+                'otp'   => 'required|digits:4',
             ];
             if (!$customer) {
                 $rules['first_name'] = 'required|string|max:255';
                 $rules['last_name'] = 'required|string|max:255';
                 $rules['email'] = 'required|email|max:255|unique:customers';
-                $rules['phone'] = 'required|digits:9|unique:customers';
+                $rules['phone'] = 'required|phone:SA|unique:customers';
             }
 
             $validatedData = $request->validate($rules);

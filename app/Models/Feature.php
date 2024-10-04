@@ -42,4 +42,10 @@ class Feature extends Model implements HasMedia
     {
         return $this->getFirstMediaUrl('icon');
     }
+
+
+    public function apartments()
+    {
+        return $this->belongsToMany(Apartment::class, 'apartment_features', 'feature_id', 'apartment_id');
+    }
 }

@@ -12,7 +12,7 @@ Route::group([
     ),
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () {
-    Route::crud('lock', 'LockController');
+    Route::crud('smart-lock', 'LockSmartController');
     Route::crud('city', 'CityController');
     Route::crud('feature', 'FeatureController');
     Route::crud('apartment', 'ApartmentController');

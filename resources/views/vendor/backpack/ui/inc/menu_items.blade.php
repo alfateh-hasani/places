@@ -3,7 +3,7 @@
 @includeWhen(class_exists(\Backpack\DevTools\DevToolsServiceProvider::class), 'backpack.devtools::buttons.sidebar_item')
 
 
-<x-backpack::menu-item title="Locks" icon="la la-question" :link="backpack_url('lock')" />
+<x-backpack::menu-item title="{{__('cms.smart_locks')}}" icon="la la-question" :link="backpack_url('smart-lock')" />
 <x-backpack::menu-item title="{{__('cms.buildings')}}" icon="la la-question" :link="backpack_url('buildings')" />
 <x-backpack::menu-item title="{{__('cms.features')}}" icon="la la-question" :link="backpack_url('feature')" />
 <x-backpack::menu-item title="{{__('cms.apartments')}}" icon="la la-question" :link="backpack_url('apartment')" />

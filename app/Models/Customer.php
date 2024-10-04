@@ -31,4 +31,9 @@ class Customer extends Authenticatable implements HasMedia
     {
         return $this->phone;
     }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('profile')->singleFile();
+    }
 }

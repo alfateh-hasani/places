@@ -13,7 +13,7 @@ class City extends Model implements HasMedia
     use CrudTrait;
     use HasFactory;
     use InteractsWithMedia;
-
+    protected $with = ['media'];
     /**
      * The attributes that are mass assignable.
      *

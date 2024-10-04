@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ApartmentRequest extends FormRequest
+class SmartLockRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,21 +25,10 @@ class ApartmentRequest extends FormRequest
     public function rules()
     {
         return [
-            'name_ar' => 'required',
-            'name_en' => 'required',
-            'building_id' => 'required|exists:buildings,id',
-            'description_ar' => 'required',
-            'description_en' => 'required',
-            'num_rooms' => 'required',
-            'num_beds' => 'required',
-            'area' => 'required',
-            'is_active' => 'required',
-            'smart_lock_id' => 'required|exists:smart_locks,id',
-            'price' => 'required',
-            'policy_id' => 'required|exists:policies,id',
-            'features' => 'required|array',
-            'features.*' => 'exists:features,id',
-        ];
+            'lock_alias' => 'required',
+            'lock_id' => 'required',
+            'lock_name' => 'required',
+            ];
     }
 
     /**
@@ -50,7 +39,9 @@ class ApartmentRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'lock_alias' => __('cms.lock_alias'),
+            'lock_id' => __('cms.lock_id'),
+            'lock_name' => __('cms.lock_name'),
         ];
     }
 
@@ -62,7 +53,8 @@ class ApartmentRequest extends FormRequest
     public function messages()
     {
         return [
-            //
+
+
         ];
     }
 }

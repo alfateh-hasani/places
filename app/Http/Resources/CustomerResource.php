@@ -17,6 +17,7 @@ class CustomerResource extends JsonResource
             'phone' => $this->phone,
             'emergency_phone' => $this->emergency_phone,
             'job_title' => $this->job_title,
+            'image' => getImage($this, 'profile'),
         ];
         return $data;
     }

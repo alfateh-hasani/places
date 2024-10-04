@@ -73,6 +73,8 @@ class ApartmentController extends CrudController
             ->type('upload_multiple')
             ->withMedia([
                 'collection' => 'image', // will pick the collection definition from your model
+            ])->wrapperAttributes([
+                'class' => 'form-group col-md-6',
             ]);
 
 
@@ -80,7 +82,7 @@ class ApartmentController extends CrudController
             'name' => 'is_active',
             'type' => 'select_from_array',
             'label' => __('cms.is_active'),
-            'options' => [1 => __('csm.yes'), 0 => __('csm.no')],
+            'options' => [1 => __('cms.yes'), 0 => __('cms.no')],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -156,20 +158,19 @@ class ApartmentController extends CrudController
         ]);
 
         $this->crud->addField([
-            'name' => 'lock',
-            'type' => 'select2_multiple',
+            'name' => 'smart_lock_id',
+            'type' => 'select2',
             'label' => __('cms.lock'),
-            'entity' => 'features',
-            'attribute' => 'name_ar',
-            'model' => \App\Models\Feature::class,
-            'pivot' => true,
+            'entity' => 'lock',
+            'attribute' => 'lock_name',
+            'model' => \App\Models\SmartLock::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
             'placeholder' => __('cms.lock_select2'),
         ]);
         $this->crud->addField([
-            'name' => 'features',
+            'name' => 'feature_id',
             'type' => 'select2_multiple',
             'label' =>  __('cms.features'),
             'entity' => 'features',
@@ -193,6 +194,18 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
             'placeholder' =>  __('cms.policy_select2'),
+        ]);
+
+        $this->crud->addField([
+            'name' => 'price',
+            'type' => 'number',
+            'label' =>  __('cms.price'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
         ]);
 
 

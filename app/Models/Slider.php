@@ -12,7 +12,7 @@ class Slider extends Model implements HasMedia
     use InteractsWithMedia;
     use CrudTrait;
     protected $guarded = [];
-
+    protected $with = ['media'];
 
     public function registerMediaCollections(): void
     {
