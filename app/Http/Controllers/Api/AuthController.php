@@ -27,9 +27,6 @@ class AuthController extends Controller
         try {
             $otp = Otp::identifier('otp_'.$request->phone)->send(
                 new CustomerRegistrationOtp(
-                    first_name:'',
-                    last_name: '',
-                    email: '',
                     phone: $request->phone),
                 Notification::route('sms', $request->phone)
             );
@@ -71,7 +68,7 @@ class AuthController extends Controller
             if ($otp['status'] == Otp::OTP_MISMATCHED || $otp['status'] == Otp::OTP_EMPTY) {
                 return $this->errorResponse([], trans($otp['status']));
             }
-            
+
             if ($otp['status'] == Otp::OTP_PROCESSED) {
                 if (!$customer) {
                     $customer = Customer::create([
@@ -82,6 +79,7 @@ class AuthController extends Controller
                     ]);
                 }
                 $data['customer'] = new CustomerResource($customer);
+                $data['token'] =$customer->createToken('Places_APP')->plainTextToken;
                 return $this->successResponse($data, trans($otp['status']), 200);
             }
 

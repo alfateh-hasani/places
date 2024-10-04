@@ -18,7 +18,6 @@ class CustomerResource extends JsonResource
             'emergency_phone' => $this->emergency_phone,
             'job_title' => $this->job_title,
         ];
-        $data['token'] = $this->when($request->user(), $this->createToken('Places_APP')->plainTextToken);
         return $data;
     }
 }
