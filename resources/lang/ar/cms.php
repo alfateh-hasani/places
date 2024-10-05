@@ -59,4 +59,7 @@ return [
     'seo_description_ar' => 'وصف السيو بالعربي',
     'seo_description_en' => 'وصف السيو بالانجليزي',
     'seo' => 'السيو',
+    'position' => 'موقع البنر',
+    'app' => 'التطبيق',
+    'site' => 'الموقع',
 ];

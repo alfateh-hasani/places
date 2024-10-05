@@ -61,6 +61,6 @@ class Apartment extends Model implements HasMedia
     //lock_alias
     public function lock()
     {
-        return $this->belongsTo(SmartLock::class);
+        return $this->belongsTo(SmartLock::class, 'smart_lock_id');
     }
 }

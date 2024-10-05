@@ -12,7 +12,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $this->data['sliders'] = SliderResource::collection(Slider::get());
+        $this->data['sliders'] = SliderResource::collection(Slider::where('position','app')->get());
         $this->data['cities'] = CityResource::collection(City::orderBy('sort_order')->get());
 
         return $this->successResponse($this->data);

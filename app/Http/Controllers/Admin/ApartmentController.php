@@ -170,13 +170,12 @@ class ApartmentController extends CrudController
             'placeholder' => __('cms.lock_select2'),
         ]);
         $this->crud->addField([
-            'name' => 'feature_id',
+            'name' => 'features',
             'type' => 'select2_multiple',
             'label' =>  __('cms.features'),
             'entity' => 'features',
             'attribute' => 'name_ar',
             'model' => \App\Models\Feature::class,
-            'pivot' => true,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -189,7 +188,6 @@ class ApartmentController extends CrudController
             'entity' => 'policy',
             'attribute' => 'name_ar',
             'model' => \App\Models\Policy::class,
-            'pivot' => true,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],

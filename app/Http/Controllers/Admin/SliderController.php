@@ -54,6 +54,13 @@ class SliderController extends CrudController
             'label' =>  __('cms.name_en'),
         ]);
         CRUD::addColumn([
+            'name' => 'position',
+            'type' => 'select_from_array',
+            'label' => __('cms.position'),
+            'options' => ['app' => __('cms.app'), 'site' => __('cms.site')],
+        ]);
+
+        CRUD::addColumn([
             'name' => 'image_ar',
             'type' => 'image',
             'label' =>  __('cms.image_ar'),
@@ -102,18 +109,34 @@ class SliderController extends CrudController
             ]
         ]);
 
+        //position slecte app and site
+
+        $this->crud->addField([
+            'name' => 'position',
+            'type' => 'select_from_array',
+            'label' => __('cms.position'),
+            'options' => ['app' => __('cms.app'), 'site' => __('cms.site')],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
+
         CRUD::field('image_ar')
             ->label(__('cms.image_ar'))
             ->type('image')
             ->withMedia(['collection' => 'image_ar'])
-            ->rules('required|mimes:svg');
+            ->wrapperAttributes([
+                'class' => 'form-group col-md-6'
+            ]);
 
 
         CRUD::field('image_en')
             ->label(__('cms.image_en'))
             ->type('image')
             ->withMedia(['collection' => 'image_en'])
-            ->rules('required|mimes:svg');
+            ->wrapperAttributes([
+                'class' => 'form-group col-md-6'
+            ]);
     }
 
     /**
