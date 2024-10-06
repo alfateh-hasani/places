@@ -177,5 +177,21 @@ class BuildingController extends CrudController
                 'class' => 'form-group col-md-12',
             ],
         ]);
+        CRUD::addColumn([
+            'name' => 'latitude',
+            'type' => 'text',
+            'label' =>  __('cms.latitude'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        CRUD::addColumn([
+            'name' => 'longitude',
+            'type' => 'text',
+            'label' =>  __('cms.longitude'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
     }
 }

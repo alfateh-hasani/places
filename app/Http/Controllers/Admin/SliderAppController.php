@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\SliderAppRequest;
 use App\Http\Requests\SliderRequest;
+use App\Models\Apartment;
+use App\Models\City;
+use App\Models\Page;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 /**
  * Class FeatureController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
-class SliderController extends CrudController
+class SliderAppController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -26,10 +31,10 @@ class SliderController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Slider::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/sliders');
-        $slider = __('cms.slider');
-        $sliders = __('cms.sliders');
+        CRUD::setModel(\App\Models\SliderApp::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/sliders-app');
+        $slider = __('cms.slider_app');
+        $sliders = __('cms.sliders_app');
 
         CRUD::setEntityNameStrings($slider, $sliders);
     }
@@ -79,7 +84,7 @@ class SliderController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(SliderRequest::class);
+        CRUD::setValidation(SliderAppRequest::class);
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
@@ -103,6 +108,39 @@ class SliderController extends CrudController
             ]
         ]);
 
+        $this->crud->addField([
+            'name' => 'related_type',
+            'type' => 'select2_from_array',
+            'label' => __('cms.related_type'),
+            'options' => [
+                'city' => __('cms.related_city'),
+                'apartment' => __('cms.related_apartment'),
+                'page' => __('cms.related_page'),
+                'general' => __('cms.related_general'),
+            ],
+            'allows_null' => false,
+            'default' => 'general',
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
+
+        $this->crud->addField([
+            'name' => 'related',
+            'type' => 'select2_from_ajax',
+            'label' => __('cms.related_id'),
+            'attribute' => 'name',
+            'data_source' => url('admin/get-related-entities'),
+            'placeholder' => __('cms.select_related_entity'),
+            'minimum_input_length' => 0,
+            'dependencies' => ['related_type'], 
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ],
+            'include_all_form_fields' => false,
+        ]);
+
+
 
 
         CRUD::field('image_ar')
@@ -113,7 +151,6 @@ class SliderController extends CrudController
                 'class' => 'form-group col-md-6'
             ]);
 
-
         CRUD::field('image_en')
             ->label(__('cms.image_en'))
             ->type('image')
@@ -121,6 +158,7 @@ class SliderController extends CrudController
             ->wrapperAttributes([
                 'class' => 'form-group col-md-6'
             ]);
+
     }
 
     /**
@@ -140,4 +178,19 @@ class SliderController extends CrudController
     {
         $this->setupListOperation();
     }
+
+
+    public function getRelatedEntities(Request $request)
+    {
+        $relatedType = $request->input('related_type');
+        dd($relatedType);
+        $entities = match ($relatedType) {
+            'city' => City::all(['id', 'name_ar']),
+            'apartment' => Apartment::all(['id', 'name_ar']),
+            'page' => Page::all(['id', 'name_ar']),
+            default => [],
+        };
+        return response()->json($entities);
+    }
+
 }

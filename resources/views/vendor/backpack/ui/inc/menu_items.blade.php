@@ -14,6 +14,7 @@
 
 <x-backpack::menu-dropdown title="{{__('cms.contents')}}" icon="la la-group">
     <x-backpack::menu-item title="{{__('cms.sliders')}}" icon="la la-question" :link="backpack_url('sliders')" />
+    <x-backpack::menu-item title="{{__('cms.sliders_app')}}" icon="la la-question" :link="backpack_url('sliders-app')" />
     <x-backpack::menu-item title="{{__('cms.advantages')}}" icon="la la-home" :link="backpack_url('advantages')" />
     <x-backpack::menu-item title="{{__('cms.pages')}}" icon="la la-home" :link="backpack_url('pages')" />
 </x-backpack::menu-dropdown>

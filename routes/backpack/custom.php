@@ -20,6 +20,9 @@ Route::group([
     Route::crud('policy', 'PolicyController');
     Route::crud('buildings', 'BuildingController');
     Route::crud('sliders', 'SliderController');
+    Route::crud('sliders-app', 'SliderAppController');
+    Route::get('get-related-entities', 'SliderAppController@getRelatedEntities');
+
     Route::crud('advantages', 'AdvantageController');
     Route::crud('pages', 'PageController');
 });

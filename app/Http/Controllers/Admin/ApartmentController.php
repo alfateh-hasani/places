@@ -50,6 +50,55 @@ class ApartmentController extends CrudController
             'label' => __('cms.name_en'),
         ]);
         CRUD::addColumn([
+            'name' => 'building_id',
+            'type' => 'select',
+            'label' => __('cms.building'),
+            'entity' => 'building',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Building::class,
+        ]);
+        CRUD::addColumn([
+            'name' => 'num_rooms',
+            'type' => 'number',
+            'label' =>  __('cms.num_rooms'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'num_beds',
+            'type' => 'number',
+            'label' =>  __('cms.num_beds'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'area',
+            'type' => 'number',
+            'label' =>  __('cms.area'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'price',
+            'type' => 'number',
+            'label' =>  __('cms.price'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'is_active',
+            'type' => 'boolean',
+            'label' =>  __('cms.is_active'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'smart_lock_id',
+            'type' => 'select',
+            'label' => __('cms.lock'),
+            'entity' => 'lock',
+            'attribute' => 'lock_name',
+            'model' => \App\Models\SmartLock::class,
+        ]);
+        CRUD::addColumn([
+            'name' => 'policy_id',
+            'type' => 'select',
+            'label' => __('cms.policy'),
+            'entity' => 'policy',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Policy::class,
+        ]);
+        CRUD::addColumn([
             'name' => 'image',
             'type' => 'image',
             'label' =>  __('cms.image'),
@@ -244,4 +293,28 @@ class ApartmentController extends CrudController
     {
         $this->setupCreateOperation();
     }
+
+    protected function setupShowOperation(){
+        $this->setupListOperation();
+        CRUD::addColumn([
+            'name' => 'description_ar',
+            'type' => 'text',
+            'label' =>  __('cms.description_ar'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'limit' => 10000000,
+        ]);
+        CRUD::addColumn([
+            'name' => 'description_en',
+            'type' => 'text',
+            'label' =>  __('cms.description_en'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'limit' => 10000000,
+        ]);
+
+    }
+
 }

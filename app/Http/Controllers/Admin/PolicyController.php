@@ -50,16 +50,7 @@ class PolicyController extends CrudController
             'label' => 'الاسم بالانجليزي'
         ]);
 
-        CRUD::addColumn([
-            'name' => 'description_ar',
-            'type' => 'text',
-            'label' => 'الوصف بالعربي'
-        ]);
-        CRUD::addColumn([
-            'name' => 'description_en',
-            'type' => 'text',
-            'label' => 'الوصف بالانجليزي'
-        ]);
+
     }
 
     /**
@@ -119,5 +110,17 @@ class PolicyController extends CrudController
     protected function setupShowOperation()
     {
         $this->setupListOperation();
+        CRUD::addColumn([
+            'name' => 'description_ar',
+            'type' => 'text',
+            'label' => 'الوصف بالعربي',
+            'limit' => 10000
+        ]);
+        CRUD::addColumn([
+            'name' => 'description_en',
+            'type' => 'text',
+            'label' => 'الوصف بالانجليزي',
+            'limit' => 10000
+        ]);
     }
 }
