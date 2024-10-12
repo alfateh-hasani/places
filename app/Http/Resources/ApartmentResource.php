@@ -29,6 +29,7 @@ class ApartmentResource extends JsonResource
                 return [
                     'id' => $feature->id,
                     'name' => $feature->{'name_' . app()->getLocale()},
+                    'icon' => getImage($feature, 'icon'),
                 ];
             }),
         ];

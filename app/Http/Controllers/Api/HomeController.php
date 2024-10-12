@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApartmentResource;
 use App\Http\Resources\CityResource;
@@ -49,23 +50,30 @@ class HomeController extends Controller
 
     public function  getFilterApartments(Request $request)
     {
-
-        $numRooms = $request->input('num_rooms');
-        $numBeds = $request->input('num_beds');
-        $price = $request->input('price');
+        $filters = $request->filters;
         $query = $this->apartment::query();
-        if (!is_null($numRooms)) {
-            $query->where('num_rooms', $numRooms);
+        foreach ($filters as $key=> $val) {
+            if($val) {
+                $filterHandler = FilterFactory::make($key);
+                $query = $filterHandler->apply($query, $val);
+            }
         }
-        if (!is_null($numBeds)) {
-            $query->where('num_beds', $numBeds);
-        }
-        if (!is_null($price)) {
-            $query->where('price', '<=', $price);
-        }
-        $apartments = $query->get();
+        $apartments = $query->paginate(30);
         $this->data['apartments'] = ApartmentResource::collection($apartments);
+        $this->data['pagination'] =  $this->pagination($apartments);
         return $this->successResponse($this->data);
+    }
 
+    //getApartments
+
+    public function getApartments(Request $request)
+    {
+//        $validator = $this->validate($request, [
+//            'id' => 'required|exists:apartments,id'
+//        ]);
+        $id = $request->id;
+        $apartments =  $this->apartment->with('building')->findOrFail($id);
+        $this->data['apartments'] =new ApartmentResource($apartments);
+        return $this->successResponse($this->data);
     }
 }
