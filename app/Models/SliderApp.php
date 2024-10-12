@@ -30,9 +30,12 @@ class SliderApp extends Model implements HasMedia
         return $this->getFirstMediaUrl('image_en');
     }
 
-
     public function related()
     {
+        if ($this->related_type === 'general') {
+            return null;
+        }
         return $this->morphTo();
     }
+
 }

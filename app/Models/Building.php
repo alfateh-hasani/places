@@ -51,4 +51,10 @@ class Building extends Model implements HasMedia
     {
         return $this->getFirstMediaUrl('image');
     }
+
+    //hasMany apartments
+    public function apartments()
+    {
+        return $this->hasMany(Apartment::class);
+    }
 }

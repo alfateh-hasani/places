@@ -12,7 +12,7 @@ class Apartment extends Model implements HasMedia
 {
     use CrudTrait;
     use InteractsWithMedia;
-
+    protected $with = ['media'];
     /**
      * The attributes that are mass assignable.
      *
@@ -62,5 +62,13 @@ class Apartment extends Model implements HasMedia
     public function lock()
     {
         return $this->belongsTo(SmartLock::class, 'smart_lock_id');
+    }
+
+
+    //is_favorite
+    public function getIsFavoriteAttribute()
+    {
+//        return $this->favorites()->where('user_id', auth()->id())->exists();
+        return true;
     }
 }

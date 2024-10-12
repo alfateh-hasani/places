@@ -70,5 +70,6 @@ return [
     'related_apartment' => 'الشقق',
     'related_page' => 'الصفحات',
     'related_general' => 'عام',
+    'related_id' => 'العنصر المرتبط',
 
 ];

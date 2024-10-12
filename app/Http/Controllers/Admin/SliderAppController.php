@@ -84,6 +84,7 @@ class SliderAppController extends CrudController
      */
     protected function setupCreateOperation()
     {
+        \Log::info(request()->all());
         CRUD::setValidation(SliderAppRequest::class);
         $this->crud->addField([
             'name' => 'name_ar',
@@ -133,12 +134,17 @@ class SliderAppController extends CrudController
             'data_source' => url('admin/get-related-entities'),
             'placeholder' => __('cms.select_related_entity'),
             'minimum_input_length' => 0,
-            'dependencies' => ['related_type'], 
+            'dependencies' => ['related_type'],
+            'data' => [
+                'related_type' => 'related_type',
+                 'related_id' => 'related_id',
+            ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6'
             ],
             'include_all_form_fields' => false,
         ]);
+
 
 
 
@@ -183,7 +189,6 @@ class SliderAppController extends CrudController
     public function getRelatedEntities(Request $request)
     {
         $relatedType = $request->input('related_type');
-        dd($relatedType);
         $entities = match ($relatedType) {
             'city' => City::all(['id', 'name_ar']),
             'apartment' => Apartment::all(['id', 'name_ar']),

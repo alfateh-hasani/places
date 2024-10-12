@@ -11,4 +11,17 @@ abstract class Controller
 
     protected $data = [];
 
+
+    protected function pagination($paginator)
+    {
+        return [
+            'total'       => $paginator->total(),
+            'count'       => $paginator->count(),
+            'per_page'    => $paginator->perPage(),
+            'pageIndex'   => $paginator->currentPage(),
+            'nextPage'    => $paginator->currentPage() + 1,
+            'total_pages' => $paginator->lastPage(),
+            'has_more'    => !$paginator->currentPage() >= $paginator->lastPage()
+        ];
+    }
 }

@@ -13,6 +13,7 @@ class City extends Model implements HasMedia
     use CrudTrait;
     use HasFactory;
     use InteractsWithMedia;
+
     protected $with = ['media'];
     /**
      * The attributes that are mass assignable.
@@ -45,5 +46,22 @@ class City extends Model implements HasMedia
     public function getImageAttribute()
     {
         return $this->getFirstMediaUrl('image');
+    }
+
+
+    //hasMany apartments
+
+    //belongsTo buildings
+    public function buildings()
+    {
+        return $this->hasMany(Building::class);
+    }
+
+
+    //city has many apartments from buildings
+
+    public function apartments()
+    {
+        return $this->hasManyThrough(Apartment::class, Building::class);
     }
 }

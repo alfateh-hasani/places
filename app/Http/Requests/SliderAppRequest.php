@@ -30,7 +30,7 @@ class SliderAppRequest extends FormRequest
             'image_ar' => 'required',
             'image_en' => 'required',
             'related_id' => 'nullable',
-            'related_type' => 'nullable',
+            'related_type' => 'required|in:city,apartment,page,general',
         ];
     }
 
