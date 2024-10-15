@@ -19,6 +19,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('logout', 'logout');
         Route::post('update-profile', 'updateProfile');
         Route::post('delete-profile', 'deleteProfile');
+        Route::post('add-review', 'addReview');
+        Route::get('my-favorite', 'myFavorite');
     });
 
 

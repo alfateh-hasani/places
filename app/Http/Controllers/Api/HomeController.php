@@ -33,7 +33,7 @@ class HomeController extends Controller
             'name' => 'default',
             'image' => 'default.jpg',
             'related_id' => 1,
-            'related_type' => 'default'
+            'related_type' => 'general'
         ];
         $this->data['sliders'] = SliderResource::collection($sliders);
         $cities = $this->city->orderBy('sort_order')->get();
@@ -107,7 +107,7 @@ class HomeController extends Controller
 //            'id' => 'required|exists:apartments,id'
 //        ]);
         $id = $request->id;
-        $apartments =  $this->apartment->with('building')->findOrFail($id);
+        $apartments =  $this->apartment->with(['building','reviews'])->findOrFail($id);
         $this->data['apartments'] =new ApartmentResource($apartments);
         return $this->successResponse($this->data);
     }

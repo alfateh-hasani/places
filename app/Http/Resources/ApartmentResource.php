@@ -9,7 +9,7 @@ class ApartmentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'name' => $this->{'name_' . app()->getLocale()},
             'description' => $this->{'description_' . app()->getLocale()},
@@ -35,5 +35,16 @@ class ApartmentResource extends JsonResource
                 ];
             }),
         ];
+        if ($this->whenLoaded('reviews')) {
+            $data['reviews'] = ReviewResource::collection($this->reviews);
+        }
+        if ($this->whenLoaded('policy')) {
+            $data['policy'] = [
+                'id' => $this->policy?->id,
+                'description' => $this->policy?->{'description_' . app()->getLocale()},
+            ];
+        }
+
+        return $data;
     }
 }

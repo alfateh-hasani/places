@@ -36,4 +36,6 @@ class Customer extends Authenticatable implements HasMedia
     {
         $this->addMediaCollection('profile')->singleFile();
     }
+
+
 }

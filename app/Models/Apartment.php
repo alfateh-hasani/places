@@ -87,4 +87,11 @@ class Apartment extends Model implements HasMedia
         return '4.5';
     }
 
+    //reviews
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+
 }

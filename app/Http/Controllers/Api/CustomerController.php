@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ApartmentResource;
 use App\Http\Resources\CustomerResource;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,7 @@ class CustomerController extends Controller
 {
     public function myProfile()
     {
-       $customer = auth()->user();
+       $customer = \Auth::guard('api')->user();
        $data['customer'] = new CustomerResource($customer);
        return $this->successResponse($data);
     }
@@ -56,5 +57,36 @@ class CustomerController extends Controller
         $customer->delete();
         $massage = __('api.profile_deleted');
         return $this->successResponse([],$massage);
+    }
+
+    //Add review
+
+    public function addReview(Request $request)
+    {
+        $validatedData = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'review_text' => 'required|string',
+            'apartment_id' => 'required|exists:apartments,id',
+        ]);
+        $customer =  \Auth::guard('api')->user();
+        $existingReview = $customer->reviews()->where('apartment_id', $validatedData['apartment_id'])->first();
+
+        if ($existingReview) {
+            $message = __('api.review_already_exists');
+            return $this->errorResponse([], $message, 400);
+        }
+        $customer->reviews()->create($validatedData);
+        $massage = __('api.review_added');
+        return $this->successResponse([],$massage);
+    }
+
+    //myFavorite
+    public function myFavorite(Request $request)
+    {
+        $customer =  \Auth::guard('api')->user();
+        $apartments = $customer->favoriteApartments()->paginate(30);
+        $data['apartments'] = ApartmentResource::collection($apartments);
+        $data['pagination'] =  $this->pagination($apartments);
+        return $this->successResponse($data);
     }
 }
