@@ -23,8 +23,10 @@ class ApartmentResource extends JsonResource
             'area' => $this->area,
             'adults_count' => $this->adults_count,
             'children_count' => $this->children_count,
-            'image' => getImage($this, 'image'),
+            'image' => getAllImages($this, 'image'),
             'is_favorite' => $this->is_favorite,
+            'top_rated' => $this->top_rated,
+            'ratings' => $this->total_ratings,
             'features' =>$this->features->map(function ($feature) {
                 return [
                     'id' => $feature->id,

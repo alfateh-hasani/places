@@ -71,4 +71,20 @@ class Apartment extends Model implements HasMedia
 //        return $this->favorites()->where('user_id', auth()->id())->exists();
         return true;
     }
+
+    //top_rated
+    public function getTopRatedAttribute()
+    {
+//        return $this->ratings()->avg('rating');
+        return true;
+    }
+
+    //ratings
+    public function getTotalRatingsAttribute()
+    {
+//        return $this->hasMany(Rating::class);
+
+        return '4.5';
+    }
+
 }

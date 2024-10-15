@@ -6,33 +6,19 @@ class FilterFactory
 {
     public static function make($field)
     {
-        switch ($field) {
-
-            case 'city':
-                return app(CityFilter::class);
-            case 'building':
-                return app(BuildingFilter::class);
-            case 'max_price':
-                return app(MaxPriceFilter::class);
-            case 'min_price':
-                return app(MinPriceFilter::class);
-            case 'adults_count':
-                return app(AdultsCountFilter::class);
-            case 'children_count':
-                return app(ChildrenCountFilter::class);
-            case 'num_rooms':
-                return app(NumRoomsFilter::class);
-            case 'num_beds ':
-                return app(NumBedsFilter::class);
-            case 'max_area':
-                return app(MaxAreaFilter::class);
-            case 'min_area':
-                return app(MinAreaFilter::class);
-
-
-            default:
-                throw new \Exception("No filter found for field: $field");
-        }
+        return match ($field) {
+            'city_id' => app(CityFilter::class),
+            'building_id' => app(BuildingFilter::class),
+            'max_price' => app(MaxPriceFilter::class),
+            'min_price' => app(MinPriceFilter::class),
+            'adults_count' => app(AdultsCountFilter::class),
+            'children_count' => app(ChildrenCountFilter::class),
+            'num_rooms' => app(NumRoomsFilter::class),
+            'num_beds ' => app(NumBedsFilter::class),
+            'max_area' => app(MaxAreaFilter::class),
+            'min_area' => app(MinAreaFilter::class),
+            default => throw new \Exception("No filter found for field: $field"),
+        };
     }
 }
 

@@ -27,7 +27,6 @@ Route::middleware('auth:api')->group(function () {
 
 Route::controller(HomeController::class)->prefix('home')->group(function () {
     Route::get('index', 'index');
-    Route::get('get-listing-apartments', 'getListingApartments');
     Route::get('get-filter-apartments', 'getFilterApartments');
     Route::get('get-apartment', 'getApartments');
 });
