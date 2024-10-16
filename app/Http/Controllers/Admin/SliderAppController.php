@@ -84,7 +84,6 @@ class SliderAppController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        \Log::info(request()->all());
         CRUD::setValidation(SliderAppRequest::class);
         $this->crud->addField([
             'name' => 'name_ar',
@@ -114,11 +113,12 @@ class SliderAppController extends CrudController
             'type' => 'select2_from_array',
             'label' => __('cms.related_type'),
             'options' => [
-                'city' => __('cms.related_city'),
-                'apartment' => __('cms.related_apartment'),
-                'page' => __('cms.related_page'),
+                'App\Models\City' => __('cms.related_city'),
+                'App\Models\Apartment' => __('cms.related_apartment'),
+                'App\Models\Page' => __('cms.related_page'),
                 'general' => __('cms.related_general'),
             ],
+            'attribute' => 'related_type',
             'allows_null' => false,
             'default' => 'general',
             'wrapperAttributes' => [
@@ -130,7 +130,7 @@ class SliderAppController extends CrudController
             'name' => 'related',
             'type' => 'select2_from_ajax',
             'label' => __('cms.related_id'),
-            'attribute' => 'name',
+            'attribute' => 'related_id',
             'data_source' => url('admin/get-related-entities'),
             'placeholder' => __('cms.select_related_entity'),
             'minimum_input_length' => 0,
@@ -190,9 +190,9 @@ class SliderAppController extends CrudController
     {
         $relatedType = $request->input('related_type');
         $entities = match ($relatedType) {
-            'city' => City::all(['id', 'name_ar']),
-            'apartment' => Apartment::all(['id', 'name_ar']),
-            'page' => Page::all(['id', 'name_ar']),
+            'App\Models\City' => City::all(['id', 'name_ar']),
+            'App\Models\Apartment' => Apartment::all(['id', 'name_ar']),
+            'App\Models\Page' => Page::all(['id', 'name_ar']),
             default => [],
         };
         return response()->json($entities);

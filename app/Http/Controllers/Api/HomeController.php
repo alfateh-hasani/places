@@ -48,7 +48,8 @@ class HomeController extends Controller
                 'name' => $building->{'name_' . app()->getLocale()},
             ];
         });
-        $this->data['user_name'] = auth()->user()?->name;
+        $user = \Auth::guard('api')->user();
+        $this->data['user_name'] = $user?->first_name.' '.$user?->last_name;
         $this->data['filter_keys'] = [
             'min_price' =>  $this->apartment->min('price'),
             'max_price' =>  $this->apartment->max('price'),
@@ -56,6 +57,7 @@ class HomeController extends Controller
             'max_area'  =>   $this->apartment->max('area'),
             'min_area'  =>   $this->apartment->min('area'),
             'max_beds'  =>   $this->apartment->max('num_beds'),
+            'max_bathrooms'  =>   6, // $this->apartment->max('num_bathrooms'), // not exist in db
         ];
         return $this->successResponse($this->data);
     }

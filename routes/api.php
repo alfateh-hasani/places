@@ -21,6 +21,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('delete-profile', 'deleteProfile');
         Route::post('add-review', 'addReview');
         Route::get('my-favorite', 'myFavorite');
+        Route::post('add-favorite', 'addFavorite');
     });
 
 

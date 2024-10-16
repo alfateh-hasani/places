@@ -44,6 +44,12 @@ class ApartmentResource extends JsonResource
                 'description' => $this->policy?->{'description_' . app()->getLocale()},
             ];
         }
+        if ($this->whenLoaded('building')) {
+            $data['map'] =  [
+                'latitude' => $this->building?->latitude,
+                'longitude' => $this->building?->longitude,
+            ];
+        }
 
         return $data;
     }

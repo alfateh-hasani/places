@@ -6,4 +6,5 @@ return [
     'profile_deleted' => 'تم حذف الملف الشخصي بنجاح',
     'review_added' => 'تمت إضافة التقييم بنجاح',
     'review_already_exists' => 'التقييم موجود بالفعل',
+    'favorite_added' => 'تمت إضافة الشقة المفضلة بنجاح',
 ];

@@ -37,5 +37,11 @@ class Customer extends Authenticatable implements HasMedia
         $this->addMediaCollection('profile')->singleFile();
     }
 
+    //favoriteApartments
+    public function favoriteApartments()
+    {
+        return $this->belongsToMany(Apartment::class, 'favorites', 'customer_id', 'apartment_id');
+    }
+
 
 }

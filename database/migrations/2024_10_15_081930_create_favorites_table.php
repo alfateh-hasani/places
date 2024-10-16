@@ -9,6 +9,8 @@ return new class extends Migration {
     {
         Schema::create('favorites', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('apartment_id');
+            $table->unsignedBigInteger('customer_id');
             $table->foreign('apartment_id')->references('id')->on('apartments')->onDelete('cascade');
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
             $table->unique(['apartment_id', 'customer_id']);

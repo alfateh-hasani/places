@@ -11,7 +11,12 @@ class SliderApp extends Model implements HasMedia
 {
     use InteractsWithMedia;
     use CrudTrait;
-    protected $guarded = [];
+    protected $fillable = [
+        'name_ar',
+        'name_en',
+        'related_type',
+        'related_id',
+    ];
     protected $with = ['media'];
 
     public function registerMediaCollections(): void

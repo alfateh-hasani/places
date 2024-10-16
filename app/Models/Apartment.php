@@ -68,8 +68,8 @@ class Apartment extends Model implements HasMedia
     //is_favorite
     public function getIsFavoriteAttribute()
     {
-//        return $this->favorites()->where('user_id', auth()->id())->exists();
-        return true;
+//         return $this->favorites()->where('customer_id', auth()->id())->exists();
+         return true;
     }
 
     //top_rated
@@ -92,6 +92,13 @@ class Apartment extends Model implements HasMedia
     {
         return $this->hasMany(Review::class);
     }
+
+    //image
+    public function getImageAttribute()
+    {
+        return $this->getFirstMediaUrl('image');
+    }
+
 
 
 }

@@ -84,9 +84,21 @@ class CustomerController extends Controller
     public function myFavorite(Request $request)
     {
         $customer =  \Auth::guard('api')->user();
-        $apartments = $customer->favoriteApartments()->paginate(30);
+        $apartments = $customer->favoriteApartments()->get();
         $data['apartments'] = ApartmentResource::collection($apartments);
-        $data['pagination'] =  $this->pagination($apartments);
         return $this->successResponse($data);
+    }
+
+    //add favorite
+
+    public function addFavorite(Request $request)
+    {
+        $validatedData = $request->validate([
+            'apartment_id' => 'required|exists:apartments,id',
+        ]);
+        $customer =  \Auth::guard('api')->user();
+        $customer->favoriteApartments()->syncWithoutDetaching($validatedData['apartment_id']);
+        $massage = __('api.favorite_added');
+        return $this->successResponse([],$massage);
     }
 }
