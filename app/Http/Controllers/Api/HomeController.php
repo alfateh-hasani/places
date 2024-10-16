@@ -79,6 +79,7 @@ class HomeController extends Controller
      */
     public function  getFilterApartments(Request $request)
     {
+
         $filters = $request->filters;
         $query = $this->apartment::query();
         if (!empty($filters)) {

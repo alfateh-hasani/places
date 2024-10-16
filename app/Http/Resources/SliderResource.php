@@ -12,7 +12,7 @@ class SliderResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->{'name_' . app()->getLocale()},
-            'image' => getImage($this, 'image'),
+            'image' => getImage($this, 'image_'.app()->getLocale()),
             'related_id' => $this->related_id,
             'related_type' => $this->related_type,
         ];

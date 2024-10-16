@@ -101,4 +101,18 @@ class CustomerController extends Controller
         $massage = __('api.favorite_added');
         return $this->successResponse([],$massage);
     }
+
+
+    //remove favorite
+
+    public function removeFavorite(Request $request)
+    {
+        $validatedData = $request->validate([
+            'apartment_id' => 'required|exists:apartments,id',
+        ]);
+        $customer =  \Auth::guard('api')->user();
+        $customer->favoriteApartments()->detach($validatedData['apartment_id']);
+        $massage = __('api.favorite_removed');
+        return $this->successResponse([],$massage);
+    }
 }

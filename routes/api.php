@@ -22,6 +22,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('add-review', 'addReview');
         Route::get('my-favorite', 'myFavorite');
         Route::post('add-favorite', 'addFavorite');
+        Route::post('remove-favorite', 'removeFavorite');
     });
 
 
@@ -30,6 +31,6 @@ Route::middleware('auth:api')->group(function () {
 
 Route::controller(HomeController::class)->prefix('home')->group(function () {
     Route::get('index', 'index');
-    Route::get('get-filter-apartments', 'getFilterApartments');
+    Route::post('get-filter-apartments', 'getFilterApartments');
     Route::get('get-apartment', 'getApartments');
 });

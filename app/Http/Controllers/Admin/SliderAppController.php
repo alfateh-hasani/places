@@ -113,9 +113,9 @@ class SliderAppController extends CrudController
             'type' => 'select2_from_array',
             'label' => __('cms.related_type'),
             'options' => [
-                'App\Models\City' => __('cms.related_city'),
-                'App\Models\Apartment' => __('cms.related_apartment'),
-                'App\Models\Page' => __('cms.related_page'),
+                'city' => __('cms.related_city'),
+                'apartment' => __('cms.related_apartment'),
+                'page' => __('cms.related_page'),
                 'general' => __('cms.related_general'),
             ],
             'attribute' => 'related_type',
@@ -127,7 +127,7 @@ class SliderAppController extends CrudController
         ]);
 
         $this->crud->addField([
-            'name' => 'related',
+            'name' => 'related_id',
             'type' => 'select2_from_ajax',
             'label' => __('cms.related_id'),
             'attribute' => 'related_id',
@@ -190,9 +190,9 @@ class SliderAppController extends CrudController
     {
         $relatedType = $request->input('related_type');
         $entities = match ($relatedType) {
-            'App\Models\City' => City::all(['id', 'name_ar']),
-            'App\Models\Apartment' => Apartment::all(['id', 'name_ar']),
-            'App\Models\Page' => Page::all(['id', 'name_ar']),
+            'city' => City::all(['id', 'name_ar']),
+            'apartment' => Apartment::all(['id', 'name_ar']),
+            'page' => Page::all(['id', 'name_ar']),
             default => [],
         };
         return response()->json($entities);
