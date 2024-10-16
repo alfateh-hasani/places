@@ -100,5 +100,10 @@ class Apartment extends Model implements HasMedia
     }
 
 
+    //coupon_apartment
 
+    public function coupons()
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_apartment', 'apartment_id', 'coupon_id');
+    }
 }

@@ -71,5 +71,7 @@ return [
     'related_page' => 'الصفحات',
     'related_general' => 'عام',
     'related_id' => 'العنصر المرتبط',
+    'coupon' => 'الكوبون',
+    'coupons' => 'الكوبونات',
 
 ];
