@@ -28,7 +28,7 @@ class CouponController extends CrudController
         CRUD::setModel(\App\Models\Coupon::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/coupon');
         $slider = __('cms.coupon');
-        $sliders = __('cms.coupon');
+        $sliders = __('cms.coupons');
         CRUD::setEntityNameStrings($slider, $sliders);
     }
 
@@ -57,6 +57,12 @@ class CouponController extends CrudController
             'label' =>  __('cms.code'),
         ]);
         CRUD::addColumn([
+            'name' => 'type',
+            'type' => 'text',
+            'label' =>  __('cms.type'),
+
+        ]);
+        CRUD::addColumn([
             'name' => 'discount',
             'type' => 'text',
             'label' =>  __('cms.discount'),
@@ -78,6 +84,13 @@ class CouponController extends CrudController
             'entity' => 'building',
             'attribute' => 'name_ar',
             'model' => 'App\Models\Building',
+        ]);
+        CRUD::addColumn([
+            'name' => 'apartments',
+            'type' => 'relationship',
+            'label' =>  __('cms.apartments'),
+            'attribute' => 'name_ar',
+            'entity' => 'apartments',
         ]);
 
     }
@@ -109,6 +122,18 @@ class CouponController extends CrudController
             'attributes' => [
                 'required' => 'required'
             ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
+        //type
+        CRUD::addField([
+            'name' => 'type',
+            'type' => 'select_from_array',
+            'label' =>  __('cms.type'),
+            'options' => ['fixed' => __('cms.fixed'), 'percentage' =>  __('cms.percentage')],
+            'allows_null' => false,
+            'default' => 'fixed',
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6'
             ]
@@ -165,6 +190,17 @@ class CouponController extends CrudController
             'attribute' => 'name_ar',
             'model' => 'App\Models\Building',
         ]);
+
+        CRUD::field('apartments')
+            ->type('select2_multiple')
+            ->label( __('cms.apartments'))
+            ->entity('apartments')
+            ->attribute('name_ar')
+            ->model('App\Models\Apartment')
+            ->pivot('coupon_id', 'apartment_id')
+            ->wrapperAttributes([
+                'class' => 'form-group col-md-12'
+            ]);
     }
 
     /**
@@ -183,7 +219,7 @@ class CouponController extends CrudController
     protected function setupShowOperation()
     {
         $this->setupListOperation();
-      
+
 
     }
 }

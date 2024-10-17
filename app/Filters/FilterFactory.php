@@ -14,9 +14,10 @@ class FilterFactory
             'adults_count' => app(AdultsCountFilter::class),
             'children_count' => app(ChildrenCountFilter::class),
             'num_rooms' => app(NumRoomsFilter::class),
-            'num_beds ' => app(NumBedsFilter::class),
+            'num_beds' => app(NumBedsFilter::class),
             'max_area' => app(MaxAreaFilter::class),
             'min_area' => app(MinAreaFilter::class),
+            'bathrooms_count' => app(BathRoomsFilter::class),
             default => throw new \Exception("No filter found for field: $field"),
         };
     }

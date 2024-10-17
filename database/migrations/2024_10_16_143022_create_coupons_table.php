@@ -12,11 +12,12 @@ return new class extends Migration {
             $table->string('name_ar');
             $table->string('name_en');
             $table->string('code')->unique()->index();
+            $table->enum('type', ['fixed', 'percentage']);
             $table->float('discount');
             $table->integer('uses_total');
             $table->integer('uses_customer');
             $table->unsignedBigInteger('building_id')->nullable();
-            $table->foreign('building_id')->onDelete('cascade');
+            $table->foreign('building_id')->references('id')->on('buildings')->onDelete('cascade');
             $table->timestamps();
         });
         Schema::create('coupon_apartment', function (Blueprint $table) {

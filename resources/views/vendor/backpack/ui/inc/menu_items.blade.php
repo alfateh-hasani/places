@@ -18,3 +18,8 @@
     <x-backpack::menu-item title="{{__('cms.advantages')}}" icon="la la-home" :link="backpack_url('advantages')" />
     <x-backpack::menu-item title="{{__('cms.pages')}}" icon="la la-home" :link="backpack_url('pages')" />
 </x-backpack::menu-dropdown>
+
+<x-backpack::menu-dropdown title="{{__('cms.finance')}}" icon="la la-group">
+    <x-backpack::menu-item title="{{__('cms.coupons')}}" icon="la la-question" :link="backpack_url('coupon')" />
+
+</x-backpack::menu-dropdown>

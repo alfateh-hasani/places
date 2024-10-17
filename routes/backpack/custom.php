@@ -14,6 +14,7 @@ Route::group([
 ], function () {
     Route::crud('smart-lock', 'LockSmartController');
     Route::crud('city', 'CityController');
+    Route::crud('coupon', 'CouponController');
     Route::crud('feature', 'FeatureController');
     Route::crud('apartment', 'ApartmentController');
     Route::crud('building', 'BuildingController');

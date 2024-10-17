@@ -73,5 +73,16 @@ return [
     'related_id' => 'العنصر المرتبط',
     'coupon' => 'الكوبون',
     'coupons' => 'الكوبونات',
+    'bathrooms_count' => 'عدد الحمامات',
+    'finance' => 'المالية',
+    'code' => 'الكود',
+    'discount' => 'الخصم',
+    'uses_total' => 'الاستخدام الكلي',
+    'uses_customer' => 'الاستخدام الفردي',
+    'coupon_select2' => 'اختر الكوبون',
+    'building_id' => 'المبنى',
+    'type' => 'النوع',
+    'fixed' => 'ثابت',
+    'percentage' => 'نسبة',
 
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Favorites;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,7 +25,7 @@ class ApartmentResource extends JsonResource
             'adults_count' => $this->adults_count,
             'children_count' => $this->children_count,
             'image' => getAllImages($this, 'image'),
-            'is_favorite' => $this->is_favorite,
+            'is_favorite' =>  $this->is_favorite,
             'top_rated' => $this->top_rated,
             'ratings' => $this->total_ratings,
             'features' =>$this->features->map(function ($feature) {

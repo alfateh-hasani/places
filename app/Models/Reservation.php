@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reservation extends Model
 {
+    use CrudTrait;
+    protected $guarded = [];
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -20,8 +23,9 @@ class Reservation extends Model
     protected function casts(): array
     {
         return [
-            'start_date' => 'date',
-            'end_date' => 'date',
+            'check_in' => 'date',
+            'check_out' => 'date',
+            'discount' => 'float',
         ];
     }
 }

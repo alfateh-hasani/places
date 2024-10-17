@@ -5,6 +5,7 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -34,6 +35,7 @@ class Apartment extends Model implements HasMedia
         'is_active' => 'boolean',
         'smart_lock_id' => 'integer',
         'price' => 'decimal:2',
+        'bathrooms_count' => 'integer',
     ];
 
     public function building(): BelongsTo
@@ -68,8 +70,13 @@ class Apartment extends Model implements HasMedia
     //is_favorite
     public function getIsFavoriteAttribute()
     {
-//         return $this->favorites()->where('customer_id', auth()->id())->exists();
-         return true;
+        $user =  \Auth::guard('api')->user();
+        return  $this->favorites()->where('customer_id', $user->id)->exists();
+    }
+
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorites::class);
     }
 
     //top_rated
@@ -105,5 +112,11 @@ class Apartment extends Model implements HasMedia
     public function coupons()
     {
         return $this->belongsToMany(Coupon::class, 'coupon_apartment', 'apartment_id', 'coupon_id');
+    }
+
+    //bookings
+    public function bookings()
+    {
+        return $this->hasMany(Reservation::class);
     }
 }

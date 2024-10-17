@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Favorites extends Model
 {
+    protected $guarded = [];
     public function apartment(): BelongsTo
     {
         return $this->belongsTo(Apartment::class);

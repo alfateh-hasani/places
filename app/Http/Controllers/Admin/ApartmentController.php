@@ -72,6 +72,12 @@ class ApartmentController extends CrudController
             'type' => 'number',
             'label' =>  __('cms.area'),
         ]);
+        //bathrooms_count
+        CRUD::addColumn([
+            'name' => 'bathrooms_count',
+            'type' => 'number',
+            'label' =>  __('cms.bathrooms_count'),
+        ]);
         CRUD::addColumn([
             'name' => 'price',
             'type' => 'number',
@@ -187,6 +193,18 @@ class ApartmentController extends CrudController
             'name' => 'num_beds',
             'type' => 'number',
             'label' =>  __('cms.num_beds'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //bathrooms_count
+        $this->crud->addField([
+            'name' => 'bathrooms_count',
+            'type' => 'number',
+            'label' =>  __('cms.bathrooms_count'),
             'attributes' => [
                 'required' => 'required',
             ],

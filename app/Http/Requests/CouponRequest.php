@@ -27,7 +27,8 @@ class CouponRequest extends FormRequest
         return [
             'name_ar' => 'required|string',
             'name_en' => 'nullable|string',
-            'code' => 'required|string|unique:coupons,code',
+            'code' => 'required|string|unique:coupons,code,' . $this->id,
+            'type' => 'required|in:fixed,percentage',
             'discount' => 'required|numeric',
             'uses_total' => 'required|integer',
             'uses_customer' => 'required|integer',

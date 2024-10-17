@@ -7,4 +7,8 @@ return [
     'review_added' => 'تمت إضافة التقييم بنجاح',
     'review_already_exists' => 'التقييم موجود بالفعل',
     'favorite_added' => 'تمت إضافة الشقة المفضلة بنجاح',
+    'coupon_invalid' => 'الكوبون غير صالح ',
+    'coupon_invalid_apartment' => 'الكوبون غير صالح  للشقة المختارة',
+    'already_booked' => 'هذه الشقة محجوزة بالفعل خلال التواريخ المحددة',
+    'booking_added' => 'تمت عملية الحجز بنجاح',
 ];

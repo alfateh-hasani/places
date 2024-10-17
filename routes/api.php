@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\{AuthController, CustomerController, HomeController};
+use App\Http\Controllers\Api\{AuthController, BookingController, CustomerController, HomeController};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +23,14 @@ Route::middleware('auth:api')->group(function () {
         Route::get('my-favorite', 'myFavorite');
         Route::post('add-favorite', 'addFavorite');
         Route::post('remove-favorite', 'removeFavorite');
+        Route::post('add-booking', 'addBooking');
+    });
+
+    Route::controller(BookingController::class)->prefix('booking')->group(function () {
+        Route::get('index', 'index');
+        Route::post('get-booking', 'getBooking');
+        Route::post('cancel-booking', 'cancelBooking');
+        Route::post('add-booking', 'addBooking');
     });
 
 
