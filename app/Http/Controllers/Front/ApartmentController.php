@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Http\Controllers\Front;
+
+use App\Http\Controllers\Controller;
+use App\Models\Apartment;
+
+class ApartmentController extends Controller
+{
+    public function index()
+    {
+        // Fetch all active apartments
+        $apartments = Apartment::where('is_active', true)->paginate(12);
+
+        return view('apartment.index', compact('apartments'));
+    }
+}

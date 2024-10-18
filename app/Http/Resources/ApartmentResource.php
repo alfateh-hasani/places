@@ -18,7 +18,7 @@ class ApartmentResource extends JsonResource
             'building_name' => $this->building->{'name_' . app()->getLocale()},
             'city_id' => $this->building->city_id,
             'city_name' => $this->building?->city->{'name_' . app()->getLocale()},
-            'price' => $this->price,
+            'price' => floatval($this->price) ,
             'num_rooms' => $this->num_rooms,
             'num_beds' => $this->num_beds,
             'area' => $this->area,
@@ -32,16 +32,19 @@ class ApartmentResource extends JsonResource
                 return [
                     'id' => $feature->id,
                     'name' => $feature->{'name_' . app()->getLocale()},
+                    'color' => $feature->color ?? '#000000',
                     'icon' => getImage($feature, 'icon'),
                 ];
             }),
         ];
         if ($this->whenLoaded('reviews')) {
             $data['reviews'] = ReviewResource::collection($this->reviews);
+            $data['total_reviews'] = $this->reviews->count();
         }
         if ($this->whenLoaded('policy')) {
             $data['policy'] = [
                 'id' => $this->policy?->id,
+                'title' => $this->policy?->{'name_' . app()->getLocale()},
                 'description' => $this->policy?->{'description_' . app()->getLocale()},
             ];
         }

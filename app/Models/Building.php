@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-
+use App\Traits\HasTranslations;
 class Building extends Model implements HasMedia
 {
     use CrudTrait;
     use InteractsWithMedia;
+    use HasTranslations; 
     /**
      * The attributes that are mass assignable.
      *

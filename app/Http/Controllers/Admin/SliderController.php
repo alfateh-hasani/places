@@ -69,6 +69,18 @@ class SliderController extends CrudController
             'width' => '50px',
         ]);
 
+        CRUD::addColumn([
+            'name' => 'link_ar',
+            'type' => 'text',
+            'label' => __('cms.link_ar'),
+        ]);
+    
+        CRUD::addColumn([
+            'name' => 'link_en',
+            'type' => 'text',
+            'label' => __('cms.link_en'),
+        ]);
+
     }
 
     /**
@@ -121,6 +133,28 @@ class SliderController extends CrudController
             ->wrapperAttributes([
                 'class' => 'form-group col-md-6'
             ]);
+
+        
+        $this->crud->addField([
+            'name' => 'sort_order',
+            'type' => 'number',
+            'label' => __('cms.sort_order'),
+            'wrapperAttributes' => ['class' => 'form-group col-md-6'],
+        ]);
+    
+        $this->crud->addField([
+            'name' => 'link_ar',
+            'type' => 'text',
+            'label' => __('cms.link_ar'),
+            'wrapperAttributes' => ['class' => 'form-group col-md-6'],
+        ]);
+    
+        $this->crud->addField([
+            'name' => 'link_en',
+            'type' => 'text',
+            'label' => __('cms.link_en'),
+            'wrapperAttributes' => ['class' => 'form-group col-md-6'],
+        ]);
     }
 
     /**

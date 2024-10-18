@@ -50,6 +50,12 @@ class FeatureController extends CrudController
             'type' => 'text',
             'label' => 'الاسم بالانجليزي',
         ]);
+        //color
+        CRUD::addColumn([
+            'name' => 'color',
+            'type' => 'color',
+            'label' => 'اللون',
+        ]);
         CRUD::addColumn([
             'name' => 'icon',
             'type' => 'image',
@@ -91,6 +97,13 @@ class FeatureController extends CrudController
                 'class' => 'form-group col-md-6'
             ]
         ]);
+
+        CRUD::field('color')
+            ->label( __('cms.color'))
+            ->type('color')
+            ->default('#000000')
+            ->attributes(['required' => 'required'])
+            ->wrapperAttributes(['class' => 'form-group col-md-6']);
 
         CRUD::field('icon')
             ->label( __('cms.icon'))

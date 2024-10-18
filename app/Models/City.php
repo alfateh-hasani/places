@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-
+use App\Traits\HasTranslations;
 class City extends Model implements HasMedia
 {
     use CrudTrait;
     use HasFactory;
     use InteractsWithMedia;
+    use HasTranslations; 
 
     protected $with = ['media'];
     /**

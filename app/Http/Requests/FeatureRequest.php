@@ -27,7 +27,7 @@ class FeatureRequest extends FormRequest
         return [
             'name_ar' => 'required|string',
             'name_en' => 'required|string',
-            'icon' => 'required',
+            'icon' => 'sometimes',
         ];
     }
 

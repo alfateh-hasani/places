@@ -22,6 +22,7 @@ class Feature extends Model implements HasMedia
         'name_ar',
         'name_en',
         'icon',
+        'color',
     ];
 
     /**

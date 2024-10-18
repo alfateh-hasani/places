@@ -84,5 +84,6 @@ return [
     'type' => 'النوع',
     'fixed' => 'ثابت',
     'percentage' => 'نسبة',
+    'color' => 'اللون',
 
 ];

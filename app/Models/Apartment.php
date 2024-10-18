@@ -8,11 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Image\Enums\Fit;
+
+use App\Traits\HasTranslations;
 
 class Apartment extends Model implements HasMedia
 {
     use CrudTrait;
     use InteractsWithMedia;
+    use HasTranslations; 
     protected $with = ['media'];
     /**
      * The attributes that are mass assignable.
@@ -53,6 +58,16 @@ class Apartment extends Model implements HasMedia
     {
         $this->addMediaCollection('image');
     }
+
+    public function registerMediaConversions(Media $media = null): void {
+        $this->addMediaConversion('grid')
+            ->fit(  Fit::Crop, 364, 374 )
+            
+            ->format('webp')                         // Convert to WebP format
+            ->nonQueued();                           // Process synchronously (optional)
+    }
+
+
 
     //belongsTo polices
     public function policy()

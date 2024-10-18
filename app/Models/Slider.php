@@ -6,11 +6,17 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Image\Enums\CropPosition;
+use App\Traits\HasTranslations;
+use Spatie\Image\Enums\Fit;
 
 class Slider extends Model implements HasMedia
 {
     use InteractsWithMedia;
     use CrudTrait;
+    use HasTranslations; 
+    
     protected $guarded = [];
     protected $with = ['media'];
 
@@ -19,6 +25,16 @@ class Slider extends Model implements HasMedia
         $this->addMediaCollection('image_ar')->singleFile();
         $this->addMediaCollection('image_en')->singleFile();
     }
+ 
+
+    public function registerMediaConversions(Media $media = null): void {
+        $this->addMediaConversion('thumb')
+        
+            ->fit(  Fit::Crop, 2732, 920 )
+            ->format('webp')                         // Convert to WebP format
+            ->nonQueued();                           // Process synchronously (optional)
+    }
+
 
     public function getImageArAttribute()
     {
