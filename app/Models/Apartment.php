@@ -71,6 +71,9 @@ class Apartment extends Model implements HasMedia
     public function getIsFavoriteAttribute()
     {
         $user =  \Auth::guard('api')->user();
+        if (!$user) {
+            return false;
+        }
         return  $this->favorites()->where('customer_id', $user->id)->exists();
     }
 
