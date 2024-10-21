@@ -60,6 +60,10 @@ class ApartmentResource extends JsonResource
                 ];
             });
         }
+        //booked days
+        if ($this->whenLoaded('bookings')) {
+            $data['booked_days'] = $this->booked_days($this->bookings);
+        }
 
         return $data;
     }

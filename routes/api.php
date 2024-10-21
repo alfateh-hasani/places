@@ -23,7 +23,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('my-favorite', 'myFavorite');
         Route::post('add-favorite', 'addFavorite');
         Route::post('remove-favorite', 'removeFavorite');
-        Route::post('add-booking', 'addBooking');
+
     });
 
     Route::controller(BookingController::class)->prefix('booking')->group(function () {
@@ -31,8 +31,10 @@ Route::middleware('auth:api')->group(function () {
         Route::post('get-booking', 'getBooking');
         Route::post('cancel-booking', 'cancelBooking');
         Route::post('add-booking', 'addBooking');
+        Route::get('get-booking-via-customer', 'getBookingViaCustomer');
         Route::post('determine-booking', 'determineBookingStatus');
         Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
+        Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon');
     });
 
 

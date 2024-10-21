@@ -46,11 +46,10 @@ class BookingService
 
     public function calculatePrices($apartmentPrice, $numberOfNights, $coupon = null): array
     {
-
         $totalPrice = $apartmentPrice * $numberOfNights;
         $discount = 0;
-        if ($coupon) {
 
+        if ($coupon) {
             if ($coupon->type === 'percentage') {
                 $discount = ($coupon->discount / 100) * $totalPrice;
             } elseif ($coupon->type === 'fixed') {
@@ -61,14 +60,13 @@ class BookingService
         if ($finalPrice < 0) {
             $finalPrice = 0;
         }
-
         return [
-            'total_price' => $totalPrice,
-            'discount' =>(float) round($discount, 2),  // تقليل إلى خانتين عشريتين
-            'final_price' => round($finalPrice, 2),  // تقليل إلى خانتين عشريتين
+            'total_price' =>   number_format( $totalPrice, 2, '.', ''),
+            'discount' =>   number_format( $discount, 2, '.', ''),
+            'final_price' =>  number_format($finalPrice, 2, '.', ''),
         ];
-
     }
+
 
     public function calculateNumberOfNights($checkIn, $checkOut)
     {
@@ -81,16 +79,24 @@ class BookingService
         DB::beginTransaction();
         try {
             $numberOfNights = $this->calculateNumberOfNights($validatedData['check_in'], $validatedData['check_out']);
-            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_id'] ?? null);
+            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code'] ?? null);
             $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
-            $booking = $apartment->bookings()->create(array_merge($validatedData, [
+            $booking =  Booking::create([
+                'apartment_id' => $apartment->id,
                 'customer_id' => $customer->id,
                 'number_of_nights' => $numberOfNights,
+                'adults_count' => $validatedData['adults_count'],
+                'children_count' => $validatedData['children_count'],
                 'total_price' => $prices['total_price'],
                 'discount' => $prices['discount'],
                 'final_price' => $prices['final_price'],
                 'booking_source' => $bookingSource,
-            ]));
+                'coupon_id' => $coupon ? $coupon->id : null,
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'check_in' => $validatedData['check_in'],
+                'check_out' => $validatedData['check_out'],
+            ]);
             DB::commit();
             return $booking;
         } catch (\Exception $exception) {

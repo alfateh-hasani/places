@@ -28,4 +28,26 @@ class Booking extends Model
             'discount' => 'float',
         ];
     }
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($booking) {
+            do {
+                $randomNumber = mt_rand(0, 999999);
+                $bookingNumber = '00' . str_pad($randomNumber, 6, '0', STR_PAD_LEFT);
+            } while (Booking::where('number_of_booking', $bookingNumber)->exists());
+            $booking->number_of_booking = $bookingNumber;
+        });
+    }
+
+    //coupon
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
+
+
+
 }

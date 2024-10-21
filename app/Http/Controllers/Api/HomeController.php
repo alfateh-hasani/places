@@ -108,7 +108,7 @@ class HomeController extends Controller
         $id = $request->id;
         $apartments =  $this->apartment->with(['building','reviews','labels','bookings'])->findOrFail($id);
         $this->data['apartments'] =new ApartmentResource($apartments);
-        $this->data['booked_days'] = $this->booked_days($apartments->bookings);
+
         return $this->successResponse($this->data);
     }
 

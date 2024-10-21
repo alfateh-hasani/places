@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Policy;
 use App\Models\Booking;
@@ -17,7 +18,7 @@ class BookingController extends Controller
 
     public function __construct(BookingService $bookingService, Booking $booking)
     {
-        $this->booking =  $booking;
+        $this->booking = $booking;
         $this->bookingService = $bookingService;
     }
 
@@ -26,7 +27,6 @@ class BookingController extends Controller
 
     }
 
-    //addBooking
 
     public function addBooking(Request $request)
     {
@@ -36,25 +36,25 @@ class BookingController extends Controller
             'check_out' => 'required|date',
             'adults_count' => 'required|integer|min:1',
             'children_count' => 'required|integer|min:0',
-            'number_of_nights' => 'required|integer|min:1',
-            'coupon_id' => 'nullable|exists:coupons,id',
+            'coupon_code' => 'nullable|exists:coupons,code',
             'notes' => 'nullable|string',
+            'booking_source' => 'nullable|in:,web', 'android', 'ios',
         ]);
         try {
             $customer = Auth::guard('api')->user();
             $apartment = Apartment::findOrFail($validatedData['apartment_id']);
-            $this->bookingService->validateCoupon($apartment, $validatedData['coupon_id']);
+            $this->bookingService->validateCoupon($apartment, $validatedData['coupon_code']);
             $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
-            $bookingSource = 'mobile_app';
-            $booking = $this->bookingService->createBooking($validatedData, $customer, $apartment, $bookingSource);
-            return  $this->successResponse($booking, __('api.booking_added'));
-        }catch (\Exception $exception){
-            return  $this->errorResponse($exception->getMessage());
+            $bookingSource = $request->header('BookingSource') ?? 'web';
+            $this->bookingService->createBooking($validatedData, $customer, $apartment, $bookingSource);
+            return $this->successResponse([], __('api.booking_added'));
+        } catch (\Exception $exception) {
+            return $this->errorResponse($exception->getMessage());
         }
 
     }
 
-    //getBookingStatus
+
 
     public function determineBookingStatus(Request $request)
     {
@@ -72,14 +72,15 @@ class BookingController extends Controller
         $data = $this->bookingService->getDetermineBooking($apartment, $request->check_in, $request->check_out);
         $payment_methods = Policy::where('type', 'booking')->first();
         $data['policy_title'] = $payment_methods?->{'name_' . app()->getLocale()};
-        $data['policy_description'] =$payment_methods?->{'description_' . app()->getLocale()};
+        $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
 
         $data['payment_details'] = [];
-        return  $this->successResponse($data);
+        return $this->successResponse($data);
     }
 
     //calculatePrice
-     public function calculatePriceWithCoupon(Request $request){
+    public function calculatePriceWithCoupon(Request $request)
+    {
 
         $request->validate([
             'apartment_id' => 'required|exists:apartments,id',
@@ -89,6 +90,31 @@ class BookingController extends Controller
         $apartment = Apartment::findOrFail($request->apartment_id);
         $coupon = $this->bookingService->validateCoupon($apartment, $request->coupon_code);
         $data = $this->bookingService->calculatePrices($apartment->price, $request->number_of_nights, $coupon);
-        return  $this->successResponse($data);
-     }
+        return $this->successResponse($data);
+    }
+
+    //calculatePriceWithOutCoupon
+    public function calculatePriceWithOutCoupon(Request $request)
+    {
+
+        $request->validate([
+            'apartment_id' => 'required|exists:apartments,id',
+            'number_of_nights' => 'required|integer|min:1',
+        ]);
+        $apartment = Apartment::findOrFail($request->apartment_id);
+        $data = $this->bookingService->calculatePrices($apartment->price, $request->number_of_nights);
+        return $this->successResponse($data);
+    }
+
+
+    //  getBookingViaCustomer
+    public function getBookingViaCustomer()
+    {
+        $customer = Auth::guard('api')->user();
+        $bookings = $this->booking->where('customer_id', $customer->id)->latest()->get();
+        $this->data['bookings'] =  BookingResource::collection($bookings);
+        return $this->successResponse($this->data);
+    }
+
+
 }

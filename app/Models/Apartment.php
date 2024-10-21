@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -142,5 +143,19 @@ class Apartment extends Model implements HasMedia
     public function labels()
     {
         return $this->belongsToMany(ApartmentLabel::class, 'apartment_label_apartment', 'apartment_id', 'label_id');
+    }
+
+    public function booked_days($reservations)
+    {
+        $bookedDays = collect();
+        if ($reservations && $reservations->count() > 0) {
+            foreach ($reservations as $reservation) {
+                $period = CarbonPeriod::create($reservation->check_in, $reservation->check_out);
+                foreach ($period as $date) {
+                    $bookedDays->push($date->format('Y-m-d'));
+                }
+            }
+        }
+        return $bookedDays;
     }
 }
