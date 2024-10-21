@@ -298,7 +298,19 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-12',
             ],
         ]);
-
+        //Label
+        $this->crud->addField([
+            'name' => 'labels',
+            'type' => 'select2_multiple',
+            'label' =>  __('cms.apartment_label'),
+            'entity' => 'labels',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\ApartmentLabel::class,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'placeholder' =>  __('cms.label_select2'),
+        ]);
     }
 
     /**

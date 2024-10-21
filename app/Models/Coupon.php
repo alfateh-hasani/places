@@ -28,8 +28,8 @@ class Coupon extends Model
         return $this->belongsToMany(Apartment::class, 'coupon_apartment', 'coupon_id', 'apartment_id');
     }
 
-    public function reservations()
+    public function bookings()
     {
-        return $this->hasMany(Reservation::class);
+        return $this->hasMany(Booking::class);
     }
 }

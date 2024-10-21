@@ -24,6 +24,7 @@ class ApartmentResource extends JsonResource
             'area' => $this->area,
             'adults_count' => $this->adults_count,
             'children_count' => $this->children_count,
+            'bathrooms_count' => $this->bathrooms_count,
             'image' => getAllImages($this, 'image'),
             'is_favorite' =>  $this->is_favorite,
             'top_rated' => $this->top_rated,
@@ -42,17 +43,22 @@ class ApartmentResource extends JsonResource
             $data['total_reviews'] = $this->reviews->count();
         }
         if ($this->whenLoaded('policy')) {
-            $data['policy'] = [
-                'id' => $this->policy?->id,
-                'title' => $this->policy?->{'name_' . app()->getLocale()},
-                'description' => $this->policy?->{'description_' . app()->getLocale()},
-            ];
+            $data['policy_title'] = $this->policy?->{'name_' . app()->getLocale()};
+            $data['policy_description'] = $this->policy?->{'description_' . app()->getLocale()};
         }
         if ($this->whenLoaded('building')) {
-            $data['map'] =  [
-                'latitude' => $this->building?->latitude,
-                'longitude' => $this->building?->longitude,
-            ];
+            $data['map'] =  $this->building?->map;
+            $data['map_link'] =  $this->building?->link;
+        }
+        if ($this->whenLoaded('labels')) {
+            $data['labels'] = $this->labels->map(function ($label) {
+                return [
+                    'id' => $label->id,
+                    'name' => $label->{'name_' . app()->getLocale()},
+                    'description' => $label->{'description_' . app()->getLocale()},
+                    'icon' => getImage($label, 'icon'),
+                ];
+            });
         }
 
         return $data;

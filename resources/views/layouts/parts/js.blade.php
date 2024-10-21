@@ -6,7 +6,7 @@
   <script type="text/javascript" src="{{ asset('assets/js/jquery-searchbox.js')}}"></script>
   <script type="text/javascript" src="{{ asset('assets/js/main.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
+  <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
   <script>
     $(document).ready(function () {
       $(".select2").select2();

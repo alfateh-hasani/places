@@ -17,7 +17,7 @@ class Apartment extends Model implements HasMedia
 {
     use CrudTrait;
     use InteractsWithMedia;
-    use HasTranslations; 
+    use HasTranslations;
     protected $with = ['media'];
     /**
      * The attributes that are mass assignable.
@@ -62,7 +62,7 @@ class Apartment extends Model implements HasMedia
     public function registerMediaConversions(Media $media = null): void {
         $this->addMediaConversion('grid')
             ->fit(  Fit::Crop, 364, 374 )
-            
+
             ->format('webp')                         // Convert to WebP format
             ->nonQueued();                           // Process synchronously (optional)
     }
@@ -135,6 +135,12 @@ class Apartment extends Model implements HasMedia
     //bookings
     public function bookings()
     {
-        return $this->hasMany(Reservation::class);
+        return $this->hasMany(Booking::class);
+    }
+
+
+    public function labels()
+    {
+        return $this->belongsToMany(ApartmentLabel::class, 'apartment_label_apartment', 'apartment_id', 'label_id');
     }
 }

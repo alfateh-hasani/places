@@ -25,7 +25,11 @@ class BuildingRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
+            'name_ar' => 'required|min:3|max:100',
+            'name_en' => 'required|min:3|max:100',
+            'city_id' => 'required|exists:cities,id',
+            'link' => 'required|url',
+            'map' => 'required|url',
         ];
     }
 

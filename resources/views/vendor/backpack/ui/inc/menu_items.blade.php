@@ -7,6 +7,7 @@
 <x-backpack::menu-item title="{{__('cms.buildings')}}" icon="la la-question" :link="backpack_url('buildings')" />
 <x-backpack::menu-item title="{{__('cms.features')}}" icon="la la-question" :link="backpack_url('feature')" />
 <x-backpack::menu-item title="{{__('cms.apartments')}}" icon="la la-question" :link="backpack_url('apartment')" />
+<x-backpack::menu-item title="{{__('cms.apartment_label')}}" icon="la la-question" :link="backpack_url('apartment-label')" />
 
 <x-backpack::menu-item title="{{__('cms.policies')}}" icon="la la-question" :link="backpack_url('policy')" />
 <x-backpack::menu-item title="{{__('cms.cities')}}" icon="la la-home" :link="backpack_url('city')" />

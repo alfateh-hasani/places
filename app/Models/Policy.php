@@ -21,6 +21,7 @@ class Policy extends Model
         'description_en',
         'name_ar',
         'name_en',
+        'type'
     ];
 
     /**

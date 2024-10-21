@@ -19,13 +19,11 @@ return new class extends Migration {
             $table->decimal('discount', 8, 2)->default(0);
             $table->decimal('total_price', 10, 2);
             $table->decimal('final_price', 10, 2);
-            $table->decimal('service_price', 10, 2);
 
 
             $table->integer('number_of_nights');
             $table->integer('number_of_adults');
             $table->integer('number_of_children');
-            $table->integer('number_of_infants');
             $table->text('notes')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');

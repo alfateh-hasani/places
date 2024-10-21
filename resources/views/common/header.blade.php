@@ -40,7 +40,7 @@
           <img src="{{ asset('assets/img/header-arrow.svg') }}" class="inline-block" alt="Arrow" />
         </button>
         <ul class="absolute w-full">
-          <li><a class="bg-white block py-1 px-4 mt-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300">@lang('site.login')</a></li>
+          <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="bg-white block py-1 px-4 mt-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300">@lang('site.login')</a></li>
           <li><a class="bg-white block py-1 px-4 mt-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300">@lang('site.signup')</a></li>
         </ul>
       </div>

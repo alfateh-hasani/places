@@ -85,5 +85,16 @@ return [
     'fixed' => 'ثابت',
     'percentage' => 'نسبة',
     'color' => 'اللون',
+    'apartment_label' => 'ملصقات الشقة',
+    'apartment_labels' => 'ملصقات الشقق',
+    'label_select2' => 'اختر الملصق',
+    'map' => 'الخريطة',
+    'check_in_time' => 'وقت الدخول',
+    'check_out_time' => 'وقت الخروج',
+    'address' => 'العنوان',
+    'address_ar' => 'العنوان بالعربي',
+    'address_en' => 'العنوان بالانجليزي',
+    'city_select2' => 'اختر المدينة',
+    'map_link' => 'رابط الخريطة',
 
 ];

@@ -31,6 +31,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('get-booking', 'getBooking');
         Route::post('cancel-booking', 'cancelBooking');
         Route::post('add-booking', 'addBooking');
+        Route::post('determine-booking', 'determineBookingStatus');
+        Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
     });
 
 
@@ -41,4 +43,5 @@ Route::controller(HomeController::class)->prefix('home')->group(function () {
     Route::get('index', 'index');
     Route::post('get-filter-apartments', 'getFilterApartments');
     Route::get('get-apartment', 'getApartments');
+    Route::get('get-review-for-apartment', 'getReviewApartment');
 });

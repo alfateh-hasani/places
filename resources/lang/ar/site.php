@@ -27,7 +27,17 @@ return [
     'sub_menu' => 'القائمة الفرعية',
     'blog' => 'المدونة',
     'contact_us' => 'اتصل بنا',
-    'login_or_signup' => 'تسجيل الدخول أو الاشتراك',
+    'login_or_signup' => 'تسجيل الدخول',
     'login' => 'تسجيل الدخول',
     'signup' => 'اشتراك',
+    'login' => 'تسجيل الدخول',
+    'welcome_back' => 'مرحبا بعودتك',
+    'first_name' => 'الاسم الأول',
+    'phone_number' => 'رقم الهاتف',
+    'search_country_name' => 'ابحث عن اسم الدولة',
+    'dont_have_account' => 'ليس لديك حساب؟',
+    'register' => 'سجل الآن',
+    'your_mobile_number'=>'رقم الجوال',
+    'phone_required'=>'رقم الجوال إلزامي!',
+    'invalid_phone'=>"يجب إدخال رقم جوال صحيح مكون من ٩ أرقام!"
 ];

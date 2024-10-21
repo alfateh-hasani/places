@@ -12,7 +12,7 @@ class Building extends Model implements HasMedia
 {
     use CrudTrait;
     use InteractsWithMedia;
-    use HasTranslations; 
+    use HasTranslations;
     /**
      * The attributes that are mass assignable.
      *
@@ -21,10 +21,13 @@ class Building extends Model implements HasMedia
     protected $fillable = [
         'name_ar',
         'name_en',
-        'address',
+        'address_en',
+        'address_ar',
         'city_id',
-        'latitude',
-        'longitude',
+        'map',
+        'link',
+        'check_in_time',
+        'check_out_time',
     ];
 
     /**

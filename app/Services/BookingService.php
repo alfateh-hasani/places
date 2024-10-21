@@ -2,7 +2,7 @@
 
 namespace App\Services;
 use App\Models\Coupon;
-use App\Models\Reservation;
+use App\Models\Booking;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -29,7 +29,7 @@ class BookingService
     //checkAvailability
     public function checkAvailability($apartment, $checkIn, $checkOut): void
     {
-        $existingBooking = Reservation::where('apartment_id', $apartment->id)
+        $existingBooking = Booking::where('apartment_id', $apartment->id)
             ->where(function ($query) use ($checkIn, $checkOut) {
                 $query->whereBetween('check_in', [$checkIn, $checkOut])
                     ->orWhereBetween('check_out', [$checkIn, $checkOut])
@@ -46,13 +46,15 @@ class BookingService
 
     public function calculatePrices($apartmentPrice, $numberOfNights, $coupon = null): array
     {
+
         $totalPrice = $apartmentPrice * $numberOfNights;
         $discount = 0;
         if ($coupon) {
+
             if ($coupon->type === 'percentage') {
-                $discount = ($coupon->value / 100) * $totalPrice;
+                $discount = ($coupon->discount / 100) * $totalPrice;
             } elseif ($coupon->type === 'fixed') {
-                $discount = $coupon->value;
+                $discount = $coupon->discount;
             }
         }
         $finalPrice = $totalPrice - $discount;
@@ -62,14 +64,15 @@ class BookingService
 
         return [
             'total_price' => $totalPrice,
-            'discount' => $discount,
-            'final_price' => $finalPrice,
+            'discount' =>(float) round($discount, 2),  // تقليل إلى خانتين عشريتين
+            'final_price' => round($finalPrice, 2),  // تقليل إلى خانتين عشريتين
         ];
+
     }
 
     public function calculateNumberOfNights($checkIn, $checkOut)
     {
-        return Carbon::parse($checkIn)->diffInNights(Carbon::parse($checkOut));
+        return Carbon::parse($checkIn)->diffInDays(Carbon::parse($checkOut));
     }
 
 
@@ -93,6 +96,33 @@ class BookingService
         } catch (\Exception $exception) {
             DB::rollBack();
             throw $exception;
+        }
+    }
+
+    public function getDetermineBooking($apartment,$check_in,$check_out)
+    {
+        $numberOfNights = $this->calculateNumberOfNights($check_in, $check_out);
+        $prices = $this->calculatePrices($apartment->price, $numberOfNights);
+        return [
+            'number_of_nights' => $numberOfNights,
+            'one_nights' => floatval($apartment->price),
+            'total_price' => $prices['total_price'],
+            'discount' => $prices['discount'],
+            'final_price' => $prices['final_price'],
+        ];
+
+    }
+
+    public function validateGuestsCount( $apartment,   $number_of_adults,   $number_of_children): void
+    {
+        $validations = [
+            'number_of_adults' => ['value' => $number_of_adults, 'max' => $apartment->adults_count, 'message' => __('api.max_adults')],
+            'number_of_children' => ['value' => $number_of_children, 'max' => $apartment->children_count, 'message' => __('api.max_children')],
+        ];
+        foreach ($validations as $key => $validation) {
+            if ($validation['value'] > $validation['max']) {
+                throw ValidationException::withMessages([$key => $validation['message']]);
+            }
         }
     }
 }

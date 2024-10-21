@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\PolicyRequest;
+use App\Http\Requests\ApartmentLabelRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
- * Class PolicyController
+ * Class ApartmentController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
-class PolicyController extends CrudController
+class ApartmentLabelController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -26,9 +26,11 @@ class PolicyController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Policy::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/policy');
-        CRUD::setEntityNameStrings('السياسة', 'السياسات');
+        CRUD::setModel(\App\Models\ApartmentLabel::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/apartment-label');
+        $singular = __('cms.apartment_label');
+        $plural = __('cms.apartment_labels');
+        CRUD::setEntityNameStrings($singular, $plural);
     }
 
     /**
@@ -42,24 +44,22 @@ class PolicyController extends CrudController
         CRUD::addColumn([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي'
+            'label' =>  __('cms.name_ar'),
         ]);
         CRUD::addColumn([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي'
+            'label' => __('cms.name_en'),
         ]);
 
-        //type
         CRUD::addColumn([
-            'name' => 'type',
-            'type' => 'array',
-            'label' => 'النوع',
-            'options' => ['apartment' => 'شقق', 'booking' => 'حجز'],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
+            'name' => 'icon',
+            'type' => 'image',
+            'label' => 'آيقونة',
+            'height' => '50px',
+            'width' => '50px',
         ]);
+
 
 
     }
@@ -72,75 +72,85 @@ class PolicyController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(PolicyRequest::class);
-        $this->crud->addField([
+        CRUD::setValidation(ApartmentLabelRequest::class);
+
+
+        CRUD::addField([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي',
-            'placeholder' => 'الاسم بالعربي',
+            'label' =>  __('cms.name_ar'),
             'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
+                'class' => 'form-group col-md-6',
+            ],
         ]);
-
-        $this->crud->addField([
+        CRUD::addField([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي',
-            'placeholder' => 'الاسم بالانجليزي',
+            'label' =>  __('cms.name_en'),
             'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
+                'class' => 'form-group col-md-6',
+            ],
         ]);
-        $this->crud->addField([
+
+        CRUD::addField([
             'name' => 'description_ar',
-            'type' => 'ckeditor',
-            'label' => 'الوصف بالعربي',
-            'placeholder' => 'الوصف بالعربي',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_ar'),
             'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
+                'class' => 'form-group col-md-6',
+            ],
         ]);
-        $this->crud->addField([
+        CRUD::addField([
             'name' => 'description_en',
-            'type' => 'ckeditor',
-            'label' => 'الوصف بالانجليزي',
-            'placeholder' => 'الوصف بالانجليزي',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_en'),
             'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
+                'class' => 'form-group col-md-6',
+            ],
         ]);
-        $this->crud->addField([
-            'name' => 'type',
-            'type' => 'select_from_array',
-            'label' => 'النوع',
-            'options' => ['apartment' => 'شقق', 'booking' => 'حجز'],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
+
+        CRUD::field('icon')
+            ->label( __('cms.icon'))
+            ->type('upload')
+            ->withMedia(['collection' => 'icon'])
+            ->wrapperAttributes(['class' => 'form-group col-md-6']);
+        ;
+
+
     }
 
-
+    /**
+     * Define what happens when the Update operation is loaded.
+     *
+     * @see https://backpackforlaravel.com/docs/crud-operation-update
+     * @return void
+     */
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
     }
 
-    protected function setupShowOperation()
-    {
+    protected function setupShowOperation(){
         $this->setupListOperation();
         CRUD::addColumn([
             'name' => 'description_ar',
             'type' => 'text',
-            'label' => 'الوصف بالعربي',
-            'limit' => 10000
+            'label' =>  __('cms.description_ar'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'limit' => 10000000,
         ]);
         CRUD::addColumn([
             'name' => 'description_en',
             'type' => 'text',
-            'label' => 'الوصف بالانجليزي',
-            'limit' => 10000
+            'label' =>  __('cms.description_en'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'limit' => 10000000,
         ]);
+
     }
+
 }

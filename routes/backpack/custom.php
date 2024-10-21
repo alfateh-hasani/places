@@ -18,6 +18,7 @@ Route::group([
     Route::crud('feature', 'FeatureController');
     Route::crud('apartment', 'ApartmentController');
     Route::crud('building', 'BuildingController');
+    Route::crud('apartment-label', 'ApartmentLabelController');
     Route::crud('policy', 'PolicyController');
     Route::crud('buildings', 'BuildingController');
     Route::crud('sliders', 'SliderController');

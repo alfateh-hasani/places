@@ -6,8 +6,10 @@ use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApartmentResource;
 use App\Http\Resources\CityResource;
+use App\Http\Resources\ReviewResource;
 use App\Http\Resources\SliderResource;
-use App\Models\{Apartment, Building, City, SliderApp};
+use App\Models\{Apartment, Building, City, Review, SliderApp};
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -28,13 +30,7 @@ class HomeController extends Controller
 
     public function index()
     {
-        $sliders = $this->sliderApp->get() ?? [
-            'id' => 1,
-            'name' => 'default',
-            'image' => 'default.jpg',
-            'related_id' => 1,
-            'related_type' => 'general'
-        ];
+        $sliders = $this->sliderApp->get();
         $this->data['sliders'] = SliderResource::collection($sliders);
         $cities = $this->city->orderBy('sort_order')->get();
         $this->data['cities'] = CityResource::collection($cities);
@@ -106,12 +102,41 @@ class HomeController extends Controller
 
     public function getApartments(Request $request)
     {
-//        $validator = $this->validate($request, [
-//            'id' => 'required|exists:apartments,id'
-//        ]);
+        $request->validate([
+            'id' => 'required|exists:apartments,id'
+        ]);
         $id = $request->id;
-        $apartments =  $this->apartment->with(['building','reviews'])->findOrFail($id);
+        $apartments =  $this->apartment->with(['building','reviews','labels','bookings'])->findOrFail($id);
         $this->data['apartments'] =new ApartmentResource($apartments);
+        $this->data['booked_days'] = $this->booked_days($apartments->bookings);
         return $this->successResponse($this->data);
+    }
+
+    //getReviewApartment
+
+    public function getReviewApartment(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:apartments,id'
+        ]);
+        $id = $request->id;
+        $reviews =  Review::where('apartment_id',$id)->latest()->get();
+        $this->data['reviews'] =  ReviewResource::collection($reviews);
+        return $this->successResponse($this->data);
+    }
+
+
+    protected function booked_days($reservations)
+    {
+        $bookedDays = collect();
+        if ($reservations && $reservations->count() > 0) {
+            foreach ($reservations as $reservation) {
+                $period = CarbonPeriod::create($reservation->check_in, $reservation->check_out);
+                foreach ($period as $date) {
+                    $bookedDays->push($date->format('Y-m-d'));
+                }
+            }
+        }
+        return $bookedDays;
     }
 }

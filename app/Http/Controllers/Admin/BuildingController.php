@@ -64,6 +64,18 @@ class BuildingController extends CrudController
             'attribute' => 'name_ar',
             'model' => \App\Models\City::class,
         ]);
+        //check_out_time check_in_time
+        $this->crud->addColumn([
+            'name' => 'check_in_time',
+            'type' => 'time',
+            'label' =>  __('cms.check_in_time'),
+        ]);
+
+        $this->crud->addColumn([
+            'name' => 'check_out_time',
+            'type' => 'time',
+            'label' =>  __('cms.check_out_time'),
+        ]);
     }
 
     /**
@@ -86,9 +98,9 @@ class BuildingController extends CrudController
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' =>'الاسم بالعربي',
+            'label' => __('cms.name_ar'),
             'attributes' => [
-                'placeholder' => 'الاسم بالعربي',
+                'placeholder' =>  __('cms.name_ar'),
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
@@ -97,9 +109,33 @@ class BuildingController extends CrudController
         $this->crud->addField([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي',
+            'label' =>  __('cms.name_en'),
             'attributes' => [
-                'placeholder' => 'الاسم بالانجليزي',
+                'placeholder' =>  __('cms.name_en'),
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'address_ar',
+            'type' => 'text',
+            'label' => __('cms.address_ar'),
+            'attributes' => [
+                'placeholder' => __('cms.address_ar'),
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'address_en',
+            'type' => 'text',
+            'label' => __('cms.address_en'),
+            'attributes' => [
+                'placeholder' =>  __('cms.address_en'),
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
@@ -108,30 +144,20 @@ class BuildingController extends CrudController
         $this->crud->addField([
             'name' => 'city_id',
             'type' => 'select2',
-            'label' => 'المدينة',
+            'label' =>  __('cms.city'),
             'entity' => 'city',
             'attribute' => 'name_ar',
             'model' => \App\Models\City::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
-            'placeholder' => 'اختر المدينة',
+            'placeholder' =>  __('cms.city_select2'),
         ]);
+        //map_link
         $this->crud->addField([
-            'name' => 'address',
+            'name' => 'link',
             'type' => 'text',
-            'label' => 'العنوان',
-            'attributes' => [
-                'placeholder' => 'العنوان',
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
-            ],
-        ]);
-        $this->crud->addField([
-            'name' => 'latitude',
-            'type' => 'text',
-            'label' =>  __('cms.latitude'),
+            'label' =>  __('cms.map_link'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -139,10 +165,37 @@ class BuildingController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
+
+        //add check_in_time check_out_time
         $this->crud->addField([
-            'name' => 'longitude',
+            'name' => 'check_in_time',
+            'type' => 'time',
+            'label' =>  __('cms.check_in_time'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'check_out_time',
+            'type' => 'time',
+            'label' =>  __('cms.check_out_time'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+
+        $this->crud->addField([
+            'name' => 'map',
             'type' => 'text',
-            'label' =>  __('cms.longitude'),
+            'label' =>  __('cms.map'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -169,29 +222,32 @@ class BuildingController extends CrudController
     {
         $this->setupListOperation();
         CRUD::addColumn([
-            'name' => 'address',
+            'name' => 'address_ar',
             'type' => 'textarea',
-            'label' => 'العنوان',
+            'label' => __('cms.address_ar'),
             'max' => 19100,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-12',
             ],
         ]);
         CRUD::addColumn([
-            'name' => 'latitude',
-            'type' => 'text',
-            'label' =>  __('cms.latitude'),
+            'name' => 'address_en',
+            'type' => 'textarea',
+            'label' =>  __('cms.address_en'),
+            'max' => 19100,
             'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
+                'class' => 'form-group col-md-12',
             ],
         ]);
+        //link
         CRUD::addColumn([
-            'name' => 'longitude',
+            'name' => 'link',
             'type' => 'text',
-            'label' =>  __('cms.longitude'),
+            'label' =>  __('cms.map_link'),
             'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
+                'class' => 'form-group col-md-12',
             ],
         ]);
+
     }
 }
