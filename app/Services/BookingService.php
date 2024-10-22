@@ -9,6 +9,12 @@ use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
+    protected $paymentService;
+
+    public function __construct(ProcessPaymentService $paymentService)
+    {
+        $this->paymentService = $paymentService;
+    }
 
     public function validateCoupon($apartment, $couponCode)
     {
@@ -18,7 +24,7 @@ class BookingService
                 throw ValidationException::withMessages(['coupon_code' =>  __('api.coupon_invalid')]);
             }
             if (!$coupon->apartments->contains($apartment->id) &&
-                !$coupon->buildings->contains($apartment->building_id)) {
+                !$coupon->building->contains($apartment->building_id)) {
                 throw ValidationException::withMessages(['coupon_code' =>  __('api.coupon_invalid_apartment')]);
             }
             return $coupon;
@@ -131,4 +137,8 @@ class BookingService
             }
         }
     }
+
+
+    //getPaymentDetails
+    
 }

@@ -74,7 +74,7 @@ class BookingController extends Controller
         $data['policy_title'] = $payment_methods?->{'name_' . app()->getLocale()};
         $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
 
-        $data['payment_details'] = [];
+        $data['payment_details'] = $this->getPaymentDetails();
         return $this->successResponse($data);
     }
 
@@ -116,5 +116,18 @@ class BookingController extends Controller
         return $this->successResponse($this->data);
     }
 
+
+    private function getPaymentDetails()
+    {
+        $paymentMethods = [];
+        foreach (config('payments.gateways') as $gateway => $gatewayData) {
+            $paymentMethods[] = [
+                'name' => $gateway,
+                'icon' => asset('images/' . $gatewayData['icon'] . '.svg'),
+                'value' => $gatewayData['value'],
+            ];
+        }
+        return $paymentMethods;
+    }
 
 }

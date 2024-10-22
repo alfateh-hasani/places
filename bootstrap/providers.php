@@ -2,5 +2,5 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
+    Illuminate\Translation\TranslationServiceProvider::class,
 ];
