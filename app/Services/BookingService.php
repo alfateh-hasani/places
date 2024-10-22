@@ -55,6 +55,10 @@ class BookingService
         $totalPrice = $apartmentPrice * $numberOfNights;
         $discount = 0;
 
+        if($coupon->discount == 0){
+            return $totalPrice; 
+        }
+
         if ($coupon) {
             if ($coupon->type === 'percentage') {
                 $discount = ($coupon->discount / 100) * $totalPrice;
@@ -68,8 +72,8 @@ class BookingService
         }
         return [
             'total_price' =>   number_format( $totalPrice, 2, '.', ''),
-            'discount' =>   number_format( $discount, 2, '.', ''),
-            'final_price' =>  number_format($finalPrice, 2, '.', ''),
+            'discount' =>      number_format( $discount, 2, '.', ''),
+            'final_price' =>   number_format($finalPrice, 2, '.', ''),
         ];
     }
 
@@ -140,5 +144,5 @@ class BookingService
 
 
     //getPaymentDetails
-    
+
 }

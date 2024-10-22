@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Customer;
-use App\Services\Payments\TabbyPayment;
-use App\Services\Payments\TapPayment;
+use App\Services\PaymentMethods\TabbyPayment;
+use App\Services\PaymentMethods\TapPayment;
 
 class ProcessPaymentService
 {
@@ -19,6 +19,7 @@ class ProcessPaymentService
 
     public function processPayment($data, $method)
     {
+        
         switch ($method) {
             case 'tabby':
                 return (new TabbyPayment())->process($this->customer, $data);

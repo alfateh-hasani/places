@@ -6,7 +6,7 @@ return [
             'value' => 'tap',
             'icon' => 'fa-cc-visa',
             'currency' => 'SAR',
-            'class' => \App\Services\Payments\TapPayment::class,
+            'class' => \App\Services\PaymentMethods\TapPayment::class,
             'api_key' => env('TAP_API_KEY'),
             'sandbox' => env('TAP_PAYMENT_MODE', true),
             'sandbox_public_key' => env('TAP_PAYMENT_TEST_PUBLIC_KEY'),

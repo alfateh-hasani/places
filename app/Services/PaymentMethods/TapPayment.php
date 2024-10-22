@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Services\Payments;
-
+namespace App\Services\PaymentMethods;
+use App\Services\PaymentMethods\PaymentMethodInterface;
 
 
 use Illuminate\Support\Facades\Http;
 
-class TapPayment
+class TapPayment implements PaymentMethodInterface
 {
     protected $secretKey;
     protected $publicKey;
