@@ -54,11 +54,6 @@ class BookingService
     {
         $totalPrice = $apartmentPrice * $numberOfNights;
         $discount = 0;
-
-        if($coupon->discount == 0){
-            return $totalPrice; 
-        }
-
         if ($coupon) {
             if ($coupon->type === 'percentage') {
                 $discount = ($coupon->discount / 100) * $totalPrice;
@@ -94,6 +89,8 @@ class BookingService
             $booking =  Booking::create([
                 'apartment_id' => $apartment->id,
                 'customer_id' => $customer->id,
+                'customer_name' => $customer->name,
+                'customer_email' => $customer->email,
                 'number_of_nights' => $numberOfNights,
                 'adults_count' => $validatedData['adults_count'],
                 'children_count' => $validatedData['children_count'],
@@ -102,12 +99,17 @@ class BookingService
                 'final_price' => $prices['final_price'],
                 'booking_source' => $bookingSource,
                 'coupon_id' => $coupon ? $coupon->id : null,
+                'coupon_code' => $coupon ? $coupon->code : null,
                 'status' => 'pending',
                 'payment_status' => 'pending',
+                'payment_method_code' => $validatedData['payment_method_code'],
                 'check_in' => $validatedData['check_in'],
                 'check_out' => $validatedData['check_out'],
             ]);
+
             DB::commit();
+
+            $this->paymentService->processPayment($booking, $validatedData['payment_method_code']);
             return $booking;
         } catch (\Exception $exception) {
             DB::rollBack();

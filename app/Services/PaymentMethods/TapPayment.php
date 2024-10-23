@@ -31,7 +31,7 @@ class TapPayment implements PaymentMethodInterface
      * @param array $data
      * @return array|bool
      */
-    public function createCharge($customer_id, $data)
+    public function createCharge($customer, $data)
     {
         $requestUrl = 'https://api.tap.company/v2/charges';
 
@@ -63,4 +63,8 @@ class TapPayment implements PaymentMethodInterface
         return false;
     }
 
+    public function process($customer, $data)
+    {
+        // TODO: Implement process() method.
+    }
 }
