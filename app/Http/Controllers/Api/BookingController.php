@@ -10,7 +10,7 @@ use App\Models\Booking;
 use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
-use App\Services\ProcessPaymentService; 
+use App\Services\ProcessPaymentService;
 class BookingController extends Controller
 {
     protected $booking;
@@ -22,9 +22,9 @@ class BookingController extends Controller
         $this->bookingService = $bookingService;
     }
 
-    public function index()
+    public function getBooking(Request $request)
     {
-
+        
     }
 
 
@@ -46,42 +46,31 @@ class BookingController extends Controller
             $apartment = Apartment::findOrFail($validatedData['apartment_id']);
             $this->bookingService->validateCoupon($apartment, $validatedData['coupon_code']);
             $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
-            $bookingSource = $request->header('BookingSource') ?? 'web';
-            $this->data['callback'] = $this->bookingService->createBooking($validatedData, $customer, $apartment, $bookingSource);
-            return $this->successResponse($this->data, __('api.booking_added'));
+            $this->data['callback'] = $this->bookingService->createPayment($validatedData, $customer, $apartment)['transaction']['url'];
+            return $this->successResponse($this->data, __('api.transaction_url'));
         } catch (\Exception $exception) {
             return $this->errorResponse($exception->getMessage());
         }
 
     }
 
-    //getCallbackPayments
-    public function getCallbackPayments(Request $request)
-    {
-        $tapId = $request->get('tap_id');
-        $transaction = $this->bookingService->getTransactionByTapId($tapId);
-    }
 
 
 
     public function paymentMethodCallBack(Request $request , $paymentMethodCode , $transaction_id){
-
         if(!in_array($paymentMethodCode,array_keys(config('payments.gateways')))){
             return $this->errorResponse(['Payment Method not Exists!']);
         }
-
         $processPaymentService = new ProcessPaymentService();
         $data = $request->all();
-        $data['transaction_id'] = $transaction_id; 
-
+        $data['transaction_id'] = $transaction_id;
         $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode , $data);
-        dd($handlePayment);
-        if($handlePayment['status'] == true){
-            // add the booking data from the transacation db and redirect to / booking/success/{id}
+        if($handlePayment['status']==true){
+          $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
+          $this->data['booking'] = $booking->id;
+          return redirect(route('paymentMethodSuccess',$booking->id));
         }
-
-        // else return false status with error message and  and redirect to / booking/faild
-        
+        return redirect(route('paymentMethodFailed'));
     }
 
     public function determineBookingStatus(Request $request)
@@ -156,6 +145,18 @@ class BookingController extends Controller
             ];
         }
         return $paymentMethods;
+    }
+
+
+    //paymentMethodSuccess
+    public function paymentMethodSuccess($booking_id)
+    {
+         return $this->successResponse($booking_id);
+    }
+
+    public function paymentMethodFailed()
+    {
+        return $this->errorResponse('Payment Failed');
     }
 
 }

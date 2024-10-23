@@ -34,16 +34,16 @@ Route::middleware('appSecret')->group(function () {
             Route::post('get-booking', 'getBooking');
             Route::post('cancel-booking', 'cancelBooking');
             Route::post('add-booking', 'addBooking');
-            
+
             Route::get('get-booking-via-customer', 'getBookingViaCustomer');
             Route::post('determine-booking', 'determineBookingStatus');
             Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
             Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon');
         });
 
-    
 
-        
+
+
 
 
     });
@@ -60,4 +60,7 @@ Route::controller(BookingController::class)->prefix('payment-methods')->group(fu
 
     Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
     // Route::post('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
+
+    Route::get('success/{booking_id}', 'paymentMethodSuccess')->name('paymentMethodSuccess');
+    Route::get('failed', 'paymentMethodFailed')->name('paymentMethodFailed');
 });

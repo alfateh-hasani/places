@@ -3,6 +3,7 @@
 namespace App\Services;
 use App\Models\Coupon;
 use App\Models\Booking;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -79,13 +80,48 @@ class BookingService
     }
 
 
-    public function createBooking($validatedData, $customer, $apartment, $bookingSource)
+    public function createPayment($validatedData, $customer, $apartment)
     {
-            $numberOfNights = $this->calculateNumberOfNights($validatedData['check_in'], $validatedData['check_out']);
-            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code'] ?? null);
-            $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
-            $transaction = $this->paymentService->addTransaction($validatedData,$prices['final_price']);
-          return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
+                $numberOfNights = $this->calculateNumberOfNights($validatedData['check_in'], $validatedData['check_out']);
+                $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code'] ?? null);
+                $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
+                $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer);
+        return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
+    }
+
+    //createBooking
+
+    public function createBooking($transaction_id,$payment_id)
+    {
+        DB::beginTransaction();
+         $transaction = Transaction::where('id',$transaction_id)->first();
+         if (!$transaction){
+                throw ValidationException::withMessages(['transaction_id' =>  __('api.transaction_not_exists')]);
+         }
+         $data = json_decode($transaction->booking_data);
+         $transaction->update(['payment_id' => $payment_id]);
+         $booking =  Booking::create([
+            'apartment_id' => $transaction->apartment_id,
+            'customer_id' => $transaction->customer_id,
+            'customer_full_name' => $transaction->customer->first_name . ' ' . $transaction->customer->last_name,
+            'customer_email' => $transaction->customer->email,
+            'number_of_nights' => $this->calculateNumberOfNights($data->check_in, $data->check_out),
+            'adults_count' => $data->adults_count,
+            'children_count' => $data->children_count,
+            'total_price' => $data->total_price,
+            'discount' => $data->discount,
+            'final_price' => $data->final_price,
+            'booking_source' => $data->booking_source,
+            'coupon_id' => $data->coupon_id ?? null  ,
+            'coupon_code' => $data->coupon_code ?? null,
+            'status' => 'approved',
+            'payment_id' => $payment_id,
+            'payment_status' => 'paid',
+            'check_in' => $data->check_in,
+            'check_out' => $data->check_out,
+         ]);
+         DB::commit();
+         return $booking;
     }
 
     public function getDetermineBooking($apartment,$check_in,$check_out)

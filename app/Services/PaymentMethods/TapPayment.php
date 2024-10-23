@@ -104,26 +104,26 @@ class TapPayment implements PaymentMethodInterface
          }
 
          $tad_id = $data['tap_id'];
-        
+
          $paymentDetails = $this->retrievePayment($tad_id);
          if($paymentDetails['status'] == 'CAPTURED' and $paymentDetails['amount'] == $transaction->amount and $paymentDetails['currency'] == $transaction->currency){
             $transaction->payment_gateway_response = json_encode($paymentDetails);
             $transaction->status = 'completed';
             $transaction->save();
             return [
-                    'status'=>true , 
+                    'status'=>true ,
                     'transaction_id'    =>$data['transaction_id'],
                     'payment_id'=> $paymentDetails['id'],
- 
+
                 ];
          }
 
          $transaction->payment_gateway_response = json_encode($paymentDetails);
-         $transaction->status = 'faild';
+         $transaction->status = 'failed';
          $transaction->save();
 
          return ['status'=>false,'transaction_id'=>null, 'message'=>'transaction Id not found'];
- 
+
 
     }
 }

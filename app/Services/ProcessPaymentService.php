@@ -23,7 +23,7 @@ class ProcessPaymentService
     {
 
         switch ($method) {
-            case 'tabby':  
+            case 'tabby':
                 return (new TabbyPayment());
             case 'tap':
                 return (new TapPayment());
@@ -46,22 +46,27 @@ class ProcessPaymentService
     }
 
     //add transactions
-    public function addTransaction($data,$total_price)
+    public function addTransaction($data,$price,$customer)
     {
         $apartment_data =[
             'apartment_id' => $data['apartment_id'],
             'check_in' => $data['check_in'],
             'check_out' => $data['check_out'],
+            'coupon_code' => $data['coupon_code'],
+            'adults_count' => $data['adults_count'],
+            'children_count' => $data['children_count'],
+            'payment_method_code' => $data['payment_method_code'],
+            'total_price' => $price['total_price'],
+            'discount' => $price['discount'],
+            'final_price' => $price['final_price'],
+            'booking_source' => \Request()->header('BookingSource') ?? 'web',
         ];
-
-        // todo send the user id from out of this services
-        $user = Auth::guard('api')->user();
         return Transaction::create([
-            'customer_id' => $user->id,
+            'customer_id' => $customer->id,
             'apartment_id' => $data['apartment_id'],
-            'apartment_data' =>  json_encode($apartment_data),
+            'booking_data' =>  json_encode($apartment_data),
             'transaction_reference' => time().'_'.uniqid(),
-            'amount' => (float) $total_price,
+            'amount' => (float) $price['total_price'],
             'currency' => 'SAR',
             'status' => 'pending',
             'type' => 'deposit',
@@ -76,10 +81,10 @@ class ProcessPaymentService
 
         $response = $paymentMethod->handlePayment($data);
 
-        return $response; 
+        return $response;
 
 
-  
+
     }
 
 
