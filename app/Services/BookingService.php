@@ -81,40 +81,11 @@ class BookingService
 
     public function createBooking($validatedData, $customer, $apartment, $bookingSource)
     {
-        DB::beginTransaction();
-        try {
             $numberOfNights = $this->calculateNumberOfNights($validatedData['check_in'], $validatedData['check_out']);
             $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code'] ?? null);
             $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
-            $booking =  Booking::create([
-                'apartment_id' => $apartment->id,
-                'customer_id' => $customer->id,
-                'customer_name' => $customer->name,
-                'customer_email' => $customer->email,
-                'number_of_nights' => $numberOfNights,
-                'adults_count' => $validatedData['adults_count'],
-                'children_count' => $validatedData['children_count'],
-                'total_price' => $prices['total_price'],
-                'discount' => $prices['discount'],
-                'final_price' => $prices['final_price'],
-                'booking_source' => $bookingSource,
-                'coupon_id' => $coupon ? $coupon->id : null,
-                'coupon_code' => $coupon ? $coupon->code : null,
-                'status' => 'pending',
-                'payment_status' => 'pending',
-                'payment_method_code' => $validatedData['payment_method_code'],
-                'check_in' => $validatedData['check_in'],
-                'check_out' => $validatedData['check_out'],
-            ]);
-
-            DB::commit();
-
-            $this->paymentService->processPayment($booking, $validatedData['payment_method_code']);
-            return $booking;
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            throw $exception;
-        }
+            $transaction = $this->paymentService->addTransaction($validatedData,$prices['final_price']);
+          return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
     }
 
     public function getDetermineBooking($apartment,$check_in,$check_out)

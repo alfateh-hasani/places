@@ -31,6 +31,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('get-booking', 'getBooking');
         Route::post('cancel-booking', 'cancelBooking');
         Route::post('add-booking', 'addBooking');
+        Route::get('callback-payments', 'getCallbackPayments')->name('getCallbackPayments');
         Route::get('get-booking-via-customer', 'getBookingViaCustomer');
         Route::post('determine-booking', 'determineBookingStatus');
         Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');

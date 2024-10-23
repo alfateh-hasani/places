@@ -39,6 +39,7 @@ class BookingController extends Controller
             'coupon_code' => 'nullable|exists:coupons,code',
             'notes' => 'nullable|string',
             'booking_source' => 'nullable|in:,web', 'android', 'ios',
+            'payment_method_code' => 'required',
         ]);
         try {
             $customer = Auth::guard('api')->user();
@@ -46,12 +47,19 @@ class BookingController extends Controller
             $this->bookingService->validateCoupon($apartment, $validatedData['coupon_code']);
             $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
             $bookingSource = $request->header('BookingSource') ?? 'web';
-            $this->bookingService->createBooking($validatedData, $customer, $apartment, $bookingSource);
-            return $this->successResponse([], __('api.booking_added'));
+            $this->data['callback'] = $this->bookingService->createBooking($validatedData, $customer, $apartment, $bookingSource);
+            return $this->successResponse($this->data, __('api.booking_added'));
         } catch (\Exception $exception) {
             return $this->errorResponse($exception->getMessage());
         }
 
+    }
+
+    //getCallbackPayments
+    public function getCallbackPayments(Request $request)
+    {
+        $tapId = $request->get('tap_id');
+        $transaction = $this->bookingService->getTransactionByTapId($tapId);
     }
 
 
