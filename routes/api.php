@@ -6,45 +6,58 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Route::get('/user', function (Request $request) {
+//     return $request->user();
+// })->middleware('auth:sanctum');
 
-Route::post('otp/request',  [AuthController::class, 'requestOtp']);
-Route::post('otp/verify',  [AuthController::class, 'verifyOtp'])->name('otp.verify');
+Route::middleware('appSecret')->group(function () {
 
-Route::middleware('auth:api')->group(function () {
-    Route::controller(CustomerController::class)->prefix('customer')->group(function () {
-        Route::get('my-profile', 'myProfile');
-        Route::post('logout', 'logout');
-        Route::post('update-profile', 'updateProfile');
-        Route::post('delete-profile', 'deleteProfile');
-        Route::post('add-review', 'addReview');
-        Route::get('my-favorite', 'myFavorite');
-        Route::post('add-favorite', 'addFavorite');
-        Route::post('remove-favorite', 'removeFavorite');
+    Route::post('otp/request',  [AuthController::class, 'requestOtp']);
+    Route::post('otp/verify',  [AuthController::class, 'verifyOtp'])->name('otp.verify');
+
+
+    Route::middleware('auth:api')->group(function () {
+        Route::controller(CustomerController::class)->prefix('customer')->group(function () {
+            Route::get('my-profile', 'myProfile');
+            Route::post('logout', 'logout');
+            Route::post('update-profile', 'updateProfile');
+            Route::post('delete-profile', 'deleteProfile');
+            Route::post('add-review', 'addReview');
+            Route::get('my-favorite', 'myFavorite');
+            Route::post('add-favorite', 'addFavorite');
+            Route::post('remove-favorite', 'removeFavorite');
+
+        });
+
+        Route::controller(BookingController::class)->prefix('booking')->group(function () {
+            Route::get('index', 'index');
+            Route::post('get-booking', 'getBooking');
+            Route::post('cancel-booking', 'cancelBooking');
+            Route::post('add-booking', 'addBooking');
+            
+            Route::get('get-booking-via-customer', 'getBookingViaCustomer');
+            Route::post('determine-booking', 'determineBookingStatus');
+            Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
+            Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon');
+        });
+
+    
+
+        
+
 
     });
 
-    Route::controller(BookingController::class)->prefix('booking')->group(function () {
+    Route::controller(HomeController::class)->prefix('home')->group(function () {
         Route::get('index', 'index');
-        Route::post('get-booking', 'getBooking');
-        Route::post('cancel-booking', 'cancelBooking');
-        Route::post('add-booking', 'addBooking');
-        Route::get('callback-payments', 'getCallbackPayments')->name('getCallbackPayments');
-        Route::get('get-booking-via-customer', 'getBookingViaCustomer');
-        Route::post('determine-booking', 'determineBookingStatus');
-        Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
-        Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon');
+        Route::post('get-filter-apartments', 'getFilterApartments');
+        Route::get('get-apartment', 'getApartments');
+        Route::get('get-review-for-apartment', 'getReviewApartment');
     });
-
-
 
 });
+Route::controller(BookingController::class)->prefix('payment-methods')->group(function () {
 
-Route::controller(HomeController::class)->prefix('home')->group(function () {
-    Route::get('index', 'index');
-    Route::post('get-filter-apartments', 'getFilterApartments');
-    Route::get('get-apartment', 'getApartments');
-    Route::get('get-review-for-apartment', 'getReviewApartment');
+    Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
+    // Route::post('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
 });

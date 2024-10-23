@@ -44,7 +44,7 @@ class TapPayment implements PaymentMethodInterface
         return false;
     }
 
-    public function retrievePayment($tapId)
+    private function retrievePayment($tapId)
     {
         $requestUrl = "https://api.tap.company/v2/charges/$tapId";
 
@@ -85,10 +85,45 @@ class TapPayment implements PaymentMethodInterface
                 ]
             ],
             'source' => ['id' => 'src_all'],
-            'redirect' => ['url' => route('getCallbackPayments',$transaction->id)],
+            'redirect' => ['url' => route('paymentMethodCallBack',['code'=>'tap', 'transaction_id'=>$transaction->id])],
         ];
 
         return $this->createCharge($data);
+
+    }
+
+
+    public function handlePayment($data){
+         $transaction = Transaction::where('id',$data['transaction_id'])->first();
+         if(!$transaction){
+            return ['status'=>false,'transaction_id'=>null, 'message'=>'transaction Id not found'];
+         }
+
+         if($transaction->status != 'pending'){
+            return ['status'=>false,'transaction_id'=>$transaction->id , 'message'=>'transaction status not pending, the status is '.$transaction->status];
+         }
+
+         $tad_id = $data['tap_id'];
+        
+         $paymentDetails = $this->retrievePayment($tad_id);
+         if($paymentDetails['status'] == 'CAPTURED' and $paymentDetails['amount'] == $transaction->amount and $paymentDetails['currency'] == $transaction->currency){
+            $transaction->payment_gateway_response = json_encode($paymentDetails);
+            $transaction->status = 'completed';
+            $transaction->save();
+            return [
+                    'status'=>true , 
+                    'transaction_id'    =>$data['transaction_id'],
+                    'payment_id'=> $paymentDetails['id'],
+ 
+                ];
+         }
+
+         $transaction->payment_gateway_response = json_encode($paymentDetails);
+         $transaction->status = 'faild';
+         $transaction->save();
+
+         return ['status'=>false,'transaction_id'=>null, 'message'=>'transaction Id not found'];
+ 
 
     }
 }

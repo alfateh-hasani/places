@@ -10,7 +10,7 @@ use App\Models\Booking;
 use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
-
+use App\Services\ProcessPaymentService; 
 class BookingController extends Controller
 {
     protected $booking;
@@ -63,6 +63,26 @@ class BookingController extends Controller
     }
 
 
+
+    public function paymentMethodCallBack(Request $request , $paymentMethodCode , $transaction_id){
+
+        if(!in_array($paymentMethodCode,array_keys(config('payments.gateways')))){
+            return $this->errorResponse(['Payment Method not Exists!']);
+        }
+
+        $processPaymentService = new ProcessPaymentService();
+        $data = $request->all();
+        $data['transaction_id'] = $transaction_id; 
+
+        $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode , $data);
+        dd($handlePayment);
+        if($handlePayment['status'] == true){
+            // add the booking data from the transacation db and redirect to / booking/success/{id}
+        }
+
+        // else return false status with error message and  and redirect to / booking/faild
+        
+    }
 
     public function determineBookingStatus(Request $request)
     {
