@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApartmentResource;
+use App\Http\Resources\BookingResource;
 use App\Http\Resources\CustomerResource;
+use App\Models\Booking;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -115,6 +117,26 @@ class CustomerController extends Controller
         $massage = __('api.favorite_removed');
         return $this->successResponse([],$massage);
     }
+
+    //getAllBookings
+
+    public function getAllBookings()
+    {
+        $customer = \Auth::guard('api')->user();
+        $allBookings = Booking::where('customer_id', $customer->id)->get();
+        $pastBookings = $allBookings->filter(function ($booking) {
+            return $booking->check_out < now();
+        });
+        $upcomingBookings = $allBookings->filter(function ($booking) {
+            return $booking->check_out >= now();
+        });
+        $data = [
+            'past_bookings' => BookingResource::collection($pastBookings->values()),
+            'upcoming_bookings' =>  BookingResource::collection($upcomingBookings->values()),
+        ];
+        return $this->successResponse($data);
+    }
+
 
 
 

@@ -24,9 +24,42 @@ class BookingController extends Controller
 
     public function getBooking(Request $request)
     {
-        
+        $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+        $booking = $this->booking->where([
+            ['id', $request->booking_id],
+            ['customer_id', Auth::guard('api')->id()]
+        ])->first();
+        if (!$booking) {
+            return $this->errorResponse(__('api.booking_not_found'));
+        }
+        $this->data['booking'] = new BookingResource($booking);
+        return $this->successResponse($this->data);
     }
 
+    //loginApartment
+    public function loginApartment(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+        $booking = $this->booking->where([
+            ['id', $request->booking_id],
+            ['customer_id', Auth::guard('api')->id()],
+            ['check_out' ,'>', now()]
+        ])->first();
+        if (!$booking) {
+            return $this->errorResponse(__('api.booking_not_found'));
+        }
+        $this->data['login_info'] = [
+            'unit_number' => $booking->apartment?->unit_number,
+            'floor_number' =>  $booking->apartment?->floor_number,
+            'passcode' => $booking->apartment?->lock?->lock_id,
+            'lock_alias' => $booking->apartment?->lock?->lock_alias,
+        ];
+        return $this->successResponse($this->data);
+    }
 
     public function addBooking(Request $request)
     {

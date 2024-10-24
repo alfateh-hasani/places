@@ -26,12 +26,13 @@ Route::middleware('appSecret')->group(function () {
             Route::get('my-favorite', 'myFavorite');
             Route::post('add-favorite', 'addFavorite');
             Route::post('remove-favorite', 'removeFavorite');
+            Route::get('get-all-bookings', 'getAllBookings');
 
         });
 
         Route::controller(BookingController::class)->prefix('booking')->group(function () {
-            Route::get('index', 'index');
-            Route::post('get-booking', 'getBooking');
+            Route::get('get-booking', 'getBooking');
+            Route::get('login-apartment', 'loginApartment');
             Route::post('cancel-booking', 'cancelBooking');
             Route::post('add-booking', 'addBooking');
 
