@@ -63,6 +63,7 @@ class BookingController extends Controller
 
     public function addBooking(Request $request)
     {
+
         $validatedData = $request->validate([
             'apartment_id' => 'required|exists:apartments,id',
             'check_in' => 'required|date',

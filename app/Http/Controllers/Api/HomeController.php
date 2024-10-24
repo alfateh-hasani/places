@@ -170,7 +170,6 @@ class HomeController extends Controller
         return $this->successResponse($this->data);
     }
 
-    //contactUs
     public function contactUs(Request $request)
     {
         $request->validate([

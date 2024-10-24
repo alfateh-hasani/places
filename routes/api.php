@@ -57,7 +57,6 @@ Route::middleware('appSecret')->group(function () {
         Route::get('get-support', 'getSupport');
         Route::get('get-page', 'getPage');
         Route::get('get-faq-page', 'getFaqPage');
-        //post contact us
         Route::post('contact-us', 'contactUs');
     });
 

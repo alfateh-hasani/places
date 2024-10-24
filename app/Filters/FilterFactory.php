@@ -18,6 +18,8 @@ class FilterFactory
             'max_area' => app(MaxAreaFilter::class),
             'min_area' => app(MinAreaFilter::class),
             'bathrooms_count' => app(BathRoomsFilter::class),
+            'check_in' => app(CheckInFilter::class),
+            'check_out' => app(CheckOutFilter::class),
             default => throw new \Exception("No filter found for field: $field"),
         };
     }
