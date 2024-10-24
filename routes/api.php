@@ -54,6 +54,11 @@ Route::middleware('appSecret')->group(function () {
         Route::post('get-filter-apartments', 'getFilterApartments');
         Route::get('get-apartment', 'getApartments');
         Route::get('get-review-for-apartment', 'getReviewApartment');
+        Route::get('get-support', 'getSupport');
+        Route::get('get-page', 'getPage');
+        Route::get('get-faq-page', 'getFaqPage');
+        //post contact us
+        Route::post('contact-us', 'contactUs');
     });
 
 });

@@ -128,6 +128,9 @@ class PageController extends CrudController
                 'default' => 'Default',
                 'contact' => 'Contact',
                 'about' => 'About',
+                'terms' => 'Terms',
+                'privacy' => 'Privacy',
+                'faq' => 'FAQ',
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',

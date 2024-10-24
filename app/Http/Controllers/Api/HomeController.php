@@ -6,9 +6,10 @@ use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApartmentResource;
 use App\Http\Resources\CityResource;
+use App\Http\Resources\PageResource;
 use App\Http\Resources\ReviewResource;
 use App\Http\Resources\SliderResource;
-use App\Models\{Apartment, Building, City, Review, SliderApp};
+use App\Models\{Apartment, Building, City, ContactUs, Page, Review, SliderApp};
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 
@@ -138,5 +139,57 @@ class HomeController extends Controller
             }
         }
         return $bookedDays;
+    }
+
+    //getSupport
+    public function getSupport()
+    {
+        $this->data['support'] = [
+            'phone' => '01000000000',
+            'email' => '',
+            'whatsapp' => '01000000000',
+            ];
+        return $this->successResponse($this->data);
+    }
+
+    //getTerms
+    public function getPage(Request $request)
+    {
+        $template = $request->template;
+        $page = Page::where('template',$template)->first();
+        $this->data['page'] =new PageResource($page);
+        return $this->successResponse($this->data);
+    }
+
+    //getFaqPage
+
+    public function getFaqPage()
+    {
+        $page = Page::where('template','faq')->first();
+        $this->data['page'] =new PageResource($page);
+        return $this->successResponse($this->data);
+    }
+
+    //contactUs
+    public function contactUs(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email',
+            'phone' => 'required',
+            'message' => 'required',
+            'subject' => 'required',
+        ]);
+        $data=[
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'message' => $request->message,
+            'subject' => $request->subject,
+        ];
+        ContactUs::create($data);
+        return $this->successResponse([],__('api.contact_us'));
+
+
     }
 }
