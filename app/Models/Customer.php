@@ -1,8 +1,6 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,7 +10,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Customer extends Authenticatable implements HasMedia
 {
-    use HasApiTokens ,InteractsWithMedia ,Notifiable,HasFactory;
+    use HasApiTokens ,InteractsWithMedia ,Notifiable;
     protected $fillable = [
         'first_name',
         'last_name',
@@ -21,6 +19,7 @@ class Customer extends Authenticatable implements HasMedia
         'emergency_phone',
         'account_verified',
         'job_title',
+        'fcm_token',
     ];
     public function reviews(): HasMany
     {

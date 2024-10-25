@@ -47,7 +47,11 @@ class Booking extends Model
         return $this->belongsTo(Coupon::class);
     }
 
-
+    //price_per_night
+    public function getPricePerNightAttribute()
+    {
+        return $this->total_price / $this->number_of_nights;
+    }
 
 
 }

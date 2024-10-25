@@ -16,4 +16,8 @@ return [
     'gateways_tap' => 'الدفع عن طريق تاب',
     'transaction_url' => 'سيتم تحويلك إلى صفحة الدفع',
     'contact_us' => 'تم إرسال رسالتك بنجاح',
+    'booking_status_pending' => 'قيد الانتظار',
+    'booking_status_approved' => 'تم التأكيد',
+    'booking_status_rejected' => 'تم الإلغاء',
+    'notification_successfully' => 'تم إرسال الإشعار بنجاح',
 ];
