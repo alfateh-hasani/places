@@ -58,6 +58,7 @@ class Apartment extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('image');
+        $this->addMediaCollection('video');
     }
 
     public function registerMediaConversions(Media $media = null): void {
@@ -105,6 +106,11 @@ class Apartment extends Model implements HasMedia
         return true;
     }
 
+    public function getLinkAttribute()
+    {
+        return route('apartments.show', $this->slug);
+    }
+
     //ratings
     public function getTotalRatingsAttribute()
     {
@@ -136,7 +142,7 @@ class Apartment extends Model implements HasMedia
     //bookings
     public function bookings()
     {
-        return $this->hasMany(Booking::class);
+        return $this->hasMany(Booking::class,'apartment_id');
     }
 
 

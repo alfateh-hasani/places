@@ -38,7 +38,7 @@ class CustomerController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:customers,email,'.$customer->id,
-            'phone' => 'required|phone:SA|unique:customers,phone,'.$customer->id,
+            // 'phone' => 'required|phone:SA|unique:customers,phone,'.$customer->id,
             'emergency_phone' => 'required|phone:SA',
             'job_title' => 'nullable|string|max:255',
             'image' => 'nullable|image',

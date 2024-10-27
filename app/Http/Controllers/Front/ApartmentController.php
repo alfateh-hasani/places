@@ -14,4 +14,11 @@ class ApartmentController extends Controller
 
         return view('apartment.index', compact('apartments'));
     }
+
+    public function show($slug)
+    {
+        $apartment = Apartment::with(['building.city','reviews','labels','bookings'])->where('slug', $slug)->firstOrFail();
+        return view('apartment.show', compact('apartment'));
+    }
+ 
 }

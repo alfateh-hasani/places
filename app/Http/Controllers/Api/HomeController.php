@@ -88,6 +88,8 @@ class HomeController extends Controller
                         });
                         continue;
                     }
+                    
+                    
                     $filterHandler = FilterFactory::make($key);
                     $query = $filterHandler->apply($query, $val);
                 }

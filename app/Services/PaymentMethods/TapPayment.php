@@ -35,8 +35,6 @@ class TapPayment implements PaymentMethodInterface
             'Authorization' => 'Bearer ' . $this->secretKey,
             'Content-Type' => 'application/json',
         ])->post($requestUrl, $data);
-
-
         if ($response->successful()) {
             return $response->json();
         }

@@ -19,19 +19,25 @@ class BookingService
 
     public function validateCoupon($apartment, $couponCode)
     {
-        if ($couponCode) {
+        if ($couponCode != null) {
             $coupon = Coupon::where('code', $couponCode)->first();
+    
             if (!$coupon) {
-                throw ValidationException::withMessages(['coupon_code' =>  __('api.coupon_invalid')]);
+                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid')]);
             }
-            if (!$coupon->apartments->contains($apartment->id) &&
-                !$coupon->building->contains($apartment->building_id)) {
-                throw ValidationException::withMessages(['coupon_code' =>  __('api.coupon_invalid_apartment')]);
+            $hasApartment = $coupon->apartments && $coupon->apartments->contains($apartment->id);
+            $hasBuilding = $coupon->building && $coupon->building->contains($apartment->building_id);
+    
+            if (!$hasApartment && !$hasBuilding) {
+                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
             }
+    
             return $coupon;
         }
+        
         return null;
     }
+    
 
     //checkAvailability
     public function checkAvailability($apartment, $checkIn, $checkOut): void
@@ -82,8 +88,12 @@ class BookingService
 
     public function createPayment($validatedData, $customer, $apartment)
     {
+    
                 $numberOfNights = $this->calculateNumberOfNights($validatedData['check_in'], $validatedData['check_out']);
-                $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code'] ?? null);
+                $coupon = null;
+                 if (!empty($validatedData['coupon_code'])) {
+                    $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code']);
+                }
                 $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
                 $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer);
         return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
@@ -114,7 +124,7 @@ class BookingService
             'booking_source' => $data->booking_source,
             'coupon_id' => $data->coupon_id ?? null  ,
             'coupon_code' => $data->coupon_code ?? null,
-            'status' => 'approved',
+            'status' => 'booked',
             'payment_id' => $payment_id,
             'payment_status' => 'paid',
             'check_in' => $data->check_in,

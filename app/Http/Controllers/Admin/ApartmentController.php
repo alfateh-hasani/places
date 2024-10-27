@@ -111,7 +111,7 @@ class ApartmentController extends CrudController
             'height' => '50px',
             'width' => '50px',
         ]);
-
+        
     }
 
     /**
@@ -128,6 +128,15 @@ class ApartmentController extends CrudController
             ->type('upload_multiple')
             ->withMedia([
                 'collection' => 'image', // will pick the collection definition from your model
+            ])->wrapperAttributes([
+                'class' => 'form-group col-md-6',
+            ]);
+            //video
+            CRUD::field('video')
+            ->label(__('cms.video'))
+            ->type('upload_multiple')
+            ->withMedia([
+                'collection' => 'video', // will pick the collection definition from your model
             ])->wrapperAttributes([
                 'class' => 'form-group col-md-6',
             ]);

@@ -52,7 +52,7 @@ class ProcessPaymentService
             'apartment_id' => $data['apartment_id'],
             'check_in' => $data['check_in'],
             'check_out' => $data['check_out'],
-            'coupon_code' => $data['coupon_code'],
+            'coupon_code' => $data['coupon_code']??null,
             'adults_count' => $data['adults_count'],
             'children_count' => $data['children_count'],
             'payment_method_code' => $data['payment_method_code'],

@@ -11,6 +11,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
     Route::get('/', [HomeController::class, 'index'])->name('home');
     
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
+    Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
 
     Route::post('/request-otp', [\App\Http\Controllers\Front\Auth\LoginController::class, 'requestOtp'])->name('login.step1');
     Route::post('/verify-otp', [\App\Http\Controllers\Front\Auth\LoginController::class, 'verifyOtp'])->name('login.step2');

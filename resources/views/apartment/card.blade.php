@@ -2,7 +2,7 @@
     <div class="relative">
         <div class="slider">
             @foreach ($apartment->getMedia('image') as $image)
-                <a>
+                <a href="{{$apartment->link}}">
                     <img 
                         class="object-cover w-full" 
                         src="{{ $image->getUrl('grid') }}" 
@@ -18,7 +18,7 @@
         </button>
     </div>
 
-    <a class="pt-3 px-4 pb-4 block">
+    <a href="{{$apartment->link}}" class="pt-3 px-4 pb-4 block">
         <div class="flex items-center">
             <img src="{{ asset('assets/img/star.svg') }}" class="mr-2 rtl:ml-2 rtl:mr-0 h-4" />
             <p class="font-normal text-xs text-reviews">

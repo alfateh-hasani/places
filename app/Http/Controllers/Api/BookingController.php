@@ -78,13 +78,18 @@ class BookingController extends Controller
         try {
             $customer = Auth::guard('api')->user();
             $apartment = Apartment::findOrFail($validatedData['apartment_id']);
-            $this->bookingService->validateCoupon($apartment, $validatedData['coupon_code']);
             $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
-            $this->data['callback'] = $this->bookingService->createPayment($validatedData, $customer, $apartment)['transaction']['url'];
-            return $this->successResponse($this->data, __('api.transaction_url'));
+            $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment);            
+            if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
+                $this->data['callback'] = $paymentResponse['transaction']['url'];
+                return $this->successResponse($this->data, __('api.transaction_url'));
+            } else {
+                return $this->errorResponse(__('api.payment_creation_failed'));
+            }
         } catch (\Exception $exception) {
             return $this->errorResponse($exception->getMessage());
         }
+        
 
     }
 
@@ -185,12 +190,22 @@ class BookingController extends Controller
     //paymentMethodSuccess
     public function paymentMethodSuccess($booking_id)
     {
-         return $this->successResponse($booking_id);
+        $data ['booking_id'] = $booking_id;
+        $data ['booking_number'] = $this->booking->find($booking_id)->booking_number;
+         return $this->successResponse($data);
     }
 
     public function paymentMethodFailed()
     {
         return $this->errorResponse('Payment Failed');
+    }
+
+
+    //entryApartment random true or false
+    public function entryApartment(Request $request)
+    {
+        $this->data['entry'] = (bool)random_int(0, 1);
+        return $this->successResponse($this->data);
     }
 
 }
