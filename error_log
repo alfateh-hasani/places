@@ -1,0 +1,14 @@
+[28-Oct-2024 08:50:59 UTC] PHP Fatal error:  Uncaught TypeError: array_replace_recursive(): Argument #2 must be of type array, int given in /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/FileLoader.php:129
+Stack trace:
+#0 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/FileLoader.php(129): array_replace_recursive(Array, 1)
+#1 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Collections/Traits/EnumeratesValues.php(816): Illuminate\Translation\FileLoader->Illuminate\Translation\{closure}(Array, '/home/places/pu...', 1)
+#2 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/FileLoader.php(127): Illuminate\Support\Collection->reduce(Object(Closure), Array)
+#3 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/FileLoader.php(68): Illuminate\Translation\FileLoader->loadPaths(Array, 'ar', 'customer')
+#4 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/Translator.php(324): Illuminate\Translation\FileLoader->load('ar', 'customer', '*')
+#5 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/Translator.php(237): Illuminate\Translation\Translator->load('*', 'customer', 'ar')
+#6 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/Translator.php(164): Illuminate\Translation\Translator->getLine('*', 'customer', 'ar', NULL, Array)
+#7 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php(950): Illuminate\Translation\Translator->get('customer', Array, 'ar')
+#8 /home/places/public_html/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php(985): trans('customer', Array, NULL)
+#9 Command line code(1): __('customer')
+#10 {main}
+  thrown in /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/FileLoader.php on line 129

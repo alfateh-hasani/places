@@ -20,4 +20,5 @@ return [
     'booking_status_approved' => 'تم التأكيد',
     'booking_status_rejected' => 'تم الإلغاء',
     'notification_successfully' => 'تم إرسال الإشعار بنجاح',
+    'booking_status_booked' => 'تم الحجز',
 ];

@@ -59,5 +59,13 @@ return [
     'create_new_account'=>'تسجيل حساب جديد!',
     'hello'=>'هلا ',
     'account'=>'حسابي',
-    'logout'=>'تسجيل الخروج'
+    'logout'=>'تسجيل الخروج',
+    'profile'=>'الملف الشخصي',
+    'my_reservations' => 'حجوزاتي',
+    'my_favorate' => 'المفضلة',
+    'wallet_balance' => 'رصيد المحفظة',
+    'messages' => 'الرسائل',
+    'notifications' => 'الإشعارات',
+    'logout' => 'تسجيل الخروج',
+    'total_reservations' => 'إجمالي الحجوزات',
 ];

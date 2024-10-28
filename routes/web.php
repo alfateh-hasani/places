@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Front\{HomeController,ApartmentController};
+use App\Http\Controllers\Front\{HomeController,ApartmentController, CustomerAccountController};
 
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function()
@@ -25,7 +25,14 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
 
     Route::middleware('auth:customer')->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Front\Auth\LoginController::class, 'logout'])->name('customer.logout');
-        Route::get('/customer/account', [CustomerAccountController::class, 'index'])->name('customer.account');
+        Route::controller(CustomerAccountController::class)->name('customer.')->prefix('customer')->group(function () {
+            Route::get('account', 'profile')->name('account');
+            Route::post('account-update', 'update')->name('update');
+            Route::get('get-booking', 'getBooking')->name('booking');
+            Route::get('favorite', 'favorite')->name('favorite');
+            Route::get('notifications', 'notifications')->name('notifications');
+        });
+
     });
 
 });

@@ -31,6 +31,12 @@ class PageResource extends JsonResource
                 ];
             });
         }
+        if ($this->template == 'contact') {
+            $data['contact'] = [
+                'phone' => '555-555-5555',
+                'whatsapp' => '5555555555',
+            ];
+        }
 
         return $data;
     }
