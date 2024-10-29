@@ -32,11 +32,14 @@ class PageResource extends JsonResource
             });
         }
         if ($this->template == 'contact') {
-            $data['contact'] = [
-                'phone' => '555-555-5555',
-                'whatsapp' => '5555555555',
-            ];
-        }
+            $data['contact_phone'] = '555-555-5555';
+            $data['whatsapp'] = '5055505005';
+            if (\Auth::guard('api')->check()) {
+                $customer = \Auth::guard('api')->user();
+                $data['customer_name'] = $customer?->first_name.' '.$customer?->last_name;
+                $data['customer_phone'] = $customer?->phone;
+            }
+        } 
 
         return $data;
     }

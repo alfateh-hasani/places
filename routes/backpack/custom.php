@@ -27,6 +27,7 @@ Route::group([
 
     Route::crud('advantages', 'AdvantageController');
     Route::crud('pages', 'PageController');
+    Route::crud('notifications', 'NotificationController');
 });
 
 

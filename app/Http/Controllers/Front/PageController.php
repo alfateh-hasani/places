@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Http\Controllers\Front;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\{Slider,Apartment,City, FaqCategory, Page}; // Import Slider model
+use Artesaos\SEOTools\Facades\SEOTools;
+
+class PageController extends Controller
+{
+
+    public function index(Request $request, $slug)
+    {
+        $slug = urldecode($slug);
+        $page = Page::whereSlug($slug)->first();
+
+        if (!$page) {
+            abort(404);
+        }
+        $template = $page->template;
+        switch ($template) {
+            case 'contact':
+                return $this->contactPage($page);
+            case 'about':
+                return $this->aboutPage($page);
+            case 'faq':
+                return $this->faqPage($page);
+            default:
+        }
+    }
+
+    private function contactPage(Page $page)
+    {
+        $this->generateSeo($page);
+        $this->data['page'] = $page;
+        return view('pages.contact', $this->data);
+    }
+
+
+    private function generateSeo($page)
+    {
+        SEOTools::setTitle($page->seo_title);
+        SEOTools::setDescription($page->seo_description);
+        SEOTools::opengraph()->setUrl(route('page',$page->slug));
+        SEOTools::setCanonical(route('page',$page->slug));
+        SEOTools::opengraph()->addProperty('type', 'articles');
+ 
+    }
+
+    private function aboutPage(Page $page)
+    {
+        $this->generateSeo($page);
+        $this->data['page'] = $page;
+        return view('pages.about', $this->data);
+    }
+
+    private function faqPage(Page $page)
+    {
+        $this->generateSeo($page);
+        $this->data['page'] = $page;
+        $this->data['faqs'] = FaqCategory::with('questions')->get();
+        return view('pages.faq', $this->data);
+    }
+}

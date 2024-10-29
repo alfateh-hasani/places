@@ -46,7 +46,7 @@ class PushNotificationService
         $notificationArray['description_en'] = $notification->description_en;
         $notificationArray['process_type'] = $notification->process_type;
         $notificationArray['process_status'] = $notification->process_status;
-        $notificationArray['date'] = $notification->created_at->format('Y-m-d H:i:s');
+        $notificationArray['date'] = $notification->created_at?->format('Y-m-d H:i:s');
         if($notification->image){
             $notificationArray['image'] = url('storage/uploads/app/notifications/'.$notification->image);
         }else{
@@ -77,7 +77,7 @@ class PushNotificationService
         $notificationArray['process_type'] = $notification->process_type;
         $notificationArray['process_status'] = $notification->process_status;
 
-        $notificationArray['date'] = $notification->created_at->format('Y-m-d H:i:s');
+        $notificationArray['date'] = $notification->created_at?->format('Y-m-d H:i:s');
         if($notification->image){
             $notificationArray['image'] = url('storage/uploads/app/notifications/'.$notification->image);
         }else{

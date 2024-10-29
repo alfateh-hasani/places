@@ -6,7 +6,8 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-
+use Request ;
+use LaravelLocalization;
 class Page extends Model implements HasMedia
 {
     use CrudTrait;
@@ -21,5 +22,18 @@ class Page extends Model implements HasMedia
     {
         return $this->getFirstMediaUrl('image');
     }
+
+
+    // public static function isRequestedPathAPage(): bool
+    // {
+    //     $url = urldecode(Request::path());
+
+    //     $url = remove_http(LaravelLocalization::getNonLocalizedURL($url)) ;
+
+    //     $domain = remove_http(config('app.url').'/');
+    //     $url = str_replace($domain, '', $url);
+    //     return   Self::whereSlug($url)->exists();
+    // }
+
 
 }

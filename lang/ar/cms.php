@@ -13,7 +13,11 @@ return [
     'lock' => 'القفل',
     'locks' => 'الأقفال',
     'unlock' => 'فتح',
-    'add_passcode' => 'إضافة رمز',
+    'add_passcode' => 'إضافة رمز', 
     'city_id' => 'المدينة',
     'is_active' => 'مفعل',
+    'title_ar' => 'العنوان بالعربية',
+    'title_en' => 'العنوان بالإنجليزية',
+    'description_ar' => 'الوصف بالعربية',
+    'description_en' => 'الوصف بالإنجليزية',
 ];

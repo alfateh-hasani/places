@@ -1,7 +1,8 @@
 <?php
 
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Front\{HomeController,ApartmentController, CustomerAccountController};
+use App\Http\Controllers\Front\{HomeController,ApartmentController, CustomerAccountController,PageController};
 
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function()
@@ -10,6 +11,8 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
     
+    Route::get('{slug}', [PageController::class, 'index'])->name('page');
+
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
 

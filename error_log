@@ -12,3 +12,5 @@ Stack trace:
 #9 Command line code(1): __('customer')
 #10 {main}
   thrown in /home/places/public_html/vendor/laravel/framework/src/Illuminate/Translation/FileLoader.php on line 129
+[29-Oct-2024 08:59:03 UTC] PHP Fatal error:  Trait "App\Models\CrudTrait" not found in /home/places/public_html/app/Models/Notification.php on line 8
+[29-Oct-2024 08:59:05 UTC] PHP Fatal error:  Trait "App\Models\CrudTrait" not found in /home/places/public_html/app/Models/Notification.php on line 8

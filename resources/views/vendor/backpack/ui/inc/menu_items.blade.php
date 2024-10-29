@@ -11,6 +11,7 @@
 
 <x-backpack::menu-item title="{{__('cms.policies')}}" icon="la la-question" :link="backpack_url('policy')" />
 <x-backpack::menu-item title="{{__('cms.cities')}}" icon="la la-home" :link="backpack_url('city')" />
+<x-backpack::menu-item title="{{__('cms.notification')}}" icon="la la-notification" :link="backpack_url('notifications')" />
 
 
 <x-backpack::menu-dropdown title="{{__('cms.contents')}}" icon="la la-group">
