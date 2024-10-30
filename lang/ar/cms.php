@@ -20,4 +20,5 @@ return [
     'title_en' => 'العنوان بالإنجليزية',
     'description_ar' => 'الوصف بالعربية',
     'description_en' => 'الوصف بالإنجليزية',
+    'notification' => 'الإشعارات',
 ];

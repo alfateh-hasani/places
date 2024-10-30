@@ -10,6 +10,7 @@
         "backpack/crud": "^6.7",
         "backpack/medialibrary-uploaders": "^1.2",
         "backpack/pro": "^2.2",
+        "backpack/settings": "^3.1",
         "backpack/theme-coreuiv2": "^1.2",
         "backpack/theme-tabler": "^1.2",
         "kreait/laravel-firebase": "^5.9",

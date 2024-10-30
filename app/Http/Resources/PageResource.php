@@ -37,6 +37,7 @@ class PageResource extends JsonResource
             if (\Auth::guard('api')->check()) {
                 $customer = \Auth::guard('api')->user();
                 $data['customer_name'] = $customer?->first_name.' '.$customer?->last_name;
+                $data['customer_email'] = $customer?->email;
                 $data['customer_phone'] = $customer?->phone;
             }
         } 

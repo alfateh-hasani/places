@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
@@ -11,8 +9,9 @@ use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
 use App\Services\ProcessPaymentService;
-class BookingController extends Controller
-{
+
+
+class BookingController extends Controller{
     protected $booking;
     protected $bookingService;
 

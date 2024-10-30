@@ -26,6 +26,10 @@ class PageController extends Controller
                 return $this->aboutPage($page);
             case 'faq':
                 return $this->faqPage($page);
+            case 'privacy':
+                return $this->privacyPage($page);
+                case 'terms':
+                return $this->termsPage($page);
             default:
         }
     }
@@ -59,7 +63,21 @@ class PageController extends Controller
     {
         $this->generateSeo($page);
         $this->data['page'] = $page;
-        $this->data['faqs'] = FaqCategory::with('questions')->get();
+        $this->data['categories'] = FaqCategory::with('questions')->get();
         return view('pages.faq', $this->data);
+    }
+
+    private function privacyPage(Page $page)
+    {
+        $this->generateSeo($page);
+        $this->data['page'] = $page;
+        return view('pages.privacy', $this->data);
+    }
+
+    private function termsPage(Page $page)
+    {
+        $this->generateSeo($page);
+        $this->data['page'] = $page;
+        return view('pages.terms', $this->data);
     }
 }

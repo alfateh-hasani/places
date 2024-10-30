@@ -64,6 +64,7 @@ class AuthController extends Controller
                 $rules['last_name'] = 'required|string|max:255';
                 $rules['email'] = 'required|email|max:255|unique:customers';
                 $rules['phone'] = 'required|phone:SA|unique:customers';
+                $rules['fcm_token'] = 'required|string|max:255';
             }
 
             $validatedData = $request->validate($rules);
@@ -84,6 +85,7 @@ class AuthController extends Controller
                         'last_name' => $request->last_name,
                         'email' => $request->email,
                         'phone' => $request->phone,
+                        'fcm_token' => $request->fcm_token,
                     ]);
                 }
                 $data['customer'] = new CustomerResource($customer);

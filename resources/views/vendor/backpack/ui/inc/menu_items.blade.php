@@ -25,3 +25,5 @@
     <x-backpack::menu-item title="{{__('cms.coupons')}}" icon="la la-question" :link="backpack_url('coupon')" />
 
 </x-backpack::menu-dropdown>
+
+<x-backpack::menu-item title='Settings' icon='la la-cog' :link="backpack_url('setting')" />

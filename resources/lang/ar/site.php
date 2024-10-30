@@ -68,4 +68,5 @@ return [
     'notifications' => 'الإشعارات',
     'logout' => 'تسجيل الخروج',
     'total_reservations' => 'إجمالي الحجوزات',
+    'home' => 'الرئيسية',
 ];

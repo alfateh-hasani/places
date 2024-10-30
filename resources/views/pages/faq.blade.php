@@ -3,5 +3,81 @@
 @section('content')
 
 @include('pages.partials.breadcrumb')
+<section class="py-12 container">
+    <h1 class="font-bold text-3xl text-black mb-5 text-center">Frequently Asked Questions</h1>
+    <p class="font-light text-base text-titletext text-center md:px-32 lg:px-56 xl:px-96 mb-10">
+        {{ strip_tags(str_replace('&nbsp;', ' ', $page->{'content_'.app()->getLocale()})) }}
+    </p>
 
-@endsection
+    <div class="lg:grid lg:grid-cols-4 lg:gap-4 w-full mx-0">
+        <!-- Tabs for Categories -->
+        <div class="aside rounded-lg py-8 px-5 mb-4 lg:mb-0">
+            <ul>
+                @foreach ($categories as $category)
+                    <li>
+                        <button class="category-tab relative font-normal text-base text-white opacity-80 block py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100"
+                                data-category="{{ $category->id }}">
+                            {{ $category->{'name_'.app()->getLocale()} }}
+                            <img class="inline-block absolute right-0 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+
+        <!-- FAQ Questions -->
+        <div class="faq col-span-3">
+            @foreach ($categories as $category)
+                <ul class="faq-category hidden" id="category-{{ $category->id }}">
+                    @foreach ($category->questions as $question)
+                        <li class="faq-item border border-border rounded-lg shadow-md mb-4 hover:border-price ease-in-out duration-300 cursor-pointer">
+                            <a class="faq-question relative block mx-5 py-5 pr-5 font-normal text-base text-black">
+                                {{ $question->{'title_'.app()->getLocale()} }}
+                                <img class="inline-block absolute right-0 top-7" src="{{ asset('assets/img/faq.svg') }}" />
+                            </a>
+                            <p class="faq-answer p-5 font-normal text-base text-black hidden">{{ $question->{'description_'.app()->getLocale()} }}</p>
+                        </li>
+                    @endforeach
+                </ul>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+@push('js')
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const categoryTabs = document.querySelectorAll(".category-tab");
+        const faqCategories = document.querySelectorAll(".faq-category");
+
+        // Display the first category by default
+        if (faqCategories.length > 0) {
+            faqCategories[0].classList.remove("hidden");
+        }
+
+        categoryTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                // Hide all FAQ categories
+                faqCategories.forEach(category => category.classList.add("hidden"));
+
+                // Get selected category ID and display relevant questions
+                const categoryId = tab.getAttribute("data-category");
+                const selectedCategory = document.getElementById("category-" + categoryId);
+                if (selectedCategory) {
+                    selectedCategory.classList.remove("hidden");
+                }
+            });
+        });
+
+        // Toggle answer visibility on question click
+        document.querySelectorAll(".faq-item").forEach(item => {
+            const question = item.querySelector(".faq-question");
+            const answer = item.querySelector(".faq-answer");
+
+            question.addEventListener("click", () => {
+                answer.classList.toggle("hidden");   
+            });
+        });
+    });
+</script>
+@endpush

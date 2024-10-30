@@ -30,6 +30,7 @@ class BookingResource extends JsonResource
             'reviews' => $this->apartment?->reviews->count(),
             'ratings' => $this->apartment?->reviews?->avg('rating'),
             'image' => getImage($this->apartment, 'image'),
+            'invoice' => url('pdf-test.pdf'),
         ];
     }
 }
