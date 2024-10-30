@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 use App\Models\FaqCategory;
+use Config;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 class PageResource extends JsonResource
@@ -32,8 +33,8 @@ class PageResource extends JsonResource
             });
         }
         if ($this->template == 'contact') {
-            $data['contact_phone'] = '555-555-5555';
-            $data['whatsapp'] = '5055505005';
+            $data['contact_phone'] = Config::get('settings.phone');
+            $data['whatsapp'] = Config::get('settings.whatsapp');
             if (\Auth::guard('api')->check()) {
                 $customer = \Auth::guard('api')->user();
                 $data['customer_name'] = $customer?->first_name.' '.$customer?->last_name;
