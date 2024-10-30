@@ -62,6 +62,8 @@
                         <button class="h-12 bg-price rounded-lg col-span-2 font-semibold text-white">
                             {{__('customer.save')}}
                         </button>
+                        {!!  GoogleReCaptchaV3::render(['contact_us_id'=>'contact_us']) !!}
+                        {!!  GoogleReCaptchaV3::init() !!}
                     </form>
 
                 </div>
@@ -76,9 +78,7 @@
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js"></script> 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{{asset('assets/plugin/HoldOn.min.js')}}"></script>
+@include('customer.section.script-form')
 <script>
     new WOW().init();   
     const phoneInput = document.querySelector("#phone");
@@ -128,8 +128,8 @@
             },
             submitHandler: function(form) {
                 HoldOn.open({
-                    theme: "sk-cube-grid", // يمكنك تغيير الثيم هنا
-                    message: "{{__('customer.loading_message')}}" // رسالة اختيارية
+                    theme: "sk-cube-grid", 
+                    message: "{{__('customer.loading_message')}}" 
                 });
     
                 $.ajax({
@@ -137,7 +137,6 @@
                     method: "POST",
                     data: $(form).serialize(), 
                     success: function(response) {
-                        // إيقاف HoldOn عند النجاح
                         HoldOn.close();
                         Swal.fire({
                             icon: 'success',
@@ -147,7 +146,6 @@
                         });
                     },
                     error: function(xhr) {
-                        // إيقاف HoldOn عند الفشل
                         HoldOn.close();
                         Swal.fire({
                             icon: 'error',

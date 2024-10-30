@@ -11,7 +11,7 @@
 
 <x-backpack::menu-item title="{{__('cms.policies')}}" icon="la la-question" :link="backpack_url('policy')" />
 <x-backpack::menu-item title="{{__('cms.cities')}}" icon="la la-home" :link="backpack_url('city')" />
-<x-backpack::menu-item title="{{__('cms.notification')}}" icon="la la-notification" :link="backpack_url('notifications')" />
+<x-backpack::menu-item title="{{__('cms.notification')}}" icon="la la-stream" :link="backpack_url('notifications')" />
 
 
 <x-backpack::menu-dropdown title="{{__('cms.contents')}}" icon="la la-group">
@@ -19,6 +19,7 @@
     <x-backpack::menu-item title="{{__('cms.sliders_app')}}" icon="la la-question" :link="backpack_url('sliders-app')" />
     <x-backpack::menu-item title="{{__('cms.advantages')}}" icon="la la-home" :link="backpack_url('advantages')" />
     <x-backpack::menu-item title="{{__('cms.pages')}}" icon="la la-home" :link="backpack_url('pages')" />
+    <x-backpack::menu-item title="{{__('cms.blogs')}}" icon="la la-home" :link="backpack_url('blogs')" />
 </x-backpack::menu-dropdown>
 
 <x-backpack::menu-dropdown title="{{__('cms.finance')}}" icon="la la-group">
@@ -26,4 +27,7 @@
 
 </x-backpack::menu-dropdown>
 
-<x-backpack::menu-item title='Settings' icon='la la-cog' :link="backpack_url('setting')" />
+<x-backpack::menu-item title="{{__('cms.setting')}}" icon='la la-cog' :link="backpack_url('setting')" />
+<x-backpack::menu-item title="{{__('cms.translation-manager')}}" icon="la la-stream" :link="backpack_url('translation-manager')" />
+
+<x-backpack::menu-item title='Menu' icon='la la-list' :link="backpack_url('menu-item')" />

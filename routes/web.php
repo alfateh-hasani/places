@@ -6,17 +6,20 @@ use App\Http\Controllers\Front\{HomeController,ApartmentController, CustomerAcco
 
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function()
-{   
+{
 
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
-    
+    Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
+    //get blog
+    Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
+
     Route::get('{slug}', [PageController::class, 'index'])->name('page');
 
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
 
-    
+
 
     Route::middleware('guest:customer')->group(function () {
         Route::post('/request-otp', [\App\Http\Controllers\Front\Auth\LoginController::class, 'requestOtp'])->name('login.step1');
@@ -40,4 +43,3 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
 
 });
 
- 

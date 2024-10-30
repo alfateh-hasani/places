@@ -75,4 +75,11 @@ return [
     'send' => 'إرسال',
     'contact_us' => 'اتصل بنا',
     'message' => 'اكتب رسالتك هنا ....',
+    'send_us_email' => 'أرسل لنا بريداً إلكترونياً',
+    'contact_us' => 'تواصل معنا',
+    'about_us' => 'من نحن',
+    'address' => 'العنوان',
+    'send_phone' => 'اتصل بنا',
+    'contact_us_success' => 'تم إرسال رسالتك بنجاح',
+    'related_blogs' => 'مدونات ذات صلة',
 ];

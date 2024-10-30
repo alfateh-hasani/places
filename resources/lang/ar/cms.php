@@ -96,5 +96,10 @@ return [
     'address_en' => 'العنوان بالانجليزي',
     'city_select2' => 'اختر المدينة',
     'map_link' => 'رابط الخريطة',
-
+    'blogs' => 'المدونات',
+    'blog' => 'المدونة',
+    'notifications' => 'الإشعارات',
+    'notification' => 'الإشعار',
+    'setting' => 'الإعدادات',
+    'translation-manager' => 'إدارة الترجمة',
 ];

@@ -9,10 +9,13 @@
         "artesaos/seotools": "^1.3",
         "backpack/crud": "^6.7",
         "backpack/medialibrary-uploaders": "^1.2",
+        "backpack/menucrud": "*",
+        "backpack/pagemanager": "*",
         "backpack/pro": "^2.2",
         "backpack/settings": "^3.1",
         "backpack/theme-coreuiv2": "^1.2",
         "backpack/theme-tabler": "^1.2",
+        "backpack/translation-manager": "^1.0",
         "kreait/laravel-firebase": "^5.9",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
@@ -20,7 +23,8 @@
         "mcamara/laravel-localization": "^2.0",
         "propaganistas/laravel-phone": "^5.3",
         "sadiqsalau/laravel-otp": "^1.0",
-        "spatie/laravel-medialibrary": "^11.9"
+        "spatie/laravel-medialibrary": "^11.9",
+        "timehunter/laravel-google-recaptcha-v3": "~2.5"
     },
     "require-dev": {
         "backpack/devtools": "^3.1",

@@ -7,7 +7,7 @@
         <ul>
             <li class="inline-block"><a href="{{route('home')}}" class="px-5">{{__('site.home')}}</a></li>
             <li class="inline-block"><a class="px-5"> 
-                {{$page->{'name_'.app()->getLocale()} }}    
+                {{$title ?? $page->{'name_'.app()->getLocale()} }}    
             </a></li>
         </ul>
     </div>
