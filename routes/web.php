@@ -10,12 +10,10 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
 
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
-    Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
-    //get blog
-    Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
 
     Route::get('{slug}', [PageController::class, 'index'])->name('page');
-
+    Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
+    Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
 

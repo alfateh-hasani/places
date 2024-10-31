@@ -43,6 +43,7 @@ class PageController extends Controller
         $this->data['page'] = $page;
         $this->data['email'] =  Config::get('settings.email');
         $this->data['phone'] =  Config::get('settings.phone');
+        $this->data['map'] =  Config::get('settings.map');
         $this->data['address'] =  Config::get('settings.address_'.app()->getLocale());
         return view('pages.contact', $this->data);
     }

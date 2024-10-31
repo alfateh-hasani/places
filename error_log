@@ -155,3 +155,13 @@ Stack trace:
 [30-Oct-2024 14:44:12 UTC] PHP Fatal error:  Trait "App\PageTemplates" not found in /home/places/public_html/vendor/backpack/pagemanager/src/app/Http/Controllers/Admin/PageCrudController.php on line 11
 [30-Oct-2024 14:44:12 UTC] PHP Fatal error:  Trait "App\PageTemplates" not found in /home/places/public_html/vendor/backpack/pagemanager/src/app/Http/Controllers/Admin/PageCrudController.php on line 11
 [30-Oct-2024 14:44:32 UTC] PHP Fatal error:  Trait "App\PageTemplates" not found in /home/places/public_html/vendor/backpack/pagemanager/src/app/Http/Controllers/Admin/PageCrudController.php on line 11
+[30-Oct-2024 23:17:32 UTC] PHP Fatal error:  Uncaught ReflectionException: Method TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::handle() does not exist in Command line code:1
+Stack trace:
+#0 Command line code(1): ReflectionMethod->__construct('TimeHunter\\Lara...', 'handle')
+#1 {main}
+  thrown in Command line code on line 1
+[31-Oct-2024 07:40:10 UTC] PHP Fatal error:  Uncaught ReflectionException: Method TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::handle() does not exist in Command line code:1
+Stack trace:
+#0 Command line code(1): ReflectionMethod->__construct('TimeHunter\\Lara...', 'handle')
+#1 {main}
+  thrown in Command line code on line 1

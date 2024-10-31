@@ -4,9 +4,7 @@
       <div>
         <img src="{{ asset('assets/img/logo.svg') }}" alt="Logo" />
         <p class="font-normal text-sm lg:text-base text-black mt-8 text-justify">
-          It is a long established fact that a reader will be distracted by the readable
-          content of a page when looking at its layout. The point of using Lorem Ipsum is
-          that it has a more-or-less normal distribution of letters, as opposed.
+            {{Config::get('settings.footer_'.app()->getLocale())}}
         </p>
       </div>
       <div class="my-6 lg:my-0">
@@ -21,24 +19,26 @@
         </ul>
       </div>
       <div>
-        <h6 class="font-semibold text-xl text-black">Contact Us</h6>
+        <h6 class="font-semibold text-xl text-black">
+            {{__('site.contact_us_menu')}}
+        </h6>
         <ul class="mt-4 lg:mt-10">
           <li>
-            <a class="block font-light text-black mb-5" href="mailto:info@testmail.com">
+            <a class="block font-light text-black mb-5" href="mailto:{{Config::get('settings.email')}}">
               <img class="inline-block mr-3" src="{{ asset('assets/img/mail.svg') }}" alt="Mail Icon" />
-              info@testmail.com
+              {{Config::get('settings.email')}}
             </a>
           </li>
           <li>
-            <a class="block font-light text-black mb-5" href="tel:+966138589000">
+            <a class="block font-light text-black mb-5" href="tel:{{Config::get('settings.phone')}}">
               <img class="inline-block mr-3" src="{{ asset('assets/img/tel.svg') }}" alt="Phone Icon" />
-              +966-13-858-9000
+              {{Config::get('settings.phone')}}
             </a>
           </li>
           <li>
             <a class="block font-light text-black mb-5" href="#">
               <img class="inline-block mr-3" src="{{ asset('assets/img/address.svg') }}" alt="Address Icon" />
-              Address Here
+              {{Config::get('settings.address_'.app()->getLocale())}}
             </a>
           </li>
         </ul>
@@ -49,33 +49,32 @@
   <div class="container py-4">
     <div class="float-left w-full sm:w-auto text-center sm:text-left mb-3 sm:mb-0">
       <p class="inline-block font-normal text-base text-black">
-        All Rights Reserved © {{ date('Y') }}
+        {{__('site.all_rights')}} © {{ date('Y') }}
       </p>
-      <a class="inline-block font-normal text-base text-price" href="#">Website Title</a>
+      <a class="inline-block font-normal text-base text-price" href="#">
+        {{ Config::get('settings.seo_title_'.app()->getLocale()) }}
+      </a>
     </div>
 
     <div class="float-right w-full sm:w-auto text-center sm:text-left">
+        @php
+            $array =[
+                'facebook' => Config::get('settings.facebook'),
+                'twitter' => Config::get('settings.x'),
+                'instagram' => Config::get('settings.instagram'),
+                'linkedin' => Config::get('settings.linkedin'),
+            ]
+        @endphp
       <ul class="social">
-        <li class="inline-block">
-          <a class="block w-8 h-8 bg-blackopacity rounded-lg relative" href="#">
-            <img class="absolute" src="{{ asset('assets/img/linkedin.svg') }}" alt="LinkedIn" />
-          </a>
-        </li>
-        <li class="inline-block">
-          <a class="block w-8 h-8 bg-blackopacity rounded-lg relative" href="#">
-            <img class="absolute" src="{{ asset('assets/img/twitter.svg') }}" alt="Twitter" />
-          </a>
-        </li>
-        <li class="inline-block">
-          <a class="block w-8 h-8 bg-blackopacity rounded-lg relative" href="#">
-            <img class="absolute" src="{{ asset('assets/img/instagram.svg') }}" alt="Instagram" />
-          </a>
-        </li>
-        <li class="inline-block">
-          <a class="block w-8 h-8 bg-blackopacity rounded-lg relative" href="#">
-            <img class="absolute" src="{{ asset('assets/img/facebook.svg') }}" alt="Facebook" />
-          </a>
-        </li>
+        @foreach($array as $key => $value)
+            @if($value)
+                <li class="inline-block">
+                    <a href="{{$value}}" target="_blank" class="block w-8 h-8 bg-blackopacity rounded-lg relative">
+                        <img class="absolute" src="{{ asset('assets/img/'.$key.'.svg') }}" alt="{{$key}}" />
+                    </a>
+                </li>
+            @endif
+        @endforeach
       </ul>
     </div>
 

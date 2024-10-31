@@ -1,5 +1,13 @@
 @extends('layouts.master')
-
+@push('css')
+    <style>
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        </style>
+@endpush
 @section('content')
 @include('pages.partials.breadcrumb')
 
@@ -46,11 +54,11 @@
                 <form id="contact-us" method="POST">
                     @csrf
                     <div class="lg:grid lg:grid-cols-2 lg:gap-4 w-full mx-0">
-                        <input class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="name" placeholder="{{__('site.name')}}" />
-                        <input class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="phone" placeholder="{{__('site.phone')}}" />
+                        <input name="name" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="name" placeholder="{{__('site.name')}}" />
+                        <input name="phone" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="phone" placeholder="{{__('site.phone')}}" />
                     </div>
-                    <input class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="email" placeholder="{{__('site.email')}}" />
-                    <textarea class="w-full mb-4 border border-border bg-footer rounded-lg h-12 h-52 px-4 pt-4 resize-none" placeholder="{{__('site.message')}}"></textarea>
+                    <input  name="email" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="email" placeholder="{{__('site.email')}}" />
+                    <textarea  name="message" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 h-52 px-4 pt-4 resize-none" placeholder="{{__('site.message')}}"></textarea>
                     
                     
                     <button class="bg-price py-4 px-16 font-normal text-sm text-white rounded-full">
@@ -66,10 +74,14 @@
 </section> 
 
 <section class="py-12 container">
-    <p class="font-semibold text-2xl mb-10">Where To Find Us</p>
+    <p class="font-semibold text-2xl mb-10">
+        {{__('site.location')}}
+    </p>
  
     <div class="border border-border rounded-xl p-4">
-        <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map"></div>
+        <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map">
+            {!! $map !!}
+        </div>
     </div>
 </section>
 
@@ -80,7 +92,7 @@
 
 <script>
     $(document).ready(function() {
-        $("#customerForm").validate({
+        $("#contact-us").validate({
             rules: {
                 name: "required",
                 phone: {
@@ -115,6 +127,7 @@
                             text: "{{__('customer.success_message')}}",
                             button: true,
                         });
+                        location.reload();
                     },
                     error: function(xhr) {
                         HoldOn.close();

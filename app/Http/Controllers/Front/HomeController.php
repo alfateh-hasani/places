@@ -31,7 +31,6 @@ class HomeController extends Controller
             'email' => 'required|email',
             'phone' => 'required',
             'message' => 'required',
-            'subject' => 'required',
         ]);
         $data=[
             'name' => $request->name,

@@ -50,7 +50,7 @@
                             <p>
                                 {{__('customer.phone')}}
                             </p>
-                            <input dir="ltr" readonly type="tel"   id="phone" value="{{$customer->phone}}" name="phone" class="w-full border border-border rounded-lg h-12" />
+                            <input dir="ltr" readonly type="tel" disabled value="{{$customer->phone}}" name="phone" class="w-full border border-border rounded-lg h-12" />
                         </label>
                         <label>
                             <p>
@@ -81,13 +81,13 @@
 @include('customer.section.script-form')
 <script>
     new WOW().init();   
-    const phoneInput = document.querySelector("#phone");
+    // const phoneInput = document.querySelector("#phone");
     const emergencyPhoneInput = document.querySelector("#emergency_phone");
-    window.intlTelInput(phoneInput, {
-        loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
-        initialCountry: "SA",
-        separateDialCode: true,
-    });
+    // window.intlTelInput(phoneInput, {
+    //     loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
+    //     initialCountry: "SA",
+    //     separateDialCode: true,
+    // });
     window.intlTelInput(emergencyPhoneInput, {
         loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
         initialCountry: "SA",

@@ -82,4 +82,7 @@ return [
     'send_phone' => 'اتصل بنا',
     'contact_us_success' => 'تم إرسال رسالتك بنجاح',
     'related_blogs' => 'مدونات ذات صلة',
+    'location' => 'أين تجدنا',
+    'all_rights' => 'جميع الحقوق محفوظة',
+    'contact_us_menu' => 'تواصل معنا',
 ];
