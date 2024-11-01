@@ -33,6 +33,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('account', 'profile')->name('account');
             Route::post('account-update', 'update')->name('update');
             Route::get('get-booking', 'getBooking')->name('booking');
+            Route::get('booking-details', 'BookingDetails')->name('booking.details');
             Route::get('favorite', 'favorite')->name('favorite');
             Route::get('notifications', 'notifications')->name('notifications');
         });

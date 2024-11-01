@@ -14,6 +14,7 @@ Route::middleware('appSecret')->group(function () {
 
     Route::post('otp/request',  [AuthController::class, 'requestOtp']);
     Route::post('otp/verify',  [AuthController::class, 'verifyOtp'])->name('otp.verify');
+    Route::post('customer/register',  [AuthController::class, 'registerUser'])->name('otp.registerUser');
 
 
     Route::middleware('auth:api')->group(function () {

@@ -80,6 +80,14 @@ class CustomerAccountController extends Controller
         ];
         return view('customer.notifications', $data);
     }
+
+
+    //BookingDetails
+    public function BookingDetails(Request $request)
+    {
+        $data['booking'] = Booking::find($request->booking_id);
+        return view('booking.details', $data);
+    }
  
  
 }

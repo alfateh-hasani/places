@@ -15,13 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    private function convertArabicNumbers($input)
-    {
-        $arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-        $englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-        return str_replace($arabicNumbers, $englishNumbers, $input);
-    }
-
+    
     private function validatePhoneStartsWith5($phone)
     {
         return preg_match('/^5\d{8}$/', $phone); // Validates phone starts with '5'
@@ -31,7 +25,7 @@ class LoginController extends Controller
     {
         try {
             $request->merge([
-                'phone' => $this->convertArabicNumbers($request->phone),
+                'phone' =>  convertArabicNumbers($request->phone),
             ]);
 
             $validatedData = $request->validate([
@@ -67,8 +61,8 @@ class LoginController extends Controller
     public function verifyOtp(Request $request)
     {
         $request->merge([
-            'phone' => $this->convertArabicNumbers($request->phone),
-            'otp'   => $this->convertArabicNumbers($request->otp),
+            'phone' =>  convertArabicNumbers($request->phone),
+            'otp'   =>  convertArabicNumbers($request->otp),
         ]);
 
         $validatedData = $request->validate([
