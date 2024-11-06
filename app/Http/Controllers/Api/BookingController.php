@@ -106,7 +106,7 @@ class BookingController extends Controller{
         if($handlePayment['status']==true){
           $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
           $this->data['booking'] = $booking->id;
-          return redirect(route('paymentMethodSuccess',['booking_id'=>$booking->id,'booking_number'=>$booking->booking_number]));
+          return redirect(route('paymentMethodSuccess',['booking_id'=>$booking->id,'booking_number'=>$booking->number_of_booking]));
         }
         return redirect(route('paymentMethodFailed'));
     }

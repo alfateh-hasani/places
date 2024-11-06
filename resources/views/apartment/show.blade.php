@@ -2,16 +2,16 @@
 
 @section('content')
 <section class="detail">
-    <div class="py-0 lg:py-10 container relative">
+    <div class="py-0 lg:py-10 container relative {{ $direction == 'rtl' ? 'text-right' : 'text-left' }}">
         <h1 class="float-left font-semibold text-2xl hidden lg:block text-title">
             {{ $apartment->ml('name') }}
         </h1>
         <div class="float-right absolute lg:relative z-10 right-3 lg:right-0 top-4 lg:top-0">
-            <a class="inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
+            <a class="inline-block py-1 {{ $direction == 'rtl' ? 'mr-1' : 'ml-1' }} lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem duration-300">
                 <img src="{{asset('assets/img/share.svg')}}" class="inline-block mr-0 lg:mr-2 h-4" />
                 <span class="hidden lg:inline">Share</span>
             </a>
-            <a class="inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
+            <a class="inline-block py-1 {{ $direction == 'rtl' ? 'mr-1' : 'ml-1' }} lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem duration-300">
                 <img src="{{asset('assets/img/favoritee.svg') }}" class="inline-block mr-0 lg:mr-2 h-4" />
                 <span class="hidden lg:inline">Save</span>
             </a>
@@ -23,7 +23,7 @@
         </div>
         <div class="clear-both"></div>
     </div>
-    <div class="container relative">
+    <div class="container relative {{ $direction == 'rtl' ? 'text-right' : 'text-left' }}">
         <div class="hidden sm:grid photos grid-cols-4 gap-4 max-w-full rounded-xl overflow-hidden h-[256px] xl:h-[456px] banner-side ease-in-out duration-300">
             
             @if ($apartment->getMedia('image'))
@@ -32,7 +32,7 @@
                 @endforeach
             @endif 
         </div>
-        <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
+        <div class="absolute z-10 top-4 lg:top-0 {{ $direction == 'rtl' ? 'left-3 lg:left-0' : 'right-3 lg:right-0' }}">
  
             <button class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block mr-2" src="{{asset('assets/img/photo.svg')}}" />
                  Show All Photos
@@ -61,7 +61,7 @@
 <section class="location mt-5 lg:mt-8 mb-0 lg:mb-12">
     <div class="container">
         <div class="float-left mr-5 lg:hidden mb-3 lg:mb-0">
-            <h1 class="float-left font-semibold text-xl text-title">
+            <h1 class="font-semibold text-2xl hidden lg:block text-title {{ $direction == 'rtl' ? 'float-right' : 'float-left' }}">
                 {{ $apartment->ml('name') }}
             </h1>
         </div>
@@ -117,7 +117,7 @@
         <div class="xl:flex xl:flex-row">
             <div class="xl:basis-8/12">
                 <div class="hidden xl:block py-5 px-6 bg-filterbackground border border-filterborder rounded-xl">
-                    <img class="float-left mr-8 my-2" src="{{asset('assets/img/logo.svg')}}" />
+                    <img class=" {{ $direction == 'rtl' ? 'float-right ml-8' : 'float-left mr-8' }}   my-2" src="{{asset('assets/img/logo.svg')}}" />
                     <ul>
                         <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> Free Cancellation For 48 Hours</li>
                         <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> Free Cancellation For 48 Hours</li>
@@ -336,7 +336,7 @@
                     </div>
                 </div>
             </div>
-            <div class="hidden xl:block xl:basis-4/12 xl:pl-5">
+            <div class="hidden xl:block xl:basis-4/12 {{ $direction == 'rtl' ? 'xl:pr-5' : 'xl:pl-5' }}">
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
                     <p class="font-normal text-base text-reviews"><span class="font-bold text-2xl text-black translate-y-0.5 inline-block">120</span> Saudi Riyal / Night</p>
                     <form class="mb-4">

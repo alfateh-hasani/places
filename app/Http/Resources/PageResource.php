@@ -35,6 +35,7 @@ class PageResource extends JsonResource
         if ($this->template == 'contact') {
             $data['contact_phone'] = Config::get('settings.phone');
             $data['whatsapp'] = Config::get('settings.whatsapp');
+            $data['content'] = strip_tags(html_entity_decode($data['content']));
             if (\Auth::guard('api')->check()) {
                 $customer = \Auth::guard('api')->user();
                 $data['customer_name'] = $customer?->first_name.' '.$customer?->last_name;

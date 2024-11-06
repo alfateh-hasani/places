@@ -17,8 +17,10 @@ class ApartmentController extends Controller
 
     public function show($slug)
     {
-        $apartment = Apartment::with(['building.city','reviews','labels','bookings'])->where('slug', $slug)->firstOrFail();
-        return view('apartment.show', compact('apartment'));
+        $data['apartment'] = Apartment::with(['building.city','reviews','labels','bookings'])->where('slug', $slug)->firstOrFail();
+        $data['lang'] = app()->getLocale();
+        $data['direction'] = app()->isLocale('ar') ? 'rtl' : 'ltr';  
+        return view('apartment.show', $data);
     }
  
 }

@@ -61,6 +61,7 @@ class AuthController extends Controller
             $rules = [
                 'phone' => 'required|phone:SA',
                 'otp'   => 'required|digits:4',
+                'fcm_token'=>'nullable'
             ];
 
             $validatedData = $request->validate($rules);
@@ -75,6 +76,9 @@ class AuthController extends Controller
             $customer = Customer::where('phone', $request->phone)->first();
 
             if ($customer) {
+                $customer->fcm_token = $request->fcm_token;
+                $customer->save();
+                
                 $data['customer'] = new CustomerResource($customer);
                 $data['token'] =$customer->createToken('Places_APP')->plainTextToken;
                 $data['register_required'] = false;

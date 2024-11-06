@@ -35,7 +35,7 @@ class HomeController extends Controller
         $this->data['sliders'] = SliderResource::collection($sliders);
         $cities = $this->city->orderBy('sort_order')->get();
         $this->data['cities'] = CityResource::collection($cities);
-        $cities = $this->city->with('buildings')->get();
+        $cities = $this->city->with('buildings')->whereHas('buildings')->get();
         $this->data['cities_with_building'] = CityResource::collection($cities);
         $apartments = $this->apartment->with('building.city')->latest()->limit(5)->get();
         $this->data['apartments'] = ApartmentResource::collection($apartments);

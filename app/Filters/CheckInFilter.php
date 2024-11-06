@@ -7,8 +7,8 @@ class CheckInFilter implements FilterHandlerInterface
     public function apply($query, $value)
     {
         return $query->whereDoesntHave('bookings', function ($query) use ($value) {
-            $query->where('check_in', '<=', $value)
-                  ->where('check_out', '>=', $value);
+            $query->where('check_in', '<', $value)
+                  ->where('check_out', '>', $value);
         });
     }
 }

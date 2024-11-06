@@ -189,12 +189,12 @@ class CustomerController extends Controller
             foreach($notifications as $one){
                 $array[] = [
                     'id'=>(int) $one->id,
-                    'title'=>(string) $one->title,
-                    'description'=>(string) $one->description,
-                    'process_type'=>(string) $one->process_type,
-                    'process_status'=>(string) $one->process_status,
+                    'title'=>(string) $one->{'title_'.app()->getLocale()},
+                    'description'=>(string) $one->{'description_'.app()->getLocale()},
+                    //'process_type'=>(string) $one->process_type,
+                    //'process_status'=>(string) $one->process_status,
                     'image'      => $one->image,
-                    'notification_seen'      => (isset($one->notification_seen->id)) ? true : false,
+                    'notification_seen'   => (isset($one->notification_seen->id)) ? true : false,
                     'date'       => $one->created_at->format('Y-m-d H:i:s'),
                 ];
             }
