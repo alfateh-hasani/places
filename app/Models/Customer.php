@@ -39,7 +39,7 @@ class Customer extends Authenticatable implements HasMedia
     //favoriteApartments
     public function favoriteApartments()
     {
-        return $this->belongsToMany(Apartment::class, 'favorites', 'customer_id', 'apartment_id');
+        return $this->belongsToMany(Apartment::class, 'favorites', 'customer_id', 'apartment_id')->withTimestamps();
     }
 
     public function bookings()

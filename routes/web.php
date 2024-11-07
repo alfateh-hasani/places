@@ -2,7 +2,7 @@
 
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Front\{HomeController,ApartmentController, CustomerAccountController,PageController};
+use App\Http\Controllers\Front\{HomeController,ApartmentController, BookingController, CustomerAccountController,PageController};
 
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function()
@@ -37,6 +37,12 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('favorite', 'favorite')->name('favorite');
             Route::get('notifications', 'notifications')->name('notifications');
             Route::post('toggle-favorite', 'toggleFavorite')->name('toggle.favorite'); 
+        });
+
+        Route::controller(BookingController::class)->name('booking.')->prefix('booking')->group(function () {
+            Route::post('add-booking', 'addBooking')->name('add');
+            Route::get('get-booking', 'getBooking')->name('get');
+            Route::get('login-apartment', 'loginApartment')->name('login');
         });
 
     });

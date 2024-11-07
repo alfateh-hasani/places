@@ -1,11 +1,24 @@
 @extends('layouts.master')
 @push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
     <style>
         iframe{
             width: 100%;
             height: 100% !important;
         }
-        </style>
+        .flatpickr-day {
+            width: 30px;  
+            height: 30px; 
+            line-height: 30px;  
+            margin:3px  ;
+        }
+        span.flatpickr-day.selected{
+            background: #6b9dff !important;
+        }
+    </style>
+
+        
 @endpush
 @section('content')
 <section class="detail"> 
@@ -21,7 +34,14 @@
                 </span>
             </a>
             <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})" class="inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
-                <img src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
+                @if ($apartment->is_favorite)
+                    <button class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite favorite-active ease-in-out duration-300"></button>
+                @else
+                    <img src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
+
+                
+                    
+                @endif
                 <span class="hidden lg:inline">
                     {{ __('apartment.favorite') }}
                 </span>
@@ -301,72 +321,122 @@
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
                     <p class="font-normal text-base text-reviews">
                         <span class="font-bold text-2xl text-black translate-y-0.5 inline-block">
-                            {{$apartment->price}}    
+                            {{__('apartment.booking_details')}}
                         </span> 
-                        {{__('apartment.sar')}}
+                        {{-- {{__('apartment.sar')}} --}}
                     </p>
-                    <form class="mb-9 space-y-4">
-                        <div class="flex flex-col">
-                            <label for="checkin" class="mb-1 font-semibold">@lang('apartment.checkin_date')</label>
-                            <input type="date" id="checkin" name="checkin" class="border border-gray-300 rounded-lg h-12 px-3" required
-                                value="{{ now()->format('Y-m-d') }}">
+                    <form id="booking" class="mb-9 space-y-4">
+                        @csrf
+                        <div class="flex flex-wrap -mx-2">
+                            <div class="flex flex-col w-1/2 px-2">
+                                <label for="checkin" class="mb-1 font-semibold">@lang('apartment.checkin_date')</label>
+                                <input type="date" id="checkin" name="checkin" class="border border-gray-300 rounded-lg h-12 px-3" required
+                                    value="{{ now()->format('Y-m-d') }}">
+                            </div>
+                        
+                            <div class="flex flex-col w-1/2 px-2">
+                                <label for="checkout" class="mb-1 font-semibold">@lang('apartment.checkout_date')</label>
+                                <input type="date" id="checkout" name="checkout" class="border border-gray-300 rounded-lg h-12 px-3" required
+                                    value="{{ now()->format('Y-m-d') }}">
+                            </div>
                         </div>
                     
-                        <div class="flex flex-col">
-                            <label for="checkout" class="mb-1 font-semibold">@lang('apartment.checkout_date')</label>
-                            <input type="date" id="checkout" name="checkout" class="border border-gray-300 rounded-lg h-12 px-3" required
-                            value="{{ now()->format('Y-m-d') }}">
+                        <div class="flex flex-wrap -mx-2">
+                            <div class="flex flex-col w-1/2 px-2">
+                                <label for="adults" class="mb-1 font-semibold">@lang('apartment.adults_count')</label>
+                                <input type="number" 
+                                       id="adults" 
+                                       name="adults_count" 
+                                       min="1" 
+                                       max="{{$apartment->adults_count}}" 
+                                       value="{{$apartment->adults_count}}" 
+                                       class="border border-gray-300 rounded-lg h-12 px-3" 
+                                       required
+                                       oninput="validateInput(this, '{{__('apartment.min_children')}}', '{{__('apartment.max_adults').' '.$apartment->adults_count}}')">
+
+                            </div>
+                        
+                            <div class="flex flex-col w-1/2 px-2">
+                                <label for="children" class="mb-1 font-semibold">@lang('apartment.children_count')</label>
+                                <input type="number" 
+                                       id="children" 
+                                       name="children_count" 
+                                       min="0" 
+                                       max="{{$apartment->children_count}}" 
+                                       value="{{$apartment->children_count}}" 
+                                       class="border border-gray-300 rounded-lg h-12 px-3" 
+                                       oninput="validateInput(this, '{{__('apartment.min_children')}}', '{{__('apartment.max_children').' '.$apartment->children_count}}')">
+                            </div>
                         </div>
-                    
+                        
+                            <script>
+                            function validateInput(input, minMessage, maxMessage) {
+                                if (input.validity.rangeUnderflow) {
+                                    input.setCustomValidity(minMessage);  
+                                } else if (input.validity.rangeOverflow) {
+                                    input.setCustomValidity(maxMessage);   
+                                } else {
+                                    input.setCustomValidity('');  
+                                }
+                            }
+                            </script>
+                        
                         <div class="flex flex-col">
-                            <label for="adults" class="mb-1 font-semibold">@lang('apartment.adults_count')</label>
-                            <input type="number" id="adults" name="adults" min="1" value="1" class="border border-gray-300 rounded-lg h-12 px-3" required>
+                            <label for="coupon_code" class="mb-1 font-semibold">@lang('apartment.coupon_code')</label>
+                            <input type="text" id="coupon_code" name="coupon_code"  class="border border-gray-300 rounded-lg h-12 px-3">
                         </div>
+                        <ul>
+                            @foreach (config('payments.gateways') as $index => $item)
+                                <li>
+                                    <label class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300 cursor-pointer">
+                                        <input type="radio" name="payment_method_code" value="{{ $item['value'] }}" class="hidden" /> 
+                                        <img class="inline-block" src="{{ asset('images/' . $item['icon'] . '.svg') }}" alt="{{ $item['value'] }}" />
+                                        <p class="inline-block ml-4 font-normal text-sm text-title">
+                                            {{ $item['value'] }}
+                                        </p>
+                                    </label>
+                                </li>
+                            @endforeach
+                        </ul>
+                         
+                        <ul>
+                            <li class="mb-4 font-semibold text-sm text-title">
+                                <span>
+                                    {{__('apartment.one_night')}}
+                                </span>
+                                <span class="float-right rtl:float-left">
+                                    {{$apartment->price . ' ' . __('apartment.price')}} 
+                                </span>
+                                <div class="clear-both"></div>
+                            </li>
+                            <li class="mb-4 font-semibold text-sm text-title">
+                                <span>{{ __('apartment.total_nights') }}</span>
+                                <span class="float-right rtl:float-left" id="totalNights">1 {{ __('apartment.nights') }}</span>
+                                <div class="clear-both"></div>
+                            </li>
+                            <li class="mb-4 font-semibold text-sm text-title">
+                                <span>{{ __('apartment.total_cost') }}</span>
+                                <span class="float-right rtl:float-left" id="totalCost"> {{$apartment->price }} </span>
+                                <div class="clear-both"></div>
+                            </li>
+                            
+                        </ul>
                     
-                        <div class="flex flex-col">
-                            <label for="children" class="mb-1 font-semibold">@lang('apartment.children_count')</label>
-                            <input type="number" id="children" name="children" min="0" value="0" class="border border-gray-300 rounded-lg h-12 px-3">
-                        </div>
-                    
-                        <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.check_out')</button>
+                        <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
                     </form>
                     
                     
-                    <p class="font-normal text-sm text-reviews text-center mb-6">You won't be charged yet</p>
-                    <ul>
-                        <li class="mb-4 font-semibold text-sm text-title">
-                            <span>
-                                {{__('apartment.one_night')}}
-                            </span>
-                            <span class="float-right rtl:float-left">
-                                {{$apartment->price . ' ' . __('apartment.price')}} 
-                            </span>
-                            <div class="clear-both"></div>
-                        </li>
-                        
-                    </ul>
-                     <ul>
-                        @foreach (config('payments.gateways') as $item)
-                            <li>
-                                <a href="" class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
-                                    <img class="inline-block" src="{{ asset('images/' . $item['icon'] . '.svg'),}}" />
-                                    <p class="inline-block ml-4 font-normal text-sm text-title">
-                                        {{$item['value']}}
-                                    </p>
-                                </a>
-                            </li>
-                            
-                        @endforeach
-                        
-                    </ul>
+                    
                 </div>
             </div>
         </div>
     </div>
 </section>
+{{-- @dd($apartment->booked_days($apartment->bookings)); --}}
 @endsection
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@include('customer.section.script-form')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     function toggleFavorite(apartmentId) {
         $.ajax({
@@ -424,5 +494,154 @@
             }
         });
     }
-</script>
+
+    const nightlyRate = {{ $apartment->price }};
+        function calculateNightsAndCost() {
+        const checkin = new Date($('#checkin').val());
+        const checkout = new Date($('#checkout').val());
+        const timeDifference = checkout - checkin;
+        const nights = timeDifference / (1000 * 60 * 60 * 24);
+        if (nights > 0) {
+            const totalCost = (nights * nightlyRate).toFixed(2);  
+            $('#totalNights').text(nights + ' ' + "{{ __('apartment.nights') }}");
+            $('#totalCost').text(totalCost + ' ' + "{{ __('apartment.price') }}");
+        } else {
+            $('#totalNights').text(0);
+            $('#totalCost').text('0.00');  
+        }
+    }
+
+
+    $(document).ready(function() {
+        // Calculate nights and cost on date change
+        $('#checkin, #checkout').on('change', calculateNightsAndCost);
+
+        $("#booking").validate({
+            rules: {
+                checkin: "required",
+                checkout: {
+                    required: true,
+                    greaterThan: "#checkin"
+                },
+                adults_count:{
+                    required: true,
+                    min: 1,
+                    max: "{{$apartment->adults_count}}"
+                },
+                children_count:{
+                    required: true,
+                    min: 0,
+                    max: {{$apartment->children_count}}
+                }
+                
+            },
+            messages: {
+                checkin: "{{__('apartment.checkin_required')}}",
+                checkout: {
+                    required: "{{__('apartment.checkout_required')}}",
+                    greaterThan: "{{__('apartment.checkout_greater_than')}}"
+                },
+                adults_count:{
+                    required: "{{__('apartment.adults_count_required')}}",
+                    min: "{{__('apartment.adults_count_min')}}",
+                    max: "{{__('apartment.adults_count_max')}}"
+                },
+                children_count:{
+                    required: "{{__('apartment.children_count_required')}}",
+                    min: "{{__('apartment.children_count_min')}}",
+                    max: "{{__('apartment.children_count_max')}}"
+                }
+            },
+            submitHandler: function(form) {
+                HoldOn.open({
+                    theme: "sk-cube-grid",  
+                    message: "{{__('apartment.loading_message')}}"  
+                });
+    
+                $.ajax({
+                    url: "{{ route('booking.add') }}",  
+                    method: "POST",
+                    data: $(form).serialize(), 
+                    success: function(response) {
+                        HoldOn.close();
+                        Swal.fire({
+                            icon: 'success',
+                            title: "{{__('apartment.success')}}",
+                            text: "{{__('apartment.booking_success_message')}}",
+                            button: true,
+                        });
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        HoldOn.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{__('apartment.error')}}",
+                            text: "{{__('apartment.booking_failed_message')}}",
+                            button: true,
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    const bookedDays = @json($apartment->booked_days($apartment->bookings));
+    console.log(bookedDays);
+    console.log(typeof flatpickr); 
+
+    function initializeDatePicker(selector) {
+        if (typeof flatpickr === "undefined") {
+            console.error("flatpickr library is not loaded.");
+            return;
+        }
+
+        flatpickr(selector, {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            allowInput: false,  
+            disable: bookedDays.length > 0 ? bookedDays : [],   
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = dayElem.dateObj.toISOString().split('T')[0];
+                if (bookedDays.includes(dateStr)) { 
+                    dayElem.style.backgroundColor = "#f08080";  
+                    dayElem.style.color = "#fff";  
+                    dayElem.classList.add("flatpickr-disabled");  
+                } else {
+                    dayElem.style.backgroundColor = "#90ee90"; 
+                    dayElem.style.color = "#000"; 
+                }
+            },
+            onChange: function(selectedDates, dateStr, instance) {
+                if (instance.calendarContainer) {
+                    instance.calendarContainer.querySelectorAll(".flatpickr-day").forEach(dayElem => {
+                        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
+                        if (bookedDays.includes(dateStr)) {
+                            dayElem.style.backgroundColor = "#f08080";  
+                            dayElem.style.color = "#fff";  
+                        } else {
+                            dayElem.style.backgroundColor = "#90ee90"; 
+                            dayElem.style.color = "#000"; 
+                        }
+                    });
+                }
+                if (selectedDates.length > 0 && instance.calendarContainer) {
+                    const selectedDayElem = instance.calendarContainer.querySelector(`.flatpickr-day[aria-label="${selectedDates[0].toDateString()}"]`);
+                    if (selectedDayElem) {
+                        selectedDayElem.style.backgroundColor = "#6b9dff";
+                        selectedDayElem.style.color = "#fff";
+                    }
+                }
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initializeDatePicker("#checkin");
+        initializeDatePicker("#checkout");
+    });
+
+
+ 
+</script> 
 @endpush

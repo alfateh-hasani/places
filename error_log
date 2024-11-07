@@ -210,3 +210,18 @@ Stack trace:
 #0 Command line code(1): ReflectionMethod->__construct('TimeHunter\\Lara...', 'handle')
 #1 {main}
   thrown in Command line code on line 1
+[07-Nov-2024 07:28:41 UTC] PHP Fatal error:  Uncaught ReflectionException: Method TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::handle() does not exist in Command line code:1
+Stack trace:
+#0 Command line code(1): ReflectionMethod->__construct('TimeHunter\\Lara...', 'handle')
+#1 {main}
+  thrown in Command line code on line 1
+[07-Nov-2024 11:44:26 UTC] PHP Fatal error:  Uncaught ReflectionException: Method TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::handle() does not exist in Command line code:1
+Stack trace:
+#0 Command line code(1): ReflectionMethod->__construct('TimeHunter\\Lara...', 'handle')
+#1 {main}
+  thrown in Command line code on line 1
+[07-Nov-2024 12:49:35 UTC] PHP Fatal error:  Uncaught ReflectionException: Method TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::handle() does not exist in Command line code:1
+Stack trace:
+#0 Command line code(1): ReflectionMethod->__construct('TimeHunter\\Lara...', 'handle')
+#1 {main}
+  thrown in Command line code on line 1

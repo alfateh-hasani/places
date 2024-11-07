@@ -68,7 +68,7 @@
 
 
     @if(app()->getLocale() == 'ar')
-      <link    href="{{ asset('assets/css/rtl.css')}}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/rtl.css?'.time())}}"   rel="stylesheet" />
     @endif
 
       <link    href="{{ asset('assets/css/custom.css')}}"   rel="stylesheet" />
