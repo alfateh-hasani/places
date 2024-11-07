@@ -221,6 +221,30 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
+        //adults_count
+        $this->crud->addField([
+            'name' => 'adults_count',
+            'type' => 'number',
+            'label' =>  __('cms.adults_count'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //children_count
+        $this->crud->addField([
+            'name' => 'children_count',
+            'type' => 'number',
+            'label' =>  __('cms.children_count'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
         $this->crud->addField([
             'name' => 'area',
             'type' => 'number',

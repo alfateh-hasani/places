@@ -36,6 +36,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('booking-details', 'BookingDetails')->name('booking.details');
             Route::get('favorite', 'favorite')->name('favorite');
             Route::get('notifications', 'notifications')->name('notifications');
+            Route::post('toggle-favorite', 'toggleFavorite')->name('toggle.favorite'); 
         });
 
     });

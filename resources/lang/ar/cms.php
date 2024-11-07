@@ -102,4 +102,7 @@ return [
     'notification' => 'الإشعار',
     'setting' => 'الإعدادات',
     'translation-manager' => 'إدارة الترجمة',
+    'children_count' => 'عدد الأطفال',
+    'adults_count' => 'عدد الكبار',
+    'vedio' => 'الفيديو',
 ];

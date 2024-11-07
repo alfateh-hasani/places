@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
+use App\Models\Apartment;
 use App\Models\Booking;
+use Auth;
 use Illuminate\Http\Request;
 class CustomerAccountController extends Controller
 {
@@ -75,7 +77,7 @@ class CustomerAccountController extends Controller
         
         $data = [
             'notifications' => 'notifications',
-            'customer' => $customer,
+            'customer' => $customer, 
             'total_notifications' => '56',
         ];
         return view('customer.notifications', $data);
@@ -88,6 +90,29 @@ class CustomerAccountController extends Controller
         $data['booking'] = Booking::find($request->booking_id);
         return view('booking.details', $data);
     }
+
+
+    //toggleFavorite
+    public function toggleFavorite(Request $request)
+    {
+        $customer = auth()->user();
+        $apartment = Apartment::find($request->apartment_id);
+    
+        if ($apartment) {
+            $isFavorited = $customer->favoriteApartments()->toggle($apartment->id);
+            $action = count($isFavorited['attached']) > 0 ? 'added' : 'removed';
+    
+            return response()->json([
+                'success' => true,
+                'action' => $action,
+                'message' => __('apartment.favorite_' . $action)
+            ]);
+        }
+    
+        return response()->json(['success' => false, 'message' => __('apartment.favorite_failed')], 404);
+    }
+    
+    
  
  
 }

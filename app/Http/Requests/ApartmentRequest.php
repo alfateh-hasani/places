@@ -34,13 +34,13 @@ class ApartmentRequest extends FormRequest
             'num_beds' => 'required',
             'adults_count' => 'required',
             'children_count' => 'required',
-            'area' => 'required',
-            'is_active' => 'required',
-            'smart_lock_id' => 'required|exists:smart_locks,id',
-            'price' => 'required',
-            'policy_id' => 'required|exists:policies,id',
-            'features' => 'required|array',
-            'features.*' => 'exists:features,id',
+            // 'area' => 'required',
+            // 'is_active' => 'required',
+            // 'smart_lock_id' => 'required|exists:smart_locks,id',
+            // 'price' => 'required',
+            // 'policy_id' => 'required|exists:policies,id',
+            // 'features' => 'required|array',
+            // 'features.*' => 'exists:features,id',
         ];
     }
 

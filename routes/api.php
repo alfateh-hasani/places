@@ -66,10 +66,8 @@ Route::middleware('appSecret')->group(function () {
 
 });
 Route::controller(BookingController::class)->prefix('payment-methods')->group(function () {
-
     Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
     // Route::post('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
-
     Route::get('success/{booking_id}/{booking_number}', 'paymentMethodSuccess')->name('paymentMethodSuccess');
     Route::get('failed', 'paymentMethodFailed')->name('paymentMethodFailed');
 });
