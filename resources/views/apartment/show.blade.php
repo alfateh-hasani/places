@@ -80,7 +80,8 @@
                     <img class="w-full h-[256px] object-cover" src="{{asset('assets/img/slider.png')}}" />
                 </a>
             </div>
-            <div><a data-fancybox="banner" href="{{asset('assets/img/slider.png')}}" class="relative block"><img class="w-full h-[256px] object-cover" src="{{asset('assets/img/slider.png')}}" /></a></div>
+            <div><a data-fancybox="banner" href="{{asset('assets/img/slider.png')}}" class="relative block">
+                <img class="w-full h-[256px] object-cover" src="{{asset('assets/img/slider.png')}}" /></a></div>
             <div><a data-fancybox="banner" href="{{asset('assets/img/slider.png')}}" class="relative block"><img class="w-full h-[256px] object-cover" src="{{asset('assets/img/slider.png')}}" /></a></div>
             <div><a data-fancybox="banner" href="{{asset('assets/img/slider.png')}}" class="relative block"><img class="w-full h-[256px] object-cover" src="{{asset('assets/img/slider.png')}}" /></a></div>
             <div><a data-fancybox="banner" href="{{asset('assets/img/slider.png')}}" class="relative block"><img class="w-full h-[256px] object-cover" src="{{asset('assets/img/slider.png')}}" /></a></div>
@@ -238,9 +239,7 @@
                             <ul>
                                 @foreach ($apartment->features as $item)
                                     <li class="inline-block mb-6 w-full xl:w-4/12 hover:text-price ease-in-out duration-300 cursor-pointer">
-                                        <svg class="-translate-y-0.5 inline-block" xmlns="http://www.w3.org/2000/svg" width="20.671" height="19.707" viewBox="0 0 20.671 19.707">
-                                            <path id="Icon_feather-star" data-name="Icon feather-star" d="M12.836,3l3.039,6.157,6.8.993-4.918,4.79,1.161,6.767-6.078-3.2-6.078,3.2L7.918,14.94,3,10.151l6.8-.993Z" transform="translate(-2.5 -2.5)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-                                        </svg>
+                                        <img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" />
                                         <p class="inline-block ml-4">
                                             {{  $item->{'name_'.app()->getLocale()}  }}
                                         </p>
@@ -325,7 +324,9 @@
                         </span> 
                         {{-- {{__('apartment.sar')}} --}}
                     </p>
-                    <form id="booking" class="mb-9 space-y-4">
+                    <form id="booking" class="mb-9 space-y-4" method="POST">
+                        <input type="hidden" id="apartment_id" name="apartment_id" value="{{ $apartment->id }}">
+
                         @csrf
                         <div class="flex flex-wrap -mx-2">
                             <div class="flex flex-col w-1/2 px-2">
@@ -383,8 +384,13 @@
                         
                         <div class="flex flex-col">
                             <label for="coupon_code" class="mb-1 font-semibold">@lang('apartment.coupon_code')</label>
-                            <input type="text" id="coupon_code" name="coupon_code"  class="border border-gray-300 rounded-lg h-12 px-3">
+                            <input type="text" id="coupon_code" name="coupon_code" class="border border-gray-300 rounded-lg h-12 px-3">
+                            <button type="button" id="verify_coupon" class="bg-price rounded-lg h-12 w-full font-semibold text-white mt-4">
+                                تحقق من الكوبون
+                            </button>
+                            <div id="coupon_message" class="mt-2 text-red-500"></div>
                         </div>
+                        
                         <ul>
                             @foreach (config('payments.gateways') as $index => $item)
                                 <li>
@@ -415,10 +421,19 @@
                                 <div class="clear-both"></div>
                             </li>
                             <li class="mb-4 font-semibold text-sm text-title">
-                                <span>{{ __('apartment.total_cost') }}</span>
-                                <span class="float-right rtl:float-left" id="totalCost"> {{$apartment->price }} </span>
+                                <span>{{ __('apartment.discounted_cost') }}</span>
+                                <span class="float-right rtl:float-left" id="discounted_cost">
+                                    0.00 {{ __('apartment.price') }}
+                                </span>
                                 <div class="clear-both"></div>
                             </li>
+                            <li class="mb-4 font-semibold text-sm text-title">
+                                <span>{{ __('apartment.total_cost') }}</span>
+                                <span class="float-right rtl:float-left" id="totalCost"> {{$apartment->price .' '.__('apartment.price') }} </span>
+                                <div class="clear-both"></div>
+                            </li>
+                            
+                            
                             
                         </ul>
                     
@@ -494,22 +509,69 @@
             }
         });
     }
-
     const nightlyRate = {{ $apartment->price }};
-        function calculateNightsAndCost() {
+    let discount = 0;
+
+    function calculateNightsAndCost() {
         const checkin = new Date($('#checkin').val());
         const checkout = new Date($('#checkout').val());
         const timeDifference = checkout - checkin;
         const nights = timeDifference / (1000 * 60 * 60 * 24);
         if (nights > 0) {
-            const totalCost = (nights * nightlyRate).toFixed(2);  
+            const totalCost = nights * nightlyRate;
             $('#totalNights').text(nights + ' ' + "{{ __('apartment.nights') }}");
-            $('#totalCost').text(totalCost + ' ' + "{{ __('apartment.price') }}");
+            let finalCost = totalCost;
+            if (discount > 0) {
+                finalCost = totalCost - (totalCost * (discount / 100));  
+            }
+            $('#totalCost').text(finalCost.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
+            if (discount > 0) {
+                $('#discountedCost').text("{{ __('apartment.discounted_price') }}: " + finalCost.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
+            } else {
+                $('#discountedCost').text('');
+            }
         } else {
             $('#totalNights').text(0);
-            $('#totalCost').text('0.00');  
+            $('#totalCost').text('0.00');
+            $('#discountedCost').text('');
         }
     }
+
+
+    $(document).ready(function() {
+        $('#checkin, #checkout').on('change', calculateNightsAndCost);
+        $('#verify_coupon').on('click', function() {
+            const couponCode = $('#coupon_code').val();
+            const apartment_id = $('#apartment_id').val();
+            const totalNights = $('#totalNights').val();
+            if (couponCode.trim() === "") {
+                $('#coupon_message').text("{{ __('apartment.enter_coupon') }}");
+                return;
+            }
+            $.ajax({
+                url: '{{ route("web-booking.coupons.verify") }}',
+                method: 'POST',
+                data: {
+                    code: couponCode,
+                    apartment_id: apartment_id,
+                    total_nights: totalNights,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    $('#verify_coupon').prop('disabled', true);
+                    $('#coupon_code').prop('disabled', true);
+                    discount = response.discount;
+                    let discountText = response.type === "percentage" ? "%" : "{{ __('apartment.price_unit') }}";
+                    $('#coupon_message').text("{{ __('apartment.coupon_applied') }}: " + discount + ' ' + discountText);
+
+                    calculateNightsAndCost();
+                },
+                error: function() {
+                    $('#coupon_message').text("{{ __('apartment.error_verifying_coupon') }}");
+                }
+            }); 
+        });
+    });
 
 
     $(document).ready(function() {
@@ -559,7 +621,7 @@
                 });
     
                 $.ajax({
-                    url: "{{ route('booking.add') }}",  
+                    url: "{{ route('web-booking.add') }}",  
                     method: "POST",
                     data: $(form).serialize(), 
                     success: function(response) {

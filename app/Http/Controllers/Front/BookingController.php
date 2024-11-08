@@ -5,6 +5,7 @@ use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Policy;
 use App\Models\Booking;
+use App\Models\Coupon;
 use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
@@ -91,5 +92,17 @@ class BookingController extends Controller{
 
 
  
+
+
+    public function couponsVerify(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string|exists:coupons,code',
+        ]);
+        $apartment = Apartment::findOrFail($request->apartment_id);
+        $coupon = $this->bookingService->validateCoupon($apartment, $request->code);
+        // $data = $this->bookingService->calculatePrices($apartment->price, $request->number_of_nights, $coupon);
+        return  response()->json($coupon);
+    }
 
 }

@@ -38,13 +38,12 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('notifications', 'notifications')->name('notifications');
             Route::post('toggle-favorite', 'toggleFavorite')->name('toggle.favorite'); 
         });
-
-        Route::controller(BookingController::class)->name('booking.')->prefix('booking')->group(function () {
-            Route::post('add-booking', 'addBooking')->name('add');
+        Route::controller(BookingController::class)->name('web-booking.')->prefix('booking')->group(function () {
+            Route::post('web-booking', 'addBooking')->name('add');
             Route::get('get-booking', 'getBooking')->name('get');
             Route::get('login-apartment', 'loginApartment')->name('login');
+            Route::post('coupons-verify', 'couponsVerify')->name('coupons.verify');
         });
-
     });
 
 });
