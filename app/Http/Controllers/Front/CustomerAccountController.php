@@ -85,9 +85,12 @@ class CustomerAccountController extends Controller
 
 
     //BookingDetails
-    public function BookingDetails(Request $request)
+    public function BookingDetails($number_of_booking )
     {
-        $data['booking'] = Booking::find($request->booking_id);
+        $data['booking'] = Booking::where([
+            'number_of_booking' => $number_of_booking,
+            'customer_id' => auth()->id()
+        ])->firstOrFail();
         return view('booking.details', $data);
     }
 

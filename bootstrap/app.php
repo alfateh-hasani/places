@@ -4,6 +4,7 @@ use App\Http\Middleware\{ApiLocaleKeyMiddleware,ApiSecretKeyMiddleware};
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -27,8 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'localeViewPath'          => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationViewPath::class,
             'appSecret'               => ApiSecretKeyMiddleware::class,
             'GoogleReCaptchaV3'=> TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::class
-
         ]);
+        //reddirect if authenticated
+        $middleware->redirectGuestsTo(fn () => route('home'));
         
     })
     ->withExceptions(function (Exceptions $exceptions) {

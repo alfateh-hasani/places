@@ -16,6 +16,8 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
     Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
+    //search
+    Route::get('/search', [ApartmentController::class, 'search'])->name('apartments.search');
 
 
 
@@ -33,13 +35,14 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('account', 'profile')->name('account');
             Route::post('account-update', 'update')->name('update');
             Route::get('get-booking', 'getBooking')->name('booking');
-            Route::get('booking-details', 'BookingDetails')->name('booking.details');
+            Route::get('booking-details/{number_of_booking}', 'BookingDetails')->name('booking.details');
             Route::get('favorite', 'favorite')->name('favorite');
             Route::get('notifications', 'notifications')->name('notifications');
             Route::post('toggle-favorite', 'toggleFavorite')->name('toggle.favorite'); 
         });
-        Route::controller(BookingController::class)->name('web-booking.')->prefix('booking')->group(function () {
-            Route::post('web-booking', 'addBooking')->name('add');
+        Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
+            Route::get('determine-booking/{apartment_id}', 'determineBookingStatus')->name('determine');
+            Route::post('add-booking', 'addBooking')->name('add');
             Route::get('get-booking', 'getBooking')->name('get');
             Route::get('login-apartment', 'loginApartment')->name('login');
             Route::post('coupons-verify', 'couponsVerify')->name('coupons.verify');

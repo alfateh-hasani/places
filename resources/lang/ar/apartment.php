@@ -24,7 +24,6 @@ return [
     'favorite_list' => 'إجمالي المفضلة',
     'notifications_list' => 'إجمالي الإشعارات',
     'share' => 'مشاركة',
-    'favorite' => 'مفضلة',
     'favorite_attached' => 'تمت إضافة الشقة إلى المفضلة',
     'favorite_added' => 'تمت إضافة الشقة إلى المفضلة',
     'favorite_removed' => 'تمت إزالة الشقة من المفضلة',
@@ -74,5 +73,9 @@ return [
     'coupon_applied' => 'تم تطبيق الكوبون',
     'invalid_coupon' => 'كود الكوبون غير صحيح',
     'error_verifying_coupon' => 'هذا الكوبون غير صالح لهذا الحجز',
-
+    'children_count_max' => 'الحد الأقصى لعدد الأطفال',
+    'adults_count_max' => 'الحد الأقصى لعدد البالغين',
+    'number_of_nights' => 'عدد الليالي',
+    'verify_coupon' => 'تحقق',
+    'coupon_verified' => 'تم التحقق من الكوبون',
 ];

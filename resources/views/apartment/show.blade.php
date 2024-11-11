@@ -14,7 +14,9 @@
             margin:3px  ;
         }
         span.flatpickr-day.selected{
-            background: #6b9dff !important;
+            background: #EF552C !important;
+            color: #fff !important;
+            border-color: #EF552C !important;
         }
     </style>
 
@@ -27,13 +29,13 @@
             {{ $apartment->ml('name') }}
         </h1>
         <div class="rtl:float-left float-right absolute lg:relative z-10 right-3 lg:right-0 top-4 lg:top-0">
-            <a  class="inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
+            <a  class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
                 <img src="{{asset('assets/img/share.svg')}}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 <span class="hidden lg:inline">
                     {{__('apartment.share')}}
                 </span>
             </a>
-            <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})" class="inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
+            <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})" class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
                 @if ($apartment->is_favorite)
                     <button class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite favorite-active ease-in-out duration-300"></button>
                 @else
@@ -60,8 +62,13 @@
         <div class="hidden sm:grid photos grid-cols-4 gap-4 max-w-full rounded-xl overflow-hidden h-[256px] xl:h-[456px] banner-side ease-in-out duration-300">
             
             @if ($apartment->getMedia('image'))
-                @foreach ($apartment->getMedia('image') as $photo)
-                    <div><a data-fancybox="banner" href="{{ $photo->getUrl('grid') }}" class="relative block"><img class="w-full h-[120px] xl:h-[220px] object-cover" src="{{ $photo->getUrl('grid') }}" /></a></div>
+                @foreach ($apartment->getMedia('image') as $key=> $photo)
+                    <div>
+                        <a data-fancybox="banner" href="{{ $photo->getUrl('grid') }}" class="relative block">
+                            <img class="{{$key==0?'w-full h-[256px] xl:h-[456px] object-cover'  :'w-full h-[120px] xl:h-[220px] object-cover'}} " src="{{ $photo->getUrl('grid') }}" />
+                            
+                        </a>
+                </div>
                 @endforeach
             @endif 
         </div>
@@ -239,7 +246,8 @@
                             <ul>
                                 @foreach ($apartment->features as $item)
                                     <li class="inline-block mb-6 w-full xl:w-4/12 hover:text-price ease-in-out duration-300 cursor-pointer">
-                                        <img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" />
+                                        <img class="inline-block rtl:ml-2 mr-2" width="20" height="20" 
+                                        src="{{getImage($item,'icon')}}" />
                                         <p class="inline-block ml-4">
                                             {{  $item->{'name_'.app()->getLocale()}  }}
                                         </p>
@@ -320,29 +328,29 @@
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
                     <p class="font-normal text-base text-reviews">
                         <span class="font-bold text-2xl text-black translate-y-0.5 inline-block">
-                            {{__('apartment.booking_details')}}
+                            {{$apartment->price}} 
                         </span> 
-                        {{-- {{__('apartment.sar')}} --}}
+                        {{__('apartment.sar')}}
                     </p>
-                    <form id="booking" class="mb-9 space-y-4" method="POST">
-                        <input type="hidden" id="apartment_id" name="apartment_id" value="{{ $apartment->id }}">
-
-                        @csrf
+                    <form action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="GET">
+             
                         <div class="flex flex-wrap -mx-2">
                             <div class="flex flex-col w-1/2 px-2">
                                 <label for="checkin" class="mb-1 font-semibold">@lang('apartment.checkin_date')</label>
-                                <input type="date" id="checkin" name="checkin" class="border border-gray-300 rounded-lg h-12 px-3" required
-                                    value="{{ now()->format('Y-m-d') }}">
+                                <input type="date" id="checkin" name="checkin" class="bg-blackopacity border border-gray-300 rounded-lg h-12 px-3" required
+                                    value="{{$started_day}}">
                             </div>
                         
                             <div class="flex flex-col w-1/2 px-2">
                                 <label for="checkout" class="mb-1 font-semibold">@lang('apartment.checkout_date')</label>
-                                <input type="date" id="checkout" name="checkout" class="border border-gray-300 rounded-lg h-12 px-3" required
-                                    value="{{ now()->format('Y-m-d') }}">
+                                <input type="date" id="checkout" name="checkout" class="bg-blackopacity border border-gray-300 rounded-lg h-12 px-3" required
+                                    value="{{ $next_started_day }}">
                             </div>
                         </div>
+                 
+                        
                     
-                        <div class="flex flex-wrap -mx-2">
+                        {{-- <div class="flex flex-wrap -mx-2">
                             <div class="flex flex-col w-1/2 px-2">
                                 <label for="adults" class="mb-1 font-semibold">@lang('apartment.adults_count')</label>
                                 <input type="number" 
@@ -368,7 +376,7 @@
                                        class="border border-gray-300 rounded-lg h-12 px-3" 
                                        oninput="validateInput(this, '{{__('apartment.min_children')}}', '{{__('apartment.max_children').' '.$apartment->children_count}}')">
                             </div>
-                        </div>
+                        </div> --}}
                         
                             <script>
                             function validateInput(input, minMessage, maxMessage) {
@@ -382,16 +390,16 @@
                             }
                             </script>
                         
-                        <div class="flex flex-col">
+                        {{-- <div class="flex flex-col">
                             <label for="coupon_code" class="mb-1 font-semibold">@lang('apartment.coupon_code')</label>
                             <input type="text" id="coupon_code" name="coupon_code" class="border border-gray-300 rounded-lg h-12 px-3">
                             <button type="button" id="verify_coupon" class="bg-price rounded-lg h-12 w-full font-semibold text-white mt-4">
                                 تحقق من الكوبون
                             </button>
                             <div id="coupon_message" class="mt-2 text-red-500"></div>
-                        </div>
+                        </div> --}}
                         
-                        <ul>
+                        {{-- <ul>
                             @foreach (config('payments.gateways') as $index => $item)
                                 <li>
                                     <label class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300 cursor-pointer">
@@ -403,7 +411,7 @@
                                     </label>
                                 </li>
                             @endforeach
-                        </ul>
+                        </ul> --}}
                          
                         <ul>
                             <li class="mb-4 font-semibold text-sm text-title">
@@ -420,13 +428,13 @@
                                 <span class="float-right rtl:float-left" id="totalNights">1 {{ __('apartment.nights') }}</span>
                                 <div class="clear-both"></div>
                             </li>
-                            <li class="mb-4 font-semibold text-sm text-title">
+                            {{-- <li class="mb-4 font-semibold text-sm text-title">
                                 <span>{{ __('apartment.discounted_cost') }}</span>
                                 <span class="float-right rtl:float-left" id="discounted_cost">
                                     0.00 {{ __('apartment.price') }}
                                 </span>
                                 <div class="clear-both"></div>
-                            </li>
+                            </li> --}}
                             <li class="mb-4 font-semibold text-sm text-title">
                                 <span>{{ __('apartment.total_cost') }}</span>
                                 <span class="float-right rtl:float-left" id="totalCost"> {{$apartment->price .' '.__('apartment.price') }} </span>
@@ -537,43 +545,6 @@
         }
     }
 
-
-    $(document).ready(function() {
-        $('#checkin, #checkout').on('change', calculateNightsAndCost);
-        $('#verify_coupon').on('click', function() {
-            const couponCode = $('#coupon_code').val();
-            const apartment_id = $('#apartment_id').val();
-            const totalNights = $('#totalNights').val();
-            if (couponCode.trim() === "") {
-                $('#coupon_message').text("{{ __('apartment.enter_coupon') }}");
-                return;
-            }
-            $.ajax({
-                url: '{{ route("web-booking.coupons.verify") }}',
-                method: 'POST',
-                data: {
-                    code: couponCode,
-                    apartment_id: apartment_id,
-                    total_nights: totalNights,
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    $('#verify_coupon').prop('disabled', true);
-                    $('#coupon_code').prop('disabled', true);
-                    discount = response.discount;
-                    let discountText = response.type === "percentage" ? "%" : "{{ __('apartment.price_unit') }}";
-                    $('#coupon_message').text("{{ __('apartment.coupon_applied') }}: " + discount + ' ' + discountText);
-
-                    calculateNightsAndCost();
-                },
-                error: function() {
-                    $('#coupon_message').text("{{ __('apartment.error_verifying_coupon') }}");
-                }
-            }); 
-        });
-    });
-
-
     $(document).ready(function() {
         // Calculate nights and cost on date change
         $('#checkin, #checkout').on('change', calculateNightsAndCost);
@@ -619,9 +590,10 @@
                     theme: "sk-cube-grid",  
                     message: "{{__('apartment.loading_message')}}"  
                 });
-    
+                var apartment_id = $('#apartment_id').val();
                 $.ajax({
-                    url: "{{ route('web-booking.add') }}",  
+                   
+                    url: "{{ route('web-booking.determine',"+apartment_id+") }}",  
                     method: "POST",
                     data: $(form).serialize(), 
                     success: function(response) {
@@ -666,11 +638,11 @@
             onDayCreate: function(dObj, dStr, fp, dayElem) {
                 const dateStr = dayElem.dateObj.toISOString().split('T')[0];
                 if (bookedDays.includes(dateStr)) { 
-                    dayElem.style.backgroundColor = "#f08080";  
+                    dayElem.style.backgroundColor = "#0000001a";  
                     dayElem.style.color = "#fff";  
                     dayElem.classList.add("flatpickr-disabled");  
                 } else {
-                    dayElem.style.backgroundColor = "#90ee90"; 
+                    dayElem.style.backgroundColor = "#fff"; 
                     dayElem.style.color = "#000"; 
                 }
             },
@@ -679,10 +651,10 @@
                     instance.calendarContainer.querySelectorAll(".flatpickr-day").forEach(dayElem => {
                         const dateStr = dayElem.dateObj.toISOString().split('T')[0];
                         if (bookedDays.includes(dateStr)) {
-                            dayElem.style.backgroundColor = "#f08080";  
-                            dayElem.style.color = "#fff";  
+                            dayElem.style.backgroundColor = "#0000001a";  
+                            dayElem.style.color = "#000";  
                         } else {
-                            dayElem.style.backgroundColor = "#90ee90"; 
+                            dayElem.style.backgroundColor = "#fff"; 
                             dayElem.style.color = "#000"; 
                         }
                     });
@@ -690,7 +662,7 @@
                 if (selectedDates.length > 0 && instance.calendarContainer) {
                     const selectedDayElem = instance.calendarContainer.querySelector(`.flatpickr-day[aria-label="${selectedDates[0].toDateString()}"]`);
                     if (selectedDayElem) {
-                        selectedDayElem.style.backgroundColor = "#6b9dff";
+                        selectedDayElem.style.backgroundColor = "#0000001a";
                         selectedDayElem.style.color = "#fff";
                     }
                 }
@@ -704,6 +676,20 @@
     });
 
 
- 
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkinInput = document.getElementById('checkin');
+        const checkoutInput = document.getElementById('checkout');
+        checkinInput.addEventListener('change', function() {
+            const checkinDate = new Date(this.value);
+            const minCheckoutDate = new Date(checkinDate);
+            minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+            const year = minCheckoutDate.getFullYear();
+            const month = String(minCheckoutDate.getMonth() + 1).padStart(2, '0');
+            const day = String(minCheckoutDate.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+            checkoutInput.value = formattedDate;
+            checkoutInput.min = formattedDate;
+        });
+    });
 </script> 
 @endpush

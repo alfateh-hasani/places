@@ -1,10 +1,10 @@
 <div class="bg-feature border border-feature-border rounded-xl p-4 relative mb-4">
-    <a href="{{route('customer.booking.details')}}" >
+    <a href="{{route('customer.booking.details',$item->number_of_booking)}}" >
         <img class="mb-4 xl:mb-0 float-left rtl:float-right rtl:ml-4 w-full xl:w-56 h-44 rounded-xl mr-4 object-cover" 
         src="{{getImage($item->apartment,'image')}}" />
     </a>
     <div class="ltr:float-right rtl:float-left border-l border-feature-border ltr:pl-3 rtl:pm-3 py-1">
-        <a  href="{{route('customer.booking.details')}}" >
+        <a  href="{{route('customer.booking.details',$item->number_of_booking)}}" >
             <p class="text-sm sm:text-base font-semibold text-lg mb-4">{{__('apartment.booking_summary')}}</p>
         </a>
         <a><p class="text-sm sm:text-base text-reviews "> {{__('apartment.night_price')}} 

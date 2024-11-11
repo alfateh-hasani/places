@@ -63,7 +63,7 @@ class HomeController extends Controller
 
     public function getListingApartments()
     {
-        $apartments = $this->apartment->with('building.city')->latest()->paginate(1);
+        $apartments = $this->apartment->with('building.city')->latest()->paginate(20);
         $this->data['apartments'] = ApartmentResource::collection($apartments);
         $this->data['pagination'] =  $this->pagination($apartments);
         return $this->successResponse($this->data);

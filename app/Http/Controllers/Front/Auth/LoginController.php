@@ -14,8 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
-{
-    
+{  
     private function validatePhoneStartsWith5($phone)
     {
         return preg_match('/^5\d{8}$/', $phone); // Validates phone starts with '5'

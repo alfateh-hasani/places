@@ -4,8 +4,9 @@ return [
     'gateways' => [
         'tap' => [
             'value' => 'tap',
-            'icon' => 'fa-cc-visa',
+            'icon' => 'tap-payments-logo.png',
             'currency' => 'SAR',
+            'explanation' => 'Pay with Tap',
             'class' => \App\Services\PaymentMethods\TapPayment::class,
             'api_key' => 'https://api.tap.company/v2/charges',
             'sandbox' => true,
