@@ -29,14 +29,23 @@
                     <p class="mb-4">
                         {{__('customer.upcoming_bookings')}}
                     </p>
-                    @foreach ($upcoming_bookings as $item) 
-                      @include('customer.section.booking-card',['item'=>$item])
-                    @endforeach
-                   
+                    @if ($upcoming_bookings->isNotEmpty())
+                        @foreach ($upcoming_bookings as $item) 
+                            @include('customer.section.booking-card',['item'=>$item])
+                        @endforeach
+                    @else
+                        <p class="text-center">{{__('customer.no_upcoming_bookings')}}</p>
+                    @endif
+                  
+                 
                     <p class="mb-4">{{__('customer.past_bookings')}}</p>
-                    @foreach ($past_bookings as $item) 
-                         @include('customer.section.booking-card',['item'=>$item])
-                    @endforeach
+                    @if ($past_bookings->isNotEmpty())
+                        @foreach ($past_bookings as $item) 
+                            @include('customer.section.booking-card',['item'=>$item])
+                        @endforeach
+                        @else
+                        <p class="text-center">{{__('customer.no_past_bookings')}}</p>
+                    @endif
                 </div>
             </div>
         </div>

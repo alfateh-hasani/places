@@ -23,6 +23,7 @@
         
 @endpush
 @section('content')
+
 <section class="detail"> 
     <div class="py-0 lg:py-10 container relative">
         <h1 class="rtl:float-right float-left font-semibold text-2xl hidden lg:block text-title">
@@ -444,7 +445,17 @@
                             
                             
                         </ul>
-                    
+                        @if ($errors->any())
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <strong class="font-bold">حدث خطأ!</strong>
+                            <span class="block sm:inline">
+                                @foreach ($errors->all() as $error)
+                                    {{ $error }}
+                                @endforeach
+                            </span>
+                             
+                        </div>
+                        @endif
                         <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
                     </form>
                     

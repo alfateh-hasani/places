@@ -13,7 +13,7 @@
 
        <div class="sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 max-w-full slider">
             @foreach ($cities as $city)
-                <a   class="{{ $loop->first ? 'col-span-2' : '' }} relative px-2 sm:px-0">
+                <a href="{{route('by-city',$city->slug)}}"  class="{{ $loop->first ? 'col-span-2' : '' }} relative px-2 sm:px-0">
                     <img   src="{{ $city->image }}"    class="w-full h-80 object-cover rounded-xl"   alt="{{ $city->ml('name') }}" />
                     <h1  class="absolute left-6 bottom-6 font-normal font-semibold text-base text-white z-10 ease-in-out duration-200">
                         {{ $city->ml('name') }}

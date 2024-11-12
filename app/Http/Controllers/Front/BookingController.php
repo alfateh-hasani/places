@@ -10,8 +10,9 @@ use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
 use App\Services\ProcessPaymentService;
-
+use Exception;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller{
     protected $booking;
@@ -50,7 +51,7 @@ class BookingController extends Controller{
             $apartment = Apartment::findOrFail($validatedData['apartment_id']);
             $validatedData['adults_count'] = $apartment->adults_count;
             $validatedData['children_count'] = $apartment->children_count;
-            // dd($customer,$apartment,$validatedData);
+            $validatedData['status'] = 'pending';  
             $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
             $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment); 
             if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
@@ -109,26 +110,27 @@ class BookingController extends Controller{
         return  response()->json($data);
     }
 
-
-    public function determineBookingStatus(Request $request ,$apartment_id)
+    public function determineBookingStatus(Request $request, $apartment_id)
     {
-        $request->validate([
-            'checkin' => 'required',
-            'checkout' => 'required|date',
-        ]);
-        $apartment = Apartment::findOrFail($apartment_id);
-        $this->bookingService->checkAvailability($apartment, $request->checkin, $request->checkout);
-        $this->bookingService->validateGuestsCount($apartment, $request->number_of_adults, $request->number_of_children);
-        $data = $this->bookingService->getDetermineBooking($apartment, $request->checkin, $request->checkout);
-        $payment_methods = Policy::where('type', 'booking')->first();
-        $data['policy_title'] = $payment_methods?->{'name_' . app()->getLocale()};
-        $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
-        $data['apartment'] = $apartment;
-        $data['payment_details'] = $this->getPaymentDetails();
-        
-        return view('booking.determine-booking', $data);
+        try {
+            $apartment = Apartment::findOrFail($apartment_id);
+                $this->bookingService->checkAvailability($apartment, $request->checkin, $request->checkout);
+            $this->bookingService->validateGuestsCount($apartment, $request->number_of_adults, $request->number_of_children);
+            $data = $this->bookingService->getDetermineBooking($apartment, $request->checkin, $request->checkout);
+            $payment_methods = Policy::where('type', 'booking')->first();
+            $data['policy_title'] = $payment_methods?->{'name_' . app()->getLocale()};
+            $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
+            $data['apartment'] = $apartment;
+            $data['payment_details'] = $this->getPaymentDetails();
+ 
+            return view('booking.determine-booking', $data);
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (Exception $e) {
+            return back()->withErrors(['error' => __('api.general_error')])->withInput();
+        }
     }
-
+    
 
     private function getPaymentDetails()
     {

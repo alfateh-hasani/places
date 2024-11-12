@@ -29,4 +29,6 @@ return [
     'error_message' => 'حدث خطأ ما',
     'upcoming_bookings' => 'الحجوزات القادمة',
     'past_bookings' => 'الحجوزات السابقة',
+    'no_past_bookings' => 'لا توجد حجوزات سابقة',
+    'no_upcoming_bookings' => 'لا توجد حجوزات قادمة',
 ];

@@ -10,7 +10,6 @@
 @section('content')
 
 
-
 <section class="container py-10">
     <a>
         <img class="inline-block mr-4" src="{{asset('assets/img/back.svg')}}" />

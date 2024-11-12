@@ -47,7 +47,7 @@
                 </p>
             </a>
         </li>
-        <li>
+        {{-- <li>
             <a class="block py-4">
                 <div class="inline-block w-6">
                     <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="22.86" height="21.2" viewBox="0 0 22.86 21.2">
@@ -63,8 +63,8 @@
                     {{__('site.wallet_balance')}}
                 </p>
             </a>
-        </li>
-        <li>
+        </li> --}}
+        {{-- <li>
             <a class="block py-4 ">
                 <div class="inline-block w-6">
                     <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
@@ -75,8 +75,8 @@
                     {{__('site.messages')}}
                 </p>
             </a>
-        </li>
-        <li>
+        </li> --}}
+        {{-- <li>
             <a href="{{route('customer.notifications')}}" class="block py-4 {{request()->fullUrl() == route('customer.notifications') ?'text-price' :''}}">
                 <div class="inline-block w-6">
                     <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="17.997" height="19.86" viewBox="0 0 17.997 19.86">
@@ -90,7 +90,7 @@
                     {{__('site.notifications')}}
                 </p>
             </a>
-        </li>
+        </li> --}}
         <li>
             <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"  class="block py-2 bg-[#fdede9] text-center rounded-lg text-price mt-20">
                 <div class="inline-block w-6">

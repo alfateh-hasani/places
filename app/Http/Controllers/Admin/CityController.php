@@ -50,6 +50,12 @@ class CityController extends CrudController
             'type' => 'text',
             'label' => 'الاسم بالانجليزي',
         ]);
+        //slug
+        CRUD::addColumn([
+            'name' => 'slug',
+            'type' => 'text',
+            'label' => 'الاسم اللطيف',
+        ]);
         CRUD::addColumn([
             'name' => 'image',
             'type' => 'image',
@@ -98,6 +104,18 @@ class CityController extends CrudController
             'label' => 'الاسم بالانجليزي',
             'attributes' => [
                 'placeholder' =>  'الاسم بالانجليزي',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //slug
+        $this->crud->addField([
+            'name' => 'slug',
+            'type' => 'text',
+            'label' => 'الاسم اللطيف',
+            'attributes' => [
+                'placeholder' =>  'Slug',
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',

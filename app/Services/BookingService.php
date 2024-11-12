@@ -96,6 +96,7 @@ class BookingService
                 }
                 $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
                 $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer);
+                $booking = $this->createBooking($transaction->id, null);
         return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
     }
 
@@ -124,7 +125,7 @@ class BookingService
             'booking_source' => $data->booking_source,
             'coupon_id' => $data->coupon_id ?? null  ,
             'coupon_code' => $data->coupon_code ?? null,
-            'status' => 'booked',
+            'status' => 'pending',
             'payment_id' => $payment_id,
             'payment_status' => 'paid',
             'check_in' => $data->check_in,
@@ -162,6 +163,18 @@ class BookingService
     }
 
 
-    //getPaymentDetails
+    
+
+    public function deleteUnpaidBookings()
+    {
+        $tenMinutesAgo = now()->subMinutes(10);
+        $unpaidBookings = Booking::where('status', 'pending')
+                                ->where('created_at', '<=', $tenMinutesAgo)
+                                ->get();
+
+        foreach ($unpaidBookings as $booking) {
+            $booking->delete();
+        }
+    }
 
 }

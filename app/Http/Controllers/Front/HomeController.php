@@ -67,4 +67,21 @@ class HomeController extends Controller
         SEOTools::opengraph()->addProperty('type', 'articles');
 
     }
+
+
+    //apartments-by-city
+    public function getApartmentsByCity(Request $request, $slug)
+    {
+        $slug = urldecode($slug);
+        $city = City::whereSlug($slug)->first();
+        if (!$city) {
+            abort(404);
+        }
+        $this->generateSeo($city);
+        $this->data['city'] = $city;
+        $this->data['apartments'] = $city->apartments()->where('is_active', true)->orderBy('id', 'desc')->paginate(30);
+        $this->data['cities'] = City::orderBy('sort_order', 'asc')->withCount('apartments')->get();
+        $this->data['buildings'] = City::with('buildings')->orderBy('sort_order', 'asc')->whereHas('buildings')->get();
+        return view('apartment.by-city', $this->data);
+    }
 }
