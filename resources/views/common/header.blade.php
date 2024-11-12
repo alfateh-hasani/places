@@ -4,25 +4,25 @@
       <a href="{{ route('home')}}">
         <img src="{{ asset('assets/img/logo.svg') }}" alt="Logo" />
       </a>
-    </div>
+    </div> 
     <ul class="menu absolute">
       <li class="float-left rtl:float-right px-6">
-        <a class="font-normal text-base text-black">@lang('site.listings')</a>
-        <ul class="absolute pt-3">
+        <a  href="" class="font-normal text-base text-black">@lang('site.listings')</a>
+        {{-- <ul class="absolute pt-3">
           @for ($i = 0; $i < 4; $i++)
-          <li>
+          <li>about us	
             <a class="bg-white block py-1 px-4 mb-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300">
               @lang('site.sub_menu')
             </a>
           </li>
           @endfor
-        </ul>
+        </ul> --}}
       </li>
       <li class="float-left rtl:float-right px-6">
-        <a class="font-normal text-base text-black">@lang('site.blog')</a>
+        <a href="{{route('page','blog')}}" class="font-normal text-base text-black">@lang('site.blog')</a>
       </li>
       <li class="float-left rtl:float-right px-6">
-        <a class="font-normal text-base text-black">@lang('site.contact_us')</a>
+        <a href="{{route('page','contact')}}" class="font-normal text-base text-black">@lang('site.contact_us')</a>
       </li>
       <li class="clear-both"></li>
     </ul>

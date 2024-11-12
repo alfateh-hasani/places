@@ -7,6 +7,7 @@ use App\Http\Controllers\Front\{HomeController,ApartmentController, BookingContr
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function()
 {
+    Route::get('apartments-filter', [ApartmentController::class, 'search'])->name('apartments.search');
 
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -17,7 +18,6 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
     //search
-    Route::get('/search', [ApartmentController::class, 'search'])->name('apartments.search');
 
 
 

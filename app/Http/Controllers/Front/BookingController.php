@@ -92,10 +92,7 @@ class BookingController extends Controller{
          return  view('booking.details',$data);
     }
 
-    public function paymentMethodFailed()
-    {
-        return $this->errorResponse('Payment Failed');
-    }
+ 
 
 
  

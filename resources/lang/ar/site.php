@@ -85,4 +85,20 @@ return [
     'location' => 'أين تجدنا',
     'all_rights' => 'جميع الحقوق محفوظة',
     'contact_us_menu' => 'تواصل معنا',
+    'filters_city_id' => 'المدينة',
+    'filters_check_in' => 'تاريخ الوصول',
+    'filters_check_out' => 'تاريخ المغادرة',
+    'filters_guests' => 'الضيوف',
+    'filters_children' => 'الأطفال',
+    'filters_adults' => 'الكبار',
+    'search' => 'بحث',
+    'add_guests' => 'إضافة ضيوف',
+    'filters' => 'الفلاتر',
+    'quick_links' => 'روابط سريعة',
+    'blogs' => 'المدونات',
+    'faqs' => 'الأسئلة الشائعة',
+    'policy' => 'السياسات',
+    'terms' => 'الشروط',
+    ''
+
 ];

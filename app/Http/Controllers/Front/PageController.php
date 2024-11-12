@@ -63,7 +63,7 @@ class PageController extends Controller
     {
         $this->generateSeo($page);
         $this->data['page'] = $page;
-        return view('pages.about', $this->data);
+        // return view('pages.about', $this->data);
     }
 
     private function faqPage(Page $page)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Front;
 use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
+use App\Models\City;
 use Illuminate\Http\Request;
 
 class ApartmentController extends Controller
@@ -50,8 +51,13 @@ class ApartmentController extends Controller
     //search
     public function search(Request $request)
     {
-    
-        $filters = $request->filters;
+        $filters = [
+            'city_id' => $request->city_id,
+            'check_out' => $request->check_out,
+            'check_in' => $request->check_in,
+            'adults_count' => $request->adults_count,
+            'children_count' => $request->children_count,
+        ];
         $query = $this->apartment::query();
         if (!empty($filters)) {
             foreach ($filters as $key=> $val) {
@@ -62,15 +68,25 @@ class ApartmentController extends Controller
                         });
                         continue;
                     }
-                    
-                    
                     $filterHandler = FilterFactory::make($key);
                     $query = $filterHandler->apply($query, $val);
                 }
             }
         }
         $apartments = $query->paginate(30);
-        return view('apartment.index', compact('apartments'));
+        $data['cities'] =  City::orderBy('sort_order','asc')->withCount('apartments')->get();
+        $data['apartments'] = $apartments;
+        $data['filter_keys'] = [
+            'min_price' =>  $this->apartment->min('price'),
+            'max_price' =>  $this->apartment->max('price'),
+            'max_rooms' =>  $this->apartment->max('num_rooms'),
+            'max_area'  =>   $this->apartment->max('area'),
+            'min_area'  =>   $this->apartment->min('area'),
+            'max_beds'  =>   $this->apartment->max('num_beds'),
+            'max_bathrooms'  =>   6, // $this->apartment->max('num_bathrooms'), // not exist in db
+        ];
+        
+        return view('apartment.list', $data);
     }
     
  
