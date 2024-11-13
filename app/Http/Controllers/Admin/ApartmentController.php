@@ -133,7 +133,7 @@ class ApartmentController extends CrudController
             ]);
             //video
             CRUD::field('video')
-            ->label(__('cms.video'))
+            ->label('الفيديو')
             ->type('upload_multiple')
             ->withMedia([
                 'collection' => 'video', // will pick the collection definition from your model

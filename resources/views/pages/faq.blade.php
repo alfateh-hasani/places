@@ -15,10 +15,11 @@
             <ul>
                 @foreach ($categories as $category)
                     <li>
-                        <button class="category-tab relative font-normal text-base text-white opacity-80 block py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100"
+                        <button class="category-tab relative font-normal text-base text-white opacity-80 block 
+                        py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100"
                                 data-category="{{ $category->id }}">
                             {{ $category->{'name_'.app()->getLocale()} }}
-                            <img class="inline-block absolute right-0 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
+                            <img class="inline-block absolute ltr:right-0 rtl:left-0 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
                         </button>
                     </li>
                 @endforeach
@@ -31,9 +32,9 @@
                 <ul class="faq-category hidden" id="category-{{ $category->id }}">
                     @foreach ($category->questions as $question)
                         <li class="faq-item border border-border rounded-lg shadow-md mb-4 hover:border-price ease-in-out duration-300 cursor-pointer">
-                            <a class="faq-question relative block mx-5 py-5 pr-5 font-normal text-base text-black">
+                            <a class="faq-question relative block mx-5 py-5 pr-5  font-normal text-base text-black">
                                 {{ $question->{'title_'.app()->getLocale()} }}
-                                <img class="inline-block absolute right-0 top-7" src="{{ asset('assets/img/faq.svg') }}" />
+                                <img class="inline-block absolute ltr:right-0 rtl:left-0 top-7" src="{{ asset('assets/img/faq.svg') }}" />
                             </a>
                             <p class="faq-answer p-5 font-normal text-base text-black hidden">{{ $question->{'description_'.app()->getLocale()} }}</p>
                         </li>

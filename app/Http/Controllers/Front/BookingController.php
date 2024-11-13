@@ -10,6 +10,8 @@ use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
 use App\Services\ProcessPaymentService;
+use Carbon\Carbon;
+use Config;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -52,15 +54,16 @@ class BookingController extends Controller{
             $validatedData['adults_count'] = $apartment->adults_count;
             $validatedData['children_count'] = $apartment->children_count;
             $validatedData['status'] = 'pending';  
-            $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
+            $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);            
             $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment); 
+            dd($paymentResponse);
             if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
                 return redirect($paymentResponse['transaction']['url']);
             } else {
                 return  redirect()->back()->with('error', $paymentResponse);
             }
         } catch (\Exception $exception) {
-            return $this->errorResponse($exception->getMessage());
+            return  redirect()->back()->with('error', $exception->getMessage());
         }
         
 
@@ -71,14 +74,15 @@ class BookingController extends Controller{
 
     public function paymentMethodCallBack(Request $request , $paymentMethodCode , $transaction_id){
         if(!in_array($paymentMethodCode,array_keys(config('payments.gateways')))){
-            return $this->errorResponse(['Payment Method not Exists!']);
+            return  redirect()->back()->with('error', __('api.payment_method_not_supported'));
         }
         $processPaymentService = new ProcessPaymentService();
         $data = $request->all();
         $data['transaction_id'] = $transaction_id;
         $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode , $data);
         if($handlePayment['status']==true){
-          $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
+        //  $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
+         $booking =  $this->booking->where('transaction_id',$transaction_id)->first();
           return redirect(route('customer.booking.details',[$booking->number_of_booking]));
         }
         dd($data);
@@ -145,5 +149,25 @@ class BookingController extends Controller{
         }
         return $paymentMethods;
     }
+
+    public function cancelBooking(Request $request)
+    {
+        $booking_id = $request->booking_id;
+        $cancellationWindow =Config::get('settings.cancel_booking');
+        $booking = $this->booking->find($booking_id);
+        if (!$booking) {
+            return redirect()->back()->with('error', __('api.booking_not_found'));
+        }
+        $checkInDate = Carbon::parse($booking->check_in);
+        $currentDate = Carbon::now();
+            $daysBeforeCheckIn = $currentDate->diffInDays($checkInDate, false); 
+        if ($daysBeforeCheckIn < $cancellationWindow) {
+            return redirect()->back()->with('error', __('booking.cancellation_window_expired'));
+        }
+        $booking->status = 'canceled';
+        $booking->save();
+        return redirect()->back()->with('success', __('booking.success'));
+    }
+    
 
 }

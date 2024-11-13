@@ -104,7 +104,8 @@ class BookingController extends Controller{
         $data['transaction_id'] = $transaction_id;
         $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode , $data);
         if($handlePayment['status']==true){
-          $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
+        //   $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
+            $booking =  $this->booking->where('transaction_id',$transaction_id)->first();
           $this->data['booking'] = $booking->id;
           return redirect(route('paymentMethodSuccess',['booking_id'=>$booking->id,'booking_number'=>$booking->number_of_booking]));
         }

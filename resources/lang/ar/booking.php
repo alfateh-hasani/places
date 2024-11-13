@@ -29,4 +29,12 @@ return [
     'go_to_link' => 'الذهاب إلى الرابط',
     'cancel' => 'إلغاء الحجز',
     'print' => 'طباعة الحجز',
+    'are_you_sure' => 'هل أنت متأكد من إلغاء الحجز؟',
+    'yes' => 'نعم',
+    'no' => 'لا',
+    'cancel_booking_confirmation' => 'تأكيد إلغاء الحجز',
+    'status_canceled' => 'تم الإلغاء',
+    'success' => 'تم بنجاح',
+    'success_message' => 'تم تحديث الحجز بنجاح',
+    'cancellation_window_expired' => 'نافذة الإلغاء قد انتهت',
 ];

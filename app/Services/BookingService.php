@@ -96,7 +96,7 @@ class BookingService
                 }
                 $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
                 $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer);
-                $booking = $this->createBooking($transaction->id, null);
+                $this->createBooking($transaction->id, null);
         return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
     }
 
@@ -110,7 +110,7 @@ class BookingService
                 throw ValidationException::withMessages(['transaction_id' =>  __('api.transaction_not_exists')]);
          }
          $data = json_decode($transaction->booking_data);
-         $transaction->update(['payment_id' => $payment_id]);
+        //  
          $booking =  Booking::create([
             'apartment_id' => $transaction->apartment_id,
             'customer_id' => $transaction->customer_id,
@@ -126,11 +126,13 @@ class BookingService
             'coupon_id' => $data->coupon_id ?? null  ,
             'coupon_code' => $data->coupon_code ?? null,
             'status' => 'pending',
-            'payment_id' => $payment_id,
-            'payment_status' => 'paid',
+            'payment_id' => $payment_id??null,
+            'payment_status' => 'pending',
             'check_in' => $data->check_in,
             'check_out' => $data->check_out,
+            'transaction_id' => $transaction->id,
          ]);
+         $transaction->update(['booking_id' => $booking->id]);
          DB::commit();
          return $booking;
     }

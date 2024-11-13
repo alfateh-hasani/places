@@ -1,5 +1,15 @@
 @extends('layouts.master')
+@push('css')
 
+<style>
+     .cancel-booking-btn[disabled] {
+        background-color: #f5d7d1;  
+        color: #a8a8a8;  
+        cursor: not-allowed; 
+        opacity: 0.6;  
+    }
+</style>
+@endpush
 @section('content')
 
 
@@ -34,12 +44,13 @@
                             {{__('booking.print')}}
                         </span>
                      </a>
-                     <a class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2">
-                         <svg class="inline-block" fill="currentColor" height="20" viewBox="0 0 329.26933 329" width="20" xmlns="http://www.w3.org/2000/svg" id="fi_1828778"><path d="m194.800781 164.769531 128.210938-128.214843c8.34375-8.339844 8.34375-21.824219 0-30.164063-8.339844-8.339844-21.824219-8.339844-30.164063 0l-128.214844 128.214844-128.210937-128.214844c-8.34375-8.339844-21.824219-8.339844-30.164063 0-8.34375 8.339844-8.34375 21.824219 0 30.164063l128.210938 128.214843-128.210938 128.214844c-8.34375 8.339844-8.34375 21.824219 0 30.164063 4.15625 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921875-2.089844 15.082031-6.25l128.210937-128.214844 128.214844 128.214844c4.160156 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921874-2.089844 15.082031-6.25 8.34375-8.339844 8.34375-21.824219 0-30.164063zm0 0"></path></svg>
-                         <span class="inline-block ml-2 text-sm">   
-                            {{__('booking.cancel')}}
-                         </span>
-                     </a>
+                     <button {{$booking->status =='canceled'? 'disabled' :''}}   class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn" data-booking-id="{{ $booking->id }}">
+                        <svg class="inline-block" fill="currentColor" height="20" viewBox="0 0 329.26933 329" width="20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="m194.800781 164.769531 128.210938-128.214843c8.34375-8.339844 8.34375-21.824219 0-30.164063-8.339844-8.339844-21.824219-8.339844-30.164063 0l-128.214844 128.214844-128.210937-128.214844c-8.34375-8.339844-21.824219-8.339844-30.164063 0-8.34375 8.339844-8.34375 21.824219 0 30.164063l128.210938 128.214843-128.210938 128.214844c-8.34375 8.339844-8.34375 21.824219 0 30.164063 4.15625 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921875-2.089844 15.082031-6.25l128.210937-128.214844 128.214844 128.214844c4.160156 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921874-2.089844 15.082031-6.25 8.34375-8.339844 8.34375-21.824219 0-30.164063zm0 0"></path>
+                        </svg>
+                        <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }}</span>
+                    </button>
+                    
                      <a class="py-2.5 px-4 inline-block rounded-md ml-2 border border-price text-center text-price">
                          <svg class="inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="fi_5728913" data-name="Layer 1" viewBox="0 0 512 512" width="20" height="20"><path d="M489.417,279v-1.182c0-62.1-24.349-120.646-68.56-164.857S318.1,44.4,256,44.4,135.354,68.749,91.143,112.96s-68.56,102.758-68.56,164.856V279A27.578,27.578,0,0,0,0,306.081V397.1a27.571,27.571,0,0,0,27.538,27.539H44.556v3.934A39.075,39.075,0,0,0,83.586,467.6H98.705a23.94,23.94,0,0,0,23.912-23.913v-184.2a23.94,23.94,0,0,0-23.912-23.913H83.586a39.074,39.074,0,0,0-39.03,39.03v3.935H38.583v-.727C38.583,157.933,136.116,60.4,256,60.4s217.417,97.533,217.417,217.416v.727h-5.973v-3.935a39.074,39.074,0,0,0-39.03-39.03H413.3a23.94,23.94,0,0,0-23.912,23.913v184.2A23.94,23.94,0,0,0,413.3,467.6h15.119a39.075,39.075,0,0,0,39.03-39.031v-3.934h17.018A27.571,27.571,0,0,0,512,397.1V306.081A27.578,27.578,0,0,0,489.417,279Zm-428.861-4.39a23.056,23.056,0,0,1,23.03-23.03H98.705a7.921,7.921,0,0,1,7.912,7.913v184.2a7.921,7.921,0,0,1-7.912,7.913H83.586a23.056,23.056,0,0,1-23.03-23.031Zm-16,134.027H27.538A11.552,11.552,0,0,1,16,397.1V306.081a11.551,11.551,0,0,1,11.538-11.538H44.556Zm406.888,19.934a23.056,23.056,0,0,1-23.03,23.031H413.3a7.921,7.921,0,0,1-7.912-7.913v-184.2a7.921,7.921,0,0,1,7.912-7.913h15.119a23.056,23.056,0,0,1,23.03,23.03ZM496,397.1a11.552,11.552,0,0,1-11.538,11.539H467.444V294.543h17.018A11.551,11.551,0,0,1,496,306.081Z"></path></svg>
                      </a>
@@ -116,3 +127,58 @@
 
 
 @endsection
+
+@push('js')
+@include('customer.section.script-form')
+<script>
+
+$(document).ready(function() {
+    $(".cancel-booking-btn").click(function() {
+        var bookingId = $(this).data("booking-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('booking.cancel_booking_confirmation') }}",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '{{ __("booking.yes") }}',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    
+                    url: "{{ route('web-booking.cancel') }}",
+                    type: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                    },
+                    data: {
+                        booking_id: bookingId
+                    },
+                    success: function(response) {
+                        HoldOn.close();
+                        Swal.fire({
+                            icon: 'success',
+                            title: "{{__('booking.success')}}",
+                            text: "{{__('booking.success_message')}}",
+                            button: true,
+                        });
+                        window.location.reload();
+                    },
+                    error: function(xhr) {
+                        HoldOn.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{__('booking.error')}}",
+                            text: "{{__('booking.error_message')}}",
+                            button: true,
+                        });
+                    }
+                });
+            }
+        });
+    });
+});
+
+</script>
+@endpush

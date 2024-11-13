@@ -83,7 +83,10 @@ class TapPayment implements PaymentMethodInterface
                 ]
             ],
             'source' => ['id' => 'src_all'],
-            'redirect' => ['url' => route('paymentMethodCallBack',['code'=>'tap', 'transaction_id'=>$transaction->id])],
+            'redirect' => [
+                'url' => route('web-booking.paymentMethodCallBack', [$transaction->payment_gateway, $transaction->id]),  
+            ],
+
         ];
 
         return $this->createCharge($data);

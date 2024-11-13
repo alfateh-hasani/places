@@ -44,10 +44,11 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
         Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
             Route::get('determine-booking/{apartment_id}', 'determineBookingStatus')->name('determine');
             Route::post('add-booking', 'addBooking')->name('add');
-            Route::get('get-booking', 'getBooking')->name('get');
+            Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
             Route::get('login-apartment', 'loginApartment')->name('login');
             Route::post('coupons-verify', 'couponsVerify')->name('coupons.verify');
-        });
+            Route::post('cancel-booking', 'cancelBooking')->name('cancel');
+        }); 
     });
 
 });
