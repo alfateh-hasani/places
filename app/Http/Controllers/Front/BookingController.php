@@ -79,13 +79,11 @@ class BookingController extends Controller{
         $data = $request->all();
         $data['transaction_id'] = $transaction_id;
         $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode , $data);
-        if($handlePayment['status']==true){
-        //  $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
-         $booking =  $this->booking->where('transaction_id',$transaction_id)->first();
-          return redirect(route('customer.booking.details',[$booking->number_of_booking]));
+        $booking =  $this->booking->where('transaction_id',$transaction_id)->first();
+        if ($handlePayment['status'] == true) {
+            return redirect()->route('customer.booking.details', [$booking->number_of_booking, 'showPopup' => '1']);
         }
-        dd($data);
-        return redirect(route('web-booking.determine'));
+        return  redirect()->back()->with('error', __('api.payment_failed'));
     }
 
  

@@ -21,4 +21,5 @@ return [
     'booking_status_rejected' => 'تم الإلغاء',
     'notification_successfully' => 'تم إرسال الإشعار بنجاح',
     'booking_status_booked' => 'تم الحجز',
+    'payment_failed' => 'فشلت عملية الدفع',
 ];

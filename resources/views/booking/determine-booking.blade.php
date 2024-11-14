@@ -141,9 +141,7 @@
                             {{__('apartment.sar')}}
                         </p>
                         
-                    <p class="font-normal text-sm text-reviews text-center mb-6">
-                        {{__('booking.not_charged_yet')}}
-                    </p>
+                   
                     <ul>
                         <li class="mb-4 font-semibold text-sm text-title">
                             <span> {{__('booking.one_night')}}  </span>

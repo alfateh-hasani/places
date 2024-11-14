@@ -113,7 +113,9 @@
                         {{__('booking.summary')}}
                     </p>
                     <p class="text-title mx-5">  {{__('booking.night_price')}} <span class="float-right rtl:float-left font-semibold">{{$booking->total_price/$booking->number_of_nights }} SAR</span></p>
-                    <p class="text-title mx-5">  {{__('booking.copon').' ( ' .$booking->coupon_code.' ) '}} <span class="float-right rtl:float-left font-semibold">{{$booking->discount}} SAR</span></p>
+                    @if($booking->coupon_code != null)
+                        <p class="text-title mx-5">  {{__('booking.copon').' ( ' .$booking->coupon_code.' ) '}} <span class="float-right rtl:float-left font-semibold">{{$booking->discount}} SAR</span></p>
+                    @endif
                     <div class="bg-feature border border-feature-border rounded-lg mx-5 mt-4 p-3">
                         <p>         {{__('booking.summary')}} (    {{$booking->number_of_nights   .' '.__('booking.nights')}})</p>
                         <p class="font-semibold text-lg">
@@ -125,7 +127,32 @@
         </div>
     </div>
 </section>
+@if(request()->query('showPopup') == 1)
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("popup-1").style.display = "block";
+        });
+    </script>
+@endif
 
+<div class="popup modal" id="popup-1" style="display: none;">
+    <div class="popup-contain text-center">
+        <p class="p-5 border-b border-border text-left">
+            {{__('booking.booking_success')}}
+        </p>
+        <img class="inline-block my-10" src="assets/img/success.svg" />
+        <p class="font-semibold">
+         
+            {{__('booking.booking_confirmed_message')}}
+            <br>
+            {{__('booking.number_of_booking')}}: <span class="text-price">#{{ $booking->number_of_booking }}</span>
+        </p>
+        <div class="md:grid md:grid-cols-2 md:gap-5 max-w-full my-10 mx-5">
+            <a href="{{ route('customer.booking.details', $booking->number_of_booking) }}" class="py-4 rounded-lg bg-price text-white">Booking Details</a>
+            <button onclick="document.getElementById('popup-1').style.display='none'" class="py-4 rounded-lg bg-feature">Continue</button>
+        </div>
+    </div>
+</div>
 
 @endsection
 

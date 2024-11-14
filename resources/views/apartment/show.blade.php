@@ -37,11 +37,13 @@
                 </span>
             </button>
             
-            <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})" class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
+            <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})"
+                class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto 
+                lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
                 @if (!$apartment->is_favorite)
-                    <img src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
+                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 @else
-                    <img src="{{ asset('assets/img/favorite-active.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
+                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favorite-active.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 @endif
                 <span class="hidden lg:inline">
                     {{ __('apartment.favorite') }}
@@ -455,7 +457,7 @@
                         </div>
                         @endif
                         
-                        @auth
+                        @auth('customer')
                             <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
                         @else
                             <button data-src="#popup-5" data-fancybox dont-close-click-outside class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
@@ -481,7 +483,7 @@
         </p>
         <div class="p-5">
             <div class="text-left mb-5">
-                <img class="float-left w-20 h-12 rounded-lg mr-4" src="{{getImage($apartment,'apartment')}}" />
+                <img class="float-left w-20 h-12 rounded-lg mr-4" src="{{getImage($apartment,'image')}}" />
                 <p class="p-3">
                     {{ $apartment->ml('name') }}
                 </p>
@@ -495,6 +497,11 @@
                             {{ __('apartment.copy_link') }}
                         </p>
                     </a>
+                    <!-- Notification message that appears briefly when link is copied -->
+                    <div id="copyNotification" style="display: none; position: fixed; top: 20px; right: 20px; padding: 10px; background-color: #28a745; color: white; border-radius: 5px; z-index: 1000;">
+                        {{ __('apartment.link_copied') }}
+                    </div>
+
                 </li>
                 <li>
                     <a href="https://api.whatsapp.com/send?text={{ urlencode(Request::fullUrl()) }}" target="_blank"
@@ -531,242 +538,24 @@
 @endsection
 @push('js')
 @include('customer.section.script-form')
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+@include('apartment.js')
+
 <script>
-    function toggleFavorite(apartmentId) {
-        $.ajax({
-            url: '{{ route('customer.toggle.favorite') }}',
-            type: 'POST',
-            data: {
-                apartment_id: apartmentId,
-                _token: '{{ csrf_token() }}'
-            },
-            success: function(data) {
-                if (data.success) {
-                    let icon = $('#favorite-icon-' + apartmentId);
-                    if (data.action === 'added') {
-                        icon.attr('src', '{{ asset("assets/img/favorited.svg") }}');  
-                        Swal.fire({
-                            icon: 'success',
-                            title: '{{ __("apartment.favorite_added") }}',
-                            text: data.message,
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        icon.attr('src', '{{ asset("assets/img/favoritee.svg") }}'); 
-                        Swal.fire({
-                            icon: 'info',
-                            title: '{{ __("apartment.favorite_removed") }}',
-                            text: data.message,
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    }
-                    window.location.reload();
-
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ __("apartment.favorite_failed") }}',
-                        text: data.message || '{{ __("apartment.favorite_failed") }}'
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                if (xhr.status === 401) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{__("apartment.favorite_login_title")}}',
-                        text: '{{ __("apartment.favorite_login") }}'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: '{{ __("apartment.favorite_failed") }}'
-                    });
-                    console.error('Error:', error);
-                }
-            }
-        });
+    function copyLink() {
+        const link = '{{ url()->current() }}';
+        const tempInput = document.createElement('input');
+        tempInput.value = link;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        tempInput.setSelectionRange(0, 99999); 
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        const notification = document.getElementById('copyNotification');
+        notification.style.display = 'block';
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 2000);
     }
-    const nightlyRate = {{ $apartment->price }};
-    let discount = 0;
+</script>
 
-    function calculateNightsAndCost() {
-        const checkin = new Date($('#checkin').val());
-        const checkout = new Date($('#checkout').val());
-        const timeDifference = checkout - checkin;
-        const nights = timeDifference / (1000 * 60 * 60 * 24);
-        if (nights > 0) {
-            const totalCost = nights * nightlyRate;
-            $('#totalNights').text(nights + ' ' + "{{ __('apartment.nights') }}");
-            let finalCost = totalCost;
-            if (discount > 0) {
-                finalCost = totalCost - (totalCost * (discount / 100));  
-            }
-            $('#totalCost').text(finalCost.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
-            if (discount > 0) {
-                $('#discountedCost').text("{{ __('apartment.discounted_price') }}: " + finalCost.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
-            } else {
-                $('#discountedCost').text('');
-            }
-        } else {
-            $('#totalNights').text(0);
-            $('#totalCost').text('0.00');
-            $('#discountedCost').text('');
-        }
-    }
-
-    $(document).ready(function() {
-        // Calculate nights and cost on date change
-        $('#checkin, #checkout').on('change', calculateNightsAndCost);
-
-        $("#booking").validate({
-            rules: {
-                checkin: "required",
-                checkout: {
-                    required: true,
-                    greaterThan: "#checkin"
-                },
-                adults_count:{
-                    required: true,
-                    min: 1,
-                    max: "{{$apartment->adults_count}}"
-                },
-                children_count:{
-                    required: true,
-                    min: 0,
-                    max: {{$apartment->children_count}}
-                }
-                
-            },
-            messages: {
-                checkin: "{{__('apartment.checkin_required')}}",
-                checkout: {
-                    required: "{{__('apartment.checkout_required')}}",
-                    greaterThan: "{{__('apartment.checkout_greater_than')}}"
-                },
-                adults_count:{
-                    required: "{{__('apartment.adults_count_required')}}",
-                    min: "{{__('apartment.adults_count_min')}}",
-                    max: "{{__('apartment.adults_count_max')}}"
-                },
-                children_count:{
-                    required: "{{__('apartment.children_count_required')}}",
-                    min: "{{__('apartment.children_count_min')}}",
-                    max: "{{__('apartment.children_count_max')}}"
-                }
-            },
-            submitHandler: function(form) {
-                HoldOn.open({
-                    theme: "sk-cube-grid",  
-                    message: "{{__('apartment.loading_message')}}"  
-                });
-                var apartment_id = $('#apartment_id').val();
-                $.ajax({
-                   
-                    url: "{{ route('web-booking.determine',"+apartment_id+") }}",  
-                    method: "POST",
-                    data: $(form).serialize(), 
-                    success: function(response) {
-                        HoldOn.close();
-                        Swal.fire({
-                            icon: 'success',
-                            title: "{{__('apartment.success')}}",
-                            text: "{{__('apartment.booking_success_message')}}",
-                            button: true,
-                        });
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        HoldOn.close();
-                        Swal.fire({
-                            icon: 'error',
-                            title: "{{__('apartment.error')}}",
-                            text: "{{__('apartment.booking_failed_message')}}",
-                            button: true,
-                        });
-                    }
-                });
-            }
-        });
-    });
-
-    const bookedDays = @json($booked_days);
-    console.log(bookedDays);
-    console.log(typeof flatpickr);
-
-    function initializeDatePicker(selector) {
-        if (typeof flatpickr === "undefined") {
-            console.error("flatpickr library is not loaded.");
-            return;
-        }
-
-        // Prepare disable dates array with ranges
-        const disableDates = bookedDays.map(booking => {
-            return {
-                from: booking.check_in,
-                to: new Date(new Date(booking.check_out).setDate(new Date(booking.check_out).getDate() - 1)).toISOString().split('T')[0]
-            };
-        });
-
-        flatpickr(selector, {
-            dateFormat: "Y-m-d",
-            minDate: "today",
-            allowInput: false,
-            disable: disableDates,
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = dayElem.dateObj.toISOString().split('T')[0];
-                const isCheckInDate = bookedDays.some(booking => booking.check_in === dateStr);
-                const isCheckOutDate = bookedDays.some(booking => booking.check_out === dateStr);
-
-                // Style check-in dates as disabled and check-out dates as available
-                if (isCheckInDate) {
-                    dayElem.style.backgroundColor = "#0000001a";
-                    dayElem.style.color = "#fff";
-                    dayElem.classList.add("flatpickr-disabled");
-                } else if (isCheckOutDate) {
-                    dayElem.style.backgroundColor = "#fff";
-                    dayElem.style.color = "#000";
-                    dayElem.classList.remove("flatpickr-disabled"); // Make check-out date selectable
-                }
-            },
-            onChange: function(selectedDates, dateStr, instance) {
-                if (selectedDates.length > 0 && instance.calendarContainer) {
-                    const selectedDayElem = instance.calendarContainer.querySelector(`.flatpickr-day[aria-label="${selectedDates[0].toDateString()}"]`);
-                    if (selectedDayElem) {
-                        selectedDayElem.style.backgroundColor = "#0000001a";
-                        selectedDayElem.style.color = "#fff";
-                    }
-                }
-            }
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        initializeDatePicker("#checkin");
-        initializeDatePicker("#checkout");
-
-        const checkinInput = document.getElementById('checkin');
-        const checkoutInput = document.getElementById('checkout');
-
-        checkinInput.addEventListener('change', function() {
-            const checkinDate = new Date(this.value);
-            const minCheckoutDate = new Date(checkinDate);
-            minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
-
-            const year = minCheckoutDate.getFullYear();
-            const month = String(minCheckoutDate.getMonth() + 1).padStart(2, '0');
-            const day = String(minCheckoutDate.getDate()).padStart(2, '0');
-            const formattedDate = `${year}-${month}-${day}`;
-
-            checkoutInput.value = formattedDate;
-            checkoutInput.min = formattedDate;
-        });
-    });
-
-
-</script> 
 @endpush

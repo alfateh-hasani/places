@@ -34,6 +34,7 @@ class ApartmentRequest extends FormRequest
             'num_beds' => 'required',
             'adults_count' => 'required',
             'children_count' => 'required',
+            'slug' => 'required',
             // 'area' => 'required',
             // 'is_active' => 'required',
             // 'smart_lock_id' => 'required|exists:smart_locks,id',

@@ -37,4 +37,7 @@ return [
     'success' => 'تم بنجاح',
     'success_message' => 'تم تحديث الحجز بنجاح',
     'cancellation_window_expired' => 'نافذة الإلغاء قد انتهت',
+    'booking_confirmed_message' => 'تم تأكيد الحجز بنجاح',
+    'booking_not_found' => 'الحجز غير موجود',
+    'booking_success' => 'نجحت العملية',    
 ];

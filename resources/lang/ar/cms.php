@@ -144,5 +144,17 @@ return [
     'price_per_night' => 'السعر لليلة',
     'booking_management' => 'إدارة الحجوزات',
     'transactions' => 'المعاملات',
-    
+    'transaction' => 'المعاملة',
+    'reference' => 'المرجع',
+    'amount' => 'المبلغ',
+    'deposit' => 'إيداع',
+    'withdraw' => 'سحب',
+    'payment_gateway' => 'بوابة الدفع',
+    'tap' => 'تاب',
+    'created_at' => 'تاريخ الإنشاء',
+    'status_failed' => 'فشل',
+    'status_completed' => 'مكتمل',
+    'type_deposit' => 'إيداع',
+    'type_withdraw' => 'سحب',
+    'transaction_details' => 'تفاصيل المعاملة',
 ];

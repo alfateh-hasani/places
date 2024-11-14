@@ -84,4 +84,5 @@ return [
     'whatsapp' => 'واتساب',
     'facebook' => 'فيسبوك',
     'X' => 'X',
+    'link_copied' => 'تم نسخ الرابط',
 ];
