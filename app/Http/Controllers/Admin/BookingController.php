@@ -28,7 +28,7 @@ class BookingController extends CrudController
     {
         CRUD::setModel(\App\Models\Booking::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/booking');
-        CRUD::setEntityNameStrings(__('cms.booking'), __('cms.booking'));
+        CRUD::setEntityNameStrings(__('cms.booking_management'), __('cms.booking_management'));
         CRUD::denyAccess(['create', 'delete','update']);
 
     }
@@ -42,6 +42,8 @@ class BookingController extends CrudController
      */
     protected function setupListOperation()
     {
+        $this->addStatusFilter();
+        $this->addPaymentStatusFilter();
         CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
         CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
     
@@ -54,7 +56,25 @@ class BookingController extends CrudController
             'attribute' => 'first_name',
             'model' => \App\Models\Customer::class,
         ]);
-    
+      // Status with badge
+      CRUD::addColumn([
+        'name' => 'status',
+        'label' => __('cms.status') . ' <i class="la la-info-circle"></i>',
+        'type' => 'custom_html',
+        'value' => function($entry) {
+            return $this->getStatusBadge($entry->status);
+        }
+    ]);
+
+    // Payment status with badge
+    CRUD::addColumn([
+        'name' => 'payment_status',
+        'label' => __('cms.payment_status') . ' <i class="la la-credit-card"></i>',
+        'type' => 'custom_html',
+        'value' => function($entry) {
+            return $this->getPaymentStatusBadge($entry->payment_status);
+        }
+    ]);
         // Apartment column
         CRUD::addColumn([
             'name' => 'apartment_id',
@@ -122,42 +142,7 @@ class BookingController extends CrudController
             }
         ]);
     
-        // Status with badge
-        CRUD::addColumn([
-            'name' => 'status',
-            'label' => __('cms.status') . ' <i class="la la-info-circle"></i>',
-            'type' => 'custom_html',
-            'value' => function($entry) {
-                $statusColors = [
-                    'pending' => 'warning',
-                    'approved' => 'success',
-                    'rejected' => 'danger',
-                    'booked' => 'primary',
-                    'finished' => 'secondary',
-                    'canceled' => 'dark',
-                ];
-    
-                $color = $statusColors[$entry->status] ?? 'info';
-                return "<span class='badge badge-{$color}'>" . ucfirst($entry->status) . "</span>";
-            }
-        ]);
-    
-        // Payment status with badge
-        CRUD::addColumn([
-            'name' => 'payment_status',
-            'label' => __('cms.payment_status') . ' <i class="la la-credit-card"></i>',
-            'type' => 'custom_html',
-            'value' => function($entry) {
-                $paymentStatusColors = [
-                    'pending' => 'warning',
-                    'paid' => 'success',
-                    'failed' => 'danger',
-                ];
-    
-                $color = $paymentStatusColors[$entry->payment_status] ?? 'info';
-                return "<span class='badge badge-{$color}'>" . ucfirst($entry->payment_status) . "</span>";
-            }
-        ]);
+      
     
         // Adults count
         CRUD::addColumn([
@@ -210,7 +195,7 @@ class BookingController extends CrudController
     
         // جدول معلومات العميل والشقة
         CRUD::addColumn([
-            'name' => 'customer_apartment_table',
+            'name' => 'معلومات&nbsp; العميل',
             'type' => 'custom_html',
             'value' => function ($entry) {
                 return '
@@ -238,7 +223,7 @@ class BookingController extends CrudController
     
         // جدول التواريخ وعدد الليالي
         CRUD::addColumn([
-            'name' => 'dates_table',
+            'name' =>  '   تفاصيل&nbsp;  الحجز',
             'type' => 'custom_html',
             'value' => function ($entry) {
                 return '
@@ -262,7 +247,7 @@ class BookingController extends CrudController
     
         // جدول المعلومات المالية
         CRUD::addColumn([
-            'name' => 'financial_table',
+            'name' => 'المعلومات &nbsp; المالية',
             'type' => 'custom_html',
             'value' => function ($entry) {
                 return '
@@ -292,9 +277,9 @@ class BookingController extends CrudController
             }
         ]);
     
-        // جدول الحالات (حالة الحجز وحالة الدفع)
+ 
         CRUD::addColumn([
-            'name' => 'status_table',
+            'name' =>   'معلومات &nbsp; الحالة',
             'type' => 'custom_html',
             'value' => function ($entry) {
                 return '
@@ -314,7 +299,8 @@ class BookingController extends CrudController
     
         // جدول لعدد البالغين والأطفال وطريقة الدفع
         CRUD::addColumn([
-            'name' => 'additional_info_table',
+            'name' => 'معلومات &nbsp;&nbsp;إضافية',
+
             'type' => 'custom_html',
             'value' => function ($entry) {
                 return '
@@ -406,6 +392,37 @@ class BookingController extends CrudController
         return back();
     }
     
-
+    protected function addStatusFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'status',
+            'type' => 'dropdown',
+            'label' => __('cms.status')
+        ], [
+            'pending' => __('cms.status_pending'),
+            'approved' => __('cms.status_approved'),
+            'rejected' => __('cms.status_rejected'),
+            'booked' => __('cms.status_booked'),
+            'finished' => __('cms.status_finished'),
+            'canceled' => __('cms.status_canceled')
+        ], function($value) {
+            CRUD::addClause('where', 'status', $value);
+        });
+    }
+    
+    protected function addPaymentStatusFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'payment_status',
+            'type' => 'dropdown',
+            'label' => __('cms.payment_status')
+        ], [
+            'pending' => __('cms.payment_status_pending'),
+            'paid' => __('cms.payment_status_paid'),
+            'failed' => __('cms.payment_status_failed')
+        ], function($value) {
+            CRUD::addClause('where', 'payment_status', $value);
+        });
+    }
 
 }

@@ -1,6 +1,6 @@
 {{-- This file is used for menu items by any Backpack v6 theme --}}
 <li class="nav-item"><a class="nav-link" href="{{ backpack_url('dashboard') }}"><i class="la la-home nav-icon"></i> {{ trans('backpack::base.dashboard') }}</a></li>
-@includeWhen(class_exists(\Backpack\DevTools\DevToolsServiceProvider::class), 'backpack.devtools::buttons.sidebar_item')
+{{-- @includeWhen(class_exists(\Backpack\DevTools\DevToolsServiceProvider::class), 'backpack.devtools::buttons.sidebar_item') --}}
 
 <x-backpack::menu-item title="{{__('cms.smart_locks')}}" icon="la la-lock" :link="backpack_url('smart-lock')" />
 <x-backpack::menu-item title="{{__('cms.buildings')}}" icon="la la-building" :link="backpack_url('buildings')" />
@@ -20,13 +20,15 @@
     <x-backpack::menu-item title="{{__('cms.blogs')}}" icon="la la-pen" :link="backpack_url('blogs')" />
 </x-backpack::menu-dropdown>
 
-<x-backpack::menu-item title="{{__('cms.booking')}}" icon="la la-calendar-check" :link="backpack_url('booking')" />
+<x-backpack::menu-item title="{{__('cms.booking_management')}}" icon="la la-calendar-check" :link="backpack_url('booking')" />
 
 <x-backpack::menu-dropdown title="{{__('cms.finance')}}" icon="la la-dollar-sign">
+    <x-backpack::menu-item title="{{__('cms.transactions')}}" icon="la la-money" :link="backpack_url('transaction')" />
+
     <x-backpack::menu-item title="{{__('cms.coupons')}}" icon="la la-percent" :link="backpack_url('coupon')" />
 </x-backpack::menu-dropdown>
 
 <x-backpack::menu-item title="{{__('cms.setting')}}" icon="la la-cog" :link="backpack_url('setting')" />
 <x-backpack::menu-item title="{{__('cms.translation-manager')}}" icon="la la-language" :link="backpack_url('translation-manager')" />
 
-<x-backpack::menu-item title="Menu" icon="la la-list" :link="backpack_url('menu-item')" />
+{{-- <x-backpack::menu-item title="Menu" icon="la la-list" :link="backpack_url('menu-item')" /> --}}

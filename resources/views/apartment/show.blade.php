@@ -473,39 +473,60 @@
 
 
 <!-- Share Popup Modal -->
+ 
 <div class="popup modal" id="popup-share">
     <div class="popup-contain text-center">
-        <p class="p-5 border-b border-border text-left rtl:text-right">
+        <p class="p-5 border-b border-border text-left">
             {{ __('apartment.share_this_apartment') }}
         </p>
-        <div class="px-5 text-left rtl:text-right pt-8">
-            <p class="font-semibold text-xl mb-6 rtl:mb-4">
-                {{ __('apartment.choose_platform') }}
-            </p>
-
-            <div class="md:grid md:grid-cols-3   max-w-full my-10 rtl:space-x-reverse text-center">
-                <!-- Facebook Share -->
-                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(Request::fullUrl()) }}" target="_blank" class="block text-center p-4 bg-facebook text-white rounded-lg">
-                    <img src="{{ asset('assets/img/facebook.svg') }}" alt="Facebook" class="h-8 mx-auto mb-2" />
-                    Facebook
-                </a>
-                
-                <!-- Twitter Share -->
-                <a href="https://twitter.com/intent/tweet?url={{ urlencode(Request::fullUrl()) }}" target="_blank" class="block text-center p-4 bg-twitter text-white rounded-lg">
-                    <img src="{{ asset('assets/img/twitter.svg') }}" alt="Twitter" class="h-8 mx-auto mb-2" />
-                    Twitter
-                </a>
-                
-                <!-- WhatsApp Share -->
-                <a href="https://api.whatsapp.com/send?text={{ urlencode(Request::fullUrl()) }}" target="_blank" class="block text-center p-4 bg-whatsapp text-white rounded-lg">
-                    <img src="{{ asset('assets/img/whatsapp.png') }}" alt="WhatsApp" class="h-8 mx-auto mb-2" />
-                    WhatsApp
-                </a>
+        <div class="p-5">
+            <div class="text-left mb-5">
+                <img class="float-left w-20 h-12 rounded-lg mr-4" src="{{getImage($apartment,'apartment')}}" />
+                <p class="p-3">
+                    {{ $apartment->ml('name') }}
+                </p>
+                <div class="clear-both"></div>
             </div>
+            <ul class="md:grid md:grid-cols-2 md:gap-3 max-w-full">
+                <li>
+                    <a class="block border border-border rounded-lg text-left p-4" onclick="copyLink()">
+                        <img class="inline-block mr-4 hover:bg-border" src="{{ asset('assets/img/link.svg') }}" />
+                        <p class="inline-block">
+                            {{ __('apartment.copy_link') }}
+                        </p>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://api.whatsapp.com/send?text={{ urlencode(Request::fullUrl()) }}" target="_blank"
+                     class="block border border-border rounded-lg text-left p-4">
+                        <img width="20px"  height="20px" class="inline-block mr-4 hover:bg-border" src="{{ asset('assets/img/whatsapp.png') }}" />
+                        <p class="inline-block">
+                            {{ __('apartment.whatsapp') }}
+                        </p>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(Request::fullUrl()) }}" target="_blank"
+                     class="block border border-border rounded-lg text-left p-4">
+                        <img class="inline-block mr-4 hover:bg-border" src="{{ asset('assets/img/fb.svg')}}" />
+                        <p class="inline-block">
+                            {{ __('apartment.facebook') }}
+                        </p>
+                    </a>
+                </li>
+                <li>
+                    <a  href="https://twitter.com/intent/tweet?url={{ urlencode(Request::fullUrl()) }}" target="_blank"
+                     class="block border border-border rounded-lg text-left p-4">
+                        <img class="inline-block mr-4 hover:bg-border" src="{{ asset('assets/img/x.svg') }}" />
+                        <p class="inline-block">
+                            {{ __('apartment.X') }}
+                        </p>
+                    </a>
+                </li>
+            </ul>
         </div>
     </div>
 </div>
-
 {{-- @dd($apartment->booked_days($apartment->bookings)); --}}
 @endsection
 @push('js')

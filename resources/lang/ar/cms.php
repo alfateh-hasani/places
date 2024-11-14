@@ -142,5 +142,7 @@ return [
     'email' => 'البريد الإلكتروني',
     'phone' => 'الهاتف',
     'price_per_night' => 'السعر لليلة',
+    'booking_management' => 'إدارة الحجوزات',
+    'transactions' => 'المعاملات',
     
 ];

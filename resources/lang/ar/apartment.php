@@ -80,4 +80,8 @@ return [
     'coupon_verified' => 'تم التحقق من الكوبون',
     'share_this_apartment' => 'شارك هذه الشقة',
     'choose_platform' => 'اختر المنصة',
+    'copy_link' => 'نسخ الرابط',
+    'whatsapp' => 'واتساب',
+    'facebook' => 'فيسبوك',
+    'X' => 'X',
 ];
