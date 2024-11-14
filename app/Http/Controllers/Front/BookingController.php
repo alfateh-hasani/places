@@ -54,9 +54,8 @@ class BookingController extends Controller{
             $validatedData['adults_count'] = $apartment->adults_count;
             $validatedData['children_count'] = $apartment->children_count;
             $validatedData['status'] = 'pending';  
-            $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);            
-            $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment); 
-            dd($paymentResponse);
+            $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);           
+            $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment , 'web'); 
             if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
                 return redirect($paymentResponse['transaction']['url']);
             } else {
@@ -118,7 +117,7 @@ class BookingController extends Controller{
     {
         try {
             $apartment = Apartment::findOrFail($apartment_id);
-                $this->bookingService->checkAvailability($apartment, $request->checkin, $request->checkout);
+            $this->bookingService->checkAvailability($apartment, $request->checkin, $request->checkout);
             $this->bookingService->validateGuestsCount($apartment, $request->number_of_adults, $request->number_of_children);
             $data = $this->bookingService->getDetermineBooking($apartment, $request->checkin, $request->checkout);
             $payment_methods = Policy::where('type', 'booking')->first();

@@ -78,4 +78,6 @@ return [
     'number_of_nights' => 'عدد الليالي',
     'verify_coupon' => 'تحقق',
     'coupon_verified' => 'تم التحقق من الكوبون',
+    'share_this_apartment' => 'شارك هذه الشقة',
+    'choose_platform' => 'اختر المنصة',
 ];

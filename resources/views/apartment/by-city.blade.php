@@ -143,9 +143,16 @@
 <section class="list pt-2 sm:pt-20 pb-2 sm:pb-20">
     <div class="container">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-0">
-            @foreach($apartments as $apartment)
-                @include('apartment.card', ['apartment' => $apartment])
-            @endforeach
+            @if($apartments->isNotEmpty())
+              @foreach($apartments as $apartment)
+                  @include('apartment.card', ['apartment' => $apartment])
+              @endforeach
+            @else
+              <div class="text-center w-full">
+                  <p class="text-2xl font-semibold text-black"> {{ __('site.no_apartments') }}</p>
+              </div>
+            @endif
+            
         </div>
         <div class="mt-6">
             {{ $apartments->links() }}

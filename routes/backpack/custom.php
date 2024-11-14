@@ -29,6 +29,7 @@ Route::group([
     Route::crud('pages', 'PageController');
     Route::crud('blogs', 'BlogController');
     Route::crud('notifications', 'NotificationController');
+    Route::crud('booking', 'BookingController');
 });
 
 

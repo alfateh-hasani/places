@@ -101,5 +101,6 @@ return [
     'terms' => 'الشروط',
     'contact' => 'تواصل',
     'privacy-policy' => 'سياسة الخصوصية',
+    'no_apartments' => 'لا توجد شقق متاحة',
 
 ];

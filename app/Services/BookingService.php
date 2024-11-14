@@ -44,18 +44,23 @@ class BookingService
     {
         $existingBooking = Booking::where('apartment_id', $apartment->id)
             ->where(function ($query) use ($checkIn, $checkOut) {
-                $query->whereBetween('check_in', [$checkIn, $checkOut])
-                    ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                    ->orWhere(function ($query) use ($checkIn, $checkOut) {
-                        $query->where('check_in', '<', $checkIn)
-                            ->where('check_out', '>', $checkOut);
-                    });
+                $query->where(function ($query) use ($checkIn, $checkOut) {
+                    $query->where('check_in', '<=', $checkIn)
+                          ->where('check_out', '>', $checkIn);
+                })->orWhere(function ($query) use ($checkIn, $checkOut) {
+                    $query->where('check_in', '<', $checkOut)
+                          ->where('check_out', '>=', $checkOut);
+                })->orWhere(function ($query) use ($checkIn, $checkOut) {
+                    $query->where('check_in', '>=', $checkIn)
+                          ->where('check_out', '<=', $checkOut);
+                });
             })->exists();
-
+    
         if ($existingBooking) {
-            throw ValidationException::withMessages(['apartment_id' =>  __('api.already_booked')]);
+            throw ValidationException::withMessages(['apartment_id' => __('api.already_booked')]);
         }
     }
+    
 
     public function calculatePrices($apartmentPrice, $numberOfNights, $coupon = null): array
     {
@@ -86,7 +91,7 @@ class BookingService
     }
 
 
-    public function createPayment($validatedData, $customer, $apartment)
+    public function createPayment($validatedData, $customer, $apartment , $plaform = 'web')
     {
     
                 $numberOfNights = $this->calculateNumberOfNights($validatedData['check_in'], $validatedData['check_out']);
@@ -95,7 +100,7 @@ class BookingService
                     $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code']);
                 }
                 $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
-                $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer);
+                $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer , $plaform);
                 $this->createBooking($transaction->id, null);
         return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
     }

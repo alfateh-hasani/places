@@ -78,7 +78,7 @@ class BookingController extends Controller{
             $customer = Auth::guard('api')->user();
             $apartment = Apartment::findOrFail($validatedData['apartment_id']);
             $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
-            $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment);            
+            $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment , 'api');            
             if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
                 $this->data['callback'] = $paymentResponse['transaction']['url'];
                 return $this->successResponse($this->data, __('api.transaction_url'));

@@ -46,8 +46,9 @@ class ProcessPaymentService
     }
 
     //add transactions
-    public function addTransaction($data,$price,$customer)
+    public function addTransaction($data,$price, $customer , $platform = 'web')
     {
+
         $apartment_data =[
             'apartment_id' => $data['apartment_id'],
             'check_in' => $data['check_in'],
@@ -72,7 +73,9 @@ class ProcessPaymentService
             'type' => 'deposit',
             'payment_gateway' => $data['payment_method_code'],
             'payment_gateway_response' => null,
+            'platform'=>$platform
         ]);
+        
     }
 
 

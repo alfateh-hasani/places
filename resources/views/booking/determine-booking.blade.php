@@ -1,6 +1,7 @@
 @extends('layouts.master')
 @push('css')
-
+<link href="{{ asset('assets/css/slick.css?'.time())}}" rel="stylesheet" />
+<link href="{{ asset('assets/css/slick-theme.css?'.time())}}" rel="stylesheet" />
 <style>
 #verify_coupon{
     margin-right: 10px !important;
@@ -115,7 +116,7 @@
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
                     <div class="rounded-xl overflow-hidden border border-border">
                         <div class="relative">
-                            <div class="slider" style="max-width: 450px">
+                            <div class="slider slider-checkout" style="max-width: 450px">
                                 @foreach ($apartment->getMedia('image') as $image)
                                    <div>
                                     <a style="width: 100%; max-width:100%; display:block" href="{{$apartment->link}}">

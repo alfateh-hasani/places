@@ -30,20 +30,18 @@
             {{ $apartment->ml('name') }}
         </h1>
         <div class="rtl:float-left float-right absolute lg:relative z-10 right-3 lg:right-0 top-4 lg:top-0">
-            <a  class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
-                <img src="{{asset('assets/img/share.svg')}}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
+            <button data-src="#popup-share" data-fancybox dont-close-click-outside class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
+                <img src="{{ asset('assets/img/share.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 <span class="hidden lg:inline">
-                    {{__('apartment.share')}}
+                    {{ __('apartment.share') }}
                 </span>
-            </a>
+            </button>
+            
             <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})" class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
-                @if ($apartment->is_favorite)
-                    <button class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite favorite-active ease-in-out duration-300"></button>
-                @else
+                @if (!$apartment->is_favorite)
                     <img src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
-
-                
-                    
+                @else
+                    <img src="{{ asset('assets/img/favorite-active.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 @endif
                 <span class="hidden lg:inline">
                     {{ __('apartment.favorite') }}
@@ -456,7 +454,14 @@
                              
                         </div>
                         @endif
-                        <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
+                        @auth
+                            <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
+
+                        @else
+                           
+                            <button data-src="#popup-5" data-fancybox dont-close-click-outside class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
+
+                        @endauth
                     </form>
                     
                     
@@ -466,6 +471,43 @@
         </div>
     </div>
 </section>
+
+
+
+<!-- Share Popup Modal -->
+<div class="popup modal" id="popup-share">
+    <div class="popup-contain text-center">
+        <p class="p-5 border-b border-border text-left rtl:text-right">
+            {{ __('apartment.share_this_apartment') }}
+        </p>
+        <div class="px-5 text-left rtl:text-right pt-8">
+            <p class="font-semibold text-xl mb-6 rtl:mb-4">
+                {{ __('apartment.choose_platform') }}
+            </p>
+
+            <div class="md:grid md:grid-cols-3   max-w-full my-10 rtl:space-x-reverse text-center">
+                <!-- Facebook Share -->
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(Request::fullUrl()) }}" target="_blank" class="block text-center p-4 bg-facebook text-white rounded-lg">
+                    <img src="{{ asset('assets/img/facebook.svg') }}" alt="Facebook" class="h-8 mx-auto mb-2" />
+                    Facebook
+                </a>
+                
+                <!-- Twitter Share -->
+                <a href="https://twitter.com/intent/tweet?url={{ urlencode(Request::fullUrl()) }}" target="_blank" class="block text-center p-4 bg-twitter text-white rounded-lg">
+                    <img src="{{ asset('assets/img/twitter.svg') }}" alt="Twitter" class="h-8 mx-auto mb-2" />
+                    Twitter
+                </a>
+                
+                <!-- WhatsApp Share -->
+                <a href="https://api.whatsapp.com/send?text={{ urlencode(Request::fullUrl()) }}" target="_blank" class="block text-center p-4 bg-whatsapp text-white rounded-lg">
+                    <img src="{{ asset('assets/img/whatsapp.png') }}" alt="WhatsApp" class="h-8 mx-auto mb-2" />
+                    WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- @dd($apartment->booked_days($apartment->bookings)); --}}
 @endsection
 @push('js')
@@ -502,6 +544,8 @@
                             showConfirmButton: false
                         });
                     }
+                    window.location.reload();
+
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -631,9 +675,9 @@
         });
     });
 
-    const bookedDays = @json($apartment->booked_days($apartment->bookings));
+    const bookedDays = @json($booked_days);
     console.log(bookedDays);
-    console.log(typeof flatpickr); 
+    console.log(typeof flatpickr);
 
     function initializeDatePicker(selector) {
         if (typeof flatpickr === "undefined") {
@@ -641,35 +685,36 @@
             return;
         }
 
+        // Prepare disable dates array with ranges
+        const disableDates = bookedDays.map(booking => {
+            return {
+                from: booking.check_in,
+                to: new Date(new Date(booking.check_out).setDate(new Date(booking.check_out).getDate() - 1)).toISOString().split('T')[0]
+            };
+        });
+
         flatpickr(selector, {
             dateFormat: "Y-m-d",
             minDate: "today",
-            allowInput: false,  
-            disable: bookedDays.length > 0 ? bookedDays : [],   
+            allowInput: false,
+            disable: disableDates,
             onDayCreate: function(dObj, dStr, fp, dayElem) {
                 const dateStr = dayElem.dateObj.toISOString().split('T')[0];
-                if (bookedDays.includes(dateStr)) { 
-                    dayElem.style.backgroundColor = "#0000001a";  
-                    dayElem.style.color = "#fff";  
-                    dayElem.classList.add("flatpickr-disabled");  
-                } else {
-                    dayElem.style.backgroundColor = "#fff"; 
-                    dayElem.style.color = "#000"; 
+                const isCheckInDate = bookedDays.some(booking => booking.check_in === dateStr);
+                const isCheckOutDate = bookedDays.some(booking => booking.check_out === dateStr);
+
+                // Style check-in dates as disabled and check-out dates as available
+                if (isCheckInDate) {
+                    dayElem.style.backgroundColor = "#0000001a";
+                    dayElem.style.color = "#fff";
+                    dayElem.classList.add("flatpickr-disabled");
+                } else if (isCheckOutDate) {
+                    dayElem.style.backgroundColor = "#fff";
+                    dayElem.style.color = "#000";
+                    dayElem.classList.remove("flatpickr-disabled"); // Make check-out date selectable
                 }
             },
             onChange: function(selectedDates, dateStr, instance) {
-                if (instance.calendarContainer) {
-                    instance.calendarContainer.querySelectorAll(".flatpickr-day").forEach(dayElem => {
-                        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
-                        if (bookedDays.includes(dateStr)) {
-                            dayElem.style.backgroundColor = "#0000001a";  
-                            dayElem.style.color = "#000";  
-                        } else {
-                            dayElem.style.backgroundColor = "#fff"; 
-                            dayElem.style.color = "#000"; 
-                        }
-                    });
-                }
                 if (selectedDates.length > 0 && instance.calendarContainer) {
                     const selectedDayElem = instance.calendarContainer.querySelector(`.flatpickr-day[aria-label="${selectedDates[0].toDateString()}"]`);
                     if (selectedDayElem) {
@@ -684,23 +729,25 @@
     document.addEventListener("DOMContentLoaded", function() {
         initializeDatePicker("#checkin");
         initializeDatePicker("#checkout");
-    });
 
-
-    document.addEventListener('DOMContentLoaded', function() {
         const checkinInput = document.getElementById('checkin');
         const checkoutInput = document.getElementById('checkout');
+
         checkinInput.addEventListener('change', function() {
             const checkinDate = new Date(this.value);
             const minCheckoutDate = new Date(checkinDate);
             minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+
             const year = minCheckoutDate.getFullYear();
             const month = String(minCheckoutDate.getMonth() + 1).padStart(2, '0');
             const day = String(minCheckoutDate.getDate()).padStart(2, '0');
             const formattedDate = `${year}-${month}-${day}`;
+
             checkoutInput.value = formattedDate;
             checkoutInput.min = formattedDate;
         });
     });
+
+
 </script> 
 @endpush

@@ -59,6 +59,14 @@ class TapPayment implements PaymentMethodInterface
 
     public function process($transaction)
     {
+
+        $callbackUrl = route('web-booking.paymentMethodCallBack', [$transaction->payment_gateway, $transaction->id]);
+
+
+        if($transaction->platform == 'api'){
+            $callbackUrl = route('paymentMethodCallBack', [$transaction->payment_gateway, $transaction->id]);
+        }
+
         $data = [
             'amount' => $transaction->amount,
             'currency' => $transaction->currency,
@@ -84,7 +92,7 @@ class TapPayment implements PaymentMethodInterface
             ],
             'source' => ['id' => 'src_all'],
             'redirect' => [
-                'url' => route('web-booking.paymentMethodCallBack', [$transaction->payment_gateway, $transaction->id]),  
+                'url' => $callbackUrl,  
             ],
 
         ];

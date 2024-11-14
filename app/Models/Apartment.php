@@ -63,7 +63,7 @@ class Apartment extends Model implements HasMedia
 
     public function registerMediaConversions(Media $media = null): void {
         $this->addMediaConversion('grid')
-            ->fit(  Fit::Crop, 364, 374 )
+            ->fit(  Fit::Crop, 364, desiredHeight: 300 )
 
             ->format('webp')                         // Convert to WebP format
             ->nonQueued();                           // Process synchronously (optional)
@@ -87,7 +87,7 @@ class Apartment extends Model implements HasMedia
     //is_favorite
     public function getIsFavoriteAttribute()
     {
-        $user =  \Auth::guard('api')->user();
+        $user = \Auth::guard('api')->check() ? \Auth::guard('api')->user() : \Auth::guard('customer')->user();
         if (!$user) {
             return false;
         }

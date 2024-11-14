@@ -54,4 +54,55 @@ class Booking extends Model
     }
 
 
+
+    public function getChangeStatusButton()
+    {
+        $statuses = [
+            'pending' => __('cms.status_pending'),
+            'confirmed' => __('cms.status_confirmed'),
+            'canceled' => __('cms.status_canceled'),
+        ];
+    
+        $button = '<div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            ' . __('cms.change_status') . '
+                        </button>
+                        <div class="dropdown-menu">';
+                        
+        foreach ($statuses as $status => $label) {
+            $url = url("admin/booking/{$this->id}/change-status/{$status}");
+            $button .= '<a class="dropdown-item" href="'.$url.'">'.$label.'</a>';
+        }
+    
+        $button .= '</div></div>';
+    
+        return $button;
+    }
+    
+
+    public function getChangePaymentStatusButton()
+    {
+        $paymentStatuses = [
+            'unpaid' => __('cms.payment_status_unpaid'),
+            'paid' => __('cms.payment_status_paid'),
+            'refunded' => __('cms.payment_status_refunded'),
+        ];
+    
+        $button = '<div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            ' . __('cms.change_payment_status') . '
+                        </button>
+                        <div class="dropdown-menu">';
+    
+        foreach ($paymentStatuses as $status => $label) {
+            $url = url("admin/booking/{$this->id}/change-payment-status/{$status}");
+            $button .= '<a class="dropdown-item" href="'.$url.'">'.$label.'</a>';
+        }
+    
+        $button .= '</div></div>';
+    
+        return $button;
+    }
+    
+
 }

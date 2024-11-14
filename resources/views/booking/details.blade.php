@@ -1,6 +1,7 @@
 @extends('layouts.master')
 @push('css')
 
+
 <style>
      .cancel-booking-btn[disabled] {
         background-color: #f5d7d1;  
