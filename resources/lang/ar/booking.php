@@ -40,4 +40,6 @@ return [
     'booking_confirmed_message' => 'تم تأكيد الحجز بنجاح',
     'booking_not_found' => 'الحجز غير موجود',
     'booking_success' => 'نجحت العملية',    
+    'view_booking' => 'عرض الحجز',
+    'close' => 'إغلاق',
 ];

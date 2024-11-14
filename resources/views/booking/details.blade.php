@@ -126,35 +126,52 @@
             </div>
         </div>
     </div>
+
+
 </section>
-@if(request()->query('showPopup') == 1)
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById("popup-1").style.display = "block";
-        });
-    </script>
-@endif
 
 <div class="popup modal" id="popup-1" style="display: none;">
     <div class="popup-contain text-center">
         <p class="p-5 border-b border-border text-left">
             {{__('booking.booking_success')}}
         </p>
-        <img class="inline-block my-10" src="assets/img/success.svg" />
+        <img class="inline-block my-10" src="{{asset('assets/img/success.svg')}}" />
         <p class="font-semibold">
-         
+        
             {{__('booking.booking_confirmed_message')}}
             <br>
-            {{__('booking.number_of_booking')}}: <span class="text-price">#{{ $booking->number_of_booking }}</span>
+            {{__('booking.number_of_booking')}}: <span class="text-price" dir="ltr">#{{ $booking->number_of_booking }}</span>
         </p>
         <div class="md:grid md:grid-cols-2 md:gap-5 max-w-full my-10 mx-5">
-            <a href="{{ route('customer.booking.details', $booking->number_of_booking) }}" class="py-4 rounded-lg bg-price text-white">Booking Details</a>
-            <button onclick="document.getElementById('popup-1').style.display='none'" class="py-4 rounded-lg bg-feature">Continue</button>
+            <a href="{{ route('customer.booking.details', $booking->number_of_booking) }}"  class="py-4 rounded-lg bg-price text-white">
+                {{__('booking.view_booking')}}
+            </a>
+            <button onclick="document.getElementById('popup-1').style.display='none'" class="py-4 rounded-lg bg-feature">
+                {{__('booking.close')}}
+            </button>
         </div>
     </div>
 </div>
 
 @endsection
+@if(request()->query('showPopup') == 1)
+@push('js')
+<script>
+  
+  $.fancybox.open({
+        src: '#popup-1',
+        type: 'inline',
+        touch: false,
+        clickSlide: false,
+        clickOutside: false,
+        afterShow: function() {
+            
+        }
+    });
+</script>
+@endpush
+@endif
+
 
 @push('js')
 @include('customer.section.script-form')
@@ -208,5 +225,14 @@ $(document).ready(function() {
     });
 });
 
+
+ 
+ 
+
 </script>
+
+
 @endpush
+
+
+ 

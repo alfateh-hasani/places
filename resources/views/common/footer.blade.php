@@ -88,6 +88,7 @@
     <div class="clear-both"></div>
   </div>
 </footer>
+@stack('pop')
 @guest('customer')
     @include('common.login-part')    
 @endguest
