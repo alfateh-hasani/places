@@ -29,7 +29,7 @@ class BookingController extends CrudController
         CRUD::setModel(\App\Models\Booking::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/booking');
         CRUD::setEntityNameStrings(__('cms.booking'), __('cms.booking'));
-        CRUD::denyAccess(['create', 'delete']);
+        CRUD::denyAccess(['create', 'delete','update']);
 
     }
     
@@ -380,22 +380,32 @@ class BookingController extends CrudController
     }
     
 
-
-    public function changeStatus($id)
+    public function changeStatus($id, $status)
     {
         $booking = \App\Models\Booking::find($id);
-        $booking->changeStatus();
-        \Alert::success(__('cms.status_changed_successfully'))->flash();
+        if ($booking) {
+            $booking->status = $status;
+            $booking->save();
+            \Alert::success(__('cms.status_changed_successfully'))->flash();
+        } else {
+            \Alert::error(__('cms.booking_not_found'))->flash();
+        }
         return back();
     }
-
-    public function changePaymentStatus($id)
+    
+    public function changePaymentStatus($id, $status)
     {
         $booking = \App\Models\Booking::find($id);
-        $booking->changePaymentStatus();
-        \Alert::success(__('cms.payment_status_changed_successfully'))->flash();
+        if ($booking) {
+            $booking->payment_status = $status;
+            $booking->save();
+            \Alert::success(__('cms.payment_status_changed_successfully'))->flash();
+        } else {
+            \Alert::error(__('cms.booking_not_found'))->flash();
+        }
         return back();
     }
+    
 
 
 }

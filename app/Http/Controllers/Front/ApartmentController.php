@@ -16,7 +16,7 @@ class ApartmentController extends Controller
         $this->apartment = $apartment;
     }
  
-    public function index()
+    public function index() 
     {
         // Fetch all active apartments
         $apartments = Apartment::where('is_active', true)->paginate(12);
@@ -30,10 +30,10 @@ class ApartmentController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
     
-        $lastBookedDate = $apartment->bookings->sortBy('check_out')->first()->check_out;
+        $lastBookedDate = $apartment->bookings->sortBy('check_out')->first()?->check_out;
         $started_day = $lastBookedDate->copy()->addDay()->format('Y-m-d');
         $next_started_day = $lastBookedDate->copy()->addDays(2)->format('Y-m-d');
-        $booked_days =  $apartment->bookings->map(function($booking) {
+        $booked_days =  $apartment->bookings?->map(function($booking) {
             return [
                 'check_in' => $booking->check_in->format('Y-m-d'),
                 'check_out' => $booking->check_out->format('Y-m-d')

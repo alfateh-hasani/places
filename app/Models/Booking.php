@@ -59,8 +59,11 @@ class Booking extends Model
     {
         $statuses = [
             'pending' => __('cms.status_pending'),
-            'confirmed' => __('cms.status_confirmed'),
+            'approved' => __('cms.status_approved'),
             'canceled' => __('cms.status_canceled'),
+            'rejected' => __('cms.status_rejected'),
+            'finished' => __('cms.status_finished'),
+            'booked' => __('cms.status_booked'),
         ];
     
         $button = '<div class="btn-group">
@@ -68,10 +71,13 @@ class Booking extends Model
                             ' . __('cms.change_status') . '
                         </button>
                         <div class="dropdown-menu">';
-                        
+    
         foreach ($statuses as $status => $label) {
             $url = url("admin/booking/{$this->id}/change-status/{$status}");
-            $button .= '<a class="dropdown-item" href="'.$url.'">'.$label.'</a>';
+            $button .= '<form method="POST" action="'.$url.'" style="display:inline;">
+                            ' . csrf_field() . '
+                            <button class="dropdown-item" type="submit">'.$label.'</button>
+                        </form>';
         }
     
         $button .= '</div></div>';
@@ -79,30 +85,35 @@ class Booking extends Model
         return $button;
     }
     
-
+    
     public function getChangePaymentStatusButton()
     {
         $paymentStatuses = [
-            'unpaid' => __('cms.payment_status_unpaid'),
+            'pending' => __('cms.payment_status_pending'),
             'paid' => __('cms.payment_status_paid'),
-            'refunded' => __('cms.payment_status_refunded'),
+            'failed' => __('cms.payment_status_failed'),
         ];
     
         $button = '<div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button type="button" class="btn btn-sm btn-warning dropdown-toggle" 
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             ' . __('cms.change_payment_status') . '
                         </button>
                         <div class="dropdown-menu">';
     
         foreach ($paymentStatuses as $status => $label) {
             $url = url("admin/booking/{$this->id}/change-payment-status/{$status}");
-            $button .= '<a class="dropdown-item" href="'.$url.'">'.$label.'</a>';
+            $button .= '<form method="POST" action="'.$url.'" style="display:inline;">
+                            ' . csrf_field() . '
+                            <button class="dropdown-item" type="submit">'.$label.'</button>
+                        </form>';
         }
     
         $button .= '</div></div>';
     
         return $button;
     }
+    
     
 
 }

@@ -454,13 +454,11 @@
                              
                         </div>
                         @endif
+                        
                         @auth
                             <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
-
                         @else
-                           
                             <button data-src="#popup-5" data-fancybox dont-close-click-outside class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
-
                         @endauth
                     </form>
                     
