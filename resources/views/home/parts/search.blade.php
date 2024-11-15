@@ -46,13 +46,13 @@
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer persons relative ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_guests') }}</p>
             <p class="font-semibold text-sm text-black py-1 content">{{ __('site.add_guests') }}</p>
-            <ul class="hidden lg:absolute w-full bg-white p-4 border border-border rounded-lg">
-                <li class="border-b border-blackopacity pb-3 mb-3">
-                    <p class="inline-block w-24">{{ __('site.filters_adults') }}</p>
+            <ul class="hidden lg:absolute w-72 bg-white p-4 border border-border rounded-lg">
+                <li class="border-b border-blackopacity pb-4 mb-4">
+                    <p class="inline-block w-36 text-lg">{{ __('site.filters_adults') }}<span class="block text-xs opacity-50">Ages 13 or above</span></p>
                     <div class="inline-block">
                         <div class="relative flex items-center">
                             <button type="button" id="decrement-button" data-input-counter-decrement="counter-input"
-                                class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                                class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -63,7 +63,7 @@
                                 class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1"
                                 placeholder="" value="1" required />
                             <button type="button" id="increment-button" data-input-counter-increment="counter-input"
-                                class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                            class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -74,11 +74,11 @@
                     </div>
                 </li>
                 <li>
-                    <p class="inline-block w-24">{{ __('site.filters_children') }}</p>
+                    <p class="inline-block w-36">{{ __('site.filters_children') }}<span class="block text-xs opacity-50">Ages 13 or above</span></p>
                     <div class="inline-block">
                         <div class="relative flex items-center">
                             <button type="button" id="decrement-button" data-input-counter-decrement="counter-input1"
-                                class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                            class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -89,7 +89,7 @@
                                 class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1"
                                 placeholder="" value="1" required />
                             <button type="button" id="increment-button" data-input-counter-increment="counter-input1"
-                                class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                            class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"

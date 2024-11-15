@@ -92,6 +92,8 @@
 @guest('customer')
     @include('common.login-part')    
 @endguest
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
 
 

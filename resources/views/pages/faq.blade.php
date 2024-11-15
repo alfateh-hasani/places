@@ -15,12 +15,12 @@
             <ul>
                 @foreach ($categories as $category)
                     <li>
-                        <button class="category-tab relative font-normal text-base text-white opacity-80 block 
+                        <a class="w-full category-tab relative font-normal text-base text-white opacity-80 block 
                         py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100"
                                 data-category="{{ $category->id }}">
                             {{ $category->{'name_'.app()->getLocale()} }}
                             <img class="inline-block absolute ltr:right-0 rtl:left-0 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
-                        </button>
+                    </a>
                     </li>
                 @endforeach
             </ul>

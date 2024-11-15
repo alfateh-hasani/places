@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Blog, Slider, Apartment, City, ContactUs, Page};
 use Artesaos\SEOTools\Facades\SEOTools;
-// Import Slider model
+use App\Models\Review;
 
 class HomeController extends Controller
 {
@@ -19,6 +19,28 @@ class HomeController extends Controller
         $data['apartments'] = Apartment::where('is_active', true) ->with('reviews')  ->orderBy('id', 'desc') ->take(10)->get();
         $data['cities']     = City::orderBy('sort_order','asc')->withCount('apartments')->get();
         $data['buildings'] = City::with('buildings')->orderBy('sort_order','asc')    ->whereHas('buildings')  ->get();
+
+        // Fetch top 40 reviews
+        $reviews = Review::where('rating', '>=', 4) // Adjust condition as needed
+            ->orderBy('rating', 'desc')
+            ->with('customer')
+            ->take(40)
+            ->get();
+
+      
+        // Calculate average rating and total reviews
+        $averageRating = Review::where('rating', '>=', 4)->avg('rating');
+        $totalUsers = Review::where('rating', '>=', 4)->count();
+
+        $averageRating = number_format($averageRating, decimals: 1);
+
+        // Chunk into two arrays
+        $chunks = $reviews->chunk(20);
+        $data['topReviews1'] = $chunks->get(0) ?? collect(); // First 20 reviews for slider 1
+        $data['topReviews2'] = $chunks->get(1) ?? collect(); // Next 20 reviews for slider 2
+        $data['averageRating' ] = $averageRating; 
+        $data['totalUsers' ] = $totalUsers;
+
 
         // apartments
         return view('home.index',$data);

@@ -1,66 +1,6 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    function toggleFavorite(apartmentId) {
-        $.ajax({
-            url: '{{ route('customer.toggle.favorite') }}',
-            type: 'POST',
-            data: {
-                apartment_id: apartmentId,
-                _token: '{{ csrf_token() }}'
-            },
-            success: function(data) {
-                if (data.success) {
-                    let icon = $('#favorite-icon-' + apartmentId);
-                    if (data.action === 'added') {
-                        console.log(data.action);
-                        
-                        icon.attr('src', '{{ asset("assets/img/favorite-active.svg") }}');  
-                        Swal.fire({
-                            icon: 'success',
-                            title: '{{ __("apartment.favorite_added") }}',
-                            text: data.message,
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        console.log(data.action);
-                        icon.attr('src', '{{ asset("assets/img/favoritee.svg") }}'); 
-                        Swal.fire({
-                            icon: 'info',
-                            title: '{{ __("apartment.favorite_removed") }}',
-                            text: data.message,
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    }
-                    // window.location.reload();
-
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ __("apartment.favorite_failed") }}',
-                        text: data.message || '{{ __("apartment.favorite_failed") }}'
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                if (xhr.status === 401) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{__("apartment.favorite_login_title")}}',
-                        text: '{{ __("apartment.favorite_login") }}'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: '{{ __("apartment.favorite_failed") }}'
-                    });
-                    console.error('Error:', error);
-                }
-            }
-        });
-    }
+   
     const nightlyRate = {{ $apartment->price }};
     let discount = 0;
 

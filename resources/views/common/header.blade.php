@@ -27,9 +27,16 @@
     <div class="right float-right rtl:float-left">
       <div class="lang float-left rtl:float-right">
         
+        @if(app()->getLocale() == 'ar')
         <a href="/en" class="py-1.5 font-normal text-base text-black block">
-          <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="Language" /> En
+          <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="Language" /> EN
         </a>
+        @else
+        <a href="/" class="py-1.5 font-normal text-base text-black block">
+          <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="Language" /> AR
+        </a>
+
+        @endif
        
       </div>
       <div class="login float-left rtl:float-right ltr:ml-5 rtl:mr-5 relative">
