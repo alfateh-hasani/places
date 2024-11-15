@@ -40,6 +40,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('favorite', 'favorite')->name('favorite');
             Route::get('notifications', 'notifications')->name('notifications');
             Route::post('toggle-favorite', 'toggleFavorite')->name('toggle.favorite'); 
+            Route::post('post-review', 'addReview')->name('post.review');
         });
         Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
             Route::get('determine-booking/{apartment_id}', 'determineBookingStatus')->name('determine');

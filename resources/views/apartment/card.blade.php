@@ -1,4 +1,4 @@
-<div class="rounded-xl overflow-hidden border border-border">
+<div class="rounded-xl overflow-hidden border border-border apartment-card">
     <div class="relative">
         <div class="slider">
             @foreach ($apartment->getMedia('image') as $image)

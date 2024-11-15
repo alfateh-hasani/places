@@ -13,14 +13,12 @@
         <!-- Tabs for Categories -->
         <div class="aside rounded-lg py-8 px-5 mb-4 lg:mb-0">
             <ul>
-                @foreach ($categories as $category)
+                @foreach ($categories as $key => $category)
                     <li>
-                        <a class="w-full category-tab relative font-normal text-base text-white opacity-80 block 
-                        py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100"
-                                data-category="{{ $category->id }}">
+                        <a class="@if($key==0) opacity-100 @endif w-full category-tab relative font-normal text-base text-white opacity-60 block py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100" data-category="{{ $category->id }}">
                             {{ $category->{'name_'.app()->getLocale()} }}
-                            <img class="inline-block absolute ltr:right-0 rtl:left-0 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
-                    </a>
+                            <img class="inline-block absolute ltr:right-0 rtl:left-0 rtl:rotate-180 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
+                        </a>
                     </li>
                 @endforeach
             </ul>
@@ -32,7 +30,7 @@
                 <ul class="faq-category hidden" id="category-{{ $category->id }}">
                     @foreach ($category->questions as $question)
                         <li class="faq-item border border-border rounded-lg shadow-md mb-4 hover:border-price ease-in-out duration-300 cursor-pointer">
-                            <a class="faq-question relative block mx-5 py-5 pr-5  font-normal text-base text-black">
+                            <a class="faq-question relative block mx-5 py-5 pr-5 font-normal text-base text-black">
                                 {{ $question->{'title_'.app()->getLocale()} }}
                                 <img class="inline-block absolute ltr:right-0 rtl:left-0 top-7" src="{{ asset('assets/img/faq.svg') }}" />
                             </a>
@@ -47,38 +45,26 @@
 
 @push('js')
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const categoryTabs = document.querySelectorAll(".category-tab");
-        const faqCategories = document.querySelectorAll(".faq-category");
+    $(document).ready(function () {
+    
+    $(".faq-category").first().show();
 
-        // Display the first category by default
-        if (faqCategories.length > 0) {
-            faqCategories[0].classList.remove("hidden");
-        }
+    $(".category-tab").on("click", function () {
+        
+        $(".category-tab").removeClass("opacity-100");
+        $(this).addClass("opacity-100");
+        $(".faq-category").hide();
 
-        categoryTabs.forEach(tab => {
-            tab.addEventListener("click", () => {
-                // Hide all FAQ categories
-                faqCategories.forEach(category => category.classList.add("hidden"));
-
-                // Get selected category ID and display relevant questions
-                const categoryId = tab.getAttribute("data-category");
-                const selectedCategory = document.getElementById("category-" + categoryId);
-                if (selectedCategory) {
-                    selectedCategory.classList.remove("hidden");
-                }
-            });
-        });
-
-        // Toggle answer visibility on question click
-        document.querySelectorAll(".faq-item").forEach(item => {
-            const question = item.querySelector(".faq-question");
-            const answer = item.querySelector(".faq-answer");
-
-            question.addEventListener("click", () => {
-                answer.classList.toggle("hidden");   
-            });
-        });
+        const categoryId = $(this).data("category");
+        
+        $("#category-" + categoryId).fadeIn();
     });
+
+    $(".faq-question").on("click", function () {
+        $(this).next(".faq-answer").slideToggle();
+    });
+});
+
 </script>
+
 @endpush

@@ -42,4 +42,9 @@ return [
     'booking_success' => 'نجحت العملية',    
     'view_booking' => 'عرض الحجز',
     'close' => 'إغلاق',
+    'review' => 'مراجعة',
+    'review_message' =>  'شكراً على وقتك',
+    'review_message_2' => 'يرجى تقديم تقييمك للحجز',
+    'review_submit' => 'إرسال التقييم',
+    'review_placeholder' => ' أدخل تقييمك هنا',
 ];

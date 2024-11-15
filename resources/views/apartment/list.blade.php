@@ -506,17 +506,60 @@
 
 
   <section class="list pt-2 sm:pt-20 pb-2 sm:pb-20">
-    <div class="container">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-0">
+    <div class="container grid-container">
+        <div class="grid grid-items grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-0">
             @foreach($apartments as $apartment)
                 @include('apartment.card', ['apartment' => $apartment])
             @endforeach
         </div>
+
+        
     </div>
+
+    <div id="list-links">
+        {!! $apartments->links() !!}
+        </div>
 </section>
 
 @endsection
+
+@push('css')
+
+<style>
+    #list-links{
+        display:none;
+    }
+</style>
+@endpush
 @push('js')
+
+<script src="{{ asset('assets/js/infinite-scroll.pkgd.min.js')}}"></script>
+
+<script>
+
+// Initialize Infinite Scroll
+$('.grid-container .grid-items').infiniteScroll({
+        path: '#list-links a[aria-label="pagination.next"]',
+        append: '.apartment-card',
+        history: false,
+        //prefill: true,
+    }).on('append.infiniteScroll', function (event, response, path, items) {
+        // Find the newly added items that contain sliders
+        $(items).find('.slider').each(function () {
+            // Destroy existing Slick instance if any
+            if ($(this).hasClass('slick-initialized')) {
+                $(this).slick('unslick');
+            }
+            // Reinitialize Slick on the new content
+            $(this).slick({
+                dots: true,
+                @if(config('app.locale') == 'ar')
+                rtl: true, 
+                @endif
+            });
+        });
+    });
+    </script>
 <script>
     function updateRange() {
         const minPrice = document.getElementById('min-price');
@@ -539,4 +582,6 @@
     }
     updateRange();
 </script>    
+
+
 @endpush

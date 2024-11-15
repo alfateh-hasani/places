@@ -77,7 +77,7 @@ class ApartmentController extends Controller
                 }
             }
         }
-        $apartments = $query->paginate(30);
+        $apartments = $query->paginate(8);
         $data['cities'] =  City::orderBy('sort_order','asc')->withCount('apartments')->get();
         $data['apartments'] = $apartments;
         $data['filter_keys'] = [

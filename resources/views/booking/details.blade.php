@@ -44,13 +44,29 @@
                         <span class="inline-block ml-2 text-sm">   
                             {{__('booking.print')}}
                         </span>
-                     </a>
-                     <button {{$booking->status =='canceled'? 'disabled' :''}}   class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn" data-booking-id="{{ $booking->id }}">
+                    </a>
+                    <button {{$booking->status =='canceled'? 'disabled' :''}}   
+                        class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn" 
+                            data-booking-id="{{ $booking->id }}">
                         <svg class="inline-block" fill="currentColor" height="20" viewBox="0 0 329.26933 329" width="20" xmlns="http://www.w3.org/2000/svg">
                             <path d="m194.800781 164.769531 128.210938-128.214843c8.34375-8.339844 8.34375-21.824219 0-30.164063-8.339844-8.339844-21.824219-8.339844-30.164063 0l-128.214844 128.214844-128.210937-128.214844c-8.34375-8.339844-21.824219-8.339844-30.164063 0-8.34375 8.339844-8.34375 21.824219 0 30.164063l128.210938 128.214843-128.210938 128.214844c-8.34375 8.339844-8.34375 21.824219 0 30.164063 4.15625 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921875-2.089844 15.082031-6.25l128.210937-128.214844 128.214844 128.214844c4.160156 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921874-2.089844 15.082031-6.25 8.34375-8.339844 8.34375-21.824219 0-30.164063zm0 0"></path>
                         </svg>
                         <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }}</span>
                     </button>
+                    
+                    <button data-src="#popup-2" data-fancybox type="button" 
+                            class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
+                        <!-- Replace the comment below with the SVG icon -->
+                        <svg class="inline-block" fill="currentColor" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Example SVG path, replace with your actual SVG code -->
+                            <circle cx="10" cy="10" r="8"></circle>
+                        </svg>
+                        <span class="inline-block ml-2 text-sm">
+                            {{ __('booking.review') }}
+                        </span>
+                    </button>
+                
+
                     
                      <a class="py-2.5 px-4 inline-block rounded-md ml-2 border border-price text-center text-price">
                          <svg class="inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="fi_5728913" data-name="Layer 1" viewBox="0 0 512 512" width="20" height="20"><path d="M489.417,279v-1.182c0-62.1-24.349-120.646-68.56-164.857S318.1,44.4,256,44.4,135.354,68.749,91.143,112.96s-68.56,102.758-68.56,164.856V279A27.578,27.578,0,0,0,0,306.081V397.1a27.571,27.571,0,0,0,27.538,27.539H44.556v3.934A39.075,39.075,0,0,0,83.586,467.6H98.705a23.94,23.94,0,0,0,23.912-23.913v-184.2a23.94,23.94,0,0,0-23.912-23.913H83.586a39.074,39.074,0,0,0-39.03,39.03v3.935H38.583v-.727C38.583,157.933,136.116,60.4,256,60.4s217.417,97.533,217.417,217.416v.727h-5.973v-3.935a39.074,39.074,0,0,0-39.03-39.03H413.3a23.94,23.94,0,0,0-23.912,23.913v184.2A23.94,23.94,0,0,0,413.3,467.6h15.119a39.075,39.075,0,0,0,39.03-39.031v-3.934h17.018A27.571,27.571,0,0,0,512,397.1V306.081A27.578,27.578,0,0,0,489.417,279Zm-428.861-4.39a23.056,23.056,0,0,1,23.03-23.03H98.705a7.921,7.921,0,0,1,7.912,7.913v184.2a7.921,7.921,0,0,1-7.912,7.913H83.586a23.056,23.056,0,0,1-23.03-23.031Zm-16,134.027H27.538A11.552,11.552,0,0,1,16,397.1V306.081a11.551,11.551,0,0,1,11.538-11.538H44.556Zm406.888,19.934a23.056,23.056,0,0,1-23.03,23.031H413.3a7.921,7.921,0,0,1-7.912-7.913v-184.2a7.921,7.921,0,0,1,7.912-7.913h15.119a23.056,23.056,0,0,1,23.03,23.03ZM496,397.1a11.552,11.552,0,0,1-11.538,11.539H467.444V294.543h17.018A11.551,11.551,0,0,1,496,306.081Z"></path></svg>
@@ -146,10 +162,64 @@
             <a href="{{ route('customer.booking.details', $booking->number_of_booking) }}"  class="py-4 rounded-lg bg-price text-white">
                 {{__('booking.view_booking')}}
             </a>
-            <button onclick="document.getElementById('popup-1').style.display='none'" class="py-4 rounded-lg bg-feature">
+            <button id="closeMe"  class="py-4 rounded-lg bg-feature">
                 {{__('booking.close')}}
             </button>
         </div>
+    </div>
+</div>
+
+<div class="popup modal" id="popup-2">
+    <div class="popup-contain text-center">
+        <p class="p-5 border-b border-border text-left">
+            {{__('booking.review')}}
+        </p>
+        <img class="inline-block mt-8 mb-5" src="{{asset('assets/img/goodbye.png')}}" />
+        <p class="font-semibold text-lg mb-4">
+            {{__('booking.review_message')}}
+        </p>
+        <p class="text-sm">
+            {{__('booking.review_message_2')}}
+        </p>
+        <form id="review-form">
+            <div class="mt-4 mx-5">
+                <!-- Radio Buttons for Stars -->
+                <section>
+                    @for($i = 1; $i <= 5; $i++)
+                        <label for="feedback-{{ $i }}" class="cursor-pointer">
+                            <input 
+                                class="hidden" 
+                                value="{{ $i }}" 
+                                type="radio" 
+                                name="rating" 
+                                id="feedback-{{ $i }}" 
+                                {{ $i == 5 ? 'checked' : '' }} 
+                            />
+                            <svg class="w-6 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.734 22.812">
+                                <path id="Path_1199" data-name="Path 1199"
+                                      d="M66.612,94.408l1.314,4.042a1.99,1.99,0,0,0,1.891,1.376h4.252a1.988,1.988,0,0,1,1.167,3.6l-3.438,2.5a1.987,1.987,0,0,0-.721,2.225l1.31,4.042a1.986,1.986,0,0,1-3.058,2.221l-3.438-2.5a1.983,1.983,0,0,0-2.337,0l-3.442,2.5a1.986,1.986,0,0,1-3.058-2.221l1.314-4.042a1.992,1.992,0,0,0-.721-2.225l-3.442-2.5a1.989,1.989,0,0,1,1.17-3.6h4.252a1.981,1.981,0,0,0,1.887-1.376l1.314-4.042a1.988,1.988,0,0,1,3.783,0"
+                                      transform="translate(-52.854 -92.533)" />
+                            </svg>
+                        </label>
+                    @endfor
+                </section>
+        
+                <!-- Review Text -->
+                <textarea class="w-full h-24 w-full mt-4 p-2 resize-none border border-border rounded-lg" 
+                          name="review_text" 
+                          placeholder="   {{__('booking.review_placeholder')}}"></textarea>
+        
+                <!-- Hidden Apartment ID -->
+                <input type="hidden" name="apartment_id" value="{{ $booking->apartment_id  }}" />
+            </div>
+        
+            <div class="md:grid md:grid-cols-1 md:gap-5 max-w-full my-10 mx-5">
+                <button type="submit" class="py-4 rounded-lg bg-price text-white">
+                    {{__('booking.review_submit')}}
+                </button>
+            </div>
+        </form>
+        
     </div>
 </div>
 
@@ -168,6 +238,14 @@
             
         }
     });
+
+$('#closeMe').on('click',function(){
+      
+  $.fancybox.close({
+        src: '#popup-1',
+    });
+
+});
 </script>
 @endpush
 @endif
@@ -227,7 +305,44 @@ $(document).ready(function() {
 
 
  
- 
+$(document).ready(function () {
+    $('#review-form').on('submit', function (e) {
+        e.preventDefault();  
+        let formData = {
+            rating: $('input[name="rating"]:checked').val(),
+            review_text: $('textarea[name="review_text"]').val(),
+            apartment_id: $('input[name="apartment_id"]').val(),
+        };
+        $.ajax({
+            url: '{{ route('customer.post.review') }}',  
+            method: 'POST',
+            data: formData,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+            },
+            success: function(response) {
+                HoldOn.close();
+                Swal.fire({
+                    icon: 'success',
+                    title: "{{__('booking.success')}}",
+                    text: "{{__('booking.success_message')}}",
+                    button: true,
+                });
+                window.location.reload();
+            },
+            error: function(xhr) {
+                HoldOn.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: "{{__('booking.error')}}",
+                    text: "{{__('booking.error_message')}}",
+                    button: true,
+                });
+            }
+        });
+    });
+});
+
 
 </script>
 
