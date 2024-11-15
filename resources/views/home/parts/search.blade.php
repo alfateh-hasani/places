@@ -46,7 +46,7 @@
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer persons relative ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_guests') }}</p>
             <p class="font-semibold text-sm text-black py-1 content">{{ __('site.add_guests') }}</p>
-            <ul class="hidden lg:absolute w-full bg-white p-3">
+            <ul class="hidden lg:absolute w-full bg-white p-4 border border-border rounded-lg">
                 <li class="border-b border-blackopacity pb-3 mb-3">
                     <p class="inline-block w-24">{{ __('site.filters_adults') }}</p>
                     <div class="inline-block">
