@@ -131,26 +131,7 @@
             {{__('apartment.children_count'). ' ( '.$apartment->children_count}}) 
         </p>
         <div class="clear-both"></div>
-        <ul class="mt-5 lg:hidden">
-            <li>
-                <a class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
-                    <img class="inline-block" src="{{asset('assets/img/payment-1.png')}}" />
-                    <p class="inline-block ml-4 font-normal text-sm text-title">Pay In 4. No Interest, No Fees.</p>
-                </a>
-            </li>
-            <li>
-                <a class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
-                    <img class="inline-block" src="{{asset('assets/img/payment-2.png')}}" />
-                    <p class="inline-block ml-4 font-normal text-sm text-title">Pay In 4. No Interest, No Fees.</p>
-                </a>
-            </li>
-            <li>
-                <a class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
-                    <img class="inline-block" src="{{asset('assets/img/payment-3.png')}}" />
-                    <p class="inline-block ml-4 font-normal text-sm text-title">Pay In 4. No Interest, No Fees.</p>
-                </a>
-            </li>
-        </ul>
+        
     </div>
 </section>
 
@@ -187,10 +168,13 @@
                     <h4 class="font-semibold text-xl text-title">   
                         {{__('apartment.description')}}
                     </h4>
-                    <p class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
-                        {!! $apartment->ml('description') !!}         
+                    <p class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[92px] overflow-hidden">
+                        {{ strip_tags($apartment->ml('description')) }}
+
                     </p>
-                    {{-- <button class="showmore font-normal text-sm text-blue underline">Read More</button> --}}
+                    <button class="showmoreApartment font-normal text-sm text-blue underline">
+                        {{__('apartment.show_more')}}    
+                    </button> 
                 </div>
                 <div class="tabs" id="tabs">
                     <ul class="buttons w-[210vw] xl:w-auto">
@@ -266,35 +250,35 @@
                                 {{__('apartment.reviews_title')}}
                             </h5>
                             <ul>
-                                @foreach ($apartment->reviews as $item)
-                                <li class="bg-sort border border-filteritem rounded-lg p-5 mb-4">
-                                    <div>
-                                        <div class="w-10 h-10 rounded-full rtl:ml-4 mr-4 float-left rtl:float-right inline-block" style="background-image: url({{asset('assets/img/slider.png')}}"></div>
-                                        <h5 class="font-normal text-base">  
-                                            {{$item->customer->first_name.' '.$item->customer->last_name}}
-                                        </h5>
-                                        <p class="font-normal text-xs text-filterhover">
-                                            
+                                @forelse ($apartment->reviews as $item)
+                                    <li class="bg-sort border border-filteritem rounded-lg p-5 mb-4">
+                                        <div>
+                                            <div class="w-10 h-10 rounded-full rtl:ml-4 mr-4 float-left rtl:float-right inline-block" 
+                                                 style="background-image: url({{asset('assets/img/slider.png')}}"></div>
+                                            <h5 class="font-normal text-base">  
+                                                {{$item->customer->first_name.' '.$item->customer->last_name}}
+                                            </h5>
+                                            <p class="font-normal text-xs text-filterhover"></p>
+                                        </div>
+                                        <div class="my-3">
+                                            @for ($i = 0; $i < $item->rating; $i++) 
+                                                <img class="inline-block" src="{{asset('assets/img/comment-star.svg')}}" />
+                                            @endfor
+                                            <p class="inline-block ml-3 translate-y-0.5 font-normal text-base">
+                                                {{$item->created_at?->diffForHumans()}}
+                                            </p>
+                                        </div>
+                                        <p class="font-light text-base text-black"> 
+                                            {{$item->review_text}}
                                         </p>
-                                    </div>
-                                    <div class="my-3">
-                                        @for ($i=0; $i < $item->rating; $i++) 
-                                            <img class="inline-block" src="{{asset('assets/img/comment-star.svg')}}" />
-                                        @endfor
-                                        
-                                        <p class="inline-block ml-3 translate-y-0.5 font-normal text-base">
-                                            {{$item->created_at?->diffForHumans()}}
-                                        </p>
-                                    </div>
-                                    <p class="font-light text-base text-black"> 
-                                        {{$item->review_text}}
-                                    </p>
-                                </li>
-                                @endforeach
-                              
-                               
+                                    </li>
+                                @empty
+                                    <li class="text-center text-gray-500">
+                                        {{ __('apartment.no_reviews') }}
+                                    </li>
+                                @endforelse
                             </ul>
-                            {{-- <button class="show-specifications font-semibold text-base border border-black rounded-full py-2 px-6">Show All 30 Amenities</button> --}}
+                            
                         </div>
                         <div class="pt-8" id="tabs-3">
                             <h5 class="font-semibold text-xl text-filterhover mb-6">    
@@ -309,12 +293,7 @@
                             <h5 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.terms_policies_title')}}
                             </h5>
-                            {{-- <ul>
-                                <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> Free Cancellation For 48 Hours</li>
-                                <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> Free Cancellation For 48 Hours</li>
-                                <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> Dive Right In</li>
-                                <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> Dive Right In</li>
-                            </ul> --}}
+                           
                             <h6 class="mt-8">
                                 {{$apartment->policy?->{'name_'.app()->getLocale()} }}
                             </h6>
@@ -348,36 +327,6 @@
                                     value="{{ $next_started_day }}">
                             </div>
                         </div>
-                 
-                        
-                    
-                        {{-- <div class="flex flex-wrap -mx-2">
-                            <div class="flex flex-col w-1/2 px-2">
-                                <label for="adults" class="mb-1 font-semibold">@lang('apartment.adults_count')</label>
-                                <input type="number" 
-                                       id="adults" 
-                                       name="adults_count" 
-                                       min="1" 
-                                       max="{{$apartment->adults_count}}" 
-                                       value="{{$apartment->adults_count}}" 
-                                       class="border border-gray-300 rounded-lg h-12 px-3" 
-                                       required
-                                       oninput="validateInput(this, '{{__('apartment.min_children')}}', '{{__('apartment.max_adults').' '.$apartment->adults_count}}')">
-
-                            </div>
-                        
-                            <div class="flex flex-col w-1/2 px-2">
-                                <label for="children" class="mb-1 font-semibold">@lang('apartment.children_count')</label>
-                                <input type="number" 
-                                       id="children" 
-                                       name="children_count" 
-                                       min="0" 
-                                       max="{{$apartment->children_count}}" 
-                                       value="{{$apartment->children_count}}" 
-                                       class="border border-gray-300 rounded-lg h-12 px-3" 
-                                       oninput="validateInput(this, '{{__('apartment.min_children')}}', '{{__('apartment.max_children').' '.$apartment->children_count}}')">
-                            </div>
-                        </div> --}}
                         
                             <script>
                             function validateInput(input, minMessage, maxMessage) {
@@ -391,29 +340,6 @@
                             }
                             </script>
                         
-                        {{-- <div class="flex flex-col">
-                            <label for="coupon_code" class="mb-1 font-semibold">@lang('apartment.coupon_code')</label>
-                            <input type="text" id="coupon_code" name="coupon_code" class="border border-gray-300 rounded-lg h-12 px-3">
-                            <button type="button" id="verify_coupon" class="bg-price rounded-lg h-12 w-full font-semibold text-white mt-4">
-                                تحقق من الكوبون
-                            </button>
-                            <div id="coupon_message" class="mt-2 text-red-500"></div>
-                        </div> --}}
-                        
-                        {{-- <ul>
-                            @foreach (config('payments.gateways') as $index => $item)
-                                <li>
-                                    <label class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300 cursor-pointer">
-                                        <input type="radio" name="payment_method_code" value="{{ $item['value'] }}" class="hidden" /> 
-                                        <img class="inline-block" src="{{ asset('images/' . $item['icon'] . '.svg') }}" alt="{{ $item['value'] }}" />
-                                        <p class="inline-block ml-4 font-normal text-sm text-title">
-                                            {{ $item['value'] }}
-                                        </p>
-                                    </label>
-                                </li>
-                            @endforeach
-                        </ul> --}}
-                         
                         <ul>
                             <li class="mb-4 font-semibold text-sm text-title">
                                 <span>
@@ -429,13 +355,6 @@
                                 <span class="float-right rtl:float-left" id="totalNights">1 {{ __('apartment.nights') }}</span>
                                 <div class="clear-both"></div>
                             </li>
-                            {{-- <li class="mb-4 font-semibold text-sm text-title">
-                                <span>{{ __('apartment.discounted_cost') }}</span>
-                                <span class="float-right rtl:float-left" id="discounted_cost">
-                                    0.00 {{ __('apartment.price') }}
-                                </span>
-                                <div class="clear-both"></div>
-                            </li> --}}
                             <li class="mb-4 font-semibold text-sm text-title">
                                 <span>{{ __('apartment.total_cost') }}</span>
                                 <span class="float-right rtl:float-left" id="totalCost"> {{$apartment->price .' '.__('apartment.price') }} </span>
@@ -556,6 +475,21 @@
             notification.style.display = 'none';
         }, 2000);
     }
+
+    var readMoreText = "{{ __('apartment.show_more') }}";
+    var readLessText = "{{ __('apartment.show_less') }}";
+
+    $(".showmoreApartment").click(function () {
+        if ($(this).hasClass("active")) {
+            $(this).removeClass("active");
+            $(this).text(readMoreText); 
+            $(this).prev("p").css({"maxHeight":"72px"});
+        } else {
+            $(this).addClass("active");
+            $(this).text(readLessText);   
+            $(this).prev("p").css({"maxHeight":"10000px"});
+        }
+    });
 </script>
 
 @endpush

@@ -22,4 +22,6 @@ return [
     'notification_successfully' => 'تم إرسال الإشعار بنجاح',
     'booking_status_booked' => 'تم الحجز',
     'payment_failed' => 'فشلت عملية الدفع',
+    'booking_status_canceled' => 'تم الإلغاء',
+    'transaction_not_exists' => 'العملية غير موجودة',
 ];

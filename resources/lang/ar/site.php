@@ -102,5 +102,9 @@ return [
     'contact' => 'تواصل',
     'privacy-policy' => 'سياسة الخصوصية',
     'no_apartments' => 'لا توجد شقق متاحة',
+    'search_mobile' => 'قائمة البحث',
+    'abrove_12' => 'أعلى من 12 سنة',
+    'below_12' => 'أقل من 12 سنة',
+    'search_mobile_desc' => 'ابحث عن شقق فندقية في أي مكان',
 
 ];

@@ -1,0 +1,20 @@
+<?php
+return [
+    'city' => 'المدينة',
+    'check_in' => 'تاريخ الوصول',
+    'check_out' => 'تاريخ المغادرة',
+    'guests' => 'الضيوف',
+    'children' => 'الأطفال',
+    'price' => 'السعر',
+    'rooms' => 'الغرف',
+    'area' => 'المساحة',
+    'min_price' => 'أقل سعر',
+    'max_price' => 'أعلى سعر',
+    'price_range' => 'نطاق السعر',
+    'rate' => 'التقييم',
+    'area_range' => 'نطاق المساحة',
+    'beds_label' => 'الأسرة',
+    'bathrooms_label' => 'الحمامات',
+    'beds' => 'الأسرة',
+    'apply_filters' => 'تطبيق الفلاتر',
+];

@@ -53,18 +53,20 @@
                         </svg>
                         <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }}</span>
                     </button>
-                    
-                    <button data-src="#popup-2" data-fancybox type="button" 
-                            class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
-                        <!-- Replace the comment below with the SVG icon -->
-                        <svg class="inline-block" fill="currentColor" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Example SVG path, replace with your actual SVG code -->
-                            <circle cx="10" cy="10" r="8"></circle>
-                        </svg>
-                        <span class="inline-block ml-2 text-sm">
-                            {{ __('booking.review') }}
-                        </span>
-                    </button>
+                    @if (!$has_review)
+                        <button data-src="#popup-2" data-fancybox type="button" 
+                                class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
+                            <!-- Replace the comment below with the SVG icon -->
+                            <svg class="inline-block" fill="currentColor" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Example SVG path, replace with your actual SVG code -->
+                                <circle cx="10" cy="10" r="8"></circle>
+                            </svg>
+                            <span class="inline-block ml-2 text-sm">
+                                {{ __('booking.review') }}
+                            </span>
+                        </button>
+                    @endif
+                   
                 
 
                     
@@ -90,6 +92,24 @@
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
                             <p class="text-gri float-left rtl:float-right">     {{__('booking.check_out')}} :</p>
                             <p class="float-right rtl:float-left">{{$booking->check_out?->format('y-m-d')}}</p><div class="clear-both"></div></li>
+                            @if($review)
+                                <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
+                                    <p class="text-gri float-left rtl:float-right">     {{__('booking.review')}} :</p>
+                                    <p class="float-right rtl:float-left">{{$review->review_text}}</p><div class="clear-both"></div>
+                                </li>
+                           
+                                <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
+                                    <p class="text-gri float-left rtl:float-right">     {{__('booking.rating')}} :</p>
+                                    <p class="float-right rtl:float-left">
+                                        @for($i = 1; $i <= $review->rating; $i++)
+                                            <svg class="w-6 inline mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.734 22.812">
+                                                <path id="Path_1199" fill="#EF552C" data-name="Path 1199" d="M66.612,94.408l1.314,4.042a1.99,1.99,0,0,0,1.891,1.376h4.252a1.988,1.988,0,0,1,1.167,3.6l-3.438,2.5a1.987,1.987,0,0,0-.721,2.225l1.31,4.042a1.986,1.986,0,0,1-3.058,2.221l-3.438-2.5a1.983,1.983,0,0,0-2.337,0l-3.442,2.5a1.986,1.986,0,0,1-3.058-2.221l1.314-4.042a1.992,1.992,0,0,0-.721-2.225l-3.442-2.5a1.989,1.989,0,0,1,1.17-3.6h4.252a1.981,1.981,0,0,0,1.887-1.376l1.314-4.042a1.988,1.988,0,0,1,3.783,0" transform="translate(-52.854 -92.533)"></path>
+                                            </svg>
+                                        @endfor
+                                        
+                                    </p><div class="clear-both"></div>
+                                </li>
+                            @endif
                     </ul>
                 </div>
                 <div class="bg-footer border border-feature-border rounded-lg py-5 col-span-2">
@@ -196,18 +216,14 @@
                                 {{ $i == 5 ? 'checked' : '' }} 
                             />
                             <svg class="w-6 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.734 22.812">
-                                <path id="Path_1199" data-name="Path 1199"
-                                      d="M66.612,94.408l1.314,4.042a1.99,1.99,0,0,0,1.891,1.376h4.252a1.988,1.988,0,0,1,1.167,3.6l-3.438,2.5a1.987,1.987,0,0,0-.721,2.225l1.31,4.042a1.986,1.986,0,0,1-3.058,2.221l-3.438-2.5a1.983,1.983,0,0,0-2.337,0l-3.442,2.5a1.986,1.986,0,0,1-3.058-2.221l1.314-4.042a1.992,1.992,0,0,0-.721-2.225l-3.442-2.5a1.989,1.989,0,0,1,1.17-3.6h4.252a1.981,1.981,0,0,0,1.887-1.376l1.314-4.042a1.988,1.988,0,0,1,3.783,0"
-                                      transform="translate(-52.854 -92.533)" />
-                            </svg>
+                                <path id="Path_1199" data-name="Path 1199" d="M66.612,94.408l1.314,4.042a1.99,1.99,0,0,0,1.891,1.376h4.252a1.988,1.988,0,0,1,1.167,3.6l-3.438,2.5a1.987,1.987,0,0,0-.721,2.225l1.31,4.042a1.986,1.986,0,0,1-3.058,2.221l-3.438-2.5a1.983,1.983,0,0,0-2.337,0l-3.442,2.5a1.986,1.986,0,0,1-3.058-2.221l1.314-4.042a1.992,1.992,0,0,0-.721-2.225l-3.442-2.5a1.989,1.989,0,0,1,1.17-3.6h4.252a1.981,1.981,0,0,0,1.887-1.376l1.314-4.042a1.988,1.988,0,0,1,3.783,0" transform="translate(-52.854 -92.533)"></path>
+                              </svg>
                         </label>
                     @endfor
                 </section>
         
                 <!-- Review Text -->
-                <textarea class="w-full h-24 w-full mt-4 p-2 resize-none border border-border rounded-lg" 
-                          name="review_text" 
-                          placeholder="   {{__('booking.review_placeholder')}}"></textarea>
+                <textarea class="w-full h-24 w-full mt-4 p-2 resize-none border border-border rounded-lg" name="review_text" placeholder="{{__('booking.review_placeholder')}}"></textarea>
         
                 <!-- Hidden Apartment ID -->
                 <input type="hidden" name="apartment_id" value="{{ $booking->apartment_id  }}" />
@@ -219,6 +235,7 @@
                 </button>
             </div>
         </form>
+        
         
     </div>
 </div>
@@ -312,6 +329,7 @@ $(document).ready(function () {
             rating: $('input[name="rating"]:checked').val(),
             review_text: $('textarea[name="review_text"]').val(),
             apartment_id: $('input[name="apartment_id"]').val(),
+            booking_id: '{{ $booking->id }}'
         };
         $.ajax({
             url: '{{ route('customer.post.review') }}',  
@@ -341,6 +359,32 @@ $(document).ready(function () {
             }
         });
     });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const radioInputs = document.querySelectorAll('input[name="rating"]');
+    const labels = document.querySelectorAll('label[for^="feedback-"]');
+    updateStars(5);
+    radioInputs.forEach((radio) => {
+        radio.addEventListener('change', function () {
+            updateStars(parseInt(this.value));
+        });
+    });
+
+    function updateStars(selectedValue) {
+        labels.forEach((label, index) => {
+            const svg = label.querySelector('svg');
+            if (index < selectedValue) {
+                svg.innerHTML = `
+                    <path id="Path_1199" fill="#EF552C" data-name="Path 1199" d="M66.612,94.408l1.314,4.042a1.99,1.99,0,0,0,1.891,1.376h4.252a1.988,1.988,0,0,1,1.167,3.6l-3.438,2.5a1.987,1.987,0,0,0-.721,2.225l1.31,4.042a1.986,1.986,0,0,1-3.058,2.221l-3.438-2.5a1.983,1.983,0,0,0-2.337,0l-3.442,2.5a1.986,1.986,0,0,1-3.058-2.221l1.314-4.042a1.992,1.992,0,0,0-.721-2.225l-3.442-2.5a1.989,1.989,0,0,1,1.17-3.6h4.252a1.981,1.981,0,0,0,1.887-1.376l1.314-4.042a1.988,1.988,0,0,1,3.783,0" transform="translate(-52.854 -92.533)"></path>
+                `;
+            } else {
+                svg.innerHTML = `
+                    <path d="M66.612,94.408l1.314,4.042a1.99,1.99,0,0,0,1.891,1.376h4.252a1.988,1.988,0,0,1,1.167,3.6l-3.438,2.5a1.987,1.987,0,0,0-.721,2.225l1.31,4.042a1.986,1.986,0,0,1-3.058,2.221l-3.438-2.5a1.983,1.983,0,0,0-2.337,0l-3.442,2.5a1.986,1.986,0,0,1-3.058-2.221l1.314-4.042a1.992,1.992,0,0,0-.721-2.225l-3.442-2.5a1.989,1.989,0,0,1,1.17-3.6h4.252a1.981,1.981,0,0,0,1.887-1.376l1.314-4.042a1.988,1.988,0,0,1,3.783,0" transform="translate(-52.854 -92.533)" style="opacity: 0.3;"></path>
+                `;
+            }
+        });
+    }
 });
 
 

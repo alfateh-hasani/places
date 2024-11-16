@@ -2,22 +2,27 @@
     <div class="px-6 py-3 bg-white shadow-xl rounded-full border border-border">
         <img src="{{ asset('assets/img/search-black.svg') }}" class="ltr:float-left rtl:float-right w-4 me-5 py-2" />
         <div class="ltr:float-left rtl:float-right">
-            <p class="font-semibold text-xs">Where To ?</p>
-            <p class="text-sm">Check In . Check Out . Add Guest</p>
+            <p class="font-semibold text-xs">
+                {{ __('site.search_mobile') }}
+            </p>
+            <p class="text-sm">
+                {{ __('site.search_mobile_desc') }}
+            </p>
         </div>
         <div class="clear-both"></div>
     </div>
 </section>
 
 <section class="search lg:container z-40 xl:px-40 lg:py-16 h-[100vh] lg:h-auto fixed lg:relative left-0 bottom-0 right-0 bg-blackopacity lg:bg-[transparent] lg:-translate-y-[50%]">
-    <form
-        action="{{ route('apartments.search') }}"
+    <form  action="{{ route('apartments.search') }}"
         method="GET"
         class="absolute lg:relative bottom-0 lg:bottom-auto left-0 margin-0 w-full lg:w-auto lg:grid grid-cols-2 lg:grid-cols-5 gap-1 max-w-full py-5 lg:pl-10 pl-5 pr-5 bg-white shadow-xl rounded-xl lg:rounded-full border border-border"
         id="date-range-picker" date-rangepicker>
         <div class="mb-5 lg:hidden">
-            <p class="float-left font-semibold">Stays</p>
-            <button type="button" class="float-right close-button"><img src="{{ asset('assets/img/close.svg') }}" /></button>
+            <p class="float-left rtl:float-right font-semibold">
+                {{ __('site.search_mobile') }}
+            </p>
+            <button type="button" class="float-right rtl:float-left close-button"><img src="{{ asset('assets/img/close.svg') }}" /></button>
             <div class="clear-both"></div>
         </div>
         <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none ">
@@ -33,14 +38,14 @@
             <p class="font-normal text-xs text-black">{{ __('site.filters_check_in') }}</p>
             <input id="datepicker-range-start" name="check_in" type="text"
                 class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
-                placeholder="27/09/2024" autocomplete="off" />
+                placeholder="{{now()->format('Y-m-d')}}" autocomplete="off" />
         </div>
         <div
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_check_out') }}</p>
             <input id="datepicker-range-end" name="check_out" type="text"
                 class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
-                placeholder="29/09/2024"  autocomplete="off"/>
+                placeholder="{{ now()->addDay()->format('Y-m-d') }}"  autocomplete="off"/>
         </div>
         <div
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer persons relative ">
@@ -48,7 +53,9 @@
             <p class="font-semibold text-sm text-black py-1 content">{{ __('site.add_guests') }}</p>
             <ul class="hidden lg:absolute w-72 bg-white p-4 border border-border rounded-lg">
                 <li class="border-b border-blackopacity pb-4 mb-4">
-                    <p class="inline-block w-36 text-lg">{{ __('site.filters_adults') }}<span class="block text-xs opacity-50">Ages 13 or above</span></p>
+                    <p class="inline-block w-36 text-lg">{{ __('site.filters_adults') }}<span class="block text-xs opacity-50">
+                        {{ __('site.abrove_12') }}     
+                    </span></p>
                     <div class="inline-block">
                         <div class="relative flex items-center">
                             <button type="button" id="decrement-button" data-input-counter-decrement="counter-input"
@@ -74,7 +81,11 @@
                     </div>
                 </li>
                 <li>
-                    <p class="inline-block w-36">{{ __('site.filters_children') }}<span class="block text-xs opacity-50">Ages 13 or above</span></p>
+                    <p class="inline-block w-36">{{ __('site.filters_children') }}
+                        <span class="block text-xs opacity-50">
+                        {{ __('site.below_12') }} </span>
+                    </p>   
+                    
                     <div class="inline-block">
                         <div class="relative flex items-center">
                             <button type="button" id="decrement-button" data-input-counter-decrement="counter-input1"

@@ -31,4 +31,5 @@ return [
     'past_bookings' => 'الحجوزات السابقة',
     'no_past_bookings' => 'لا توجد حجوزات سابقة',
     'no_upcoming_bookings' => 'لا توجد حجوزات قادمة',
+    'no_favorites' => 'لا توجد عناصر في المفضلة',
 ];

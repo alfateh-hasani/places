@@ -18,8 +18,20 @@
         <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_number')}} : 
             <span class="text-black">#{{$item->number_of_booking}}</span></p></a>
         <a><p class="text-sm sm:text-base text-reviews py-2"> {{__('apartment.reservations_status')}} : 
-            <span class="text-[#10C13F]">{{__('api.booking_status_'.$item->status)}}</span></p></a>
-        <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_date')}} :
+            @php
+                $statusColor = match($item->status) {
+                    'pending' => '#FFC107', 
+                    'approved' => '#10C13F',  
+                    'rejected' => '#FF0000',  
+                    'booked' => '#1E90FF',   
+                    'finished' => '#6C757D' ,
+                    'canceled' => '#DC3545',  
+                    default => '#000000',     
+                };
+            @endphp
+        
+        <span class="text-[{{ $statusColor }}]">{{ __('api.booking_status_' . $item->status) }}</span>
+                <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_date')}} :
             <span class="text-black">{{$item->check_in}}</span></p></a>
     </div>
     <svg class="absolute ltr:right-4 rtl:left-4 top-4" width="20" height="20" version="1.1" id="fi_512142" 

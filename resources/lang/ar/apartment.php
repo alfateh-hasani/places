@@ -85,4 +85,7 @@ return [
     'facebook' => 'فيسبوك',
     'X' => 'X',
     'link_copied' => 'تم نسخ الرابط',
+    'no_reviews' => 'لا توجد تقييمات',
+    'show_more' => 'عرض المزيد',
+    'show_less' => 'عرض أقل',
 ];

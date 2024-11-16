@@ -1,6 +1,6 @@
 <div class="rounded-xl overflow-hidden border border-border">
     <div class="relative">
-        <div class="slider">
+        <div class="slider slider-checkout">
             @foreach ($apartment->getMedia('image') as $image)
                 <a href="{{$apartment->link}}">
                     <img 

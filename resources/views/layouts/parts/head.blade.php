@@ -84,6 +84,6 @@
       <link    href="{{ asset('assets/css/rtl.css?'.time())}}"   rel="stylesheet" />
     @endif
 
-      <link    href="{{ asset('assets/css/custom.css')}}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/custom.css?'.time())}}"   rel="stylesheet" />
 
     @stack('css')

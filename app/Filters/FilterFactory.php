@@ -20,6 +20,7 @@ class FilterFactory
             'bathrooms_count' => app(BathRoomsFilter::class),
             'check_in' => app(CheckInFilter::class),
             'check_out' => app(CheckOutFilter::class),
+            'rate' => app(RateFilter::class),
             default => throw new \Exception("No filter found for field: $field"),
         };
     }

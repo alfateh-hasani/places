@@ -13,6 +13,7 @@ use App\Models\NotificationSeen;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Models\Notification as CustomNotification;
+use App\Models\Review;
 
 class CustomerController extends Controller
 {
@@ -74,11 +75,10 @@ class CustomerController extends Controller
             'rating' => 'required|integer|min:1|max:5',
             'review_text' => 'required|string',
             'apartment_id' => 'required|exists:apartments,id',
+            'booking_id' => 'required|exists:bookings,id',
         ]);
         $customer =  \Auth::guard('api')->user();
-        $existingReview = $customer->reviews()->where('apartment_id', $validatedData['apartment_id'])->first();
-
-        if ($existingReview) {
+        if (Review::existsForBooking($customer->id, $validatedData['booking_id'])) {
             $message = __('api.review_already_exists');
             return $this->errorResponse([], $message, 400);
         }

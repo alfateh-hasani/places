@@ -47,4 +47,5 @@ return [
     'review_message_2' => 'يرجى تقديم تقييمك للحجز',
     'review_submit' => 'إرسال التقييم',
     'review_placeholder' => ' أدخل تقييمك هنا',
+    'rating' => 'التقييم',
 ];

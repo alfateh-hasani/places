@@ -11,6 +11,7 @@ class Review extends Model
         'customer_id',
         'rating',
         'review_text',
+        'booking_id',
     ];
     public function customer(): BelongsTo
     {
@@ -20,5 +21,18 @@ class Review extends Model
     public function apartment(): BelongsTo
     {
         return $this->belongsTo(Apartment::class);
+    }
+
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class);
+    }
+
+
+    public static function existsForBooking($customerId, $bookingId)
+    {
+        return self::where('customer_id', $customerId)
+                    ->where('booking_id', $bookingId)
+                    ->exists();
     }
 }

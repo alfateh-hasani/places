@@ -6,19 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Booking;
+use App\Models\Review;
 use Auth;
 use Illuminate\Http\Request;
 class CustomerAccountController extends Controller
 {
     public function profile()
     {
-        $customer = auth()->user();
+        $customer = Auth::guard('customer')->user();
+        
         return view('customer.account', compact('customer'));
     }
 
     public function update(Request $request)
     {
-        $customer = auth()->user();
+        $customer = Auth::guard('customer')->user();
         $request->validate([
             'first_name' => 'required',
             'last_name' => 'required',
@@ -39,7 +41,7 @@ class CustomerAccountController extends Controller
     //getBooking
     public function getBooking()
     {
-        $customer = auth()->user();
+        $customer = Auth::guard('customer')->user();
 
         $allBookings = Booking::where('customer_id', $customer->id)->get();
         $pastBookings = $allBookings->filter(function ($booking) {
@@ -61,7 +63,7 @@ class CustomerAccountController extends Controller
 
     public function favorite()
     {
-        $customer = auth()->user();
+        $customer = Auth::guard('customer')->user();
         $favoriteApartments = $customer->favoriteApartments;
           $data = [
             'favorites' => $favoriteApartments,
@@ -73,7 +75,7 @@ class CustomerAccountController extends Controller
 
     public function notifications()
     {
-        $customer = auth()->user();
+        $customer = Auth::guard('customer')->user();
         
         $data = [
             'notifications' => 'notifications',
@@ -87,10 +89,16 @@ class CustomerAccountController extends Controller
     //BookingDetails
     public function BookingDetails($number_of_booking )
     {
+        $user = Auth::guard('customer')->user();
         $data['booking'] = Booking::where([
             'number_of_booking' => $number_of_booking,
-            'customer_id' => auth()->id()
+            'customer_id' => $user->id
         ])->firstOrFail();
+        $data['has_review'] =  Review::existsForBooking($user->id, $data['booking']->id);
+        $data['review'] = Review::where([
+            'booking_id' => $data['booking']->id,
+            'customer_id' => $user->id
+        ])->first();
         return view('booking.details', $data);
     }
 
@@ -98,7 +106,7 @@ class CustomerAccountController extends Controller
     //toggleFavorite
     public function toggleFavorite(Request $request)
     {
-        $customer = auth()->user();
+        $customer = Auth::guard('customer')->user();
         $apartment = Apartment::find($request->apartment_id);
     
         if ($apartment) {
@@ -116,6 +124,35 @@ class CustomerAccountController extends Controller
     }
     
     
+
+    //addReview
+    public function addReview(Request $request)
+    {
+        $request->validate([
+            'apartment_id' => 'required|exists:apartments,id',
+            'rating' => 'required|numeric|min:1|max:5',
+            'review_text' => 'required',
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+    
+        $customer = Auth::guard('customer')->user();   
+        $apartment = Apartment::find($request->apartment_id);
+        if (Review::existsForBooking($customer->id, $request->booking_id)) {
+            return response()->json(['success' => false, 'message' => __('apartment.review_already_exists')], 400);
+        }
+        if ($apartment) {
+            $apartment->reviews()->create([
+                'customer_id' => $customer->id,
+                'rating' => $request->rating,
+                'review_text' => $request->review_text,
+                'booking_id' => $request->booking_id,
+            ]);
+    
+            return response()->json(['success' => true, 'message' => __('apartment.review_added_successfully')]);
+        }
+    
+        return response()->json(['success' => false, 'message' => __('apartment.review_added_failed')], 404);
+    }
  
  
 }

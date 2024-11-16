@@ -55,43 +55,78 @@ class ApartmentController extends Controller
     //search
     public function search(Request $request)
     {
-        $filters = [
+           
+        $filters = array_filter([
             'city_id' => $request->city_id,
             'check_out' => $request->check_out,
             'check_in' => $request->check_in,
             'adults_count' => $request->adults_count,
             'children_count' => $request->children_count,
-        ];
+            'max_price' => $request->price_range,
+            'max_area' => $request->area_range,
+            'num_rooms' => $request->rooms,
+            'num_beds' => $request->beds,
+        ], function ($value) {
+            return !is_null($value) && $value !== '';
+        });
+     
+
         $query = $this->apartment::query();
-        if (!empty($filters)) {
-            foreach ($filters as $key=> $val) {
-                if($val) {
-                    if ($key == 'city_id') {
-                        $query->whereHas('building', function ($query) use ($val) {
-                            $query->where('city_id', $val);
-                        });
-                        continue;
-                    }
-                    $filterHandler = FilterFactory::make($key);
-                    $query = $filterHandler->apply($query, $val);
-                }
+
+        foreach ($filters as $key => $val) {
+            if ($key === 'city_id') {
+                $query->whereHas('building', function ($query) use ($val) {
+                    $query->where('city_id', $val);
+                });
+                continue;
             }
+
+            if (in_array($key, ['num_rooms', 'num_beds']) && is_array($val) && count($val) > 0) {
+                $query->whereIn($key, $val);
+                continue;
+            }
+
+            if ($key === 'max_price') {
+                $query->where('price', '<=', $val);
+                continue;
+            }
+
+            if ($key === 'max_area') {
+                $query->where('area', '<=', $val);
+                continue;
+            }
+
+            $filterHandler = FilterFactory::make($key);
+            $query = $filterHandler->apply($query, $val);
         }
+
         $apartments = $query->paginate(8);
-        $data['cities'] =  City::orderBy('sort_order','asc')->withCount('apartments')->get();
-        $data['apartments'] = $apartments;
-        $data['filter_keys'] = [
-            'min_price' =>  $this->apartment->min('price'),
-            'max_price' =>  $this->apartment->max('price'),
-            'max_rooms' =>  $this->apartment->max('num_rooms'),
-            'max_area'  =>   $this->apartment->max('area'),
-            'min_area'  =>   $this->apartment->min('area'),
-            'max_beds'  =>   $this->apartment->max('num_beds'),
-            'max_bathrooms'  =>   6, // $this->apartment->max('num_bathrooms'), // not exist in db
+
+        $data = [
+            'cities' => City::orderBy('sort_order', 'asc')->withCount('apartments')->get(),
+            'apartments' => $apartments,
+            'filter_keys' => $this->prepareFilterKeys(),
         ];
-        
+
         return view('apartment.list', $data);
     }
-    
- 
+
+    protected function prepareFilterKeys()
+    {
+        return [
+            'min_price' => $this->apartment->min('price') ?? 0,
+            'max_price' => $this->apartment->max('price') ?? 0,
+            'rooms_options' => $this->apartment
+                ? $this->apartment->pluck('num_rooms')->unique()->sort()->values()->toArray()
+                : [],
+            'max_area' => $this->apartment->max('area') ?? 0,
+            'min_area' => $this->apartment->min('area') ?? 0,
+            'beds_options' => $this->apartment
+                ? $this->apartment->pluck('num_beds')->unique()->sort()->values()->toArray()
+                : [],
+            'bathrooms_options' => $this->apartment
+                ? $this->apartment->pluck('bathrooms_count')->unique()->sort()->values()->toArray()
+                : [],
+        ];
+    }
 }

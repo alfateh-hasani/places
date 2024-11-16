@@ -14,7 +14,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
 
     Route::get('{slug}', [PageController::class, 'index'])->name('page');
     Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
-    Route::get('get-apartments-by-city/{slug}', [HomeController::class, 'getApartmentsByCity'])->name('by-city');
+    Route::get('city/{slug}/apartments', [HomeController::class, 'getApartmentsByCity'])->name('by-city');
     Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');

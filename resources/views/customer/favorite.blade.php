@@ -22,10 +22,15 @@
                     </div>
                   
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 max-w-full">
-                        @foreach ($favorites as $item) 
-                            @include('customer.section.favorite-card',['apartment'=>$item])
-                        @endforeach
+                        @forelse ($favorites as $item)
+                            @include('customer.section.favorite-card', ['apartment' => $item])
+                        @empty
+                            <p class="text-center text-gray-500 col-span-full">
+                                {{ __('customer.no_favorites') }}
+                            </p>
+                        @endforelse
                     </div>
+                    
                 </div>
             </div>
         </div>
