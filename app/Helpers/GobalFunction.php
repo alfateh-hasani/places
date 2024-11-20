@@ -35,7 +35,9 @@ if (!function_exists('calculateTax')) {
 
     function calculateTax($amount)
     {
-        $taxRate = Config::get('settings.tax', 15); 
+        $taxRate = Cache::remember('settings.tax', 60, function () {
+            return Config::get('settings.tax', 15);  
+        });
         $decimalTaxRate = $taxRate / 100;  
         return $amount * $decimalTaxRate;
     }

@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\Review;
 use App\Traits\generateSeoTrait;
 use Auth;
+use Cache;
 use Carbon\Carbon;
 use Config;
 use Illuminate\Http\Request;
@@ -177,7 +178,8 @@ class CustomerAccountController extends Controller
                 'review_text' => $request->review_text,
                 'booking_id' => $request->booking_id,
             ]);
-    
+            Cache::forget("total_ratings_{$apartment->id}");
+
             return response()->json(['success' => true, 'message' => __('apartment.review_added_successfully')]);
         }
     

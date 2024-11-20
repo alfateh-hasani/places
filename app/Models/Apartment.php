@@ -13,6 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Image\Enums\Fit;
 
 use App\Traits\HasTranslations;
+use Cache;
 
 class Apartment extends Model implements HasMedia
 {
@@ -113,7 +114,10 @@ class Apartment extends Model implements HasMedia
     //ratings
     public function getTotalRatingsAttribute()
     {
-        $averageRating = $this->reviews()->avg('rating');
+        $cacheKey = "total_ratings_{$this->id}";
+        $averageRating = Cache::remember($cacheKey, 120, function () {
+            return $this->reviews()->avg('rating');
+        });
         return $averageRating ? number_format($averageRating, 1) : '';
     }
 

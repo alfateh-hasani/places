@@ -542,7 +542,11 @@
 
     
 
-    alert($('.desctext').text().trim().split(/\s+/).length);
+    // alert($('.desctext').text().trim().split(/\s+/).length);
+
+    if ($('.desctext').text().trim().split(/\s+/).length < 50) {
+        $(".showmoreApartment").hide();
+    }
 
 
     
