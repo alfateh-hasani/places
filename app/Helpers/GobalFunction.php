@@ -28,3 +28,22 @@ function remove_http($url): string
 {
     return str_replace(['http://', 'https://'], '', $url);
 }
+
+use Illuminate\Support\Facades\Config;
+
+if (!function_exists('calculateTax')) {
+
+    function calculateTax($amount)
+    {
+        $taxRate = Config::get('settings.tax', 15); 
+        $decimalTaxRate = $taxRate / 100;  
+        return $amount * $decimalTaxRate;
+    }
+}
+
+if (!function_exists('calculateTotalWithTax')) {
+    function calculateTotalWithTax($amount)
+    {
+        return $amount + calculateTax($amount);
+    }
+}

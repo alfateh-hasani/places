@@ -13,7 +13,15 @@
 @endpush
 @section('content')
 
-
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 <section class="profile py-5 lg:py-16 bg-[#eff3f6] min-h-screen lg:min-h-min">
     <div class="container">
         <div>
@@ -45,14 +53,23 @@
                             {{__('booking.print')}}
                         </span>
                     </a>
-                    <button {{$booking->status =='canceled'? 'disabled' :''}}   
-                        class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn" 
+                    
+                    <div class="relative group inline-block">
+                        <button {{ $can_cancel ? '' : 'disabled' }}
+                            class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn" 
                             data-booking-id="{{ $booking->id }}">
-                        <svg class="inline-block" fill="currentColor" height="20" viewBox="0 0 329.26933 329" width="20" xmlns="http://www.w3.org/2000/svg">
-                            <path d="m194.800781 164.769531 128.210938-128.214843c8.34375-8.339844 8.34375-21.824219 0-30.164063-8.339844-8.339844-21.824219-8.339844-30.164063 0l-128.214844 128.214844-128.210937-128.214844c-8.34375-8.339844-21.824219-8.339844-30.164063 0-8.34375 8.339844-8.34375 21.824219 0 30.164063l128.210938 128.214843-128.210938 128.214844c-8.34375 8.339844-8.34375 21.824219 0 30.164063 4.15625 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921875-2.089844 15.082031-6.25l128.210937-128.214844 128.214844 128.214844c4.160156 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921874-2.089844 15.082031-6.25 8.34375-8.339844 8.34375-21.824219 0-30.164063zm0 0"></path>
-                        </svg>
-                        <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }}</span>
-                    </button>
+                            <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }}</span>
+                        </button>
+                    
+                        <!-- Tooltip -->
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 translate-y-2 px-3 py-2 mb-3 
+                        bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+
+                            {{ __('booking.cancel_booking').' '.  Config::get('settings.cancel_booking') .' '. __('booking.days') }}
+                        </div>
+                    </div>
+                    
+
                     @if (!$has_review)
                         <button data-src="#popup-2" data-fancybox type="button" 
                                 class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
@@ -85,7 +102,10 @@
                             <p class="float-right rtl:float-left">#{{$booking->number_of_booking }}</p><div class="clear-both"></div></li>
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
                             <p class="text-gri float-left rtl:float-right">{{__('booking.status')}} :</p>
-                            <p class="float-right rtl:float-left text-[#10C13F]">{{__('booking.status_'.$booking->status )}}</p><div class="clear-both"></div></li>
+                            <p class="float-right rtl:float-left text-[#10C13F]">{{__('booking.status_'.$booking->status )}}</p>
+                            <div class="clear-both"></div>
+                        </li>
+                        
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
                             <p class="text-gri float-left rtl:float-right">  {{__('booking.check_in')}} :</p>
                             <p class="float-right rtl:float-left">{{$booking->check_in?->format('y-m-d')}}</p><div class="clear-both"></div></li>
@@ -283,6 +303,7 @@ $(document).ready(function() {
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
             confirmButtonText: '{{ __("booking.yes") }}',
+            cancelButtonText: '{{ __("booking.no") }}',
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
@@ -303,17 +324,22 @@ $(document).ready(function() {
                             text: "{{__('booking.success_message')}}",
                             button: true,
                         });
-                        window.location.reload();
+                        // window.location.reload();
                     },
                     error: function(xhr) {
-                        HoldOn.close();
-                        Swal.fire({
-                            icon: 'error',
-                            title: "{{__('booking.error')}}",
-                            text: "{{__('booking.error_message')}}",
-                            button: true,
-                        });
+                    HoldOn.close();
+                    let errorMessage = "{{ __('booking.error_message') }}"; 
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message; 
                     }
+                    Swal.fire({
+                        icon: 'error',
+                        title: "{{ __('booking.error') }}",
+                        text: errorMessage,
+                        button: true,
+                    });
+                }
+
                 });
             }
         });

@@ -36,7 +36,7 @@ return [
     'status_canceled' => 'تم الإلغاء',
     'success' => 'تم بنجاح',
     'success_message' => 'تم تحديث الحجز بنجاح',
-    'cancellation_window_expired' => 'نافذة الإلغاء قد انتهت',
+    'cancellation_window_expired' => 'مدة الإلغاء قد انتهت',
     'booking_confirmed_message' => 'تم تأكيد الحجز بنجاح',
     'booking_not_found' => 'الحجز غير موجود',
     'booking_success' => 'نجحت العملية',    
@@ -49,4 +49,8 @@ return [
     'review_placeholder' => ' أدخل تقييمك هنا',
     'rating' => 'التقييم',
     'booking_details' => '  مراجعة الدفع',
+    'error' => 'خطأ',
+    'error_message' => 'حدث خطأ ما',
+    'cancel_booking' => 'إلغاء الحجز يكون قبل',
+    'days' => 'أيام فقط .',
 ];

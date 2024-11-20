@@ -110,13 +110,11 @@ class Apartment extends Model implements HasMedia
     {
         return route('apartments.show', $this->slug);
     }
-
     //ratings
     public function getTotalRatingsAttribute()
     {
-//        return $this->hasMany(Rating::class);
-
-        return '4.5';
+        $averageRating = $this->reviews()->avg('rating');
+        return $averageRating ? number_format($averageRating, 1) : '';
     }
 
     //reviews

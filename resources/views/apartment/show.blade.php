@@ -216,7 +216,7 @@
                     <h4 class="font-semibold text-xl text-title">   
                         {{__('apartment.description')}}
                     </h4>
-                    <p class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[92px] overflow-hidden">
+                    <p class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[92px] overflow-hidden desctext">
                         {{ strip_tags($apartment->ml('description')) }}
 
                     </p>
@@ -410,8 +410,13 @@
                                 <div class="clear-both"></div>
                             </li>
                             <li class="mb-4 font-semibold text-sm text-title">
-                                <span>{{ __('apartment.total_cost') }}</span>
-                                <span class="float-right rtl:float-left" id="totalCost"> {{$apartment->price .' '.__('apartment.price') }} </span>
+                                <span>{{ __('apartment.total_cost')}}</span>
+                                <span class="font-normal text-base text-reviews">
+                                    ({{__('apartment.price_tax') }})
+                                </span>
+                                <span class="float-right rtl:float-left" id="totalCost"> 
+                                    {{calculateTotalWithTax($apartment->price) .' '.__('apartment.price') }} 
+                                </span>
                                 <div class="clear-both"></div>
                             </li>
                             
@@ -532,6 +537,17 @@
 
     var readMoreText = "{{ __('apartment.show_more') }}";
     var readLessText = "{{ __('apartment.show_less') }}";
+
+   
+
+    
+
+    alert($('.desctext').text().trim().split(/\s+/).length);
+
+
+    
+
+        
 
     $(".showmoreApartment").click(function () {
         if ($(this).hasClass("active")) {

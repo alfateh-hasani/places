@@ -9,6 +9,8 @@ use App\Models\Booking;
 use App\Models\Review;
 use App\Traits\generateSeoTrait;
 use Auth;
+use Carbon\Carbon;
+use Config;
 use Illuminate\Http\Request;
 class CustomerAccountController extends Controller
 {
@@ -48,7 +50,7 @@ class CustomerAccountController extends Controller
     {
         $customer = Auth::guard('customer')->user();
 
-        $allBookings = Booking::where('customer_id', $customer->id)->get();
+        $allBookings = Booking::where('customer_id', $customer->id)->latest()->get();
         $pastBookings = $allBookings->filter(function ($booking) {
             return $booking->check_out < now();
         });
@@ -113,6 +115,16 @@ class CustomerAccountController extends Controller
             'booking_id' => $data['booking']->id,
             'customer_id' => $user->id
         ])->first();
+        
+         $cancellationWindow = Config::get('settings.cancel_booking');
+
+        $checkInDate = Carbon::parse($data['booking']->check_in);  
+        $currentDate = Carbon::now();  
+        $daysBeforeCheckIn = $currentDate->diffInDays($checkInDate, false); 
+
+        $data['can_cancel'] = $daysBeforeCheckIn >= $cancellationWindow;
+
+
         $seo_title = __('customer.booking_details'). ' #'  .$number_of_booking.  ' | ' . __('site.seo_title');
         $seo_description = __('customer.booking_details');
         $url = route('customer.booking.details', $number_of_booking);

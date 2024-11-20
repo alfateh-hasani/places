@@ -11,7 +11,8 @@
             <span class="leading-none block font-semibold text-black">{{$item->price_per_night}} SAR</span></p></a>
         <a><p class="text-sm sm:text-sm text-reviews "> {{__('apartment.discount')}} 
             <span class="leading-none block font-semibold text-black">{{$item->discount}} SAR</span></p></a>
-        <a><p class="text-sm sm:text-sm text-reviews ">{{__('apartment.total_price')}} ({{$item->number_of_nights .' '.__('apartment.nights')}})<span class="leading-none block font-semibold text-black mb-2">{{$item->final_price}} SAR</span></p></a>
+        <a><p class="text-sm sm:text-sm text-reviews ">{{__('apartment.total_price')}} ({{$item->number_of_nights .' '.__('apartment.nights')}})
+            <span class="leading-none block font-semibold text-black mb-2">{{$item->final_price}} SAR</span></p></a>
     </div>
     <div>
         <a><p class="text-sm sm:text-base font-semibold text-lg pt-2">{{$item->apartment?->{'name_' . app()->getLocale()} }}</p></a>
@@ -32,7 +33,7 @@
         
         <span class="text-[{{ $statusColor }}]">{{ __('api.booking_status_' . $item->status) }}</span>
                 <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_date')}} :
-            <span class="text-black">{{$item->check_in}}</span></p></a>
+            <span class="text-black">{{$item->check_in?->format('Y-m-d')}}</span></p></a>
     </div>
     <a class="options-button cursor-pointer z-50 absolute ltr:right-4 rtl:left-4 top-4">
         <svg width="20" height="20" version="1.1" id="fi_512142" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 426.667 426.667" style="enable-background:new 0 0 426.667 426.667;" xml:space="preserve">

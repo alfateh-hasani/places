@@ -89,4 +89,5 @@ return [
     'show_more' => 'عرض المزيد',
     'show_less' => 'عرض أقل',
     'show_all_photos' => 'عرض جميع الصور',
+    'price_tax' => 'شامل الضريبة',
 ];

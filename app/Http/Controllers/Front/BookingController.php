@@ -164,11 +164,17 @@ class BookingController extends Controller{
         $currentDate = Carbon::now();
             $daysBeforeCheckIn = $currentDate->diffInDays($checkInDate, false); 
         if ($daysBeforeCheckIn < $cancellationWindow) {
-            return redirect()->back()->with('error', __('booking.cancellation_window_expired'));
+            return response()->json([
+                'status' => 'error',
+                'message' => __('booking.cancellation_window_expired'),
+            ], 400);
         }
         $booking->status = 'canceled';
         $booking->save();
-        return redirect()->back()->with('success', __('booking.success'));
+        return response()->json([
+            'status' => 'success',
+            'message' => __('booking.success'),
+        ]);
     }
     
 

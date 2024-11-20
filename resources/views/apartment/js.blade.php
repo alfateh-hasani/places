@@ -3,22 +3,42 @@
    
     const nightlyRate = {{ $apartment->price }};
     let discount = 0;
+    function calculateTax(amount, taxRate) {
+        return amount * (taxRate / 100);  
+    }
+
+    function calculateTotalWithTax(amount, taxRate) {
+        return amount + calculateTax(amount, taxRate);
+    }
 
     function calculateNightsAndCost() {
         const checkin = new Date($('#checkin').val());
         const checkout = new Date($('#checkout').val());
         const timeDifference = checkout - checkin;
         const nights = timeDifference / (1000 * 60 * 60 * 24);
+
         if (nights > 0) {
             const totalCost = nights * nightlyRate;
             $('#totalNights').text(nights + ' ' + "{{ __('apartment.nights') }}");
+
             let finalCost = totalCost;
+
             if (discount > 0) {
-                finalCost = totalCost - (totalCost * (discount / 100));  
+                finalCost = totalCost - (totalCost * (discount / 100));
             }
-            $('#totalCost').text(finalCost.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
+
+            // نسبة الضريبة من Laravel
+            const taxRate = {{ Config::get('settings.tax', 15) }}; 
+            const valueWithTax = calculateTotalWithTax(finalCost, taxRate);
+
+            $('#totalCost').text(valueWithTax.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
+
             if (discount > 0) {
-                $('#discountedCost').text("{{ __('apartment.discounted_price') }}: " + finalCost.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
+                $('#discountedCost').text(
+                    "{{ __('apartment.discounted_price') }}: " + 
+                    valueWithTax.toFixed(2) + ' ' + 
+                    "{{ __('apartment.price') }}"
+                );
             } else {
                 $('#discountedCost').text('');
             }
@@ -28,6 +48,7 @@
             $('#discountedCost').text('');
         }
     }
+
 
     $(document).ready(function() {
         // Calculate nights and cost on date change

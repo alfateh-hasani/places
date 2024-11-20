@@ -49,7 +49,7 @@ class ApartmentController extends Controller
             ];
         })->toArray();
             
-          $data = [
+        $data = [
             'apartment' => $apartment,
             'started_day' => $started_day,
             'next_started_day' => $next_started_day,

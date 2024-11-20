@@ -2,18 +2,14 @@
 @push('css')
 <link href="{{ asset('assets/css/slick.css?'.time())}}" rel="stylesheet" />
 <link href="{{ asset('assets/css/slick-theme.css?'.time())}}" rel="stylesheet" />
-<style>
-#verify_coupon{
-    margin-right: 10px !important;
-}
-    </style>
+
 @endpush
 @section('content')
 
 
 <section class="container py-10">
     <a>
-        <img class="inline-block mr-4" src="{{asset('assets/img/back.svg')}}" />
+        <img class="inline-block me-4 rtl:rotate-180" src="{{asset('assets/img/back.svg')}}" />
         <span class="font-semibold text-2xl text-title translate-y-1 inline-block">
             {{__('booking.review_payment')}}
         </span>
@@ -142,31 +138,35 @@
                         </p>
 
                         
-                        <div class="grid-cols-2">
-                            <div>
+                        <div class=" grid grid-cols-2 mx-0 w-full gap-2">
+                            <div class="border border-border bg-[#f6f6f6] rounded-lg px-4">
                                 <p>
-                                    <span>Chick In</span>
+                                    <span class="block text-sm translate-y-1.5">Chick In</span>
                                     9/6/2024
                                 </p>
                             </div>
-                            <div>
+                            <div class="border border-border bg-[#f6f6f6] rounded-lg px-4">
                                 <p>
-                                    <span>Chick Out</span>
+                                    <span class="block text-sm translate-y-1.5">Chick Out</span>
                                     9/6/2024
                                 </p>
                             </div>
                         </div>
 
-                        <div>
+                        <div class="border border-border bg-[#f6f6f6] rounded-lg px-4 grid grid-cols-2 mx-0 w-full gap-2 mt-2 mb-4">
                             <p>
-                                <span>Chick Out</span>
+                                <span class="block text-sm translate-y-1.5">Chick Out</span>
                                 04:00 PM
                             </p>
-                            <p>
-                                <span>Chick Out</span>
+                            <p class="ps-4 checkout-time relative">
+                                <span class="block text-sm translate-y-1.5">Chick Out</span>
                                 04:00 PM
                             </p>
                         </div>
+
+                        <p class="font-semibold my-3">Reservastion Summary</p>
+
+
                    
                     <ul>
                         <li class="mb-4 font-semibold text-sm text-title">
@@ -208,7 +208,7 @@
                         
                          
                     </ul>
-                    <div class="flex flex-row items-center space-x-2">
+                    <div class="flex flex-row items-center">
                         <input type="text" id="coupon_code" name="coupon_code" 
                         placeholder="@lang('apartment.coupon_code')" class="border border-gray-300 rounded-lg h-12 px-3 flex-1">
                         <button type="button" id="verify_coupon" class="mr-4 bg-price rounded-lg h-12 px-4 font-semibold text-white">
