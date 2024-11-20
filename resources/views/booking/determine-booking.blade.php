@@ -114,14 +114,14 @@
             </div>
             <div class="hidden xl:block xl:basis-4/12 xl:pl-5 rtl:xl:pr-5">
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
-                    <div class="rounded-xl overflow-hidden border border-border">
+                    <div class="">
                         <div class="relative">
                             <div class="slider slider-checkout" style="max-width: 450px">
                                 @foreach ($apartment->getMedia('image') as $image)
                                    <div>
-                                    <a style="width: 100%; max-width:100%; display:block" href="{{$apartment->link}}">
+                                    <a style="width: 100%; max-width:100%; display:block" class="rounded-xl overflow-hidden border border-border" href="{{$apartment->link}}">
                                         <img 
-                                            class="object-cover w-full" 
+                                            class="object-cover w-full block" 
                                             src="{{ $image->getUrl('grid') }}" 
                                             alt="@lang('apartment.apartment_name_default')"
                                         />
@@ -134,13 +134,39 @@
                         </div>
                     </div>               
                   
-                        <p class="mb-4 font-normal text-base text-reviews">
+                        <p class="my-4 font-normal text-base text-reviews">
                             <span class="font-bold text-2xl text-black translate-y-0.5 inline-block">
                                 {{$apartment->price}} 
                             </span> 
                             {{__('apartment.sar')}}
                         </p>
+
                         
+                        <div class="grid-cols-2">
+                            <div>
+                                <p>
+                                    <span>Chick In</span>
+                                    9/6/2024
+                                </p>
+                            </div>
+                            <div>
+                                <p>
+                                    <span>Chick Out</span>
+                                    9/6/2024
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p>
+                                <span>Chick Out</span>
+                                04:00 PM
+                            </p>
+                            <p>
+                                <span>Chick Out</span>
+                                04:00 PM
+                            </p>
+                        </div>
                    
                     <ul>
                         <li class="mb-4 font-semibold text-sm text-title">
