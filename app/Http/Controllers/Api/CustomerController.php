@@ -82,7 +82,13 @@ class CustomerController extends Controller
             $message = __('api.review_already_exists');
             return $this->errorResponse([], $message, 400);
         }
-        $customer->reviews()->create($validatedData);
+        Review::create([
+            'rating' => $validatedData['rating'],
+            'review_text' => $validatedData['review_text'],
+            'booking_id' => $validatedData['booking_id'],
+            'apartment_id' => $validatedData['apartment_id'],
+            'customer_id' => $customer->id,
+        ]);
         $massage = __('api.review_added');
         return $this->successResponse([],$massage);
     }

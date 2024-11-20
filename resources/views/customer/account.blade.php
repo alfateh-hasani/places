@@ -56,7 +56,47 @@
                             <p>
                                 {{__('customer.emergency_phone')}}
                             </p>
-                            <input dir="ltr" type="tel"   id="emergency_phone" value="{{$customer->emergency_phone}}" name="emergency_phone" class="w-full border border-border rounded-lg h-12" />
+                            <!-- <input dir="ltr" type="tel"   id="emergency_phone" value="{{$customer->emergency_phone}}" name="emergency_phone" class="w-full border border-border rounded-lg h-12" /> -->
+
+                            <div class="select-box m-0 w-full border border-border rounded-lg">
+                                <div dir="ltr" class="selected-option">
+                                    <div>
+                                        <span class="iconify" data-icon="flag:gb-4x3"></span>
+                                        <strong>+44</strong>
+                                    </div>
+                                    <input type="tel" name="tel" placeholder="Phone Number">
+                                </div>
+                                <div class="options">
+                                    <input type="text" class="search-box" placeholder="Search Country Name">
+                                    <ol>
+
+                                    </ol>
+                                </div>
+                            </div>
+                        </label>
+
+
+                        <label>
+                            <p>
+                                {{__('customer.emergency_phone')}}
+                            </p>
+                            <!-- <input dir="ltr" type="tel"   id="emergency_phone" value="{{$customer->emergency_phone}}" name="emergency_phone" class="w-full border border-border rounded-lg h-12" /> -->
+
+                            <div class="select-box m-0 w-full border border-border rounded-lg">
+                                <div dir="ltr" class="selected-option">
+                                    <div>
+                                        <span class="iconify" data-icon="flag:gb-4x3"></span>
+                                        <strong>+44</strong>
+                                    </div>
+                                    <input disabled type="tel" name="tel" placeholder="Phone Number">
+                                </div>
+                                <div class="options">
+                                    <input type="text" class="search-box" placeholder="Search Country Name">
+                                    <ol>
+
+                                    </ol>
+                                </div>
+                            </div>
                         </label>
                          
                         <button class="h-12 bg-price rounded-lg col-span-2 font-semibold text-white">

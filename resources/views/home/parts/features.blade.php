@@ -60,7 +60,7 @@
             </div>
 
             <div class="text-center">
-                <img src="{{ asset('assets/img/automated.png') }}" class="inline" />
+                <img src="{{ asset('assets/img/app_427.png') }}" class="inline" />
             </div>
 
             <div class="md:pt-24">

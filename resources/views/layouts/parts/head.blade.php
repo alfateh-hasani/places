@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     @stack('TopCss')
     
-    <link href="{{ asset('assets/css/style.css?'.time())}}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/style.css?44')}}" rel="stylesheet" />
     <link    href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css"  rel="stylesheet"  />
     <link    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"   rel="stylesheet" />
     <link rel="icon" href="{{ asset('assets/img/favicon.svg')}}" />
@@ -15,7 +15,7 @@
 
     
     <script type="text/javascript" src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="{{ asset('assets/js/maplace.js?'.time())}}"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/maplace.js?3')}}"></script>
 
     <script>
       tailwind.config = {

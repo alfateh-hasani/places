@@ -50,6 +50,19 @@ class CityController extends CrudController
             'type' => 'text',
             'label' => 'الاسم بالانجليزي',
         ]);
+        //seo_title_ar
+        CRUD::addColumn([
+            'name' => 'seo_title_ar',
+            'type' => 'text',
+            'label' => __('cms.seo_title_ar'),
+        ]);
+        //description_ar
+        CRUD::addColumn([
+            'name' => 'seo_description_ar',
+            'type' => 'text',
+            'label' => __('cms.seo_description_ar'),
+        ]);
+
         //slug
         CRUD::addColumn([
             'name' => 'slug',
@@ -104,6 +117,54 @@ class CityController extends CrudController
             'label' => 'الاسم بالانجليزي',
             'attributes' => [
                 'placeholder' =>  'الاسم بالانجليزي',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //seo_title_ar 
+        $this->crud->addField([
+            'name' => 'seo_title_ar',
+            'type' => 'text',
+            'label' => __('cms.seo_title_ar'),
+            'attributes' => [
+                'placeholder' =>  __('cms.seo_title_ar'),
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //seo_title_en
+        $this->crud->addField([
+            'name' => 'seo_title_en',
+            'type' => 'text',
+            'label' => __('cms.seo_title_en'),
+            'attributes' => [
+                'placeholder' =>  __('cms.seo_title_en'),
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //seo_description_ar
+        $this->crud->addField([
+            'name' => 'seo_description_ar',
+            'type' => 'textarea',
+            'label' => __('cms.seo_description_ar'),
+            'attributes' => [
+                'placeholder' =>  __('cms.seo_description_ar'),
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //seo_description_en
+        $this->crud->addField([
+            'name' => 'seo_description_en',
+            'type' => 'textarea',
+            'label' =>  __('cms.seo_description_en'),
+            'attributes' => [
+                'placeholder' =>   __('cms.seo_description_en'),
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',

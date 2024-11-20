@@ -8,11 +8,12 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-
+use App\Traits\HasTranslations;
 class Blog extends Model implements HasMedia
 {
     use CrudTrait;
     use InteractsWithMedia;
+    use HasTranslations; 
     protected $guarded = ['id'];
     public function registerMediaCollections(): void
     {

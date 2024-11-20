@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,13 +25,17 @@ class BookingResource extends JsonResource
             'status' =>$this->status,
             'price_per_night' => $this->price_per_night,
             'number_of_nights' => $this->number_of_nights,
+            'apartment_id' => $this->apartment_id,
             'apartment_name' => $this->apartment?->{'name_' . app()->getLocale()},
             'building_name' => $this->apartment?->building?->{'name_' . app()->getLocale()},
             'city_name' => $this->apartment?->building?->city?->{'name_' . app()->getLocale()},
             'reviews' => $this->apartment?->reviews->count(),
-            'ratings' => $this->apartment?->reviews?->avg('rating'),
+            'ratings' => number_format($this->apartment?->reviews?->avg('rating') ?? 0, 1),
             'image' => getImage($this->apartment, 'image'),
             'invoice' => url('pdf-test.pdf'),
+            'has_review' =>  Review::existsForBooking( $this->customer_id , $this->id),
+            'review_avaliable' => now()->gt($this->check_out),
+
         ];
     }
 }

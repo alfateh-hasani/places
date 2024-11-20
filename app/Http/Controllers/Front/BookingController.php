@@ -10,6 +10,7 @@ use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
 use App\Services\ProcessPaymentService;
+use App\Traits\generateSeoTrait;
 use Carbon\Carbon;
 use Config;
 use Exception;
@@ -20,6 +21,7 @@ class BookingController extends Controller{
     protected $booking;
     protected $bookingService;
 
+    use generateSeoTrait;
     public function __construct(BookingService $bookingService, Booking $booking)
     {
         $this->booking = $booking;
@@ -123,7 +125,10 @@ class BookingController extends Controller{
             $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
             $data['apartment'] = $apartment;
             $data['payment_details'] = $this->getPaymentDetails();
- 
+            $seo_title = __('booking.booking_details') . ' | ' . __('site.seo_title');
+            $seo_description = __('booking.booking_details');
+            $url = route('web-booking.determine', $apartment_id);
+            $this->generateSeo($seo_title, $seo_description, $url);
             return view('booking.determine-booking', $data);
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();

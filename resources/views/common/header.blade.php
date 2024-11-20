@@ -69,15 +69,15 @@
           </button>
           <ul class="absolute p-3 bg-white border border-border rounded-lg" style="min-width: 190px">
             <li>
-              <a href="" class="block p-2 font-normal text-base text-black border-b border-border">
+              <button data-src="#popup-5" data-fancybox dont-close-click-outside class="block p-2 font-normal text-base text-black border-b border-border">
                 <img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" alt="Login" />
-                تسجيل دخول
+                @lang('site.login')
               </a>
             </li>
             <li>
-              <a href="" class="block p-2 font-normal text-base text-black border-b border-border">
+              <button data-src="#popup-5" data-fancybox dont-close-click-outside class="block p-2 font-normal text-base text-black border-b border-border">
                 <img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="Login" />
-                إنشاء حساب
+                @lang('site.sign_up_new')
               </a>
             </li>
             

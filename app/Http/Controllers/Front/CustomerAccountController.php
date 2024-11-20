@@ -7,14 +7,19 @@ use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\Review;
+use App\Traits\generateSeoTrait;
 use Auth;
 use Illuminate\Http\Request;
 class CustomerAccountController extends Controller
 {
+    use generateSeoTrait;
     public function profile()
     {
         $customer = Auth::guard('customer')->user();
-        
+        $seo_title = $customer->first_name.' '.$customer->last_name.' | '.__('site.seo_title');
+        $seo_description = __('customer.account');
+        $url = route('customer.account');
+        $this->generateSeo($seo_title, $seo_description, $url);
         return view('customer.account', compact('customer'));
     }
 
@@ -56,6 +61,10 @@ class CustomerAccountController extends Controller
             'customer' => $customer,
             'total_bookings' => $allBookings->count(),
         ];
+        $seo_title = __('customer.my_reservations') . ' | ' . __('site.seo_title');
+        $seo_description = __('customer.my_reservations');
+        $url = route('customer.booking');
+        $this->generateSeo($seo_title, $seo_description, $url);
         return view('customer.booking', $data);
     }
 
@@ -70,6 +79,11 @@ class CustomerAccountController extends Controller
             'customer' => $customer,
             'total_favorites' => $favoriteApartments->count(),
           ];
+
+        $seo_title = __('customer.favorite') . ' | ' . __('site.seo_title');
+        $seo_description = __('customer.favorite');
+        $url = route('customer.favorite');
+        $this->generateSeo($seo_title, $seo_description, $url);
         return view('customer.favorite', $data);
     }
 
@@ -99,6 +113,10 @@ class CustomerAccountController extends Controller
             'booking_id' => $data['booking']->id,
             'customer_id' => $user->id
         ])->first();
+        $seo_title = __('customer.booking_details'). ' #'  .$number_of_booking.  ' | ' . __('site.seo_title');
+        $seo_description = __('customer.booking_details');
+        $url = route('customer.booking.details', $number_of_booking);
+        $this->generateSeo($seo_title, $seo_description, $url);
         return view('booking.details', $data);
     }
 

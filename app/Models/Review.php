@@ -12,6 +12,7 @@ class Review extends Model
         'rating',
         'review_text',
         'booking_id',
+        'apartment_id',
     ];
     public function customer(): BelongsTo
     {

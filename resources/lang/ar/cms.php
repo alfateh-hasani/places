@@ -157,4 +157,9 @@ return [
     'type_deposit' => 'إيداع',
     'type_withdraw' => 'سحب',
     'transaction_details' => 'تفاصيل المعاملة',
+    'image_mobile_ar' => 'الصورة الهاتف بالعربي',
+    'image_mobile_en' => 'الصورة الهاتف بالانجليزي',
+    'sort_order' => 'ترتيب العرض',
+    'link_ar' => 'الرابط بالعربي',
+    'link_en' => 'الرابط بالانجليزي',
 ];

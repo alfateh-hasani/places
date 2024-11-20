@@ -343,6 +343,43 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-12',
             ],
         ]);
+        //seo_title_ar
+        $this->crud->addField([
+            'name' => 'seo_title_ar',
+            'type' => 'text',
+            'label' =>  __('cms.seo_title_ar'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //seo_title_en
+        $this->crud->addField([
+            'name' => 'seo_title_en',
+            'type' => 'text',
+            'label' =>  __('cms.seo_title_en'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //seo_description_ar
+        $this->crud->addField([
+            'name' => 'seo_description_ar',
+            'type' => 'text',
+            'label' =>  __('cms.seo_description_ar'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        //seo_description_en
+        $this->crud->addField([
+            'name' => 'seo_description_en',
+            'type' => 'text',
+            'label' =>  __('cms.seo_description_en'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
         //Label
         $this->crud->addField([
             'name' => 'labels',

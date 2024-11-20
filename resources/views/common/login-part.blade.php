@@ -10,7 +10,7 @@
                 @lang('site.welcome_back') 
                 <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="Goodbye" />
             </p>
-            <form id="login-form" method="post">
+            <form id="login-form" method="post" >
                 @csrf <!-- Include CSRF token -->
 
                 <div id="login-result"></div>
@@ -144,10 +144,10 @@
 
 @push('js')
  
-<link rel="stylesheet" href="https://conference.kkesh.med.sa/front/assets/css/HoldOn.min.css" />
-<script src="https://conference.kkesh.med.sa/front/assets/js/jquery.validate.js"></script>
+<link rel="stylesheet" href="{{ asset('assets/css/HoldOn.min.css')}}" />
+<script src="{{ asset('assets/js/jquery.validate.js')}}"></script>
  
-<script src="https://conference.kkesh.med.sa/front/assets/js/HoldOn.min.js"></script>
+<script src="{{ asset('assets/js/HoldOn.min.js')}}"></script>
 <style>
     .alert.alert-danger {
     color: red;
@@ -168,6 +168,8 @@ input.otp-input {
 }
 </style>
 <script>
+
+$( document ).ready(function() {
 
 // Display Inline Messages for General Errors
 function showGeneralErrorMessage(container, message) {
@@ -446,6 +448,6 @@ $('.phoneNumberInput').on('input', function() {
     this.value = value;
 });
 
-
+});
 </script>
 @endpush

@@ -27,7 +27,7 @@
                 <ul>
                     <li class="mb-9">
                         <a href="mailto:{{$email}}">
-                            <div class="w-12 h-12 rounded-full mr-6 bg-[#fae3dd] text-center pt-3 float-left translate-y-1">
+                            <div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
                                 <img class="inline-block" src="{{asset('assets/img/mail.svg')}}" />
                             </div> 
                             <p class="font-semibold text-lg text-black">{{__('site.send_us_email')}} <br>
@@ -37,10 +37,10 @@
                     </li>
                     <li class="mb-9">
                         <a>
-                            <div class="w-12 h-12 rounded-full mr-6 bg-[#fae3dd] text-center pt-3 float-left translate-y-1">
+                            <div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
                                 <img class="inline-block" src="{{asset('assets/img/tel.svg')}}" /></div> 
                                 <p class="font-semibold text-lg text-black"> {{__('site.send_phone')}} <br> {{$phone}}</p></a></li>
-                    <li class="mb-9"><a><div class="w-12 h-12 rounded-full mr-6 bg-[#fae3dd] text-center pt-3 float-left translate-y-1">
+                    <li class="mb-9"><a><div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
                         <img class="inline-block" src="{{asset('assets/img/address.svg')}}" /></div> <p class="font-semibold text-lg text-black">
                              {{__('site.address')}} <br> 
                             {{$address}}

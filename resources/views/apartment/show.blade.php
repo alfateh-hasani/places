@@ -64,19 +64,67 @@
             
             @if ($apartment->getMedia('image'))
                 @foreach ($apartment->getMedia('image') as $key=> $photo)
-                    <div>
-                        <a data-fancybox="banner" href="{{ $photo->getUrl('grid') }}" class="relative block">
-                            <img class="{{$key==0?'w-full h-[256px] xl:h-[456px] object-cover'  :'w-full h-[120px] xl:h-[220px] object-cover'}} " src="{{ $photo->getUrl('grid') }}" />
-                            
-                        </a>
-                </div>
+                    @if($key==0)
+                        <div class="col-span-2"><a data-fancybox="banner" href="{{ $photo->getUrl() }}" class="relative block">
+                            <img class="w-full h-[256px] xl:h-[456px] object-cover" src="{{ $photo->getUrl() }}" /></a>
+                        </div>
+                    @endif
                 @endforeach
+            <div>              
+            @foreach ($apartment->getMedia('image') as $key=> $photo)
+                        
+                @if(!in_array($key , [1,2]) )
+                @continue
+                @endif
+ 
+                    
+                        <a data-fancybox="banner" href="{{ $photo->getUrl() }}" class="relative block mb-4">
+                            <img class="w-full h-[120px] xl:h-[220px] object-cover" src="{{ $photo->getUrl() }}" />
+                        </a>
+ 
+            
+                @endforeach
+            </div>
+
+            <div>              
+                @foreach ($apartment->getMedia('image') as $key=> $photo)
+                            
+                    @if(!in_array($key , [3,4]) )
+                    @continue
+                    @endif
+                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}" class="relative block mb-4">
+                        <img class="w-full h-[120px] xl:h-[220px] object-cover" src="{{ $photo->getUrl() }}" />
+                    </a>
+ 
+                    @endforeach
+                </div>
+
+
+                    
+            @foreach ($apartment->getMedia('image') as $key=> $photo)
+                        
+                @if($key < 5) 
+                     @continue
+                @endif
+
+                <div> 
+    
+                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}" class="relative block">
+                        <img class="{{$key==0?'w-full h-[256px] xl:h-[456px] object-cover'  :'w-full h-[120px] xl:h-[220px] object-cover'}} " src="{{ $photo->getUrl() }}" />
+                    </a>
+                </div>
+ 
+            
+                        
+                
+            @endforeach
+            
             @endif 
         </div>
         <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
- 
-            <button class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/photo.svg')}}" />
-                Show All Photos
+            {{-- <button class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer video-button"><img class="inline-block mr-2" src="assets/img/video.svg" /> Show All Videos</button> --}}
+            <button class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block mr-2" src="{{asset('assets/img/photo.svg')}}" /> 
+                {{__('apartment.show_all_photos')}}
             </button>
         </div>
     </div>
@@ -306,6 +354,12 @@
             </div>
             <div class="hidden xl:block xl:basis-4/12 rtl:xl:pr-5 xl:pl-5">
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
+                    <!--<div class="checkout-slider-detail">
+                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
+                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
+                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
+                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
+                    </div>-->
                     <p class="font-normal text-base text-reviews">
                         <span class="font-bold text-2xl text-black translate-y-0.5 inline-block">
                             {{$apartment->price}} 

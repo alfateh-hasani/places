@@ -46,7 +46,7 @@
       </div>
       
       <!-- حقل تسجيل الدخول (Check In) -->
-      <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-l border-blackopacity cursor-pointer ">
+      <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
         <p class="font-normal text-xs text-black">  
             {{ __('site.filters_check_in') }}
         </p>
@@ -61,7 +61,7 @@
       </div>
       
       <!-- حقل تسجيل الخروج (Check Out) -->
-      <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-l border-blackopacity cursor-pointer ">
+      <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
         <p class="font-normal text-xs text-black">  
             {{ __('site.filters_check_out') }}
         </p>
@@ -76,7 +76,7 @@
       </div>
       
       <!-- حقل إضافة الضيوف (Guests) -->
-      <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-l border-blackopacity cursor-pointer persons relative ">
+      <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer persons relative ">
         <p class="font-normal text-xs text-black">
             {{ __('site.filters_guests') }}
         </p>

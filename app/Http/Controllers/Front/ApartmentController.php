@@ -6,6 +6,8 @@ use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\City;
+use Artesaos\SEOTools\Facades\SEOTools;
+use Config;
 use Illuminate\Http\Request;
 
 class ApartmentController extends Controller
@@ -30,22 +32,34 @@ class ApartmentController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
     
-        $lastBookedDate = $apartment->bookings->sortBy('check_out')->first()?->check_out;
-        $started_day = $lastBookedDate->copy()->addDay()->format('Y-m-d');
-        $next_started_day = $lastBookedDate->copy()->addDays(2)->format('Y-m-d');
-        $booked_days =  $apartment->bookings?->map(function($booking) {
+            $lastBookedDate = $apartment->bookings->sortBy('check_out')->first()?->check_out;
+
+        if ($lastBookedDate) {
+            $started_day = $lastBookedDate->copy()->addDay()->format('Y-m-d');
+            $next_started_day = $lastBookedDate->copy()->addDays(2)->format('Y-m-d');
+        } else {
+            $started_day = now()->format('Y-m-d');  
+            $next_started_day = now()->addDay()->format('Y-m-d'); 
+        }
+        
+        $booked_days = $apartment->bookings?->map(function ($booking) {
             return [
                 'check_in' => $booking->check_in->format('Y-m-d'),
                 'check_out' => $booking->check_out->format('Y-m-d')
             ];
         })->toArray();
+            
           $data = [
             'apartment' => $apartment,
             'started_day' => $started_day,
             'next_started_day' => $next_started_day,
             'booked_days' => $booked_days
         ];
-    
+        $seo_title = $apartment->ml('seo_title') . ' | ' . Config::get('settings.seo_title_'.app()->getLocale());
+        $seo_description = $apartment->ml('seo_description');
+        $url = route('apartments.show', $apartment->slug);
+        $this->generateSeo($seo_title, $seo_description, $url);
+
     
         return view('apartment.show', $data);
     }
@@ -100,7 +114,7 @@ class ApartmentController extends Controller
             $query = $filterHandler->apply($query, $val);
         }
 
-        $apartments = $query->paginate(8);
+        $apartments = $query->latest()->paginate(8);
 
         $data = [
             'cities' => City::orderBy('sort_order', 'asc')->withCount('apartments')->get(),
@@ -128,5 +142,16 @@ class ApartmentController extends Controller
                 ? $this->apartment->pluck('bathrooms_count')->unique()->sort()->values()->toArray()
                 : [],
         ];
+    }
+
+
+    private function generateSeo($seo_title, $seo_description,$url)
+    {
+        SEOTools::setTitle($seo_title);
+        SEOTools::setDescription($seo_description);
+        SEOTools::opengraph()->setUrl($url);
+        SEOTools::setCanonical($url);
+        SEOTools::opengraph()->addProperty('type', 'articles');
+
     }
 }

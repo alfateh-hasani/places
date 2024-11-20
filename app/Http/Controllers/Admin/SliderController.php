@@ -68,6 +68,20 @@ class SliderController extends CrudController
             'height' => '50px',
             'width' => '50px',
         ]);
+        CRUD::addColumn([
+            'name' => 'image_mobile_ar',
+            'type' => 'image',
+            'label' =>  __('cms.image_mobile_ar'),
+            'height' => '50px',
+            'width' => '50px',
+        ]);
+        CRUD::addColumn([
+            'name' => 'image_mobile_en',
+            'type' => 'image',
+            'label' =>  __('cms.image_mobile_en'),
+            'height' => '50px',
+            'width' => '50px',
+        ]);
 
         CRUD::addColumn([
             'name' => 'link_ar',
@@ -130,6 +144,20 @@ class SliderController extends CrudController
             ->label(__('cms.image_en'))
             ->type('image')
             ->withMedia(['collection' => 'image_en'])
+            ->wrapperAttributes([
+                'class' => 'form-group col-md-6'
+            ]);
+        CRUD::field('image_mobile_ar')
+            ->label(__('cms.image_mobile_ar'))
+            ->type('image')
+            ->withMedia(['collection' => 'image_mobile_ar'])
+            ->wrapperAttributes([
+                'class' => 'form-group col-md-6'
+            ]);
+        CRUD::field('image_mobile_en')
+            ->label(__('cms.image_mobile_en'))
+            ->type('image')
+            ->withMedia(['collection' => 'image_mobile_en'])
             ->wrapperAttributes([
                 'class' => 'form-group col-md-6'
             ]);

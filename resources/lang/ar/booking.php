@@ -48,4 +48,5 @@ return [
     'review_submit' => 'إرسال التقييم',
     'review_placeholder' => ' أدخل تقييمك هنا',
     'rating' => 'التقييم',
+    'booking_details' => '  مراجعة الدفع',
 ];

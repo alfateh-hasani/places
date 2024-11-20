@@ -26,6 +26,10 @@ class City extends Model implements HasMedia
         'name_en',
         'sort_order',
         'slug',
+        'seo_title_ar',
+        'seo_description_ar',
+        'seo_title_en',
+        'seo_description_en',
     ];
 
     /**

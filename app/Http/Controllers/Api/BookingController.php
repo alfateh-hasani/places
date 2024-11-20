@@ -5,6 +5,7 @@ use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Policy;
 use App\Models\Booking;
+use App\Models\Review;
 use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
@@ -26,9 +27,10 @@ class BookingController extends Controller{
         $request->validate([
             'booking_id' => 'required|exists:bookings,id',
         ]);
+        $customer = Auth::guard('api')->user();
         $booking = $this->booking->where([
             ['id', $request->booking_id],
-            ['customer_id', Auth::guard('api')->id()]
+            ['customer_id', $customer->id]
         ])->first();
         if (!$booking) {
             return $this->errorResponse(__('api.booking_not_found'));
