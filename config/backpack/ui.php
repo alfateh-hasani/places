@@ -63,10 +63,10 @@ return [
     'home_link' => '',
 
     // Menu logo. You can replace this with an <img> tag if you have a logo.
-    'project_logo' => '<b>P </b>Places',
+    'project_logo' => '<img src="/front/assets/img/logo.svg" />' ,
 
     // Show / hide breadcrumbs on admin panel pages.
-    'breadcrumbs' => true,
+    'breadcrumbs' => false,
 
     // ------
     // FOOTER
@@ -79,7 +79,7 @@ return [
     'developer_link' => 'https://madar-solutions.com',
 
     // Show powered by Laravel Backpack in the footer? true/false
-    'show_powered_by' => true,
+    'show_powered_by' => false,
 
     // ---------
     // DASHBOARD
@@ -94,7 +94,8 @@ return [
 
     // CSS files that are loaded in all pages, using Laravel's asset() helper
     'styles' => [
-        'css/custom-rtl.css',
+        
+      
         // 'styles/example.css',
         // 'https://some-cdn.com/example.css',
     ],

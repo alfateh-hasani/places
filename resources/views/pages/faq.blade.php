@@ -4,7 +4,9 @@
 
 @include('pages.partials.breadcrumb')
 <section class="py-12 container">
-    <h1 class="font-bold text-3xl text-black mb-5 text-center">Frequently Asked Questions</h1>
+    <h1 class="font-bold text-3xl text-black mb-5 text-center">
+        {{ $page->{'name_'.app()->getLocale()} }}
+    </h1>
     <p class="font-light text-base text-titletext text-center md:px-32 lg:px-56 xl:px-96 mb-10">
         {{ strip_tags(str_replace('&nbsp;', ' ', $page->{'content_'.app()->getLocale()})) }}
     </p>
@@ -15,7 +17,8 @@
             <ul>
                 @foreach ($categories as $key => $category)
                     <li>
-                        <a class="@if($key==0) opacity-100 @endif w-full category-tab relative font-normal text-base text-white opacity-60 block py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100" data-category="{{ $category->id }}">
+                        <a class="@if($key==0) opacity-100 @endif w-full category-tab relative 
+                        font-normal text-base text-white opacity-60 block py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100" data-category="{{ $category->id }}">
                             {{ $category->{'name_'.app()->getLocale()} }}
                             <img class="inline-block absolute ltr:right-0 rtl:left-0 rtl:rotate-180 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
                         </a>

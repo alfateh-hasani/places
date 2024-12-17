@@ -128,7 +128,7 @@ class Apartment extends Model implements HasMedia
     }
 
     //image
-    public function getImageAttribute()
+    public function getImageViewAttribute()
     {
         return $this->getFirstMediaUrl('image');
     }

@@ -28,6 +28,7 @@ class Building extends Model implements HasMedia
         'link',
         'check_in_time',
         'check_out_time',
+        'slug',
     ];
 
     /**

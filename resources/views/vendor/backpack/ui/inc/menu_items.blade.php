@@ -32,3 +32,10 @@
 <x-backpack::menu-item title="{{__('cms.translation-manager')}}" icon="la la-language" :link="backpack_url('translation-manager')" />
 
 {{-- <x-backpack::menu-item title="Menu" icon="la la-list" :link="backpack_url('menu-item')" /> --}}
+
+
+<x-backpack::menu-dropdown title="المسؤولين" icon="la la-puzzle-piece">
+    <x-backpack::menu-dropdown-item title="المستخدمون" icon="la la-user" :link="backpack_url('user')" />
+    <x-backpack::menu-dropdown-item title="الأدوار" icon="la la-group" :link="backpack_url('role')" />
+    <x-backpack::menu-dropdown-item title="الأذونات" icon="la la-key" :link="backpack_url('permission')" />
+</x-backpack::menu-dropdown>

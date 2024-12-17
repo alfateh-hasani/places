@@ -51,8 +51,10 @@ class PageController extends Controller
 
     private function generateSeo($page)
     {
-        SEOTools::setTitle($page->seo_title);
-        SEOTools::setDescription($page->seo_description);
+        $seo_title = $page->{'seo_title_'.app()->getLocale()} .' | '.Config::get('settings.seo_title_'.app()->getLocale());
+        $seo_description = $page->{'seo_description_'.app()->getLocale()} ;
+        SEOTools::setTitle($seo_title );
+        SEOTools::setDescription($seo_description);
         SEOTools::opengraph()->setUrl(route('page',$page->slug));
         SEOTools::setCanonical(route('page',$page->slug));
         SEOTools::opengraph()->addProperty('type', 'articles');

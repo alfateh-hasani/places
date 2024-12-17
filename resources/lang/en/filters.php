@@ -1,0 +1,20 @@
+<?php
+return [
+    'city' => 'City',
+    'check_in' => 'Check-in Date',
+    'check_out' => 'Check-out Date',
+    'guests' => 'Guests',
+    'children' => 'Children',
+    'price' => 'Price',
+    'rooms' => 'Rooms',
+    'area' => 'Area',
+    'min_price' => 'Minimum Price',
+    'max_price' => 'Maximum Price',
+    'price_range' => 'Price Range',
+    'rate' => 'Rating',
+    'area_range' => 'Area Range',
+    'beds_label' => 'Beds',
+    'bathrooms_label' => 'Bathrooms',
+    'beds' => 'Beds',
+    'apply_filters' => 'Apply Filters',
+];

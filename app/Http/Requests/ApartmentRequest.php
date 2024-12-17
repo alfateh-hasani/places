@@ -34,6 +34,8 @@ class ApartmentRequest extends FormRequest
             'num_beds' => 'required',
             'adults_count' => 'required',
             'children_count' => 'required',
+            'floor_number' => 'required|int|min:1',
+            'unit_number' => 'required|int|min:1',
             'slug' => 'required|unique:apartments,slug,' . $this->id,
             // 'area' => 'required',
             // 'is_active' => 'required',

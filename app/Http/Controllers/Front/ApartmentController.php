@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Front;
 use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
+use App\Models\Building;
 use App\Models\City;
 use Artesaos\SEOTools\Facades\SEOTools;
 use Config;
@@ -26,7 +27,7 @@ class ApartmentController extends Controller
         return view('apartment.index', compact('apartments'));
     }
 
-    public function show($slug)
+    public function show(Request $request,$slug)
     {
         $apartment = Apartment::with(['building.city', 'reviews', 'features', 'bookings', 'policy'])
             ->where('slug', $slug)
@@ -59,7 +60,7 @@ class ApartmentController extends Controller
         $seo_description = $apartment->ml('seo_description');
         $url = route('apartments.show', $apartment->slug);
         $this->generateSeo($seo_title, $seo_description, $url);
-
+        $data['request'] = $request;
     
         return view('apartment.show', $data);
     }
@@ -121,6 +122,10 @@ class ApartmentController extends Controller
             'apartments' => $apartments,
             'filter_keys' => $this->prepareFilterKeys(),
         ];
+        $seo_title = __('site.search') .' | '. Config::get('settings.seo_title_'.app()->getLocale());
+        $seo_description =  Config::get('settings.seo_description_'.app()->getLocale());
+        $url = route('apartments.search');
+        $this->generateSeo($seo_title, $seo_description, $url);
 
         return view('apartment.list', $data);
     }
@@ -153,5 +158,23 @@ class ApartmentController extends Controller
         SEOTools::setCanonical($url);
         SEOTools::opengraph()->addProperty('type', 'articles');
 
+    }
+
+
+    public function getApartmentBuliding($slug)
+    {
+        $building = Building::where('slug', $slug)->firstOrFail();
+        $apartments = $building->apartments()->paginate(12);
+        $data = [
+            'building' => $building,
+            'apartments' => $apartments,
+            'filter_keys' => $this->prepareFilterKeys(),
+            'cities' => City::orderBy('sort_order', 'asc')->withCount('apartments')->get(),
+        ];
+        $seo_title = $building->ml('seo_title') . ' | ' . Config::get('settings.seo_title_'.app()->getLocale());
+        $seo_description = $building->ml('seo_description');
+        $url = route('buliding.show', $building->slug);
+        $this->generateSeo($seo_title, $seo_description, $url);
+        return view('building.show', $data);
     }
 }

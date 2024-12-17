@@ -18,7 +18,7 @@ class ApartmentController extends CrudController
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
-
+    use \Backpack\Pro\Http\Controllers\Operations\DropzoneOperation;
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
      *
@@ -93,7 +93,7 @@ class ApartmentController extends CrudController
             'type' => 'select',
             'label' => __('cms.lock'),
             'entity' => 'lock',
-            'attribute' => 'lock_name',
+            'attribute' => 'full_name',
             'model' => \App\Models\SmartLock::class,
         ]);
         CRUD::addColumn([
@@ -105,7 +105,7 @@ class ApartmentController extends CrudController
             'model' => \App\Models\Policy::class,
         ]);
         CRUD::addColumn([
-            'name' => 'image',
+            'name' => 'image_view',
             'type' => 'image',
             'label' =>  __('cms.image'),
             'height' => '50px',
@@ -125,21 +125,13 @@ class ApartmentController extends CrudController
         CRUD::setValidation(ApartmentRequest::class);
         CRUD::field('image')
             ->label(__('cms.image'))
-            ->type('upload_multiple')
+            ->type('dropzone')
             ->withMedia([
                 'collection' => 'image', // will pick the collection definition from your model
             ])->wrapperAttributes([
-                'class' => 'form-group col-md-6',
+                'class' => 'form-group col-md-12',
             ]);
-            //video
-            CRUD::field('video')
-            ->label('الفيديو')
-            ->type('upload_multiple')
-            ->withMedia([
-                'collection' => 'video', // will pick the collection definition from your model
-            ])->wrapperAttributes([
-                'class' => 'form-group col-md-6',
-            ]);
+         
 
 
         $this->crud->addField([
@@ -258,11 +250,36 @@ class ApartmentController extends CrudController
         ]);
 
         $this->crud->addField([
+            'name' => 'floor_number',
+            'type' => 'number',
+            'label' =>  __('cms.floor_number'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'unit_number',
+            'type' => 'number',
+            'label' =>  __('cms.unit_number'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+
+        $this->crud->addField([
             'name' => 'smart_lock_id',
             'type' => 'select2',
             'label' => __('cms.lock'),
             'entity' => 'lock',
-            'attribute' => 'lock_name',
+            'attribute' => 'full_name',
             'model' => \App\Models\SmartLock::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',

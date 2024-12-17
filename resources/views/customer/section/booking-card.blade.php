@@ -3,7 +3,7 @@
         <img class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover" 
         src="{{getImage($item->apartment,'image')}}" />
     </a>
-    <div class="ltr:float-right rtl:float-left border-s border-feature-border px-3 py-1">
+    <div style="    min-width: 30%;" class="ltr:float-right rtl:float-left border-s border-feature-border px-3 py-1">
         <a  href="{{route('customer.booking.details',$item->number_of_booking)}}" >
             <p class="text-sm sm:text-base font-semibold text-lg mb-1">{{__('apartment.booking_summary')}}</p>
         </a>
@@ -35,7 +35,7 @@
                 <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_date')}} :
             <span class="text-black">{{$item->check_in?->format('Y-m-d')}}</span></p></a>
     </div>
-    <a class="options-button cursor-pointer z-50 absolute ltr:right-4 rtl:left-4 top-4">
+    {{-- <a class="options-button cursor-pointer z-50 absolute ltr:right-4 rtl:left-4 top-4">
         <svg width="20" height="20" version="1.1" id="fi_512142" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 426.667 426.667" style="enable-background:new 0 0 426.667 426.667;" xml:space="preserve">
             <circle cx="42.667" cy="213.333" r="42.667"></circle>
             <circle cx="213.333" cy="213.333" r="42.667"></circle>
@@ -46,7 +46,7 @@
         <li><a class="block p-1 border-b border-border text-sm">Option 1</a></li>
         <li><a class="block p-1 border-b border-border text-sm">Option 2</a></li>
         <li><a class="block p-1 border-b border-border text-sm">Option 3</a></li>
-    </ul>
+    </ul> --}}
     <div class="clear-both"></div>
     
 </div>

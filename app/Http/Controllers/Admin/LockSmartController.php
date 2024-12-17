@@ -49,6 +49,14 @@ class LockSmartController extends CrudController
             'name' => 'lock_alias',
             'label' =>  __('cms.lock_alias'),
         ]);
+        CRUD::addColumn([
+            'name' => 'building_id',
+            'label' => __('cms.building'),
+            'type' => 'select',
+            'entity' => 'building',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Building::class,
+        ]);
 
     }
 
@@ -75,6 +83,14 @@ class LockSmartController extends CrudController
             'name' => 'lock_alias',
             'label' =>  __('cms.lock_alias'),
             'type' => 'text',
+        ]);
+        $this->crud->addField([
+            'name' => 'building_id',
+            'type' => 'select',
+            'label' => __('cms.building'),
+            'entity' => 'building',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Building::class,
         ]);
     }
 

@@ -36,11 +36,13 @@
         </div>
         <div class="py-8 px-6 bg-white rounded-2xl mt-6">
             <div class="border-b border-border pb-8 mb-8">
-                <p class="font-semibold text-lg float-left  rtl:float-right py-2.5">
-                    {{$booking->apartment->{'name_'.app()->getLocale()} }}
-                </p>
+               <a href="{{route('apartments.show',$booking->apartment?->slug)}}" > 
+                    <p class="font-semibold text-lg float-left  rtl:float-right py-2.5">
+                        {{$booking->apartment->{'name_'.app()->getLocale()} }}
+                    </p>
+               </a>
                 <div class="float-right rtl:float-left">
-                    <a class="py-3 px-4 inline-block rounded-md bg-gri text-white ml-2">
+                    <a class="py-3 px-4 inline-block rounded-md bg-gri text-white ml-2" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
                         <svg class="inline-block" id="fi_2891455" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                             <path d="m21.5 18h-3c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h3c.827 0 1.5-.673 1.5-1.5v-7c0-.827-.673-1.5-1.5-1.5h-19c-.827 0-1.5.673-1.5 1.5v7c0 .827.673 1.5 1.5 1.5h3c.276 0 .5.224.5.5s-.224.5-.5.5h-3c-1.379 0-2.5-1.122-2.5-2.5v-7c0-1.378 1.121-2.5 2.5-2.5h19c1.379 0 2.5 1.122 2.5 2.5v7c0 1.378-1.121 2.5-2.5 2.5z"></path>
                             <path d="m14.5 21h-6c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h6c.276 0 .5.224.5.5s-.224.5-.5.5z"></path>
@@ -70,7 +72,7 @@
                     </div>
                     
 
-                    @if (!$has_review)
+                    @if (!$has_review and $booking->status == 'finished')
                         <button data-src="#popup-2" data-fancybox type="button" 
                                 class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
                             <!-- Replace the comment below with the SVG icon -->
@@ -95,7 +97,7 @@
             </div>
             <div class="grid lg:grid-cols-5 gap-6 max-w-full">
                 <div class="col-span-3">
-                    <img src="{{getImage($booking->apartment,'image')}}" class="w-full h-40 object-cover rounded-lg mb-4" />
+                    <img src="{{getImage($booking->apartment,'image')}}" class="w-full h-80 object-cover rounded-lg mb-4" />
                     <ul>
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
                             <p class="text-gri float-left rtl:float-right">{{__('booking.number_of_booking')}} :</p>
@@ -145,18 +147,24 @@
                         </svg>
                         <div class="clear-both"></div>
                     </div>
-                    <div class="bg-feature border border-feature-border rounded-lg mx-5 px-4 py-3">
-                        <p class="float-left rtl:float-right text-xs">{{__('booking.check_in_time')}} <span class="block font-semibold text-sm">12:00 PM</span></p>
-                        <p class="float-right rtl:float-left text-xs w-2/4 border-l border-feature-border text-right">{{__('booking.check_out_time')}}  <span class="block font-semibold text-sm">12:00 PM</span></p>
+                    <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 px-4 py-3">
+                        <p class="float-left rtl:float-right text-xs">{{__('booking.check_in_time')}} <span class="block font-semibold text-sm">
+                            {{Config::get('settings.check_in_time')}}    
+                        </span></p>
+                        <p class="float-right rtl:float-left text-xs w-2/4 border-l border-feature-border text-right">{{__('booking.check_out_time')}}  <span class="block font-semibold text-sm">
+                            {{Config::get('settings.check_out_time')}}    
+                        </span></p>
                         <div class="clear-both"></div>
                     </div>
-                    <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 p-4">
+                    {{-- <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 p-4">
                         <p class="float-left rtl:float-right text-sm">{{__('booking.link')}}   :</p>
                         <a class="float-right rtl:float-left text-sm underline decoration-solid">
                             {{__('booking.go_to_link')}}
                         </a>
                         <div class="clear-both"></div>
-                    </div>
+                    </div> --}}
+
+                    @if($booking->status == 'approved')
                     <div class="border border-price bg-[#fdeee9] rounded-lg mx-5 px-3 py-5 relative pin text-price">
                         <svg class="float-left rtl:float-right" fill="currentColor" id="fi_16916738" height="32" viewBox="0 0 24 24" width="32" xmlns="http://www.w3.org/2000/svg">
                             <path d="m10.5 5.5c0 .27612-.22388.5-.5.5s-.5-.22388-.5-.5c0-.27618.22388-.5.5-.5s.5.22382.5.5zm2.5-.5c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm-6 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 3c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm-6 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 3c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm-6 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm13.75 5v2c0 .96484-.78516 1.75-1.75 1.75h-8.89307c-1.39453 0-2.60693-.98633-2.81982-2.29395-.13086-.80566.09424-1.62207.61768-2.2373.52393-.61523 1.2876-.96875 2.09521-.96875h9c.96484 0 1.75.78516 1.75 1.75zm-1.5 0c0-.1377-.1123-.25-.25-.25h-9c-.36719 0-.71436.16113-.95264.44043-.2417.28418-.34082.64844-.27979 1.02539.09619.58984.67188 1.03418 1.33936 1.03418h8.89307c.1377 0 .25-.1123.25-.25zm-9.25.5c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm4 4.75h-8c-.68945 0-1.25-.56055-1.25-1.25v-16c0-.68945.56055-1.25 1.25-1.25h8c.68945 0 1.25.56055 1.25 1.25v9h1.5v-9c0-1.5166-1.2334-2.75-2.75-2.75h-8c-1.5166 0-2.75 1.2334-2.75 2.75v16c0 1.5166 1.2334 2.75 2.75 2.75h8c1.16302 0 2.15375-.72784 2.55518-1.75h-1.84424c-.20447.14587-.4411.25-.71094.25z"></path>
@@ -165,6 +173,7 @@
                         <p class="float-right rtl:float-left tracking-wider py-1">224658</p>
                         <div class="clear-both"></div>
                     </div>
+                    @endif
                     <p class="font-semibold py-4 mx-5">
                         {{__('booking.summary')}}
                     </p>
@@ -173,7 +182,13 @@
                         <p class="text-title mx-5">  {{__('booking.copon').' ( ' .$booking->coupon_code.' ) '}} <span class="float-right rtl:float-left font-semibold">{{$booking->discount}} SAR</span></p>
                     @endif
                     <div class="bg-feature border border-feature-border rounded-lg mx-5 mt-4 p-3">
-                        <p>         {{__('booking.summary')}} (    {{$booking->number_of_nights   .' '.__('booking.nights')}})</p>
+                    
+                        <p>         {{__('booking.summary')}} (    {{$booking->number_of_nights   .' '.__('booking.nights')}})
+
+                            <span class="font-normal text-base text-reviews">
+                                ({{__('apartment.price_tax') }})
+                            </span>
+                        </p>
                         <p class="font-semibold text-lg">
                             {{$booking->final_price}}
                             SAR</p>

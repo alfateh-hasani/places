@@ -8,5 +8,5 @@
     </p>
     <p class="font-normal text-xs text-price">
             {{__('site.explor_more')}}
-        <img class="h-3 inline-block ml-2" src="{{asset('assets/img/blog-arrow.svg')}}" /></p>
+        <img class="h-3 inline-block ml-2 rtl:rotate-180" src="{{asset('assets/img/blog-arrow.svg')}}" /></p>
 </a>

@@ -1,4 +1,4 @@
-<header class="fixed w-full py-6 bg-white top-0 z-50 lg:block hidden">
+<header class="fixed w-full py-6 bg-white top-0 z-50 lg:block hidden" data-aos="fade-down">
   <div class="container">
     <div class="float-left rtl:float-right">
       <a href="{{ route('home')}}">

@@ -12,7 +12,7 @@
         
         @if($apartments->hasMorePages())
             <div class="text-center">
-                <button id="load-more" 
+                <button id="show-more" 
                         data-next-page="{{ $apartments->currentPage() + 1 }}" 
                         class="inline-block font-normal font-semibold text-base text-title border border-title px-6 py-2 mt-4 sm:mt-10 rounded-3xl hover:bg-black hover:text-white ease-in-out duration-300">
                     @lang('site.explor_more')
@@ -21,22 +21,73 @@
         @endif
         
     </div>
+
+    <div style="display:none;" id="list-links">
+        {!! $apartments->links() !!}
+        </div>
 </section>
 
-@push('scripts')
-    <script>
-        $(document).ready(function() {
-            $('#load-more').click(function() {
-                var nextPage = $(this).data('next-page');
-                var url = '{{ route('home') }}?page=' + nextPage;
-                $.get(url, function(data) {
-                    $('#apartments-container').append(data);
-                    $('#load-more').data('next-page', nextPage + 1);
-                    if (data.trim() == '') {
-                        $('#load-more').remove();
-                    }
+@push('js')
+
+<script src="{{ asset('assets/js/infinite-scroll.pkgd.min.js')}}"></script>
+<script>
+    // $(document).ready(function () {
+    //     // Initialize Infinite Scroll
+    //     $('#apartments-container').infiniteScroll({
+    //         path: '#list-links a[aria-label="pagination.next"]',
+    //         append: '.apartment-card',
+    //         history: false,
+    //     }).on('append.infiniteScroll', function (event, response, path, items) {
+    //         // Reinitialize sliders if present in the new content
+    //         $(items).find('.slider').each(function () {
+    //             // Destroy existing Slick instance if initialized
+    //             if ($(this).hasClass('slick-initialized')) {
+    //                 $(this).slick('unslick');
+    //             }
+    //             // Initialize Slick
+    //             $(this).slick({
+    //                 dots: true,
+    //                 @if(config('app.locale') == 'ar')
+    //                 rtl: true,
+    //                 @endif
+    //             });
+    //         });
+    //     });
+    // });
+</script>
+<script>
+    $(document).ready(function () {
+        var infScroll = $('#apartments-container').infiniteScroll({
+            path: '#list-links a[aria-label="pagination.next"]',
+            append: '.apartment-card',
+            history: false,
+            scrollThreshold: false, // Disable automatic loading
+        }).on('append.infiniteScroll', function (event, response, path, items) {
+            // Reinitialize sliders if present in the new content
+            $(items).find('.slider').each(function () {
+                // Destroy existing Slick instance if initialized
+                if ($(this).hasClass('slick-initialized')) {
+                    $(this).slick('unslick');
+                }
+                // Initialize Slick
+                $(this).slick({
+                    dots: true,
+                    @if(config('app.locale') == 'ar')
+                    rtl: true,
+                    @endif
                 });
             });
         });
-    </script>
+
+        // Manual trigger on button click
+        $('#show-more').on('click', function () {
+            infScroll.infiniteScroll('loadNextPage');
+        });
+    });
+
+    $('#apartments-container').on('last.infiniteScroll', function () {
+        $('#show-more').hide();
+    });
+</script>
+ 
 @endpush

@@ -5,6 +5,7 @@ use App\Models\Coupon;
 use App\Models\Booking;
 use App\Models\Transaction;
 use Carbon\Carbon;
+use Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -99,7 +100,8 @@ class BookingService
                  if (!empty($validatedData['coupon_code'])) {
                     $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code']);
                 }
-                $prices = $this->calculatePrices($apartment->price, $numberOfNights, $coupon);
+                $priceWithTax = calculateTotalWithTax($apartment->price);
+                $prices = $this->calculatePrices($priceWithTax, $numberOfNights, $coupon);
                 $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer , $plaform);
                 $this->createBooking($transaction->id, null);
         return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
@@ -126,7 +128,7 @@ class BookingService
             'children_count' => $data->children_count,
             'total_price' => $data->total_price,
             'discount' => $data->discount,
-            'final_price' => $data->final_price,
+            'final_price' =>  calculateTotalWithTax($data->final_price),
             'booking_source' => $data->booking_source,
             'coupon_id' => $data->coupon_id ?? null  ,
             'coupon_code' => $data->coupon_code ?? null,
@@ -136,6 +138,7 @@ class BookingService
             'check_in' => $data->check_in,
             'check_out' => $data->check_out,
             'transaction_id' => $transaction->id,
+            'tax' => Config::get('settings.tax', 15),
          ]);
          $transaction->update(['booking_id' => $booking->id]);
          DB::commit();

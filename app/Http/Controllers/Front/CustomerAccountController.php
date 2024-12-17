@@ -133,6 +133,16 @@ class CustomerAccountController extends Controller
         return view('booking.details', $data);
     }
 
+    public function printBookingDetails($number_of_booking)  {
+        
+        $user = Auth::guard('customer')->user();
+        $data['booking'] = Booking::where([
+            'number_of_booking' => $number_of_booking,
+            'customer_id' => $user->id
+        ])->firstOrFail();
+        return view('booking.print',  $data);
+    }
+
 
     //toggleFavorite
     public function toggleFavorite(Request $request)

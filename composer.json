@@ -11,6 +11,7 @@
         "backpack/medialibrary-uploaders": "^1.2",
         "backpack/menucrud": "*",
         "backpack/pagemanager": "*",
+        "backpack/permissionmanager": "^7.2",
         "backpack/pro": "^2.2",
         "backpack/settings": "^3.1",
         "backpack/theme-coreuiv2": "^1.2",

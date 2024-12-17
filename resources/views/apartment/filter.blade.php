@@ -45,7 +45,7 @@
                                     <div class="flex items-center p-2 rounded hover:bg-gray-100">
                                         <input id="rate-{{ $i }}" type="checkbox" value="{{ $i }}" 
                                         name="rate" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded" 
-                                        {{ in_array($i, request('rate', [])) ? 'checked' : '' }}>
+                                        {{ in_array($i, \Illuminate\Support\Arr::wrap(request('rate'))) ? 'checked' : '' }}>
                                         <label for="rate-{{ $i }}" class="w-full ms-2 text-sm font-medium text-gray-900 rounded">
                                             @for ($j = 1; $j <= $i; $j++)
                                                 <img class="inline-block -translate-y-0.5" src="{{ asset('assets/img/star.svg') }}" alt="Star">
@@ -54,6 +54,7 @@
                                     </div>
                                 </li>
                             @endfor
+
                         </ul>
                     </div>
                 </div>
@@ -131,7 +132,7 @@
             </div>
             
             <button class="float-right rtl:float-left rounded-xl h-12 text-center bg-price font-semibold text-base text-white w-full xl:w-48" data-aos="fade-left rtl:fade-right">
-                <img class="inline-block mr-4" src="{{asset('assets/img/filter-icon.svg')}}" />
+                <img class="inline-block me-4" src="{{asset('assets/img/filter-icon.svg')}}" />
                 {{ __('filters.apply_filters') }}
             </button>
     

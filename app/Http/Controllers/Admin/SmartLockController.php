@@ -104,6 +104,7 @@ class SmartLockController extends CrudController
                 'class' => 'form-group col-md-6'
             ]
         ]);
+        
         $this->crud->addField([
             'name' => 'description_en',
             'type' => 'textarea',

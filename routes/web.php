@@ -18,6 +18,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
     Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
+    Route::get('buliding/{slug}', [ApartmentController::class, 'getApartmentBuliding'])->name('buliding.show');
     //search
 
 
@@ -41,6 +42,8 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('notifications', 'notifications')->name('notifications');
             Route::post('toggle-favorite', 'toggleFavorite')->name('toggle.favorite'); 
             Route::post('post-review', 'addReview')->name('post.review');
+            Route::get('booking-details/{number_of_booking}/print', 'printBookingDetails')->name('booking.print_details');
+ 
         });
         Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
             Route::get('determine-booking/{apartment_id}', 'determineBookingStatus')->name('determine');
@@ -49,6 +52,8 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
             Route::get('login-apartment', 'loginApartment')->name('login');
             Route::post('coupons-verify', 'couponsVerify')->name('coupons.verify');
             Route::post('cancel-booking', 'cancelBooking')->name('cancel');
+            
+
         }); 
     });
 

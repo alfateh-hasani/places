@@ -204,6 +204,18 @@ class BuildingController extends CrudController
             ],
         ]);
 
+        $this->crud->addField([
+            'name' => 'slug',
+            'type' => 'text',
+            'label' => 'الاسم اللطيف',
+            'attributes' => [
+                'placeholder' => 'slug',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
 
     }
 

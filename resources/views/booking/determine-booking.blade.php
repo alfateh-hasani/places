@@ -22,8 +22,7 @@
             <div class="xl:basis-8/12">
                 <div class="container">
                     <div class="float-left rtl:float-right  ltr:mr-5 rtl:ml-5 rtl:ml-5 mb-6 w-full">
-                        <h1 class="float-left rtl:float-right  font-semibold text-2xl text-title">
-                            
+                        <h1 class="float-left rtl:float-right  font-semibold text-2xl text-title"> 
                             {{ $apartment->ml('name') }}
                         </h1>
                     </div>
@@ -57,37 +56,33 @@
                         <input type="hidden" name="total_price" value="{{$total_price}}">
                         <input type="hidden" name="check_in" value="{{request()->checkin}}">
                         <input type="hidden" name="check_out" value="{{request()->checkout}}">
-                       
                         @csrf
                         <h1 class="font-semibold text-2xl text-title border-t border-blackopacity pt-8 mt-8">
                             {{__('booking.payment_method')}}
                         </h1>
                         <ul class="pb-8 border-b border-blackopacity">
                             @foreach ($payment_details as $key => $item)
-                            <li>
-                                <input type="radio" 
-                                       name="payment_method_code" 
-                                       id="check{{$key}}" 
-                                       value="{{$item['value']}}" 
-                                       class="hidden" 
-                                       required 
-                                       {{ $key === 0 ? 'checked' : '' }} />
-                                
-                                <label for="check{{$key}}" class="cursor-pointer block border border-filterborder mt-2 py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
-                                    <img class="inline-block" src="{{$item['icon']}}" width="50"/>
-                                    <p class="inline-block ml-4 font-normal text-sm text-title">
-                                        {{$item['explanation']}}
-                                    </p>
-                                    <div class="w-5 h-5 border rounded-full border-filterborder float-right rtl:float-left mt-1 relative">
-                                        <div class="w-3 h-3 rounded-full bg-price absolute opacity-0"></div>
-                                    </div>
-                                    <div class="clear-both"></div>
-                                </label>
-                            </li>
-                        @endforeach
-                        
-                         
-                           
+                                <li>
+                                    <input type="radio" 
+                                        name="payment_method_code" 
+                                        id="check{{$key}}" 
+                                        value="{{$item['value']}}" 
+                                        class="hidden" 
+                                        required 
+                                        {{ $key === 0 ? 'checked' : '' }} />
+                                    
+                                    <label for="check{{$key}}" class="cursor-pointer block border border-filterborder mt-2 py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
+                                        <img class="inline-block" src="{{$item['icon']}}" width="50"/>
+                                        <p class="inline-block ml-4 font-normal text-sm text-title">
+                                            {{$item['explanation']}}
+                                        </p>
+                                        <div class="w-5 h-5 border rounded-full border-filterborder float-right rtl:float-left mt-1 relative">
+                                            <div class="w-3 h-3 rounded-full bg-price absolute opacity-0"></div>
+                                        </div>
+                                        <div class="clear-both"></div>
+                                    </label>
+                                </li>
+                            @endforeach
                         </ul>
                
                 </div>
@@ -115,14 +110,13 @@
                             <div class="slider slider-checkout" style="max-width: 450px">
                                 @foreach ($apartment->getMedia('image') as $image)
                                    <div>
-                                    <a style="width: 100%; max-width:100%; display:block" class="rounded-xl overflow-hidden border border-border" href="{{$apartment->link}}">
-                                        <img 
-                                            class="object-cover w-full block" 
-                                            src="{{ $image->getUrl('grid') }}" 
-                                            alt="@lang('apartment.apartment_name_default')"
-                                        />
-                                    </a>
-
+                                        <a style="width: 100%; max-width:100%; display:block" class="rounded-xl overflow-hidden border border-border" href="{{$apartment->link}}">
+                                            <img 
+                                                class="object-cover w-full block" 
+                                                src="{{ $image->getUrl('grid') }}" 
+                                                alt="@lang('apartment.apartment_name_default')"
+                                            />
+                                        </a>
                                    </div>
                                 @endforeach
                             </div>
@@ -141,30 +135,40 @@
                         <div class=" grid grid-cols-2 mx-0 w-full gap-2">
                             <div class="border border-border bg-[#f6f6f6] rounded-lg px-4">
                                 <p>
-                                    <span class="block text-sm translate-y-1.5">Chick In</span>
-                                    9/6/2024
+                                    <span class="block text-sm translate-y-1.5">
+                                        {{__('booking.check_in')}}
+                                    </span>
+                                     {{request()->checkin}}
                                 </p>
                             </div>
                             <div class="border border-border bg-[#f6f6f6] rounded-lg px-4">
                                 <p>
-                                    <span class="block text-sm translate-y-1.5">Chick Out</span>
-                                    9/6/2024
+                                    <span class="block text-sm translate-y-1.5">  
+                                        {{__('booking.check_out')}}
+                                    </span>
+                                    {{request()->checkout}}
                                 </p>
                             </div>
                         </div>
 
                         <div class="border border-border bg-[#f6f6f6] rounded-lg px-4 grid grid-cols-2 mx-0 w-full gap-2 mt-2 mb-4">
                             <p>
-                                <span class="block text-sm translate-y-1.5">Chick Out</span>
-                                04:00 PM
+                                <span class="block text-sm translate-y-1.5">
+                                    {{__('booking.check_in_time')}}
+                                </span>
+                              {{ Config::get('settings.check_in_time') }}
                             </p>
                             <p class="ps-4 checkout-time relative">
-                                <span class="block text-sm translate-y-1.5">Chick Out</span>
-                                04:00 PM
+                                <span class="block text-sm translate-y-1.5">
+                                    {{__('booking.check_out_time')}}
+                                </span>
+                                {{ Config::get('settings.check_out_time') }}
                             </p>
                         </div>
 
-                        <p class="font-semibold my-3">Reservastion Summary</p>
+                        <p class="font-semibold my-3">  
+                            {{__('site.summary_reservastion')}}
+                        </p>
 
 
                    
@@ -191,8 +195,11 @@
                     
                     <p class="py-4 px-3 bg-filterbackground border border-filterborder rounded-lg font-semibold text-sm text-title mb-4">
                         {{__('booking.total_price')}}
+                        <span class="font-normal text-base text-reviews">
+                            ({{__('apartment.price_tax') }})
+                        </span>
                         <span id="total_price" class="float-right rtl:float-left">
-                            {{$total_price .' '. __('apartment.price')}}    
+                            {{calculateTotalWithTax($total_price) .' '.__('apartment.price') }} 
                         </span></p>
                     <ul>
                         @foreach ($payment_details as $item)

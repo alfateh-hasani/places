@@ -108,5 +108,5 @@ return [
     'search_mobile_desc' => 'ابحث عن شقق فندقية في أي مكان',
     'sign_up_new' => 'إنشاء حساب  ',
     'seo_title' => 'أفضل الشقق الفندقية في العالم',
-
+    'summary_reservastion' => 'ملخص الحجز',
 ];
