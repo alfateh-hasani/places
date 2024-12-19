@@ -89,6 +89,19 @@
 @can('customer.list')
     <x-backpack::menu-item title="{{__('cms.customers')}}" icon="la la-users" :link="backpack_url('customer')" />
 @endcan
+{{-- services and bookin service --}}
+@canany(['service.list', 'bookingService.list'])
+    <x-backpack::menu-dropdown title="{{__('cms.services')}}" icon="la la-cogs">
+        @can('service.list')
+            <x-backpack::menu-item title="{{__('cms.services')}}" icon="la la-cogs" :link="backpack_url('service')" />
+        @endcan
+
+        @can('bookingService.list')
+            <x-backpack::menu-item title="{{__('cms.booking_services')}}" icon="la la-calendar" :link="backpack_url('booking-service')" />
+        @endcan
+    </x-backpack::menu-dropdown>
+@endcanany
+
 {{-- Finance Dropdown --}}
 @canany(['transaction.list', 'coupon.list'])
     <x-backpack::menu-dropdown title="{{__('cms.finance')}}" icon="la la-dollar-sign">

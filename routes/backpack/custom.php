@@ -37,6 +37,8 @@ Route::group([
     
     Route::crud('transaction', 'TransactionController');
     Route::crud('customer', 'CustomerController');
+    Route::crud('service', 'ServiceController');
+ 
  
   
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');
@@ -58,6 +60,8 @@ Route::group([
     // Monthly Bookings
     Route::get('charts/monthly-bookings', [\App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController::class, 'data'])->name('charts.monthly-bookings');
 
+    Route::get('charts/total-users', [\App\Http\Controllers\Admin\Charts\TotalUsersChartController::class, 'data'])
+    ->name('charts.total-users');
 
 });
 
