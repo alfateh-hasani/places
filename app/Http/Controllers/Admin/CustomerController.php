@@ -44,15 +44,15 @@ class CustomerController extends CrudController
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
         
-        if (backpack_user()->can('customer.create')) {
-            $this->crud->allowAccess('create');
-        }
-        if (backpack_user()->can('customer.update')) {
-            $this->crud->allowAccess('update');
-        }
-        if (backpack_user()->can('customer.delete')) {
-            $this->crud->allowAccess('delete');
-        }
+        // if (backpack_user()->can('customer.create')) {
+        //     $this->crud->allowAccess('create');
+        // }
+        // if (backpack_user()->can('customer.update')) {
+        //     $this->crud->allowAccess('update');
+        // }
+        // if (backpack_user()->can('customer.delete')) {
+        //     $this->crud->allowAccess('delete');
+        // }
     }
 
     /**
@@ -65,34 +65,61 @@ class CustomerController extends CrudController
     {
 
         CRUD::addColumn([
-            'name' => 'title_ar',
+            'name' => 'first_name',
             'type' => 'text',
-            'label' => __('cms.name_ar'),
+            'label' => __('cms.first_name'),
+        ]);
+    
+        CRUD::addColumn([
+            'name' => 'last_name',
+            'type' => 'text',
+            'label' => __('cms.last_name'),
+        ]);
+    
+        CRUD::addColumn([
+            'name' => 'email',
+            'type' => 'email',
+            'label' => __('cms.email'),
+        ]);
+    
+        CRUD::addColumn([
+            'name' => 'phone',
+            'type' => 'text',
+            'label' => __('cms.phone'),
+        ]);
+    
+        CRUD::addColumn([
+            'name' => 'reviews_count',
+            'type' => 'number',
+            'label' => __('cms.reviews_count'),
+            'wrapper' => [
+                'element' => 'span',
+                'class' => 'badge badge-success p-2',  
+            ],
+        ]);
+    
+        CRUD::addColumn([
+            'name' => 'bookings_count',
+            'type' => 'number',
+            'label' => __('cms.bookings_count'),
+            'wrapper' => [
+                'element' => 'span',
+                'class' => 'badge badge-primary p-2', 
+            ],
+        ]);    
+ 
+        
+        CRUD::addColumn([
+            'name' => 'emergency_phone',
+            'type' => 'text',
+            'label' => __('cms.emergency_phone'),
         ]);
         CRUD::addColumn([
-            'name' => 'title_en',
-            'type' => 'text',
-            'label' =>  __('cms.name_en'),
+            'name' => 'created_at',
+            'type' => 'datetime',
+            'label' => __('cms.created_at'),
         ]);
-
-        //description_ar
-        CRUD::addColumn([
-            'name' => 'description_ar',
-            'type' => 'text',
-            'label' => __('cms.description_ar'),
-        ]);
-
-        CRUD::addColumn([
-            'name' => 'description_en',
-            'type' => 'text',
-            'label' =>  __('cms.description_en'),
-        ]);
-
-        CRUD::addColumn([
-            'name' => 'sort',
-            'type' => 'text',
-            'label' =>  __('cms.sort'),
-        ]);
+    
 
          
 
@@ -106,65 +133,7 @@ class CustomerController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(FaqRequest::class);
-        $this->crud->addField([
-            'name' => 'title_ar',
-            'type' => 'text',
-            'label' =>  __('cms.name_ar'),
-            'attributes' => [
-                'required' => 'required'
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
-        $this->crud->addField([
-            'name' => 'title_en',
-            'type' => 'text',
-            'label' =>  __('cms.name_en'),
-            'attributes' => [
-                'required' => 'required'
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
-
-        $this->crud->addField([
-            'name' => 'description_ar',
-            'type' => 'ckeditor',
-            'label' => __('cms.description_ar'),
-            'attributes' => [
-                'required' => 'required'
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
-
-        $this->crud->addField([
-            'name' => 'description_en',
-            'type' => 'ckeditor',
-            'label' => __('cms.description_en'),
-            'attributes' => [
-                'required' => 'required'
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
-
-        $this->crud->addField([
-            'name' => 'faq_category_id',
-            'type' => 'select',
-            'label' =>  __('cms.faq_category_id'),
-            'entity' => 'FaqCategory',
-            'attribute' => 'name_ar',
-            'model' => 'App\Models\FaqCategory',
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
+         
     }
 
     /**
@@ -186,16 +155,5 @@ class CustomerController extends CrudController
     }
 
 
-    public function getRelatedEntities(Request $request)
-    {
-        $relatedType = $request->input('related_type');
-        $entities = match ($relatedType) {
-            'city' => City::all(['id', 'name_ar']),
-            'apartment' => Apartment::all(['id', 'name_ar']),
-            'page' => Page::all(['id', 'name_ar']),
-            default => [],
-        };
-        return response()->json($entities);
-    }
-
+  
 }

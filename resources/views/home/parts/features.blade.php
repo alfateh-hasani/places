@@ -32,7 +32,7 @@
             </div>
             
             <div class="text-center">
-                <img src="{{ asset('assets/img/app_427.png') }}" class="inline" />
+                <img src="{{ asset('assets/img/Group 437.png') }}" class="inline" />
             </div>
             
             <div class="md:pt-24">

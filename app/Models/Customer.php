@@ -46,6 +46,18 @@ class Customer extends Authenticatable implements HasMedia
     {
         return $this->hasMany(Booking::class);
     }
+
+
+    public function getReviewsCountAttribute(): int
+    {
+        return $this->reviews()->count();
+    }
+
+     public function getBookingsCountAttribute(): int
+    {
+        return $this->bookings()->count();
+    }
+    
   
 
 }

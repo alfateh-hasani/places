@@ -70,7 +70,18 @@ class NotificationController extends CrudController
         CRUD::field('title_en')->type('text')->label(__('cms.title_en'))->attributes(['required' => 'required'])->wrapper(['class' => 'form-group col-md-6']);
         CRUD::field('description_ar')->type('textarea')->label(__('cms.description_ar'))->attributes(['required' => 'required'])->wrapper(['class' => 'form-group col-md-6']);
         CRUD::field('description_en')->type('textarea')->label(__('cms.description_en'))->attributes(['required' => 'required'])->wrapper(['class' => 'form-group col-md-6']);
-        CRUD::field('image')->type('image')->upload(true);
+   
+
+    CRUD::field('image')
+            ->label(__('cms.image'))
+            ->type('image')
+            ->withMedia([
+                'collection' => 'image', // will pick the collection definition from your model
+            ])->wrapperAttributes([
+                'class' => 'form-group col-md-12',
+            ]);
+
+    
         CRUD::field('process_type')->type('hidden')->value('notification');
         CRUD::field('process_status')->type('hidden')->value('unread');
     }

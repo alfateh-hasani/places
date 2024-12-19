@@ -34,7 +34,7 @@
             </div>
             <div class="text-right rtl:text-left mt-10 lg:mt-0">
                 <img
-                    src="{{ asset('assets/img/app_426.png') }}"
+                    src="{{ asset('assets/img/app33.png') }}"
                     class="inline"
                     alt="App Image"
                 />

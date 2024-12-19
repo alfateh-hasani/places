@@ -174,4 +174,9 @@ return [
     'SiteFeature' => 'ميزة الموقع',
     'site_feature' => 'ميزة الموقع',
     'customers' =>  'العملاء',
+    'first_name' => 'الاسم الأول',
+    'last_name' => 'الاسم الأخير',
+    'emergency_phone' => 'الهاتف الطارئ',
+    'reviews_count' => 'إجمالي التقييمات',
+    'bookings_count' => 'إجمالي الحجوزات',
 ];
