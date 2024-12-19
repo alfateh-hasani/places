@@ -1,32 +1,70 @@
 @extends(backpack_view('blank'))
 
 @section('content')
-<div class="row">
-    <div class="col-md-6">
-        {{-- Daily Occupancy Chart --}}
-        @include('backpack.theme-coreuiv2::inc.widgets.chart', ['chart' => app()->make(\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class)->chart])
-    </div>
-    <div class="col-md-6">
-        {{-- Ongoing Bookings Chart --}}
-        @include('backpack.theme-coreuiv2::inc.widgets.chart', ['chart' => app()->make(\App\Http\Controllers\Admin\Charts\OngoingBookingsChartController::class)->chart])
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6">
-        {{-- Units Available Chart --}}
-        @include('backpack.theme-coreuiv2::inc.widgets.chart', ['chart' => app()->make(\App\Http\Controllers\Admin\Charts\UnitsAvailableChartController::class)->chart])
-    </div>
-    <div class="col-md-6">
-        {{-- Average Rating Chart --}}
-        @include('backpack.theme-coreuiv2::inc.widgets.chart', ['chart' => app()->make(\App\Http\Controllers\Admin\Charts\AverageRatingChartController::class)->chart])
-    </div>
-</div>
+@php
+    // إضافة ودجت معدل الإشغال اليومي
+    Widget::add([
+        'type'       => 'chart',
+        'controller' => \App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class,
+        'class'   => 'card mb-2',
+        'wrapper' => ['class'=> 'col-md-6'],
+        'content' => [
+             'header' => 'Daily Occupancy (%)',
+             'body'   => 'This chart shows the daily occupancy rate for the last 7 days.',
+        ],
+    ]);
 
-<div class="row">
-    <div class="col-md-12">
-        {{-- Monthly Bookings Chart --}}
-        @include('backpack.theme-coreuiv2::inc.widgets.chart', ['chart' => app()->make(\App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController::class)->chart])
-    </div>
-</div>
+    // إضافة ودجت الحجوزات الجارية
+    Widget::add([
+        'type'       => 'chart',
+        'controller' => \App\Http\Controllers\Admin\Charts\OngoingBookingsChartController::class,
+        'class'   => 'card mb-2',
+        'wrapper' => ['class'=> 'col-md-6'],
+        'content' => [
+             'header' => 'Ongoing Bookings',
+             'body'   => 'This chart shows the number of ongoing bookings for today.',
+        ],
+    ]);
+
+    // إضافة ودجت عدد الوحدات المتاحة
+    Widget::add([
+        'type'       => 'chart',
+        'controller' => \App\Http\Controllers\Admin\Charts\UnitsAvailableChartController::class,
+        'class'   => 'card mb-2',
+        'wrapper' => ['class'=> 'col-md-6'],
+        'content' => [
+             'header' => 'Units Available',
+             'body'   => 'This chart shows the current number of available units.',
+        ],
+    ]);
+
+    // إضافة ودجت متوسط تقييم العملاء
+    Widget::add([
+        'type'       => 'chart',
+        'controller' => \App\Http\Controllers\Admin\Charts\AverageRatingChartController::class,
+        'class'   => 'card mb-2',
+        'wrapper' => ['class'=> 'col-md-6'],
+        'content' => [
+             'header' => 'Average Customer Rating',
+             'body'   => 'This chart shows the average customer rating.',
+        ],
+    ]);
+
+    // إضافة ودجت الحجوزات الشهرية
+    Widget::add([
+        'type'       => 'chart',
+        'controller' => \App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController::class,
+        'class'   => 'card mb-2',
+        'wrapper' => ['class'=> 'col-md-6'],
+        'content' => [
+             'header' => 'Monthly Bookings',
+             'body'   => 'This chart shows the total number of bookings this month.',
+        ],
+    ]);
+@endphp
+
+
+ 
+
 @endsection

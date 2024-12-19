@@ -27,8 +27,8 @@ class UnitsAvailableChartController extends ChartController
         $this->chart->labels(['Available Units']);
         $this->chart->dataset('Units Available', 'doughnut', [$units_available, $ongoing_bookings])
             ->backgroundColor(['rgba(75, 192, 192, 0.4)','rgba(201, 203, 207, 0.4)'])
-            ->color(['rgba(75, 192, 192, 1)','rgba(201, 203, 207, 1)'])
-            ->displayLegend(true);
+            ->color(['rgba(75, 192, 192, 1)','rgba(201, 203, 207, 1)']) ;
+            $this->chart->displayLegend(true);
 
         return $this->chart->api();
     }
