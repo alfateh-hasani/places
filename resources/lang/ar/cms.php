@@ -179,4 +179,5 @@ return [
     'emergency_phone' => 'الهاتف الطارئ',
     'reviews_count' => 'إجمالي التقييمات',
     'bookings_count' => 'إجمالي الحجوزات',
+    'supervisor' => 'المشرف',
 ];

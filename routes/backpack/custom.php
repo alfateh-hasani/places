@@ -42,10 +42,26 @@ Route::group([
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');
     // Route for changing payment status
     Route::post('booking/{id}/change-payment-status/{status}', [BookingController::class, 'changePaymentStatus'])->name('admin.booking.change-payment-status');
+    
+    // Daily Occupancy
+    Route::get('charts/daily-occupancy', [\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');
+
+    // Ongoing Bookings
+    Route::get('charts/ongoing-bookings', [\App\Http\Controllers\Admin\Charts\OngoingBookingsChartController::class, 'data'])->name('charts.ongoing-bookings');
+
+    // Units Available
+    Route::get('charts/units-available', [\App\Http\Controllers\Admin\Charts\UnitsAvailableChartController::class, 'data'])->name('charts.units-available');
+
+    // Average Rating
+    Route::get('charts/average-rating', [\App\Http\Controllers\Admin\Charts\AverageRatingChartController::class, 'data'])->name('charts.average-rating');
+
+    // Monthly Bookings
+    Route::get('charts/monthly-bookings', [\App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController::class, 'data'])->name('charts.monthly-bookings');
+
 
 });
 
 
 
-Route::post('admin/lock/{id}/unlock', [LockController::class, 'unlock'])->name('lock.unlock');
-Route::post('admin/lock/{id}/add-passcode', [LockController::class, 'addPasscode'])->name('lock.add_passcode');
+// Route::post('admin/lock/{id}/unlock', [LockController::class, 'unlock'])->name('lock.unlock');
+// Route::post('admin/lock/{id}/add-passcode', [LockController::class, 'addPasscode'])->name('lock.add_passcode');

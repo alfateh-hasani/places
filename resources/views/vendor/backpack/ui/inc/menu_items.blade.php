@@ -126,3 +126,5 @@
         @endcan --}}
     </x-backpack::menu-dropdown>
 @endcanany
+
+<x-backpack::menu-item title="Translation Manager" icon="la la-stream" :link="backpack_url('translation-manager')" />

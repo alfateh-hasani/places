@@ -46,7 +46,13 @@ class BookingController extends CrudController
         if (backpack_user()->can('booking.delete')) {
             $this->crud->allowAccess('delete');
         }
-
+        if (backpack_user()->hasRole('supervisor')) {
+            $this->crud->query->whereHas('apartment', function ($query) {
+                $query->whereHas('building', function ($query) {
+                    $query->where('supervisor_id', backpack_user()->id);
+                });
+            });
+        }
     }
     
 

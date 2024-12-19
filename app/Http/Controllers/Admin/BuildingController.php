@@ -45,6 +45,10 @@ class BuildingController extends CrudController
         if (backpack_user()->can('building.delete')) {
             $this->crud->allowAccess('delete');
         }
+        if (backpack_user()->hasRole('supervisor')) {
+            $this->crud->addClause('where', 'supervisor_id', backpack_user()->id);
+        }
+       
     }
 
     /**
@@ -79,6 +83,16 @@ class BuildingController extends CrudController
             'entity' => 'city',
             'attribute' => 'name_ar',
             'model' => \App\Models\City::class,
+        ]);
+
+        //supervisor_id
+        $this->crud->addColumn([
+            'name' => 'supervisor_id',
+            'type' => 'select',
+            'label' => 'المشرف',
+            'entity' => 'supervisor',
+            'attribute' => 'name',
+            'model' => \App\Models\User::class,
         ]);
         //check_out_time check_in_time
         $this->crud->addColumn([
@@ -169,6 +183,20 @@ class BuildingController extends CrudController
             ],
             'placeholder' =>  __('cms.city_select2'),
         ]);
+
+        $this->crud->addField([
+            'name' => 'supervisor_id',
+            'type' => 'select2',
+            'label' =>  __('cms.supervisor'),
+            'entity' => 'supervisor',
+            'attribute' => 'name',
+            'model' => \App\Models\User::class,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'placeholder' =>  __('cms.supervisor_select2'),
+        ]);
+
         //map_link
         $this->crud->addField([
             'name' => 'link',

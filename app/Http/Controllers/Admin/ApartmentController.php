@@ -44,6 +44,12 @@ class ApartmentController extends CrudController
         if (backpack_user()->can('apartment.delete')) {
             $this->crud->allowAccess('delete');
         }
+        if (backpack_user()->hasRole('supervisor')) {
+            $this->crud->query->whereHas('building', function ($query) {
+                $query->where('supervisor_id', backpack_user()->id);
+            });
+        }
+        
     }
 
     /**

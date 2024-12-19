@@ -29,6 +29,7 @@ class Building extends Model implements HasMedia
         'check_in_time',
         'check_out_time',
         'slug',
+        'supervisor_id',
     ];
 
     /**
@@ -62,4 +63,10 @@ class Building extends Model implements HasMedia
     {
         return $this->hasMany(Apartment::class);
     }
+
+    public function supervisor()
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
 }
