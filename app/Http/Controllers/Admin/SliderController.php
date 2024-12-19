@@ -32,6 +32,22 @@ class SliderController extends CrudController
         $sliders = __('cms.sliders');
 
         CRUD::setEntityNameStrings($slider, $sliders);
+
+        if (!backpack_user()->can('slider.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('slider.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('slider.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('slider.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

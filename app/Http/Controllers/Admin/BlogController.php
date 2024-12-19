@@ -31,6 +31,22 @@ class BlogController extends CrudController
         CRUD::setModel(\App\Models\Blog::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/blogs');
         CRUD::setEntityNameStrings(__('cms.page'), __('cms.blogs'));
+
+        if (!backpack_user()->can('blog.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('blog.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('blog.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('blog.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

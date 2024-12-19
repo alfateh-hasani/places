@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\FeatureRequest;
+use App\Http\Requests\FaqCategoryRequest;
+use App\Http\Requests\FaqRequest;
+use App\Models\Apartment;
+use App\Models\City;
+use App\Models\Page;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 /**
  * Class FeatureController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
-class FeatureController extends CrudController
+class FaqCategoryController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -26,23 +31,27 @@ class FeatureController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Feature::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/feature');
-        CRUD::setEntityNameStrings('الميزة', 'الميزات');
+        CRUD::setModel(\App\Models\FaqCategory::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/faq-category');
+        $slider = __('cms.category');
+        $sliders = __('cms.faq_category');
 
-        if (!backpack_user()->can('feature.list')) {
+        CRUD::setEntityNameStrings($slider, $sliders);
+
+        
+        if (!backpack_user()->can('faqCategory.list')) {
             abort(403, 'Unauthorized Access - List');
         }
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
         
-        if (backpack_user()->can('feature.create')) {
+        if (backpack_user()->can('faqCategory.create')) {
             $this->crud->allowAccess('create');
         }
-        if (backpack_user()->can('feature.update')) {
+        if (backpack_user()->can('faqCategory.update')) {
             $this->crud->allowAccess('update');
         }
-        if (backpack_user()->can('feature.delete')) {
+        if (backpack_user()->can('faqCategory.delete')) {
             $this->crud->allowAccess('delete');
         }
     }
@@ -59,26 +68,23 @@ class FeatureController extends CrudController
         CRUD::addColumn([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي',
+            'label' => __('cms.name_ar'),
         ]);
         CRUD::addColumn([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي',
+            'label' =>  __('cms.name_en'),
         ]);
-        //color
+
+        //description_ar
         CRUD::addColumn([
-            'name' => 'color',
-            'type' => 'color',
-            'label' => 'اللون',
+            'name' => 'slug',
+            'type' => 'text',
+            'label' => __('cms.slug'),
         ]);
-        CRUD::addColumn([
-            'name' => 'icon',
-            'type' => 'image',
-            'label' => 'آيقونة',
-            'height' => '50px',
-            'width' => '50px',
-        ]);
+
+         
+         
 
     }
 
@@ -90,7 +96,7 @@ class FeatureController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(FeatureRequest::class);
+        CRUD::setValidation(FaqCategoryRequest::class);
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
@@ -114,18 +120,17 @@ class FeatureController extends CrudController
             ]
         ]);
 
-        CRUD::field('color')
-            ->label( __('cms.color'))
-            ->type('color')
-            ->default('#000000')
-            ->attributes(['required' => 'required'])
-            ->wrapperAttributes(['class' => 'form-group col-md-6']);
-
-        CRUD::field('icon')
-            ->label( __('cms.icon'))
-            ->type('upload')
-            ->withMedia(['collection' => 'icon'])
-            ;
+        $this->crud->addField([
+            'name' => 'slug',
+            'type' => 'text',
+            'label' => __('cms.slug'),
+            'attributes' => [
+                'required' => 'required'
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
     }
 
     /**
@@ -145,4 +150,18 @@ class FeatureController extends CrudController
     {
         $this->setupListOperation();
     }
+
+
+    public function getRelatedEntities(Request $request)
+    {
+        $relatedType = $request->input('related_type');
+        $entities = match ($relatedType) {
+            'city' => City::all(['id', 'name_ar']),
+            'apartment' => Apartment::all(['id', 'name_ar']),
+            'page' => Page::all(['id', 'name_ar']),
+            default => [],
+        };
+        return response()->json($entities);
+    }
+
 }

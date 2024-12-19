@@ -27,6 +27,22 @@ class LockSmartController extends CrudController
         $singular = __('cms.smart_lock');
         $plural = __('cms.smart_locks');
         CRUD::setEntityNameStrings($singular, $plural);
+
+        if (!backpack_user()->can('locksmart.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('locksmart.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('locksmart.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('locksmart.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

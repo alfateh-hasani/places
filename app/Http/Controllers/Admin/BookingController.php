@@ -31,6 +31,22 @@ class BookingController extends CrudController
         CRUD::setEntityNameStrings(__('cms.booking_management'), __('cms.booking_management'));
         CRUD::denyAccess(['create', 'delete','update']);
 
+        if (!backpack_user()->can('booking.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('booking.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('booking.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('booking.delete')) {
+            $this->crud->allowAccess('delete');
+        }
+
     }
     
 
@@ -44,9 +60,12 @@ class BookingController extends CrudController
     {
         $this->addStatusFilter();
         $this->addPaymentStatusFilter();
-        CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
-        CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
-    
+        if (backpack_user()->can('booking.changeStatus')) {
+            CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
+        }
+        if (backpack_user()->can('booking.changePaymentStatus')) {
+            CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
+        }
         // Customer column
         CRUD::addColumn([
             'name' => 'customer_id',

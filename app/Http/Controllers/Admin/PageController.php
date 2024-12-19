@@ -30,6 +30,22 @@ class PageController extends CrudController
         CRUD::setModel(\App\Models\Page::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/pages');
         CRUD::setEntityNameStrings(__('cms.page'), __('cms.pages'));
+
+        if (!backpack_user()->can('page.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('page.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('page.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('page.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

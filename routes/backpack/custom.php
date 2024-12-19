@@ -31,8 +31,12 @@ Route::group([
     Route::crud('blogs', 'BlogController');
     Route::crud('notifications', 'NotificationController');
     Route::crud('booking', 'BookingController');
+    Route::crud('faq', 'FaqController'); 
+    Route::crud('faq-category', 'FaqCategoryController');
+    Route::crud('site-feature', 'SiteFeatureController');
     
     Route::crud('transaction', 'TransactionController');
+    Route::crud('customer', 'CustomerController');
  
   
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');

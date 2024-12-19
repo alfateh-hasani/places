@@ -31,6 +31,13 @@ class TransactionController extends CrudController
         CRUD::setEntityNameStrings(__('cms.transaction'), __('cms.transaction'));
         CRUD::denyAccess(['create', 'delete','update']);
 
+        
+        if (!backpack_user()->can('transaction.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+       
+
     }
     
 

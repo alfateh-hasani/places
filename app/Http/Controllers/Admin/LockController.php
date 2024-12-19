@@ -24,6 +24,22 @@ class LockController extends CrudController
         CRUD::setModel(\App\Models\Lock::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/lock');
         CRUD::setEntityNameStrings('lock', 'locks');
+
+        if (!backpack_user()->can('lock.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('lock.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('lock.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('lock.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

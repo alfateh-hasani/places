@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\AdvantageRequest;
+use App\Http\Requests\FaqRequest;
+use App\Models\Apartment;
+use App\Models\City;
+use App\Models\Page;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 /**
  * Class FeatureController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
-class AdvantageController extends CrudController
+class FaqController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -24,33 +28,31 @@ class AdvantageController extends CrudController
      *
      * @return void
      */
-
-   
-
     public function setup()
     {
-        CRUD::setModel(\App\Models\Advantage::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/advantages');
-        $slider = __('cms.advantage');
-        $sliders = __('cms.advantages');
+        CRUD::setModel(\App\Models\Faq::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/faq');
+        $slider = __('cms.faq');
+        $sliders = __('cms.faq');
 
         CRUD::setEntityNameStrings($slider, $sliders);
-        if (!backpack_user()->can('advantage.list')) {
+
+        
+        if (!backpack_user()->can('faq.list')) {
             abort(403, 'Unauthorized Access - List');
         }
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
         
-        if (backpack_user()->can('advantage.create')) {
+        if (backpack_user()->can('faq.create')) {
             $this->crud->allowAccess('create');
         }
-        if (backpack_user()->can('advantage.update')) {
+        if (backpack_user()->can('faq.update')) {
             $this->crud->allowAccess('update');
         }
-        if (backpack_user()->can('advantage.delete')) {
+        if (backpack_user()->can('faq.delete')) {
             $this->crud->allowAccess('delete');
         }
-  
     }
 
     /**
@@ -63,20 +65,36 @@ class AdvantageController extends CrudController
     {
 
         CRUD::addColumn([
-            'name' => 'name_ar',
+            'name' => 'title_ar',
             'type' => 'text',
             'label' => __('cms.name_ar'),
         ]);
         CRUD::addColumn([
-            'name' => 'name_en',
+            'name' => 'title_en',
             'type' => 'text',
             'label' =>  __('cms.name_en'),
         ]);
+
+        //description_ar
         CRUD::addColumn([
-            'name' => 'icon',
-            'type' => 'image',
-            'label' =>  __('cms.icon'),
+            'name' => 'description_ar',
+            'type' => 'text',
+            'label' => __('cms.description_ar'),
         ]);
+
+        CRUD::addColumn([
+            'name' => 'description_en',
+            'type' => 'text',
+            'label' =>  __('cms.description_en'),
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'sort',
+            'type' => 'text',
+            'label' =>  __('cms.sort'),
+        ]);
+
+         
 
     }
 
@@ -88,9 +106,9 @@ class AdvantageController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(AdvantageRequest::class);
+        CRUD::setValidation(FaqRequest::class);
         $this->crud->addField([
-            'name' => 'name_ar',
+            'name' => 'title_ar',
             'type' => 'text',
             'label' =>  __('cms.name_ar'),
             'attributes' => [
@@ -101,7 +119,7 @@ class AdvantageController extends CrudController
             ]
         ]);
         $this->crud->addField([
-            'name' => 'name_en',
+            'name' => 'title_en',
             'type' => 'text',
             'label' =>  __('cms.name_en'),
             'attributes' => [
@@ -111,21 +129,11 @@ class AdvantageController extends CrudController
                 'class' => 'form-group col-md-6'
             ]
         ]);
+
         $this->crud->addField([
             'name' => 'description_ar',
-            'type' => 'textarea',
-            'label' =>  __('cms.description_ar'),
-            'attributes' => [
-                'required' => 'required'
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
-        $this->crud->addField([
-            'name' => 'description_en',
-            'type' => 'textarea',
-            'label' =>  __('cms.description_en'),
+            'type' => 'ckeditor',
+            'label' => __('cms.description_ar'),
             'attributes' => [
                 'required' => 'required'
             ],
@@ -134,10 +142,29 @@ class AdvantageController extends CrudController
             ]
         ]);
 
-        CRUD::field('icon')
-            ->label( __('cms.icon'))
-            ->type('upload')
-            ->withMedia(['collection' => 'icon']);
+        $this->crud->addField([
+            'name' => 'description_en',
+            'type' => 'ckeditor',
+            'label' => __('cms.description_en'),
+            'attributes' => [
+                'required' => 'required'
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
+
+        $this->crud->addField([
+            'name' => 'faq_category_id',
+            'type' => 'select',
+            'label' =>  __('cms.faq_category_id'),
+            'entity' => 'FaqCategory',
+            'attribute' => 'name_ar',
+            'model' => 'App\Models\FaqCategory',
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
     }
 
     /**
@@ -156,16 +183,19 @@ class AdvantageController extends CrudController
     protected function setupShowOperation()
     {
         $this->setupListOperation();
-       CRUD::addColumn([
-            'name' => 'description_ar',
-            'type' => 'textarea',
-            'label' =>  __('cms.description_ar'),
-        ]);
-        CRUD::addColumn([
-            'name' => 'description_en',
-            'type' => 'textarea',
-            'label' =>  __('cms.description_en'),
-        ]);
-
     }
+
+
+    public function getRelatedEntities(Request $request)
+    {
+        $relatedType = $request->input('related_type');
+        $entities = match ($relatedType) {
+            'city' => City::all(['id', 'name_ar']),
+            'apartment' => Apartment::all(['id', 'name_ar']),
+            'page' => Page::all(['id', 'name_ar']),
+            default => [],
+        };
+        return response()->json($entities);
+    }
+
 }

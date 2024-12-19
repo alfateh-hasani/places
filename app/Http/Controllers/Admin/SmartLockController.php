@@ -32,6 +32,22 @@ class SmartLockController extends CrudController
         $sliders = __('cms.smart_locks');
 
         CRUD::setEntityNameStrings($slider, $sliders);
+
+        if (!backpack_user()->can('smartlock.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('smartlock.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('smartlock.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('smartlock.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

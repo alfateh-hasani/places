@@ -15,6 +15,22 @@ class NotificationController extends CrudController
         CRUD::setModel(\App\Models\Notification::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/notifications');
         CRUD::setEntityNameStrings('notification', 'notifications');
+
+        if (!backpack_user()->can('notification.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('notification.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('notification.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('notification.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     protected function setupListOperation()

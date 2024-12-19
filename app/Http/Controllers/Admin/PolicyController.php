@@ -29,6 +29,23 @@ class PolicyController extends CrudController
         CRUD::setModel(\App\Models\Policy::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/policy');
         CRUD::setEntityNameStrings('السياسة', 'السياسات');
+
+        
+        if (!backpack_user()->can('policy.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('policy.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('policy.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('policy.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

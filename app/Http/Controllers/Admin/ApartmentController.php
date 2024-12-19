@@ -29,6 +29,21 @@ class ApartmentController extends CrudController
         CRUD::setModel(\App\Models\Apartment::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/apartment');
         CRUD::setEntityNameStrings(__('cms.apartment'), __('cms.apartments'));
+        if (!backpack_user()->can('apartment.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('apartment.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('apartment.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('apartment.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

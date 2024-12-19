@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\FeatureRequest;
+use App\Http\Requests\AdvantageRequest;
+use App\Http\Requests\SiteFeatureRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
@@ -11,7 +12,7 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
-class FeatureController extends CrudController
+class SiteFeatureController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -24,27 +25,33 @@ class FeatureController extends CrudController
      *
      * @return void
      */
+
+   
+
     public function setup()
     {
-        CRUD::setModel(\App\Models\Feature::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/feature');
-        CRUD::setEntityNameStrings('الميزة', 'الميزات');
+        CRUD::setModel(\App\Models\SiteFeature::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/site-feature');
+        $slider = __('cms.SiteFeature');
+        $sliders = __('cms.SiteFeature');
 
-        if (!backpack_user()->can('feature.list')) {
+        CRUD::setEntityNameStrings($slider, $sliders);
+        if (!backpack_user()->can('sitefeature.list')) {
             abort(403, 'Unauthorized Access - List');
         }
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
         
-        if (backpack_user()->can('feature.create')) {
+        if (backpack_user()->can('sitefeature.create')) {
             $this->crud->allowAccess('create');
         }
-        if (backpack_user()->can('feature.update')) {
+        if (backpack_user()->can('sitefeature.update')) {
             $this->crud->allowAccess('update');
         }
-        if (backpack_user()->can('feature.delete')) {
+        if (backpack_user()->can('sitefeature.delete')) {
             $this->crud->allowAccess('delete');
         }
+  
     }
 
     /**
@@ -59,25 +66,17 @@ class FeatureController extends CrudController
         CRUD::addColumn([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' => 'الاسم بالعربي',
+            'label' => __('cms.name_ar'),
         ]);
         CRUD::addColumn([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => 'الاسم بالانجليزي',
-        ]);
-        //color
-        CRUD::addColumn([
-            'name' => 'color',
-            'type' => 'color',
-            'label' => 'اللون',
+            'label' =>  __('cms.name_en'),
         ]);
         CRUD::addColumn([
             'name' => 'icon',
             'type' => 'image',
-            'label' => 'آيقونة',
-            'height' => '50px',
-            'width' => '50px',
+            'label' =>  __('cms.icon'),
         ]);
 
     }
@@ -90,7 +89,7 @@ class FeatureController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        CRUD::setValidation(FeatureRequest::class);
+        CRUD::setValidation(SiteFeatureRequest::class);
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
@@ -113,19 +112,33 @@ class FeatureController extends CrudController
                 'class' => 'form-group col-md-6'
             ]
         ]);
-
-        CRUD::field('color')
-            ->label( __('cms.color'))
-            ->type('color')
-            ->default('#000000')
-            ->attributes(['required' => 'required'])
-            ->wrapperAttributes(['class' => 'form-group col-md-6']);
+        $this->crud->addField([
+            'name' => 'description_ar',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_ar'),
+            'attributes' => [
+                'required' => 'required'
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
+        $this->crud->addField([
+            'name' => 'description_en',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_en'),
+            'attributes' => [
+                'required' => 'required'
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
 
         CRUD::field('icon')
             ->label( __('cms.icon'))
             ->type('upload')
-            ->withMedia(['collection' => 'icon'])
-            ;
+            ->withMedia(['collection' => 'icon']);
     }
 
     /**
@@ -144,5 +157,16 @@ class FeatureController extends CrudController
     protected function setupShowOperation()
     {
         $this->setupListOperation();
+       CRUD::addColumn([
+            'name' => 'description_ar',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_ar'),
+        ]);
+        CRUD::addColumn([
+            'name' => 'description_en',
+            'type' => 'textarea',
+            'label' =>  __('cms.description_en'),
+        ]);
+
     }
 }

@@ -31,6 +31,22 @@ class ApartmentLabelController extends CrudController
         $singular = __('cms.apartment_label');
         $plural = __('cms.apartment_labels');
         CRUD::setEntityNameStrings($singular, $plural);
+
+        if (!backpack_user()->can('apartmentlabel.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('apartmentlabel.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('apartmentlabel.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('apartmentlabel.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

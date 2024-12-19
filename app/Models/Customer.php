@@ -7,10 +7,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 class Customer extends Authenticatable implements HasMedia
 {
-    use HasApiTokens ,InteractsWithMedia ,Notifiable;
+    use HasApiTokens ,InteractsWithMedia ,Notifiable , CrudTrait;
     protected $fillable = [
         'first_name',
         'last_name',

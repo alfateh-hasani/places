@@ -30,6 +30,22 @@ class CityController extends CrudController
         CRUD::setRoute(config('backpack.base.route_prefix') . '/city');
 
         CRUD::setEntityNameStrings('المدينة', 'المدن');
+
+        if (!backpack_user()->can('city.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('city.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('city.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('city.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

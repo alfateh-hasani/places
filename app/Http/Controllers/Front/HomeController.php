@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Blog, Slider, Apartment, City, ContactUs, Page};
+use App\Models\{Blog, Slider, Apartment, City, ContactUs, Page, SiteFeature};
 use Artesaos\SEOTools\Facades\SEOTools;
 use App\Models\Review;
 use Config;
@@ -51,6 +51,8 @@ class HomeController extends Controller
         }
         $seo_title =  Config::get('settings.seo_title_'.app()->getLocale()).' | '.__('site.seo_title');
         $seo_description =  Config::get('settings.seo_description_'.app()->getLocale());
+        $data['features_1'] = SiteFeature::orderBy('sort', 'asc')->limit(3)->get();
+        $data['features_2'] = SiteFeature::orderBy('sort', 'asc')->skip(3)->limit(3)->get();
         SEOTools::setTitle($seo_title);
         SEOTools::setDescription($seo_description);
         SEOTools::opengraph()->setUrl(route('home'));

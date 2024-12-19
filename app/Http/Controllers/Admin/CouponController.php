@@ -30,6 +30,22 @@ class CouponController extends CrudController
         $slider = __('cms.coupon');
         $sliders = __('cms.coupons');
         CRUD::setEntityNameStrings($slider, $sliders);
+
+        if (!backpack_user()->can('coupon.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('coupon.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('coupon.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('coupon.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**

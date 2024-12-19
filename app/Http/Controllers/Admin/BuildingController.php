@@ -29,6 +29,22 @@ class BuildingController extends CrudController
         CRUD::setModel(\App\Models\Building::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/building');
         CRUD::setEntityNameStrings('مبنى', 'البناء');
+
+        if (!backpack_user()->can('building.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+        
+        if (backpack_user()->can('building.create')) {
+            $this->crud->allowAccess('create');
+        }
+        if (backpack_user()->can('building.update')) {
+            $this->crud->allowAccess('update');
+        }
+        if (backpack_user()->can('building.delete')) {
+            $this->crud->allowAccess('delete');
+        }
     }
 
     /**
