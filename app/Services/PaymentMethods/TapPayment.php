@@ -119,6 +119,7 @@ class TapPayment implements PaymentMethodInterface
             $transaction->payment_gateway_response = json_encode($paymentDetails);
             $transaction->status = 'completed';
             $transaction->save();
+            
             return [
                     'status'=>true ,
                     'transaction_id'    =>$data['transaction_id'],

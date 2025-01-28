@@ -199,12 +199,20 @@ class BuildingController extends CrudController
 
         //map_link
         $this->crud->addField([
-            'name' => 'link',
+            'name' => 'latitude',
             'type' => 'text',
-            'label' =>  __('cms.map_link'),
-            'attributes' => [
-                'required' => 'required',
+            'label' => __('cms.latitude'),
+            
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
             ],
+        ]);
+        
+        $this->crud->addField([
+            'name' => 'longitude',
+            'type' => 'text',
+            'label' => __('cms.longitude'),
+             
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -238,7 +246,7 @@ class BuildingController extends CrudController
 
         $this->crud->addField([
             'name' => 'map',
-            'type' => 'text',
+            'type' => 'textarea',
             'label' =>  __('cms.map'),
             'attributes' => [
                 'required' => 'required',

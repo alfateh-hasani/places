@@ -3,6 +3,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Front\{HomeController,ApartmentController, BookingController, CustomerAccountController,PageController};
+use App\Http\Controllers\Front\ApartmentsICSController; 
+
+Route::get('/apartments/{apartment}/unit.ics', [ApartmentsICSController::class, 'generateICS'])->name('apartments.ics');
 
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function()

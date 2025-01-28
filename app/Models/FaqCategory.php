@@ -9,7 +9,7 @@ class FaqCategory extends Model
 {
     use CrudTrait;
     protected $table = 'faq_categories';
-    protected $fillable = ['name_ar', 'name_en', 'sort'];
+    protected $fillable = ['name_ar', 'name_en', 'sort','slug'];
 
     public function questions()
     {

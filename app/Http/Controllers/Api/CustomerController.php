@@ -47,7 +47,7 @@ class CustomerController extends Controller
             // 'phone' => 'required|phone:SA|unique:customers,phone,'.$customer->id,
             'emergency_phone' => 'required|phone:SA',
             'job_title' => 'nullable|string|max:255',
-            'image' => 'nullable|image',
+            'image' => 'nullable|image|max:10240',
         ]);
         $customer->update($validatedData);
         if ($request->has('image')) {
@@ -303,6 +303,41 @@ class CustomerController extends Controller
             return$this->errorResponse('failed ' . $e->getMessage(), 500);
         }
     }
+
+
+    /**
+     * Return bookings that have NOT yet ended (based on check_out >= now()).
+     */
+    public function currentBookings()
+    {
+        $customer = \Auth::guard('api')->user();
+
+        // If you want “current” to mean bookings that haven’t ended:
+        $current = Booking::where('customer_id', $customer->id)
+            ->where('check_out', '>=', now())
+            ->get();
+
+        return $this->successResponse([
+            'current_bookings' => BookingResource::collection($current),
+        ], __('api.success'));
+    }
+
+    /**
+     * Return past or previous bookings (based on check_out < now()).
+     */
+    public function previousBookings()
+    {
+        $customer = \Auth::guard('api')->user();
+
+        $previous = Booking::where('customer_id', $customer->id)
+            ->where('check_out', '<', now())
+            ->get();
+
+        return $this->successResponse([
+            'previous_bookings' => BookingResource::collection($previous),
+        ], __('api.success'));
+    }
+
 
 
 }

@@ -53,4 +53,6 @@ return [
     'error_message' => 'حدث خطأ ما',
     'cancel_booking' => 'إلغاء الحجز يكون قبل',
     'days' => 'أيام فقط .',
+    'service' => 'الخدمة',
+    'services' => 'الخدمات',
 ];

@@ -25,6 +25,8 @@ class Booking extends Model
         return [
             'check_in' => 'date:Y-m-d',
             'check_out' => 'date:Y-m-d',
+            'check_in_time' => 'datetime',
+            'check_out_time' => 'datetime',
             'discount' => 'float',
         ];
     }

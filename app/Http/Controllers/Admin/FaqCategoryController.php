@@ -131,6 +131,22 @@ class FaqCategoryController extends CrudController
                 'class' => 'form-group col-md-6'
             ]
         ]);
+
+
+        $this->crud->addField([
+            'name' => 'sort',
+            'type' => 'number',
+            'label' => __('cms.sort'),
+            'attributes' => [
+                'required' => 'required'
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6'
+            ]
+        ]);
+
+
+        
     }
 
     /**

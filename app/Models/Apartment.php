@@ -20,7 +20,7 @@ class Apartment extends Model implements HasMedia
     use CrudTrait;
     use InteractsWithMedia;
     use HasTranslations;
-    protected $with = ['media'];
+    protected $with = ['media','building'];
     /**
      * The attributes that are mass assignable.
      *

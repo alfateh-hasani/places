@@ -28,6 +28,8 @@ Route::middleware('appSecret')->group(function () {
             Route::post('add-favorite', 'addFavorite');
             Route::post('remove-favorite', 'removeFavorite');
             Route::get('get-all-bookings', 'getAllBookings');
+            Route::get('current-bookings', 'currentBookings');
+            Route::get('previous-bookings', 'previousBookings');
             Route::post('fmc-token', 'fmcToken');
             Route::post('notification/mark-seen/{id}', 'markSeen');
             Route::get('notification/unread-count', 'unreadCount');
@@ -45,6 +47,9 @@ Route::middleware('appSecret')->group(function () {
             Route::post('determine-booking', 'determineBookingStatus');
             Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
             Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon');
+            Route::get('get-services', 'getServices');
+            Route::post('add-services-to-booking', 'addServicesToBooking');
+            Route::post('booking-services', 'bookingServices');
         });
 
 

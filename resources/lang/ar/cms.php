@@ -180,4 +180,7 @@ return [
     'reviews_count' => 'إجمالي التقييمات',
     'bookings_count' => 'إجمالي الحجوزات',
     'supervisor' => 'المشرف',
+    'service' => 'الخدمة',
+    'services' => 'الخدمات',
+ 
 ];

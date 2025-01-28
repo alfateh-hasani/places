@@ -40,6 +40,8 @@ class PushNotificationService
 
 
         $notificationArray = [];
+        $notificationArray['title'] = $notification->title_ar;
+        $notificationArray['body']  = $notification->description_ar;
         $notificationArray['title_ar'] = $notification->title_ar;
         $notificationArray['title_en'] = $notification->title_en;
         $notificationArray['description_ar'] = $notification->description_ar;
@@ -70,6 +72,8 @@ class PushNotificationService
     private function push(Notification $notification){
 
         $notificationArray = [];
+        $notificationArray['title'] = $notification->title_ar;
+        $notificationArray['body']  = $notification->description_ar;
         $notificationArray['title_ar'] = $notification->title_ar;
         $notificationArray['title_en'] = $notification->title_en;
         $notificationArray['description_ar'] = $notification->description_ar;

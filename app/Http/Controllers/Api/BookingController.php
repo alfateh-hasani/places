@@ -1,11 +1,13 @@
 <?php
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ApartmentResource;
 use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Policy;
 use App\Models\Booking;
 use App\Models\Review;
+use App\Models\Service;
 use App\Services\BookingService;
 use Auth;
 use Illuminate\Http\Request;
@@ -108,7 +110,12 @@ class BookingController extends Controller{
         if($handlePayment['status']==true){
         //   $booking =  $this->bookingService->createBooking($transaction_id,$handlePayment['payment_id']);
             $booking =  $this->booking->where('transaction_id',$transaction_id)->first();
-          $this->data['booking'] = $booking->id;
+            $booking->status = 'approved';
+            $booking->payment_status = 'paid';
+            $booking->payment_method_code = $paymentMethodCode;
+            $booking->save();
+            $booking = $booking->refresh();
+          $this->data['booking'] = $booking->id;    
           return redirect(route('paymentMethodSuccess',['booking_id'=>$booking->id,'booking_number'=>$booking->number_of_booking]));
         }
         return redirect(route('paymentMethodFailed'));
@@ -124,13 +131,18 @@ class BookingController extends Controller{
             'number_of_adults' => 'required|integer|min:1',
             'number_of_children' => 'required|integer|min:0',
         ]);
-        $apartment = Apartment::findOrFail($request->apartment_id);
+        $apartment = Apartment::where('id',$request->apartment_id)->with('building')->first();
         $this->bookingService->checkAvailability($apartment, $request->check_in, $request->check_out);
         $this->bookingService->validateGuestsCount($apartment, $request->number_of_adults, $request->number_of_children);
         $data = $this->bookingService->getDetermineBooking($apartment, $request->check_in, $request->check_out);
-        $payment_methods = Policy::where('type', 'booking')->first();
-        $data['policy_title'] = $payment_methods?->{'name_' . app()->getLocale()};
-        $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
+        $policy = Policy::where('type', 'booking')->first();
+        $data['policy_title'] = $policy?->{'name_' . app()->getLocale()};
+        $data['policy_description'] = $policy?->{'description_' . app()->getLocale()};
+        $data['apartments'] = new ApartmentResource($apartment);
+
+        
+        $data['check_in_time'] =   $apartment?->building?->check_in_time?->format('h:i A');
+        $data['check_out_time'] =  $apartment?->building?->check_out_time?->format('h:i A');
 
         $data['payment_details'] = $this->getPaymentDetails();
         return $this->successResponse($data);
@@ -181,7 +193,7 @@ class BookingController extends Controller{
         foreach (config('payments.gateways') as $gateway => $gatewayData) {
             $paymentMethods[] = [
                 'name' => $gateway,
-                'icon' => asset('images/' . $gatewayData['icon'] . '.svg'),
+                'icon' => url('icons/' . $gatewayData['value'] . '.png'),
                 'value' => $gatewayData['value'],
             ];
         }
@@ -208,6 +220,38 @@ class BookingController extends Controller{
     {
         $this->data['entry'] = (bool)random_int(0, 1);
         return $this->successResponse($this->data);
+    }
+
+
+    //services
+    public function getServices()
+    {
+ 
+        $this->data['services'] =  Service::get()->map(function ($service) {
+            return [
+                'id' => $service->id,
+                'name' => $service->{'name_' . app()->getLocale()},
+                'price' => $service->price,
+            ];
+        });
+        return $this->successResponse($this->data);
+    }
+
+
+    //bookingServices
+    public function addServicesToBooking(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+            'services' => 'required|array',
+            'services.*' => 'required|exists:services,id',
+        ]);
+        $customer_id = Auth::guard('api')->id();
+        $response = $this->bookingService->addServicesToBooking($request, $customer_id);
+        if (!$response['success']) {
+            return $this->errorResponse($response['message']);
+        }
+        return $this->successResponse(__('api.services_added'));
     }
 
 }

@@ -189,6 +189,20 @@ class ApartmentController extends CrudController
 
 
         $this->crud->addField([
+            'name' => 'apart_no',
+            'type' => 'text',
+            'label' =>  __('cms.apart_no'),
+            'attributes' => [
+                'required' => 'required',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+
+
+        $this->crud->addField([
             'name' => 'building_id',
             'type' => 'select2',
             'label' => __('cms.building'),

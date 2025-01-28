@@ -12,6 +12,7 @@ class ApartmentResource extends JsonResource
     {
         $data = [
             'id' => $this->id,
+            'apart_no' => (string) $this->apart_no,
             'name' => $this->{'name_' . app()->getLocale()},
             'description' => $this->{'description_' . app()->getLocale()},
             'building_id' => $this->building_id,
@@ -48,7 +49,11 @@ class ApartmentResource extends JsonResource
         }
         if ($this->whenLoaded('building')) {
             $data['map'] =  $this->building?->map;
-            $data['map_link'] =  $this->building?->link;
+            $data['latitude'] =  $this->building?->latitude;
+            $data['longitude'] =  $this->building?->longitude;
+            $data['check_in_time'] = $this->building?->check_in_time?->format('h:i A');
+            $data['check_out_time'] = $this->building?->check_out_time?->format('h:i A');
+            
         }
         if ($this->whenLoaded('labels')) {
             $data['labels'] = $this->labels->map(function ($label) {

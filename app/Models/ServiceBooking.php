@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ServiceBooking extends Model
 {
-    protected $table = 'service_booking';
     use CrudTrait;
     protected $guarded = [];
      

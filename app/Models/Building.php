@@ -30,6 +30,8 @@ class Building extends Model implements HasMedia
         'check_out_time',
         'slug',
         'supervisor_id',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -40,6 +42,8 @@ class Building extends Model implements HasMedia
     protected $casts = [
         'id' => 'integer',
         'city_id' => 'integer',
+        'check_in_time' => 'datetime',
+        'check_out_time' => 'datetime',
     ];
 
     public function city(): BelongsTo

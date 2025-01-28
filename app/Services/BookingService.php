@@ -1,8 +1,13 @@
 <?php
 
 namespace App\Services;
+
+use App\Models\Apartment;
 use App\Models\Coupon;
 use App\Models\Booking;
+use App\Models\Building;
+use App\Models\Service;
+use App\Models\ServiceBooking;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Config;
@@ -118,6 +123,10 @@ class BookingService
          }
          $data = json_decode($transaction->booking_data);
         //  
+
+        $apartment  = Apartment::where('id',$transaction->apartment_id)->first();
+        $building = Building::where('id',$apartment->building_id)->first();
+
          $booking =  Booking::create([
             'apartment_id' => $transaction->apartment_id,
             'customer_id' => $transaction->customer_id,
@@ -137,6 +146,10 @@ class BookingService
             'payment_status' => 'pending',
             'check_in' => $data->check_in,
             'check_out' => $data->check_out,
+
+            'check_in_time' => $building->check_in_time,
+            'check_out_time' => $building->check_out_time,
+
             'transaction_id' => $transaction->id,
             'tax' => Config::get('settings.tax', 15),
          ]);
@@ -186,5 +199,53 @@ class BookingService
             $booking->delete();
         }
     }
+
+
+    //bookingServices
+    public function addServicesToBooking($request, $customer_id)
+    {
+        $date = Carbon::now()->toDateString();
+        $booking = Booking::where([
+            ['id', $request->booking_id],
+            ['customer_id', $customer_id],
+            ['check_out', '>',$date ]
+        ])->first();
+        if (!$booking) {
+            return [
+                'success' => false,
+                'message' => __('api.booking_not_found')
+            ];
+        }
+        try {
+            $servicesData = Service::whereIn('id', $request->services)->get()->map(function ($service) use ($booking) {
+                return [
+                    'booking_id' => $booking->id,
+                    'service_id' => $service->id,
+                    'price' => $service->price,
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->toArray();
+          
+           $servicesDat = ServiceBooking::insert($servicesData);
+ 
+            return [
+                'success' => true,
+                'message' => __('api.services_added')
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    
+    }
+    
+ 
+    
+
+
 
 }

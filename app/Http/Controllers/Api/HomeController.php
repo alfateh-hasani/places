@@ -146,9 +146,9 @@ class HomeController extends Controller
     //getSupport
     public function getSupport()
     {
-        $this->data['support'] = [
+        $this->data = [
             'phone' => '01000000000',
-            'email' => '',
+            'email' => 'info@diyfa.sa',
             'whatsapp' => '01000000000',
             ];
         return $this->successResponse($this->data);

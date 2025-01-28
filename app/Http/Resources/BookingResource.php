@@ -28,6 +28,8 @@ class BookingResource extends JsonResource
             'apartment_id' => $this->apartment_id,
             'apartment_name' => $this->apartment?->{'name_' . app()->getLocale()},
             'building_name' => $this->apartment?->building?->{'name_' . app()->getLocale()},
+            'check_in_time' => $this->check_in_time->format('h:i A'),
+            'check_out_time' => $this->check_out_time->format('h:i A'),
             'city_name' => $this->apartment?->building?->city?->{'name_' . app()->getLocale()},
             'reviews' => $this->apartment?->reviews->count(),
             'ratings' => number_format($this->apartment?->reviews?->avg('rating') ?? 0, 1),
@@ -35,7 +37,28 @@ class BookingResource extends JsonResource
             'invoice' => url('pdf-test.pdf'),
             'has_review' =>  Review::existsForBooking( $this->customer_id , $this->id),
             'review_avaliable' => now()->gt($this->check_out),
+            'show_login_btn'  => (bool) $this->checkLoginInfoShow(),
 
         ];
     }
+
+
+    private function checkLoginInfoShow(): bool
+    {
+        // Ensure status is confirmed and both check-in and check-out times exist
+        if ($this->status === 'confirmed' && $this->check_in && $this->check_out && $this->check_in_time && $this->check_out_time) {
+            // Combine check-in date and time
+            $checkInDateTime = $this->check_in->setTimeFromTimeString($this->check_in_time->format('H:i:s'));
+
+            // Combine check-out date and time
+            $checkOutDateTime = $this->check_out->setTimeFromTimeString($this->check_out_time->format('H:i:s'));
+
+            // Check if the current time falls between the check-in and check-out times
+            return now()->between($checkInDateTime, $checkOutDateTime);
+        }
+
+        return false;
+    }
+
+
 }
