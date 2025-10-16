@@ -16,7 +16,7 @@
     </div>
     <h3 class="text-center font-semibold text-base sm:text-3xl text-black mt-4 mb-6 sm:my-8" >
       @lang('site.words_of_praise')
-      <br />@lang('site.about_our_presence')
+       
     </h3>
   </div>
 

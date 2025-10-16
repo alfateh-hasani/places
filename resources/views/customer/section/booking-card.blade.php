@@ -1,7 +1,9 @@
 <div class="bg-feature border border-feature-border rounded-xl p-4 relative mb-4 reservations">
     <a href="{{route('customer.booking.details',$item->number_of_booking)}}" >
-        <img class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover" 
-        src="{{getImage($item->apartment,'image')}}" />
+        @if($item->apartment)
+            <img class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover" 
+                src="{{getImage($item->apartment,'image')}}" />
+        @endif
     </a>
     <div style="    min-width: 30%;" class="ltr:float-right rtl:float-left border-s border-feature-border px-3 py-1">
         <a  href="{{route('customer.booking.details',$item->number_of_booking)}}" >
@@ -15,7 +17,18 @@
             <span class="leading-none block font-semibold text-black mb-2">{{$item->final_price}} SAR</span></p></a>
     </div>
     <div>
-        <a><p class="text-sm sm:text-base font-semibold text-lg pt-2">{{$item->apartment?->{'name_' . app()->getLocale()} }}</p></a>
+        <a>
+            <p class="text-sm sm:text-base font-semibold text-lg pt-2">
+                {{
+                    $item->apartment?->{'name_' . app()->getLocale()}
+                    .' - '. 
+                    $item->apartment?->building?->{'name_' . app()->getLocale()}
+                    .' - ( '.
+                    $item->apartment?->unit_number.' )'
+                }}
+            </p>
+        </a>
+        
         <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_number')}} : 
             <span class="text-black">#{{$item->number_of_booking}}</span></p></a>
         <a><p class="text-sm sm:text-base text-reviews py-2"> {{__('apartment.reservations_status')}} : 

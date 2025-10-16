@@ -6,12 +6,15 @@ use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApartmentResource;
 use App\Http\Resources\CityResource;
+use App\Http\Resources\BuildingResource;
 use App\Http\Resources\PageResource;
 use App\Http\Resources\ReviewResource;
 use App\Http\Resources\SliderResource;
 use App\Models\{Apartment, Building, City, ContactUs, Page, Review, SliderApp};
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 
 class HomeController extends Controller
 {
@@ -34,17 +37,13 @@ class HomeController extends Controller
         $sliders = $this->sliderApp->get();
         $this->data['sliders'] = SliderResource::collection($sliders);
         $cities = $this->city->orderBy('sort_order')->whereHas('apartments')->get();
-        $this->data['cities'] = CityResource::collection($cities);
+        $this->data['cities'] = []; // CityResource::collection($cities);
         $cities = $this->city->with('buildings')->whereHas('buildings')->get();
         $this->data['cities_with_building'] = CityResource::collection($cities);
-        $apartments = $this->apartment->with('building.city')->latest()->limit(5)->get();
+        $apartments = $this->apartment->with('building.city')->where('is_active', true)->latest()->limit(5)->get();
         $this->data['apartments'] = ApartmentResource::collection($apartments);
-        $this->data['buildings']  = $this->building->get()?->map(function ($building) {
-            return  [
-                'id' => $building->id,
-                'name' => $building->{'name_' . app()->getLocale()},
-            ];
-        });
+        $buildings  = $this->building->orderBy('sort_order','asc')->get(); 
+        $this->data['buildings'] = BuildingResource::collection($buildings);
         $user = \Auth::guard('api')->user();
         $this->data['user_name'] = $user?->first_name.' '.$user?->last_name;
         $this->data['filter_keys'] = [
@@ -56,6 +55,16 @@ class HomeController extends Controller
             'max_beds'  =>   $this->apartment->max('num_beds'),
             'max_bathrooms'  =>   6, // $this->apartment->max('num_bathrooms'), // not exist in db
         ];
+
+        if($user && $user->hasMedia('profile')){
+            $this->data['avatar'] = $user->getFirstMediaUrl('profile');
+            $this->data['email'] = $user?->email;
+        }else{
+            $this->data['avatar'] = null;
+            $this->data['email'] = null;
+        }
+
+
         return $this->successResponse($this->data);
     }
 
@@ -63,7 +72,7 @@ class HomeController extends Controller
 
     public function getListingApartments()
     {
-        $apartments = $this->apartment->with('building.city')->latest()->paginate(20);
+        $apartments = $this->apartment->with('building.city')->where('is_active', 1)->latest()->paginate(20);
         $this->data['apartments'] = ApartmentResource::collection($apartments);
         $this->data['pagination'] =  $this->pagination($apartments);
         return $this->successResponse($this->data);
@@ -81,22 +90,53 @@ class HomeController extends Controller
         $query = $this->apartment::query();
         if (!empty($filters)) {
             foreach ($filters as $key=> $val) {
-                if($val) {
-                    if ($key == 'city_id') {
-                        $query->whereHas('building', function ($query) use ($val) {
-                            $query->where('city_id', $val);
-                        });
-                        continue;
+                if (!empty($filters)) {
+                    foreach ($filters as $key => $val) {
+                        if ($val) {
+                            if ($key == 'city_id') {
+                                $query->whereHas('building', function ($query) use ($val) {
+                                    $query->where('city_id', $val);
+                                });
+                                continue;
+                            }
+
+                            if ($key == 'building_id') {
+                                $query->whereHas('building', function ($query) use ($val) {
+                                    $query->where('id', $val);
+                                });
+                                continue;
+                            }
+                
+                             if ($key == 'check_in' || $key == 'check_out') {
+                                 if (!isset($filters['check_in']) || !isset($filters['check_out'])) {
+                                    continue;  
+                                }
+                
+                                $checkInDate = Carbon::parse($filters['check_in'])->format('Y-m-d');
+                                $checkOutDate = Carbon::parse($filters['check_out'])->format('Y-m-d');
+                
+                                $query->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
+                                    $query->where(function ($q) use ($checkInDate, $checkOutDate) {
+                                        $q->where('check_in', '<', $checkOutDate)
+                                          ->where('check_out', '>', $checkInDate);
+                                    });
+                                });
+                
+                                break; // توقف بعد معالجة الفلتر المدمج
+                            }
+                            
+                            
+                
+                            $filterHandler = FilterFactory::make($key);
+                            $query = $filterHandler->apply($query, $val);
+                        }
                     }
-                    
-                    
-                    $filterHandler = FilterFactory::make($key);
-                    $query = $filterHandler->apply($query, $val);
                 }
             }
         }
-        $apartments = $query->paginate(30);
-        $this->data['apartments'] = ApartmentResource::collection($apartments);
+   
+        $apartments = $query->where('is_active',1)->paginate(30);
+        $this->data['apartments'] = ApartmentResource::collection($apartments); // total_amount
         $this->data['pagination'] =  $this->pagination($apartments);
         return $this->successResponse($this->data);
     }
@@ -105,11 +145,16 @@ class HomeController extends Controller
 
     public function getApartments(Request $request)
     {
-        $request->validate([
-            'id' => 'required|exists:apartments,id'
-        ]);
+      
         $id = $request->id;
-        $apartments =  $this->apartment->with(['building','reviews','labels','bookings'])->findOrFail($id);
+
+
+        $apartments = Apartment::where('id', $id)->orWhere('slug', $id)->with(['building','reviews','labels','bookings'])->where('is_active', 1)->first();
+
+        if(!$apartments){
+            return $this->errorResponse([],__('api.apartment_not_found'),404);
+        }
+         
         $this->data['apartments'] =new ApartmentResource($apartments);
 
         return $this->successResponse($this->data);
@@ -132,11 +177,19 @@ class HomeController extends Controller
     protected function booked_days($reservations)
     {
         $bookedDays = collect();
+        $today = Carbon::today()->format('Y-m-d');
+        
         if ($reservations && $reservations->count() > 0) {
             foreach ($reservations as $reservation) {
-                $period = CarbonPeriod::create($reservation->check_in, $reservation->check_out);
+                // إنشاء الفترة من check_in إلى check_out (بدون تضمين check_out)
+                $period = CarbonPeriod::create($reservation->check_in, $reservation->check_out->subDay());
+                
                 foreach ($period as $date) {
-                    $bookedDays->push($date->format('Y-m-d'));
+                    $dateString = $date->format('Y-m-d');
+                    // التأكد من عدم إضافة تواريخ سابقة عن اليوم الحالي
+                    if ($dateString >= $today) {
+                        $bookedDays->push($dateString);
+                    }
                 }
             }
         }

@@ -25,7 +25,7 @@ class SmartLockRequest extends FormRequest
     public function rules()
     {
         return [
-            'lock_alias' => 'required',
+            //'lock_alias' => 'required',
             'lock_id' => 'required',
             'lock_name' => 'required',
             ];

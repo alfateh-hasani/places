@@ -53,4 +53,7 @@ return [
     'error_message' => 'Something went wrong',
     'cancel_booking' => 'Booking cancellation must be done before',
     'days' => 'days only.',
+    'customer_services_title' => 'Customer Services',
+    'customer_services_text1' => 'Do you need room cleaning service or any other service?',
+    'customer_services_text2' => 'Request customer services now',
 ];

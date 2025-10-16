@@ -60,15 +60,11 @@ class ApartmentController extends CrudController
      */
     protected function setupListOperation()
     {
-        CRUD::addColumn([
-            'name' => 'name_ar',
-            'type' => 'text',
-            'label' =>  __('cms.name_ar'),
-        ]);
+       
         CRUD::addColumn([
             'name' => 'name_en',
             'type' => 'text',
-            'label' => __('cms.name_en'),
+            'label' =>  'Name',
         ]);
         CRUD::addColumn([
             'name' => 'building_id',
@@ -78,27 +74,8 @@ class ApartmentController extends CrudController
             'attribute' => 'name_ar',
             'model' => \App\Models\Building::class,
         ]);
-        CRUD::addColumn([
-            'name' => 'num_rooms',
-            'type' => 'number',
-            'label' =>  __('cms.num_rooms'),
-        ]);
-        CRUD::addColumn([
-            'name' => 'num_beds',
-            'type' => 'number',
-            'label' =>  __('cms.num_beds'),
-        ]);
-        CRUD::addColumn([
-            'name' => 'area',
-            'type' => 'number',
-            'label' =>  __('cms.area'),
-        ]);
-        //bathrooms_count
-        CRUD::addColumn([
-            'name' => 'bathrooms_count',
-            'type' => 'number',
-            'label' =>  __('cms.bathrooms_count'),
-        ]);
+        
+       
         CRUD::addColumn([
             'name' => 'price',
             'type' => 'number',
@@ -114,17 +91,10 @@ class ApartmentController extends CrudController
             'type' => 'select',
             'label' => __('cms.lock'),
             'entity' => 'lock',
-            'attribute' => 'full_name',
+            'attribute' => 'lock_id',
             'model' => \App\Models\SmartLock::class,
         ]);
-        CRUD::addColumn([
-            'name' => 'policy_id',
-            'type' => 'select',
-            'label' => __('cms.policy'),
-            'entity' => 'policy',
-            'attribute' => 'name_ar',
-            'model' => \App\Models\Policy::class,
-        ]);
+       
         CRUD::addColumn([
             'name' => 'image_view',
             'type' => 'image',
@@ -132,8 +102,23 @@ class ApartmentController extends CrudController
             'height' => '50px',
             'width' => '50px',
         ]);
-        
-    }
+
+        CRUD::addButtonFromModelFunction('line', 'calendar_button', 'getCalendarButton', 'beginning');
+        CRUD::addButtonFromModelFunction('line', 'pricing_button', 'getPricingButton', 'beginning');
+        //add button for copy link
+        CRUD::addButtonFromModelFunction('line', 'copy_link_button', 'getCopyLinkButton', 'beginning');
+
+        // إضافة فلتر حسب المشروع
+        CRUD::filter('select2')
+            ->type('select2')
+            ->label( 'المشروع')
+            ->values(function() {
+                return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
+            })
+            ->whenActive(function($value) {
+                $this->crud->addClause('where', 'building_id', $value);
+            });
+     }
 
     /**
      * Define what happens when the Create operation is loaded.
@@ -214,6 +199,24 @@ class ApartmentController extends CrudController
             ],
             'placeholder' => __('cms.building_select2'),
         ]);
+        
+        $this->crud->addField([
+            'name' => 'smart_lock_id',
+            'type' => 'select2_smart_lock',
+            'label' => __('cms.lock'),
+            'entity' => 'lock',
+            'attribute' => 'full_name',
+            'model' => \App\Models\SmartLock::class,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'data_source' => url('admin/get-smart-locks'),
+            'placeholder' => __('cms.lock_select2'),
+            'minimum_input_length' => 0,
+            'dependencies' => ['building_id'],
+            'loading' => true,  
+        ]);
+        
         $this->crud->addField([
             'name' => 'num_rooms',
             'type' => 'number',
@@ -309,18 +312,7 @@ class ApartmentController extends CrudController
         ]);
 
 
-        $this->crud->addField([
-            'name' => 'smart_lock_id',
-            'type' => 'select2',
-            'label' => __('cms.lock'),
-            'entity' => 'lock',
-            'attribute' => 'full_name',
-            'model' => \App\Models\SmartLock::class,
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6',
-            ],
-            'placeholder' => __('cms.lock_select2'),
-        ]);
+        
         $this->crud->addField([
             'name' => 'features',
             'type' => 'select2_multiple',
@@ -349,12 +341,87 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'price',
             'type' => 'number',
-            'label' =>  __('cms.price'),
+            'label' =>  __('cms.price') . ' (السعر القديم - للتوافق فقط)',
             'attributes' => [
                 'required' => 'required',
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
+            ],
+            'hint' => 'يُستخدم كقيمة افتراضية إذا لم يتم تحديد أسعار متقدمة',
+        ]);
+
+        // ═══════════════════════════════════════════════
+        // 🎯 حقول التسعير المتقدم (PricingService)
+        // ═══════════════════════════════════════════════
+        
+        $this->crud->addField([
+            'name' => 'pricing_section',
+            'type' => 'custom_html',
+            'value' => '<hr><h4 class="text-primary"><i class="la la-dollar"></i> إعدادات التسعير المتقدم</h4>',
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-12',
+            ],
+        ]);
+
+        // السعر الأساسي
+        $this->crud->addField([
+            'name' => 'base_price',
+            'type' => 'number',
+            'label' => 'السعر الأساسي لليلة (SAR)',
+            'attributes' => [
+                'step' => '0.01',
+                'min' => '0',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-4',
+            ],
+            'hint' => 'السعر الافتراضي لليلة الواحدة في أيام الأسبوع',
+        ]);
+
+        // سعر نهاية الأسبوع
+        $this->crud->addField([
+            'name' => 'weekend_price',
+            'type' => 'number',
+            'label' => 'سعر نهاية الأسبوع (SAR)',
+            'attributes' => [
+                'step' => '0.01',
+                'min' => '0',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-4',
+            ],
+            'hint' => 'السعر الخاص بليالي الجمعة والسبت (اتركه فارغاً لاستخدام السعر الأساسي)',
+        ]);
+
+        // خصم الإقامة الطويلة
+        $this->crud->addField([
+            'name' => 'long_stay_discount',
+            'type' => 'number',
+            'label' => 'خصم الإقامة الطويلة (%)',
+            'attributes' => [
+                'step' => '0.01',
+                'min' => '0',
+                'max' => '100',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-4',
+            ],
+            'hint' => 'نسبة الخصم للحجوزات 7 ليالي فأكثر',
+        ]);
+
+        $this->crud->addField([
+            'name' => 'pricing_note',
+            'type' => 'custom_html',
+            'value' => '<div class="alert alert-info">
+                <i class="la la-info-circle"></i> 
+                <strong>ملاحظة:</strong> الأولوية للأسعار: 
+                <strong>1)</strong> سعر التقويم المخصص 
+                <strong>2)</strong> سعر نهاية الأسبوع 
+                <strong>3)</strong> السعر الأساسي
+            </div>',
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-12',
             ],
         ]);
 
@@ -445,6 +512,27 @@ class ApartmentController extends CrudController
             ],
             'placeholder' =>  __('cms.label_select2'),
         ]);
+        $this->crud->addField([
+            'name' => 'category_id',
+            'type' => 'select2',
+            'label' => __('cms.category_2'),
+            'entity' => 'category',
+            'attribute' => 'name',
+            'model' => \App\Models\Category::class,
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+            'placeholder' => __('cms.category_select2'),
+        ]);
+
+        $this->crud->addField([
+            'name' => 'ics_url',
+            'label' => 'ICS URL',
+            'type' => 'url',
+            'hint' => 'أدخل رابط ICS (AIRBNB).'
+        ]);
+
+     
     }
 
     /**
@@ -456,6 +544,99 @@ class ApartmentController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+        
+        // تحميل بيانات التسعير الحالية
+        $entry = $this->crud->getCurrentEntry();
+        if ($entry) {
+            $entry->load('pricing');
+            
+            if ($entry->pricing) {
+                // تعيين القيم الافتراضية للحقول
+                CRUD::field('base_price')->value($entry->pricing->base_price);
+                CRUD::field('weekend_price')->value($entry->pricing->weekend_price);
+                CRUD::field('long_stay_discount')->value($entry->pricing->long_stay_discount);
+            }
+        }
+    }
+    
+    /**
+     * Override store method to save pricing data
+     */
+    public function store()
+    {
+        $this->crud->hasAccessOrFail('create');
+        $request = $this->crud->validateRequest();
+        $this->crud->registerFieldEvents();
+        
+        // إزالة حقول التسعير من البيانات قبل الحفظ
+        $strippedRequest = $this->crud->getStrippedSaveRequest($request);
+        $pricingData = [
+            'base_price' => $strippedRequest['base_price'] ?? null,
+            'weekend_price' => $strippedRequest['weekend_price'] ?? null,
+            'long_stay_discount' => $strippedRequest['long_stay_discount'] ?? null,
+        ];
+        unset($strippedRequest['base_price'], $strippedRequest['weekend_price'], $strippedRequest['long_stay_discount']);
+        
+        // حفظ الشقة بدون حقول التسعير
+        $item = $this->crud->create($strippedRequest);
+        $this->data['entry'] = $this->crud->entry = $item;
+        
+        // حفظ بيانات التسعير في جدول منفصل
+        $this->savePricingDataFromArray($item, $pricingData);
+        
+        \Alert::success(trans('backpack::crud.insert_success'))->flash();
+        $this->crud->setSaveAction();
+        return $this->crud->performSaveAction($item->getKey());
+    }
+    
+    /**
+     * Override update method to save pricing data
+     */
+    public function update()
+    {
+        $this->crud->hasAccessOrFail('update');
+        $request = $this->crud->validateRequest();
+        $this->crud->registerFieldEvents();
+        
+        // إزالة حقول التسعير من البيانات قبل الحفظ
+        $strippedRequest = $this->crud->getStrippedSaveRequest($request);
+        $pricingData = [
+            'base_price' => $strippedRequest['base_price'] ?? null,
+            'weekend_price' => $strippedRequest['weekend_price'] ?? null,
+            'long_stay_discount' => $strippedRequest['long_stay_discount'] ?? null,
+        ];
+        unset($strippedRequest['base_price'], $strippedRequest['weekend_price'], $strippedRequest['long_stay_discount']);
+        
+        // تحديث الشقة بدون حقول التسعير
+        $item = $this->crud->update($this->crud->getCurrentEntryId(), $strippedRequest);
+        $this->data['entry'] = $this->crud->entry = $item;
+        
+        // حفظ بيانات التسعير في جدول منفصل
+        $this->savePricingDataFromArray($item, $pricingData);
+        
+        \Alert::success(trans('backpack::crud.update_success'))->flash();
+        $this->crud->setSaveAction();
+        return $this->crud->performSaveAction($item->getKey());
+    }
+    
+    /**
+     * حفظ بيانات التسعير من مصفوفة
+     */
+    protected function savePricingDataFromArray($entry, $data)
+    {
+        $pricingData = [
+            'apartment_id' => $entry->id,
+            'base_price' => $data['base_price'] ?: $entry->price,
+            'weekend_price' => $data['weekend_price'] ?: null,
+            'long_stay_discount' => $data['long_stay_discount'] ?: null,
+            'is_active' => 1,
+        ];
+
+        // تحديث أو إنشاء سجل التسعير
+        \App\Models\ApartmentPrice::updateOrCreate(
+            ['apartment_id' => $entry->id],
+            $pricingData
+        );
     }
 
     protected function setupShowOperation(){

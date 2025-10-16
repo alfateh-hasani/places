@@ -3,7 +3,7 @@
 @section('content')
 
 @php
-    // إضافة ودجت معدل الإشغال اليومي
+    // معدل الإشغال اليومي
     Widget::add([
         'type'       => 'chart',
         'controller' => \App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class,
@@ -11,12 +11,12 @@
         'wrapper' => ['class'=> 'col-md-4'],
         'group' => 'content',
         'content' => [
-             'header' => 'Daily Occupancy (%)',
-             'body'   => 'This chart shows the daily occupancy rate for the last 7 days.',
+             'header' => 'معدل الإشغال اليومي (%)',
+             'body'   => 'يوضح هذا المخطط معدل الإشغال اليومي خلال آخر 7 أيام.',
         ],
     ]) ;
 
-    // إضافة ودجت الحجوزات الجارية
+    // الحجوزات الجارية
     Widget::add([
         'type'       => 'chart',
         'controller' => \App\Http\Controllers\Admin\Charts\OngoingBookingsChartController::class,
@@ -24,12 +24,12 @@
         'wrapper' => ['class'=> 'col-md-4'],
         'group' => 'content',
         'content' => [
-             'header' => 'Ongoing Bookings',
-             'body'   => 'This chart shows the number of ongoing bookings for today.',
+             'header' => 'الحجوزات الجارية',
+             'body'   => 'يوضح هذا المخطط عدد الحجوزات الجارية لليوم الحالي.',
         ],
     ]) ;
 
-    // إضافة ودجت عدد الوحدات المتاحة
+    // عدد الوحدات المتاحة
     Widget::add([
         'type'       => 'chart',
         'controller' => \App\Http\Controllers\Admin\Charts\UnitsAvailableChartController::class,
@@ -37,12 +37,12 @@
         'wrapper' => ['class'=> 'col-md-4'],
         'group' => 'content',
         'content' => [
-             'header' => 'Units Available',
-             'body'   => 'This chart shows the current number of available units.',
+             'header' => 'الوحدات المتاحة',
+             'body'   => 'يوضح هذا المخطط عدد الوحدات المتاحة حاليًا.',
         ],
     ]) ;
 
-    // إضافة ودجت متوسط تقييم العملاء
+    // متوسط تقييم العملاء
     Widget::add([
         'type'       => 'chart',
         'controller' => \App\Http\Controllers\Admin\Charts\AverageRatingChartController::class,
@@ -50,12 +50,12 @@
         'wrapper' => ['class'=> 'col-md-4'],
         'group' => 'content',
         'content' => [
-             'header' => 'Average Customer Rating',
-             'body'   => 'This chart shows the average customer rating.',
+             'header' => 'متوسط تقييم العملاء',
+             'body'   => 'يوضح هذا المخطط متوسط تقييم العملاء.',
         ],
     ]) ;
 
-    // إضافة ودجت الحجوزات الشهرية
+    // الحجوزات الشهرية
     Widget::add([
         'type'       => 'chart',
         'controller' => \App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController::class,
@@ -63,12 +63,12 @@
         'wrapper' => ['class'=> 'col-md-4'],
         'group' => 'content',
         'content' => [
-             'header' => 'Monthly Bookings',
-             'body'   => 'This chart shows the total number of bookings this month.',
+             'header' => 'الحجوزات الشهرية',
+             'body'   => 'يوضح هذا المخطط إجمالي عدد الحجوزات لهذا الشهر.',
         ],
     ]) ;
 
-     // إضافة ودجت عدد المستخدمين
+     // عدد المستخدمين المسجلين
      Widget::add([
         'type'       => 'chart',
         'controller' => \App\Http\Controllers\Admin\Charts\TotalUsersChartController::class,
@@ -76,16 +76,26 @@
         'wrapper'    => ['class' => 'col-md-4'],
         'group'      => 'content',
         'content'    => [
-            'header' => 'Total Registered Users',
-            'body'   => 'This chart shows the total number of users registered in the system.',
+            'header' => 'إجمالي المستخدمين المسجلين',
+            'body'   => 'يوضح هذا المخطط العدد الإجمالي للمستخدمين المسجلين في النظام.',
+        ],
+    ]);
+
+    // أحدث الأنشطة
+    Widget::add([
+        'type'       => 'view',
+        'view'       => 'vendor.backpack.ui.widgets.recent_activities',
+        'class'      => 'card mb-2',
+        'wrapper'    => ['class' => 'col-md-12'],
+        'group'      => 'content',
+        'content'    => [
+            'activities' => app(\App\Http\Controllers\Admin\Widgets\RecentActivitiesWidgetController::class)->data()['activities'],
         ],
     ]);
 @endphp
 
-
- 
-
 @endsection
+
 @section('before_content_widgets')
 <div class="row">
 	@include(backpack_view('inc.widgets'), [ 'widgets' => app('widgets')->where('section', 'before_content')->toArray() ])

@@ -2,11 +2,16 @@
 
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Front\{HomeController,ApartmentController, BookingController, CustomerAccountController,PageController};
+use App\Http\Controllers\Front\{HomeController,ApartmentController, BookingController, CustomerAccountController,PageController,TestController};
 use App\Http\Controllers\Front\ApartmentsICSController; 
 
 Route::get('/apartments/{apartment}/unit.ics', [ApartmentsICSController::class, 'generateICS'])->name('apartments.ics');
-
+Route::get('test-mail', function () {
+    $booking = \App\Models\Booking::find(4);
+    //ReservationDetails
+      Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking, NULL));
+      return response()->json(['message' => 'Email sent successfully!']);
+});
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function()
 {
@@ -14,6 +19,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
 
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/test', [TestController::class, 'index'])->name('test');
 
     Route::get('{slug}', [PageController::class, 'index'])->name('page');
     Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
@@ -21,6 +27,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
     Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
     Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
+    Route::post('/apartments/{apartmentId}/calculate-price', [ApartmentController::class, 'calculatePrice'])->name('apartments.calculate-price');
     Route::get('buliding/{slug}', [ApartmentController::class, 'getApartmentBuliding'])->name('buliding.show');
     //search
 
@@ -49,11 +56,14 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function()
  
         });
         Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
-            Route::get('determine-booking/{apartment_id}', 'determineBookingStatus')->name('determine');
-            Route::post('add-booking', 'addBooking')->name('add');
+            Route::post('start-booking/{apartment_id}', 'determineBookingStatus')->name('determine');
+            Route::get('confirm-booking/{uuid}', 'confirmBooking')->name('confirm-booking');
+            Route::post('start-payment/{uuid}', 'startPayment')->name('add');
             Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
             Route::get('login-apartment', 'loginApartment')->name('login');
-            Route::post('coupons-verify', 'couponsVerify')->name('coupons.verify');
+            Route::post('coupons-verify/{uuid}', 'couponsVerify')->name('coupons.verify');
+            Route::post('remove-coupon/{uuid}', [BookingController::class, 'removeCoupon'])->name('coupons.remove');
+
             Route::post('cancel-booking', 'cancelBooking')->name('cancel');
             
 

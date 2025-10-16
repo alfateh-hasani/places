@@ -143,6 +143,7 @@ return [
     'phone' => 'Phone',
     'price_per_night' => 'Price per Night',
     'booking_management' => 'Booking Management',
+    'airbnb_booking_management' => 'Airbnb Booking Management',
     'transactions' => 'Transactions',
     'transaction' => 'Transaction',
     'reference' => 'Reference',

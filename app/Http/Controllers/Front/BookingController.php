@@ -1,10 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Front;
+
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Policy;
 use App\Models\Booking;
+use App\Models\Building;
 use App\Models\Coupon;
 use App\Services\BookingService;
 use Auth;
@@ -16,127 +19,324 @@ use Config;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Mail;
+use App\Services\Pricing\PricingService;
 
-class BookingController extends Controller{
+class BookingController extends Controller
+{
     protected $booking;
     protected $bookingService;
+    protected $pricing;
 
     use generateSeoTrait;
-    public function __construct(BookingService $bookingService, Booking $booking)
+    public function __construct(BookingService $bookingService, Booking $booking, PricingService $pricing)
     {
         $this->booking = $booking;
         $this->bookingService = $bookingService;
+        $this->pricing = $pricing;
     }
 
-     
 
-     
 
-    public function addBooking(Request $request)
+
+
+    public function startPayment(Request $request, $uuid)
     {
- 
-            $validator = Validator::make($request->all(), [
-                'apartment_id' => 'required|exists:apartments,id',
-                'check_in' => 'required|date',
-                'check_out' => 'required|date',
-                'coupon_code' => 'nullable|exists:coupons,code',
-                'notes' => 'nullable|string',
-                'booking_source' => 'nullable|in:web,android,ios',
-                'payment_method_code' => 'required',
+
+        $booking = Booking::where('uuid', $uuid)->first();
+        if (!$booking) {
+            abort(404);
+        }
+
+        // dd($request->all());
+
+        $validatedData = $request->validate([
+            //'coupon_code' => 'nullable|exists:coupons,code',
+            'payment_method_code' => 'required|in:geidea',
+        ]);
+
+
+        if ($booking->final_price == 0) {
+
+            $booking->update([
+                'payment_status' => 'paid',
+                'status' => 'approved',
             ]);
-        
-            if ($validator->fails()) {
-                return redirect()->back()->withErrors($validator)->withInput();
-            }
+            return $this->bookingComplated($booking);
+        }
+
+
         try {
-            $validatedData = $validator->validated();
-            
-            $customer = Auth::user();
-            $apartment = Apartment::findOrFail($validatedData['apartment_id']);
-            $validatedData['adults_count'] = $apartment->adults_count;
-            $validatedData['children_count'] = $apartment->children_count;
-            $validatedData['status'] = 'pending';  
-            $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);           
-            $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment , 'web'); 
+
+
+            $paymentResponse = $this->bookingService->createPaymentV2($booking, $validatedData,);
+
+
             if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
                 return redirect($paymentResponse['transaction']['url']);
             } else {
                 return  redirect()->back()->with('error', $paymentResponse);
             }
         } catch (\Exception $exception) {
+            //  dd($exception->getMessage());
             return  redirect()->back()->with('error', $exception->getMessage());
         }
-        
-
     }
 
 
-
-
-    public function paymentMethodCallBack(Request $request , $paymentMethodCode , $transaction_id){
-        if(!in_array($paymentMethodCode,array_keys(config('payments.gateways')))){
-            return  redirect()->back()->with('error', __('api.payment_method_not_supported'));
+    public function paymentMethodCallBack(Request $request, $paymentMethodCode, $transaction_id)
+    {
+        if (!in_array($paymentMethodCode, array_keys(config('payments.gateways')))) {
+            return redirect()->back()->with('error', __('api.payment_method_not_supported'));
         }
+
         $processPaymentService = new ProcessPaymentService();
         $data = $request->all();
         $data['transaction_id'] = $transaction_id;
-        $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode , $data);
-        $booking =  $this->booking->where('transaction_id',$transaction_id)->first();
+        $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode, $data);
+
+        $booking = $this->booking->where('transaction_id', $transaction_id)->first();
+
         if ($handlePayment['status'] == true) {
-            return redirect()->route('customer.booking.details', [$booking->number_of_booking, 'showPopup' => '1']);
+            $result = $this->bookingService->completeBookingAfterPayment($transaction_id);
+
+            return $this->bookingComplated($booking);
         }
-        return  redirect()->back()->with('error', __('api.payment_failed'));
+
+        if ($booking) {
+            $booking->update(['status' => 'canceled']);
+        }
+
+        return redirect()->back()->with('error', __('api.payment_failed'));
     }
 
- 
+
+    private function bookingComplated($booking)
+    {
+        Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+
+        $building = Building::where('id', $booking?->apartment?->building_id)->first();
+        if ($building) {
+            $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+            $superVisorEmail = $superVisor->email;
+            if($superVisorEmail) {
+                Mail::to($superVisorEmail)->send(new \App\Mail\ReservationDetails($booking));
+            }
+
+        }
+        return redirect()->route('customer.booking.details', [$booking->number_of_booking, 'showPopup' => '1']);
+    }
+
     //paymentMethodSuccess
     public function paymentMethodSuccess($booking_id)
     {
-        $data ['booking'] = $this->booking->find($booking_id);
-         return  view('booking.details',$data);
+        $data['booking'] = $this->booking->find($booking_id);
+        return  view('booking.details', $data);
     }
 
- 
-
-
- 
-
-
-    public function couponsVerify(Request $request)
+    public function couponsVerify(Request $request, $uuid)
     {
         $request->validate([
             'code' => 'required|string|exists:coupons,code',
         ]);
-        $apartment = Apartment::findOrFail($request->apartment_id);
+
+        // جلب الحجز مع معلومات الشقة
+        $booking = Booking::where('uuid', $uuid)->with('apartment')->firstOrFail();
+        $apartment = $booking->apartment;
+
+        // التحقق من صحة الكوبون
         $coupon = $this->bookingService->validateCoupon($apartment, $request->code);
-        $data = $this->bookingService->calculatePrices($apartment->price, $request->total_nights, $coupon);
-        return  response()->json($data);
+
+        // حساب الأسعار الجديدة مع الضريبة باستخدام نظام التسعير الجديد
+        $prices = $this->bookingService->calculatePricesWithDates($apartment, $booking->check_in, $booking->check_out, $coupon);
+
+        // حساب سعر الليلة الواحدة
+        $oneNightPrice = $booking->number_of_nights > 0 ? $prices['total_price'] / $booking->number_of_nights : 0;
+        
+        // تحديث بيانات الحجز في قاعدة البيانات
+        $booking->update([
+            'coupon_id' => $coupon->id ?? null,
+            'coupon_code' => $coupon->code ?? null,
+            'discount' => $prices['discount'],
+            'tax' => $prices['vat'],
+            'total_price' => $prices['total_price'], // السعر الكلي قبل الخصم (شامل الضريبة)
+            'final_price' => $prices['final_price'], // السعر النهائي بعد الخصم (شامل الضريبة)
+            'one_night_price' => $oneNightPrice, // سعر الليلة الواحدة
+        ]);
+
+        return response()->json($prices);
     }
+
+    public function removeCoupon(Request $request, $uuid)
+    {
+
+        $customer = auth()->user();
+        $booking = Booking::where('uuid', $uuid)->where('customer_id', $customer->id)->firstOrFail();
+
+        $apartment = $booking->apartment;
+        
+        // حساب الأسعار باستخدام نظام التسعير الجديد بدون كوبون
+        $prices = $this->bookingService->calculatePricesWithDates($apartment, $booking->check_in, $booking->check_out);
+
+        // حساب سعر الليلة الواحدة
+        $oneNightPrice = $booking->number_of_nights > 0 ? $prices['total_price'] / $booking->number_of_nights : 0;
+        
+        $booking->update([
+            'coupon_id' => null,
+            'coupon_code' => null,
+            'discount' => 0,
+            'tax' => $prices['vat'],
+            'total_price' => $prices['total_price'], // السعر الكلي قبل الخصم (شامل الضريبة)
+            'final_price' => $prices['final_price'], // السعر النهائي بعد الخصم (شامل الضريبة)
+            'one_night_price' => $oneNightPrice, // سعر الليلة الواحدة
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('apartment.coupon_removed'),
+            'final_price' => number_format($booking->final_price, 2, '.', ''),
+            'vat' => number_format($booking->tax, 2, '.', ''),
+        ]);
+    }
+
+
+
 
     public function determineBookingStatus(Request $request, $apartment_id)
     {
+        $validatedData = $request->validate([
+            'checkin'            => ['required', 'date', 'after_or_equal:today'],
+            'checkout'           => ['required', 'date', 'after:checkin'],
+            'number_of_adults'   => ['required', 'integer', 'min:1', 'max:10'],
+            'number_of_children' => ['required', 'integer', 'min:0', 'max:10'],
+            'coupon_code'        => ['nullable', 'string'],
+        ], __('validation.custom'));
+
+        \DB::beginTransaction();
+
         try {
+
+            //dd($validatedData);
+            // جلب بيانات الشقة المطلوبة
             $apartment = Apartment::findOrFail($apartment_id);
-            $this->bookingService->checkAvailability($apartment, $request->checkin, $request->checkout);
-            $this->bookingService->validateGuestsCount($apartment, $request->number_of_adults, $request->number_of_children);
-            $data = $this->bookingService->getDetermineBooking($apartment, $request->checkin, $request->checkout);
-            $payment_methods = Policy::where('type', 'booking')->first();
-            $data['policy_title'] = $payment_methods?->{'name_' . app()->getLocale()};
-            $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
-            $data['apartment'] = $apartment;
-            $data['payment_details'] = $this->getPaymentDetails();
-            $seo_title = __('booking.booking_details') . ' | ' . __('site.seo_title');
-            $seo_description = __('booking.booking_details');
-            $url = route('web-booking.determine', $apartment_id);
-            $this->generateSeo($seo_title, $seo_description, $url);
-            return view('booking.determine-booking', $data);
+
+            // التحقق من توفر الشقة
+            $this->bookingService->checkAvailability($apartment, $validatedData['checkin'], $validatedData['checkout']);
+
+            // التحقق من عدد الضيوف
+            $this->bookingService->validateGuestsCount($apartment, $validatedData['number_of_adults'], $validatedData['number_of_children']);
+
+            // تحويل التواريخ إلى Carbon
+            $checkInDate = Carbon::parse($validatedData['checkin']);
+            $checkOutDate = Carbon::parse($validatedData['checkout']);
+            
+            // حساب عدد الليالي
+            $number_of_nights = $checkInDate->diffInDays($checkOutDate);
+
+            // استخدام PricingService للحصول على السعر الصحيح (شامل الضريبة)
+            $priceInfo = $this->pricing->calculate($apartment, $checkInDate, $checkOutDate);
+            
+            $building = Building::where('id', $apartment->building_id)->first();
+
+            // التحقق من الكوبون إذا كان موجودًا
+            $coupon = null;
+            $discount = 0;
+            
+            // السعر من PricingService شامل الضريبة
+            $totalPriceWithVat = $priceInfo['total'];
+            
+            // استخراج الضريبة من السعر
+            $vatRate = 15;
+            $tax_amount = round($totalPriceWithVat * $vatRate / (100 + $vatRate), 2);
+            $total_price = round($totalPriceWithVat - $tax_amount, 2);
+
+            // حساب السعر النهائي بعد الخصم (إذا كان هناك كوبون)
+            $finalPriceWithVat = $totalPriceWithVat; // بدون خصم في البداية
+            if ($coupon) {
+                // تطبيق خصم الكوبون
+                $couponDiscount = $coupon->type === 'percentage'
+                    ? round(($coupon->discount / 100) * $totalPriceWithVat, 2)
+                    : min($coupon->discount, $totalPriceWithVat);
+                $finalPriceWithVat = max($totalPriceWithVat - $couponDiscount, 0);
+                $discount = $couponDiscount;
+            }
+            
+            // حساب سعر الليلة الواحدة
+            $oneNightPrice = $number_of_nights > 0 ? $totalPriceWithVat / $number_of_nights : 0;
+            
+            // إنشاء حجز مؤقت بحالة `pending`
+            $booking = Booking::create([
+                'apartment_id'       => $apartment->id,
+                'customer_id'        => auth()->id(),
+                'customer_full_name' => auth()->user()->full_name,
+                'customer_email'     => auth()->user()->email,
+                'check_in'           => $checkInDate,
+                'check_out'          => $checkOutDate,
+                'number_of_nights'   => $number_of_nights,
+                'adults_count'       => $validatedData['number_of_adults'],
+                'children_count'     => $validatedData['number_of_children'],
+                'status'             => 'pending',
+                'total_price'        => $totalPriceWithVat,  // السعر الكلي قبل الخصم (شامل الضريبة)
+                'discount'           => $discount,
+                'final_price'        => $finalPriceWithVat,   // السعر النهائي بعد الخصم (شامل الضريبة)
+                'one_night_price'    => $oneNightPrice,       // سعر الليلة الواحدة
+                'tax'                => $tax_amount,
+                'payment_status'     => 'pending',
+                'coupon_id'          => $coupon ? $coupon->id : null,
+                'coupon_code'        => $coupon ? $coupon->code : null,
+                'booking_source'     => $request->header('User-Agent') ? 'web' : 'android',
+                'payment_method_code' => $request->payment_method ?? null,
+                'check_in_time' => $building->check_in_time,
+                'check_out_time' => $building->check_out_time,
+            ]);
+
+            \DB::commit();
+
+            // إعادة توجيه العميل إلى صفحة تأكيد الحجز
+            return redirect()->route('web-booking.confirm-booking', ['uuid' => $booking->uuid]);
         } catch (ValidationException $e) {
-            return back()->withErrors($e->errors())->withInput();
+            //dd($e->getMessage());
+            \DB::rollBack();
+            return redirect()->route('apartments.show', $apartment->slug)
+                ->withErrors($e->errors())
+                ->withInput();
         } catch (Exception $e) {
-            return back()->withErrors(['error' => __('api.general_error')])->withInput();
+
+            //dd($e->getMessage());
+            \DB::rollBack();
+            return redirect()->route('apartments.show', $apartment->slug)
+                ->withErrors(['error' => __('api.general_error')])
+                ->withInput();
         }
     }
-    
+
+
+
+
+    public function confirmBooking($uuid)
+    {
+        $booking = Booking::with('apartment')->where('uuid', $uuid)->first();
+
+        if (!$booking) {
+            abort(404);
+        }
+        $payment_methods = Policy::where('type', 'booking')->first();
+        $data['policy_title'] = $payment_methods?->{'name_' . app()->getLocale()};
+        $data['policy_description'] = $payment_methods?->{'description_' . app()->getLocale()};
+        $priceInfo = $this->pricing->calculate($booking->apartment, $booking->check_in, $booking->check_out);
+
+        return view('booking.confirm-booking', [
+            'booking' => $booking,
+            'apartment' => $booking->apartment,
+            'payment_methods' => Policy::where('type', 'booking')->first(),
+            'payment_details' => $this->getPaymentDetails(),
+            'policy_title' => $data['policy_title'],
+            'policy_description' => $data['policy_description'],
+            'priceInfo' => $priceInfo,
+        ]);
+    }
+
+
 
     private function getPaymentDetails()
     {
@@ -155,14 +355,14 @@ class BookingController extends Controller{
     public function cancelBooking(Request $request)
     {
         $booking_id = $request->booking_id;
-        $cancellationWindow =Config::get('settings.cancel_booking');
+        $cancellationWindow = Config::get('settings.cancel_booking');
         $booking = $this->booking->find($booking_id);
         if (!$booking) {
             return redirect()->back()->with('error', __('api.booking_not_found'));
         }
         $checkInDate = Carbon::parse($booking->check_in);
         $currentDate = Carbon::now();
-            $daysBeforeCheckIn = $currentDate->diffInDays($checkInDate, false); 
+        $daysBeforeCheckIn = $currentDate->diffInDays($checkInDate, false);
         if ($daysBeforeCheckIn < $cancellationWindow) {
             return response()->json([
                 'status' => 'error',
@@ -176,6 +376,4 @@ class BookingController extends Controller{
             'message' => __('booking.success'),
         ]);
     }
-    
-
 }

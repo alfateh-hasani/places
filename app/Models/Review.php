@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Review extends Model
 {
+    use CrudTrait, LogsActivity;
     protected $fillable = [
         'customer_id',
         'rating',
@@ -35,5 +39,11 @@ class Review extends Model
         return self::where('customer_id', $customerId)
                     ->where('booking_id', $bookingId)
                     ->exists();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

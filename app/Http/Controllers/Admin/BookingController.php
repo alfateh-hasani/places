@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\ApartmentRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-
+use App\Services\ScienerLockService;
+use Illuminate\Support\Facades\DB;
 /**
  * Class ApartmentController
  * @package App\Http\Controllers\Admin
@@ -14,8 +15,7 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 class BookingController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+    // use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 
@@ -34,8 +34,8 @@ class BookingController extends CrudController
         if (!backpack_user()->can('booking.list')) {
             abort(403, 'Unauthorized Access - List');
         }
-
-        $this->crud->denyAccess(['create', 'update', 'delete']);
+        $this->crud->removeButton('create');
+        // $this->crud->denyAccess(['create', 'update', 'delete']);
         
         if (backpack_user()->can('booking.create')) {
             $this->crud->allowAccess('create');
@@ -64,13 +64,22 @@ class BookingController extends CrudController
      */
     protected function setupListOperation()
     {
+        // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
+        $this->crud->query->where('is_airbnb_booking', '!=', 1);
+        
         $this->addStatusFilter();
         $this->addPaymentStatusFilter();
+        
         if (backpack_user()->can('booking.changeStatus')) {
             CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
         }
-        if (backpack_user()->can('booking.changePaymentStatus')) {
-            CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
+        // if (backpack_user()->can('booking.changePaymentStatus')) {
+        //     CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
+        // }
+        
+        // إضافة زر تعديل وقت الدخول باستخدام inline button
+        if (backpack_user()->can('booking.changeStatus')) {
+            CRUD::addButtonFromView('line', 'edit_check_in_time', 'edit_check_in_time', 'end');
         }
         // Customer column
         CRUD::addColumn([
@@ -91,15 +100,26 @@ class BookingController extends CrudController
         }
     ]);
 
-    // Payment status with badge
-    CRUD::addColumn([
-        'name' => 'payment_status',
-        'label' => __('cms.payment_status') . ' <i class="la la-credit-card"></i>',
-        'type' => 'custom_html',
-        'value' => function($entry) {
-            return $this->getPaymentStatusBadge($entry->payment_status);
-        }
-    ]);
+        // Payment status with badge
+        // CRUD::addColumn([
+        //     'name' => 'payment_status',
+        //     'label' => __('cms.payment_status') . ' <i class="la la-credit-card"></i>',
+        //     'type' => 'custom_html',
+        //     'value' => function($entry) {
+        //         return $this->getPaymentStatusBadge($entry->payment_status);
+        //     }
+        // ]);
+
+        //buliding column
+        CRUD::addColumn([
+            'name' => 'building_id',
+            'type' => 'select',
+            'label' => __('cms.building') . ' <i class="la la-building"></i>',
+            'entity' => 'building',
+            'attribute' => 'name_ar',
+            'model' => \App\Models\Building::class,
+        ]);
+
         // Apartment column
         CRUD::addColumn([
             'name' => 'apartment_id',
@@ -115,6 +135,16 @@ class BookingController extends CrudController
             'name' => 'number_of_booking',
             'type' => 'text',
             'label' => __('cms.number_of_booking') . ' <i class="la la-bookmark"></i>',
+        ]);
+
+        // Booking date (created_at)
+        CRUD::addColumn([
+            'name' => 'created_at',
+            'type' => 'custom_html',
+            'label' => __('cms.booking_date') . ' <i class="la la-calendar-plus"></i>',
+            'value' => function($entry) {
+                return '<span class="text-info font-weight-bold">' . \Carbon\Carbon::parse($entry->created_at)->format('Y-m-d H:i') . '</span>';
+            }
         ]);
     
         // Check-in date
@@ -148,20 +178,20 @@ class BookingController extends CrudController
         ]);
     
         // Total Price
-        CRUD::addColumn([
-            'name' => 'total_price',
-            'type' => 'custom_html',
-            'label' => __('cms.total_price') . ' (SAR) <i class="la la-money"></i>',
-            'value' => function($entry) {
-                return '<span class="text-primary font-weight-bold">' . number_format($entry->total_price, 2) . ' SAR</span>';
-            }
-        ]);
+        // CRUD::addColumn([
+        //     'name' => 'total_price',
+        //     'type' => 'custom_html',
+        //     'label' => __('cms.total_price') . ' (SAR) <i class="la la-money"></i>',
+        //     'value' => function($entry) {
+        //         return '<span class="text-primary font-weight-bold">' . number_format($entry->total_price, 2) . ' SAR</span>';
+        //     }
+        // ]);
     
         // Final Price
         CRUD::addColumn([
             'name' => 'final_price',
             'type' => 'custom_html',
-            'label' => __('cms.final_price') . ' (SAR) <i class="la la-money-bill"></i>',
+            'label' => 'المبلغ النهائية شامل الضريبة' . ' (SAR) <i class="la la-money-bill"></i>',
             'value' => function($entry) {
                 return '<span class="text-success font-weight-bold">' . number_format($entry->final_price, 2) . ' SAR</span>';
             }
@@ -170,18 +200,7 @@ class BookingController extends CrudController
       
     
         // Adults count
-        CRUD::addColumn([
-            'name' => 'adults_count',
-            'type' => 'number',
-            'label' => __('cms.adults_count') . ' <i class="la la-user"></i>',
-        ]);
-    
-        // Children count
-        CRUD::addColumn([
-            'name' => 'children_count',
-            'type' => 'number',
-            'label' => __('cms.children_count') . ' <i class="la la-child"></i>',
-        ]);
+        
     
         // Payment Method
         CRUD::addColumn([
@@ -266,6 +285,10 @@ class BookingController extends CrudController
                             <th>' . __('cms.number_of_nights') . ' <i class="la la-moon"></i></th>
                             <td><span class="badge badge-info">' . $entry->number_of_nights . '</span></td>
                         </tr>
+                        <tr>
+                            <th>' . __('cms.booking_date') . ' <i class="la la-calendar-plus"></i></th>
+                            <td><span class="badge badge-primary">' . \Carbon\Carbon::parse($entry->created_at)->format('d F Y H:i') . '</span></td>
+                        </tr>
                     </table>';
             }
         ]);
@@ -278,49 +301,67 @@ class BookingController extends CrudController
                 return '
                     <h5><strong>' . __('cms.financial_info') . '</strong></h5>
                     <table class="table table-bordered">
+                         
+
                         <tr>
-                            <th>' . __('cms.price_per_night') . ' (SAR) <i class="la la-money"></i></th>
-                            <td>' . number_format($entry->price_per_night, 2) . ' SAR</td>
+                            <th> المبلغ الإجمالي قبل الضريبة (SAR) <i class="la la-money"></i></th>
+                            <td><span class="font-weight-bold text-primary">' . number_format($entry->total_price_before_tax, 2) . ' SAR</span></td>
                         </tr>
+
                         <tr>
-                            <th>' . __('cms.total_price') . ' (SAR) <i class="la la-money"></i></th>
+                            <th> الضريبة (SAR) <i class="la la-money"></i></th>
+                            <td><span class="font-weight-bold text-primary">' . number_format($entry->tax, 2) . ' SAR</span></td>
+                        </tr>
+
+                        <tr>
+                            <th> المبلغ الإجمالي شامل الضريبة (SAR) <i class="la la-money"></i></th>
                             <td><span class="font-weight-bold text-primary">' . number_format($entry->total_price, 2) . ' SAR</span></td>
                         </tr>
-                        <tr>
-                            <th>' . __('cms.final_price') . ' (SAR) <i class="la la-money-bill"></i></th>
-                            <td><span class="font-weight-bold text-success">' . number_format($entry->final_price, 2) . ' SAR</span></td>
-                        </tr>
+
+                        
+
+                        
                         ' . ($entry->discount ? '<tr>
-                            <th>' . __('cms.discount') . ' (SAR) <i class="la la-percent"></i></th>
+                            <th>' . __('cms.discount') . ' (SAR)  </th>
                             <td><span class="font-weight-bold text-danger">' . number_format($entry->discount, 2) . ' SAR</span></td>
+                        </tr>
+                        <tr>
+                            <th>نسبة الخصم (%)</th>
+                            <td><span class="font-weight-bold text-danger">' . number_format(($entry->discount / $entry->total_price) * 100) . '%</span></td>
                         </tr>' : '') . '
                         ' . ($entry->coupon ? '<tr>
                             <th>' . __('cms.coupon') . ' <i class="la la-tag"></i></th>
                             <td>' . $entry->coupon->code . '</td>
                         </tr>' : '') . '
+
+
+                        <tr>
+                            <th> المبلغ النهائي شامل الضريبة (SAR) <i class="la la-money-bill"></i></th>
+                            <td><span class="font-weight-bold text-success">' . number_format($entry->final_price, 2) . ' SAR</span></td>
+                        </tr>
                     </table>';
             }
         ]);
     
  
-        CRUD::addColumn([
-            'name' =>   'معلومات &nbsp; الحالة',
-            'type' => 'custom_html',
-            'value' => function ($entry) {
-                return '
-                    <h5><strong>' . __('cms.status_info') . '</strong></h5>
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>' . __('cms.status') . '</th>
-                            <td>' . $this->getStatusBadge($entry->status) . '</td>
-                        </tr>
-                        <tr>
-                            <th>' . __('cms.payment_status') . '</th>
-                            <td>' . $this->getPaymentStatusBadge($entry->payment_status) . '</td>
-                        </tr>
-                    </table>';
-            }
-        ]);
+        // CRUD::addColumn([
+        //     'name' =>   'معلومات &nbsp; الحالة',
+        //     'type' => 'custom_html',
+        //     'value' => function ($entry) {
+        //         return '
+        //             <h5><strong>' . __('cms.status_info') . '</strong></h5>
+        //             <table class="table table-bordered">
+        //                 <tr>
+        //                     <th>' . __('cms.status') . '</th>
+        //                     <td>' . $this->getStatusBadge($entry->status) . '</td>
+        //                 </tr>
+        //                 <tr>
+        //                     <th>' . __('cms.payment_status') . '</th>
+        //                     <td>' . $this->getPaymentStatusBadge($entry->payment_status) . '</td>
+        //                 </tr>
+        //             </table>';
+        //     }
+        // ]);
     
         // جدول لعدد البالغين والأطفال وطريقة الدفع
         CRUD::addColumn([
@@ -397,6 +438,36 @@ class BookingController extends CrudController
         if ($booking) {
             $booking->status = $status;
             $booking->save();
+
+            $booking =  \App\Models\Booking::find($id);
+            if($status == 'canceled' && $booking->passcode_status == 'generated'){
+
+                $bookingActivePasscode = $booking->smartLockPasscodes()->first();
+
+                \Log::info($bookingActivePasscode);
+                if($bookingActivePasscode){
+
+                    DB::beginTransaction();
+                    try {
+                        $lock_id = $bookingActivePasscode->smart_lock_id;
+                        $passcode_id = $bookingActivePasscode->passcode_id;
+                        $bookingActivePasscode->delete();
+                        
+                        $scienerService = new ScienerLockService(
+                            $booking?->apartment?->building?->ttlock_username,
+                            $booking?->apartment?->building?->ttlock_password
+                        );
+                        $scienerService->deletePasscode($lock_id, $passcode_id);
+                        DB::commit();
+                    } catch (\Throwable $th) {
+                        \Log::error($th);
+                        \Alert::error(__('cms.failed_to_delete_passcode'))->flash();
+                        DB::rollBack();
+                    }
+                    
+
+                }
+            }
             \Alert::success(__('cms.status_changed_successfully'))->flash();
         } else {
             \Alert::error(__('cms.booking_not_found'))->flash();
@@ -448,6 +519,110 @@ class BookingController extends CrudController
         ], function($value) {
             CRUD::addClause('where', 'payment_status', $value);
         });
+    }
+
+    /**
+     * عرض صفحة تعديل وقت الدخول
+     */
+    public function editCheckInTime($id)
+    {
+        $booking = \App\Models\Booking::with(['apartment', 'customer'])->findOrFail($id);
+        
+        // التحقق من الصلاحيات
+        if (!backpack_user()->can('booking.changeStatus')) {
+            abort(403, 'Unauthorized Access');
+        }
+        
+        return view('admin.booking.edit-check-in-time', compact('booking'));
+    }
+
+    /**
+     * تحديث وقت الدخول
+     */
+    public function updateCheckInTime($id)
+    {
+        $request = request();
+        
+        $booking = \App\Models\Booking::findOrFail($id);
+        
+        // التحقق من الصلاحيات
+        if (!backpack_user()->can('booking.changeStatus')) {
+            abort(403, 'Unauthorized Access');
+        }
+        
+        // التحقق من صحة البيانات
+        $request->validate([
+            'check_in_time' => 'required|date_format:H:i',
+        ]);
+        
+        // دمج تاريخ الوصول مع الوقت الجديد
+        $checkInDate = \Carbon\Carbon::parse($booking->check_in)->format('Y-m-d');
+        $newTime = $request->check_in_time;
+        $newDateTime = $checkInDate . ' ' . $newTime;
+        
+        // التحقق من صحة التاريخ والوقت
+        try {
+            $parsedDateTime = \Carbon\Carbon::parse($newDateTime);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'خطأ في تنسيق التاريخ والوقت');
+        }
+        
+        // تحديث وقت الدخول
+        $booking->update([
+            'check_in_time' => $parsedDateTime
+        ]);
+        
+        // إنشاء passcode جديد للغرفة
+        $this->generateNewPasscode($booking);
+        
+        return redirect()->back()->with('success', 'تم تحديث وقت الدخول وإنشاء رمز جديد للغرفة بنجاح');
+    }
+
+    /**
+     * إنشاء passcode جديد للغرفة
+     */
+    private function generateNewPasscode($booking)
+    {
+        try {
+            // حذف الـ passcodes القديمة
+            $booking->smartLockPasscodes()->delete();
+            
+            // استخدام BookingService لإنشاء passcode جديد
+            $bookingService = app(\App\Services\BookingService::class);
+            $bookingService->addPasscodeToSmartLock($booking);
+            
+            \Log::info("New passcode generated for booking {$booking->id} using BookingService");
+            
+        } catch (\Exception $e) {
+            \Log::error("Failed to generate new passcode for booking {$booking->id}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * إعادة إنشاء الباس كود
+     */
+    public function regeneratePasscode($id)
+    {
+        $booking = \App\Models\Booking::findOrFail($id);
+        
+        // التحقق من الصلاحيات
+        if (!backpack_user()->can('booking.changeStatus')) {
+            abort(403, 'Unauthorized Access');
+        }
+        
+        try {
+            // إعادة تعيين حالة الباس كود
+            $booking->markPasscodeAsPending();
+            
+            // إنشاء باس كود جديد
+            $this->generateNewPasscode($booking);
+            
+            return redirect()->back()->with('success', 'تم إعادة إنشاء الباس كود بنجاح');
+            
+        } catch (\Exception $e) {
+            \Log::error("Failed to regenerate passcode for booking {$booking->id}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'فشل في إعادة إنشاء الباس كود: ' . $e->getMessage());
+        }
     }
 
 }

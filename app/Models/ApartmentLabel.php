@@ -6,11 +6,12 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class ApartmentLabel extends Model implements HasMedia
 {
-    use InteractsWithMedia;
-    use CrudTrait;
+    use InteractsWithMedia, CrudTrait, LogsActivity;
     protected $fillable = [
         'name_ar',
         'name_en',
@@ -36,5 +37,11 @@ class ApartmentLabel extends Model implements HasMedia
     public function apartments()
     {
         return $this->belongsToMany(Apartment::class, 'apartment_label_apartment', 'label_id', 'apartment_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

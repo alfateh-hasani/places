@@ -10,25 +10,21 @@
                 @lang('site.welcome_back') 
                 <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="Goodbye" />
             </p>
-            <form id="login-form" method="post" >
-                @csrf <!-- Include CSRF token -->
-
+            <form id="login-form" method="post">
+                @csrf
                 <div id="login-result"></div>
-                 <label>
-                 <p class="text-sm mb-3">{{ __('site.your_mobile_number') }}</p>
-                <div dir="ltr" class="select-box m-0 w-full border border-border rounded-lg">
-                                <div style="    direction: ltr !important;  text-align: left !important;" class="selected-option">
-                                    <div style="direction: ltr !important;" dir="ltr">
-                                        <span class="iconify" data-icon="flag:sa-4x3"></span>
-                                        <strong>+966</strong>
-                                    </div>
-                                    <input  class="phoneNumberInput" style="text-align: left; direction: ltr;" type="tel" id="phoneNumber" name="phone" placeholder="5xxxxxxxxx">
-                                </div>
-                                
-                            </div>
-                    </label>
+                <label>
+                    <p class="text-sm mb-3">{{ __('site.your_mobile_number') }}</p>
+                    
+                </label>
+                <div class="w-full">
+                        <input autocomplete="off" type="tel" id="phoneNumber" name="phone" class="w-full border border-border rounded-lg h-12 px-3">
+                          <div id="countriesDropdown" class="w-full"></div>
+                    </div>
+              
+                
                 <div class="md:grid md:grid-cols-1 md:gap-5 max-w-full mt-4">
-                    <button type="submit" class="py-4 rounded-lg bg-price text-white w-full">
+                    <button type="submit" id="login-submit-button" class="py-4 rounded-lg bg-price text-white w-full">
                         @lang('site.login')
                     </button>
                 </div>
@@ -143,7 +139,8 @@
 
 
 @push('js')
- 
+<link rel="stylesheet" href="{{ asset('telinput/css/intlTelInput.css')}}">
+<script src="{{ asset('telinput/js/intlTelInputWithUtils.min.js')}}"></script>
 <link rel="stylesheet" href="{{ asset('assets/css/HoldOn.min.css')}}" />
 <script src="{{ asset('assets/js/jquery.validate.js')}}"></script>
  
@@ -165,6 +162,76 @@ input.otp-input {
 }
 .popup-contain {
     max-width: 100%;
+}
+.iti {
+    width: 100%;
+}
+ 
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .iti__flag {
+        background-image: url("{{ asset('telinput/img/flags@2x.png')}}");
+    }
+}
+.iti__country-name {
+    display: none !important;
+}
+.iti__selected-flag {
+    padding-left: 6px !important;
+}
+
+ul.iti__country-list .iti__country {
+    direction: ltr !important;
+}
+.iti__selected-flag {
+    direction: ltr !important;
+}   
+.iti__selected-dial-code {
+    direction: ltr !important;
+}
+div#popup-5 .fancybox-content {
+ 
+    overflow: visible;
+   
+}
+
+#countriesDropdown {
+        
+    z-index: 99999;
+    position: relative;
+    overflow: visible;
+    width: 100%;
+    direction: ltr;
+}
+div#popup-5 {
+    overflow: visible !important;
+}
+.iti__country-list {
+    
+    left: 0 !important;
+}
+
+.iti.iti--container {
+    top: 0 !important;
+    left: 0 !important;
+    position: static !important;
+}
+input#phoneNumber {
+    padding-right: 10px !important;
+    padding-left: 86px !important;
+    direction: ltr;
+}
+
+button.iti__selected-country {
+    background: #e9e9e9;
+    
+}
+
+span.iti__dial-code {
+    direction: ltr !important;
+    margin-left: 4px;
+}
+button#login-submit-button:disabled {
+    opacity: 0.6;
 }
 </style>
 <script>
@@ -192,28 +259,31 @@ function handleAjaxError(xhr,   container) {
     }
 }
 
+// إعداد حقل الهاتف
+const phoneInput = document.querySelector("#phoneNumber");
+const iti = window.intlTelInput(phoneInput, {
+      //  utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+    initialCountry: "auto",
+    separateDialCode: true,
+    formatOnDisplay: true,
+    nationalMode: false,
+    autoFormat: true,
+    geoIpLookup: function(callback) {
+        fetch("https://ipapi.co/json")
+        .then(res => res.json())
+        .then(data => callback(data.country_code))
+        .catch(() => callback("sa")); // السعودية كدولة افتراضية في حالة الفشل
+    },
+    preferredCountries: ["sa", "ae", "kw", "bh", "om", "qa"],
+    dropdownContainer: document.getElementById('countriesDropdown'),
+});
 
-
-
-// Phone Validation Method: Converts Arabic numbers to English and ensures 9 digits.
+// تحديث التحقق من صحة رقم الهاتف
 $.validator.addMethod("validPhone", function(value, element) {
-    let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    let englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-
-    // Replace Arabic numbers with English
-    for (let i = 0; i < 10; i++) {
-        let regex = new RegExp(arabicNumbers[i], 'g');
-        value = value.replace(regex, englishNumbers[i]);
-    }
-
-    // Remove non-digit characters and leading zeros
-    value = value.replace(/\D/g, '').replace(/^0+/, '');
-
-    // Ensure the value is exactly 9 digits
-    return this.optional(element) || value.length === 9;
+    return iti.isValidNumber();
 }, "@lang('site.invalid_phone')");
 
- // Open Registration Popup
+// Open Registration Popup
 function openRegistrationPopup(token) {
     $.fancybox.open({
         src: '#popup-7',
@@ -260,7 +330,7 @@ $('#popup-7 form').validate({
             headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
             success: function(response) {
                 HoldOn.close();
-                showMessage('#registration-result', 'success', 'Account created and logged in successfully!');
+                showMessage('#registration-result', 'success', '{{ __('site.created_in_successfully')}}');
                 window.location.href = response.redirect;
             },
             error: function(xhr) {
@@ -312,23 +382,29 @@ function startCountdown() {
 
 // Login Form Validation and Submission
 $('#login-form').validate({
-    rules: { phone: { required: true, validPhone: true } },
+    rules: { 
+        phone: { 
+            required: true, 
+             
+        } 
+    },
     messages: {
         phone: {
             required: "@lang('site.phone_required')",
             validPhone: "@lang('site.invalid_phone')"
         }
     },
-    errorPlacement: function(error, element) {
-        error.insertAfter(element.closest('.select-box'));
-    },
     submitHandler: function(form) {
+        const phoneNumber = iti.getNumber();
+        const formData = new FormData(form);
+        formData.set('phone', phoneNumber);
+
         HoldOn.open({ theme: "sk-rect" });
 
         $.ajax({
             url: "{{ route('login.step1') }}",
             type: "POST",
-            data: new FormData(form),
+            data: formData,
             contentType: false,
             processData: false,
             headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
@@ -339,7 +415,7 @@ $('#login-form').validate({
                 if (!response.has_account) $('#otp-form').data('registerRequired', true);
             },
             error: function(xhr) {
-                handleAjaxError(xhr,   '#login-result');
+                handleAjaxError(xhr, '#login-result');
             }
         });
     }
@@ -366,7 +442,7 @@ $('#otp-form').on('submit', function (e) {
                 if (response.register_required) {
                     openRegistrationPopup(response.token);
                 } else {
-                    showMessage('#otp-result', 'success', 'Logged in successfully!');
+                    showMessage('#otp-result', 'success', '{{ __('site.logged_in_successfully')}}');
                     window.location.href = response.redirect || '/';
                 }
             },
@@ -442,12 +518,33 @@ $('#resend-button').on('click', function() {
     }
 });
 
-// Phone Number Input Handling
-$('.phoneNumberInput').on('input', function() {
-    let value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '').replace(/^0+/, '').slice(0, 9);
-    this.value = value;
+
+ 
+var handleChange = function() {
+    let number = phoneInput.value.trim();
+    console.log(number);
+    console.log(iti.getNumber());
+    if (number) {
+        if (iti.isValidNumber()) {
+            console.log('Valid Number:', iti.getNumber());
+            $('#login-submit-button').prop('disabled', false);
+        } else {
+            console.log('Invalid Number');
+            $('#login-submit-button').prop('disabled', true);
+        }
+    }
+};
+
+ 
+$('#phoneNumber').on('countrychange', function() {
+    handleChange();
+});
+$('#phoneNumber').on('keyup', function() {
+    handleChange();
 });
 
 });
+
+
 </script>
 @endpush

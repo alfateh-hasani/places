@@ -5,6 +5,8 @@ return [
     'review_payment' => 'مراجعة الدفع',
     'payment_method' => 'طريقة الدفع',
     'total_price' => 'السعر الكلي',
+    'subtotal' => 'السعر الكلي قبل الخصم',
+    'final_price' => 'السعر النهائي بعد الخصم',
     'not_charged_yet' => 'لن يتم تحصيل رسوم منك بعد',
     'one_night' => 'ليلة واحدة',
     'book_now' => 'احجز الآن',
@@ -55,4 +57,9 @@ return [
     'days' => 'أيام فقط .',
     'service' => 'الخدمة',
     'services' => 'الخدمات',
+    'customer_services_title' => 'خدمات العملاء',
+    'customer_services_text1' => 'هل تحتاج خدمة تنظيف الغرفة أو أي خدمة أخرى؟',
+    'customer_services_text2' => 'اطلب الآن خدمات العملاء',
+    'no_passcode'=>'لم يتم التعيين بعد',
+    'passcode'=>'رمز دخول الغرفة',
 ];

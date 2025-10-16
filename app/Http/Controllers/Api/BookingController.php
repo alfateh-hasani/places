@@ -9,7 +9,9 @@ use App\Models\Booking;
 use App\Models\Review;
 use App\Models\Service;
 use App\Services\BookingService;
+use App\Services\Pricing\PricingService;
 use Auth;
+use Mail;
 use Illuminate\Http\Request;
 use App\Services\ProcessPaymentService;
 
@@ -17,11 +19,13 @@ use App\Services\ProcessPaymentService;
 class BookingController extends Controller{
     protected $booking;
     protected $bookingService;
+    protected $pricingService;
 
-    public function __construct(BookingService $bookingService, Booking $booking)
+    public function __construct(BookingService $bookingService, Booking $booking, PricingService $pricingService)
     {
         $this->booking = $booking;
         $this->bookingService = $bookingService;
+        $this->pricingService = $pricingService;
     }
 
     public function getBooking(Request $request)
@@ -37,7 +41,12 @@ class BookingController extends Controller{
         if (!$booking) {
             return $this->errorResponse(__('api.booking_not_found'));
         }
+
         $this->data['booking'] = new BookingResource($booking);
+        $this->data['customer_services_title'] = __('booking.customer_services_title');
+        $this->data['customer_services_text1'] = __('booking.customer_services_text1');
+        $this->data['customer_services_text2'] = __('booking.customer_services_text2');
+        
         return $this->successResponse($this->data);
     }
 
@@ -55,10 +64,13 @@ class BookingController extends Controller{
         if (!$booking) {
             return $this->errorResponse(__('api.booking_not_found'));
         }
+
+        $active_passcode = $booking->getActivePasscode();
+
         $this->data['login_info'] = [
             'unit_number' => $booking->apartment?->unit_number,
             'floor_number' =>  $booking->apartment?->floor_number,
-            'passcode' => $booking->apartment?->lock?->lock_id,
+            'passcode' =>  $active_passcode?->keyboard_pwd ?? __('booking.no_passcode'),
             'lock_alias' => $booking->apartment?->lock?->lock_alias,
         ];
         return $this->successResponse($this->data);
@@ -85,6 +97,7 @@ class BookingController extends Controller{
             $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment , 'api');            
             if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
                 $this->data['callback'] = $paymentResponse['transaction']['url'];
+                $this->data['booking_id'] = $paymentResponse['booking_id'];
                 return $this->successResponse($this->data, __('api.transaction_url'));
             } else {
                 return $this->errorResponse(__('api.payment_creation_failed'));
@@ -96,9 +109,21 @@ class BookingController extends Controller{
 
     }
 
-
-
-
+    public function cancelBookingPayment(Request $request , $booking_id)
+    {
+        $customer = Auth::guard('api')->user();
+         
+        $booking =  Booking::where([
+            ['id', $booking_id],
+            ['customer_id', $customer->id]
+        ])->where('status','pending')->first();
+        if (!$booking) {
+            return $this->errorResponse(__('api.booking_not_found'));
+        }
+        $booking->delete();
+        return $this->successResponse(__('api.booking_cancelled'));
+    }
+ 
     public function paymentMethodCallBack(Request $request , $paymentMethodCode , $transaction_id){
         if(!in_array($paymentMethodCode,array_keys(config('payments.gateways')))){
             return $this->errorResponse(['Payment Method not Exists!']);
@@ -116,6 +141,23 @@ class BookingController extends Controller{
             $booking->save();
             $booking = $booking->refresh();
           $this->data['booking'] = $booking->id;    
+
+          try {
+            Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+
+            $building = Building::where('id', $booking?->apartment?->building_id)->first();
+            if ($building) {
+                $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $superVisorEmail = $superVisor->email;
+                if($superVisorEmail) {
+                    Mail::to($superVisorEmail)->send(new \App\Mail\ReservationDetails($booking));
+                }
+
+            }
+
+          } catch (\Exception $e) {
+            //
+          }
           return redirect(route('paymentMethodSuccess',['booking_id'=>$booking->id,'booking_number'=>$booking->number_of_booking]));
         }
         return redirect(route('paymentMethodFailed'));
@@ -134,7 +176,7 @@ class BookingController extends Controller{
         $apartment = Apartment::where('id',$request->apartment_id)->with('building')->first();
         $this->bookingService->checkAvailability($apartment, $request->check_in, $request->check_out);
         $this->bookingService->validateGuestsCount($apartment, $request->number_of_adults, $request->number_of_children);
-        $data = $this->bookingService->getDetermineBooking($apartment, $request->check_in, $request->check_out);
+        $data = $this->bookingService->getDetermineBooking($apartment, $request->check_in, $request->check_out, null);
         $policy = Policy::where('type', 'booking')->first();
         $data['policy_title'] = $policy?->{'name_' . app()->getLocale()};
         $data['policy_description'] = $policy?->{'description_' . app()->getLocale()};
@@ -155,11 +197,14 @@ class BookingController extends Controller{
         $request->validate([
             'apartment_id' => 'required|exists:apartments,id',
             'coupon_code' => 'required|exists:coupons,code',
-            'number_of_nights' => 'required|integer|min:1',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
         ]);
         $apartment = Apartment::findOrFail($request->apartment_id);
         $coupon = $this->bookingService->validateCoupon($apartment, $request->coupon_code);
-        $data = $this->bookingService->calculatePrices($apartment->price, $request->number_of_nights, $coupon);
+        
+        // استخدام نظام التسعير الجديد
+        $data = $this->bookingService->calculatePricesWithDates($apartment, $request->check_in, $request->check_out, $coupon);
         return $this->successResponse($data);
     }
 
@@ -169,10 +214,13 @@ class BookingController extends Controller{
 
         $request->validate([
             'apartment_id' => 'required|exists:apartments,id',
-            'number_of_nights' => 'required|integer|min:1',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
         ]);
         $apartment = Apartment::findOrFail($request->apartment_id);
-        $data = $this->bookingService->calculatePrices($apartment->price, $request->number_of_nights);
+        
+        // استخدام نظام التسعير الجديد
+        $data = $this->bookingService->calculatePricesWithDates($apartment, $request->check_in, $request->check_out);
         return $this->successResponse($data);
     }
 
@@ -192,7 +240,7 @@ class BookingController extends Controller{
         $paymentMethods = [];
         foreach (config('payments.gateways') as $gateway => $gatewayData) {
             $paymentMethods[] = [
-                'name' => $gateway,
+                'name' => $gatewayData['title'],
                 'icon' => url('icons/' . $gatewayData['value'] . '.png'),
                 'value' => $gatewayData['value'],
             ];

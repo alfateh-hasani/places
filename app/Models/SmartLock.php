@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class SmartLock extends Model
 {
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
 
     protected $guarded = [];
 
@@ -23,6 +25,12 @@ class SmartLock extends Model
 
     public function getFullNameAttribute()
     {
-        return $this->lock_name . ' - ' . $this->building?->name_ar;
+        return $this->lock_id . ' - ' .  $this->lock_name;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

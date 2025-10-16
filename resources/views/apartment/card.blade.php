@@ -1,4 +1,4 @@
-<div class="rounded-xl overflow-hidden border border-border apartment-card">
+<div class="rounded-xl overflow-hidden border border-border apartment-card card-feading">
     <div class="relative">
         <div class="slider">
             @foreach ($apartment->getMedia('image') as $image)
@@ -20,7 +20,7 @@
 
     <a href="{{$apartment->link}}" class="pt-3 px-4 pb-4 block">
         <div class="flex items-center">
-            <img src="{{ asset('assets/img/star.svg') }}" class="mr-2 rtl:ml-2 rtl:mr-0 h-4" />
+            <img src="{{ asset('assets/img/start-new-2.svg') }}" class="mr-2 rtl:ml-2 rtl:mr-0 h-4" />
             <p class="font-normal text-xs text-reviews">
                 {{ $apartment->total_ratings }} ({{ $apartment->reviews->count() }}) @lang('apartment.reviews')
             </p>
@@ -35,26 +35,26 @@
 
         <ul class="my-2.5 flex gap-2 flex-wrap">
             <li 
-                class="bg-feature border border-feature-border py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
+                class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
                 <img 
                     class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/feature-1.svg') }}" 
+                    src="{{ asset('assets/img/bed-new.svg') }}" 
                 />
                 {{ $apartment->num_rooms }}  
             </li>
             <li 
-                class="bg-feature border border-feature-border py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
+                class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
                 <img 
                     class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/feature-2.svg') }}" 
+                    src="{{ asset('assets/img/path-new.svg') }}" 
                 />
                 {{ $apartment->num_beds }}  
             </li>
             <li 
-                class="bg-feature border border-feature-border py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
+                class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
                 <img 
                     class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/feature-3.svg') }}" 
+                    src="{{ asset('assets/img/space-new.svg') }}" 
                 />
                 {{ $apartment->area }} @lang('apartment.area')
             </li>
@@ -71,7 +71,7 @@
     </a>
 </div>
 
-
+ 
 @push('js')
 
  

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,12 +15,15 @@ use Spatie\Image\Enums\Fit;
 
 use App\Traits\HasTranslations;
 use Cache;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Apartment extends Model implements HasMedia
 {
     use CrudTrait;
     use InteractsWithMedia;
     use HasTranslations;
+    use LogsActivity;
     protected $with = ['media','building'];
     /**
      * The attributes that are mass assignable.
@@ -45,6 +49,15 @@ class Apartment extends Model implements HasMedia
         'bathrooms_count' => 'integer',
     ];
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        // log all changes
+        return LogOptions::defaults()
+        ->logAll();
+         
+    }
+
+
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
@@ -68,6 +81,13 @@ class Apartment extends Model implements HasMedia
 
             ->format('webp')                         // Convert to WebP format
             ->nonQueued();                           // Process synchronously (optional)
+
+            $this->addMediaConversion('grid-app2')
+            ->fit(  Fit::Crop, 660, desiredHeight: 432 )   
+            ->quality(75)         
+            ->format('webp')                         
+            ->nonQueued(); 
+
     }
 
 
@@ -80,6 +100,12 @@ class Apartment extends Model implements HasMedia
 
     //lock_alias
     public function lock()
+    {
+        return $this->belongsTo(SmartLock::class, 'smart_lock_id');
+    }
+
+    // smartLock alias for compatibility
+    public function smartLock()
     {
         return $this->belongsTo(SmartLock::class, 'smart_lock_id');
     }
@@ -156,14 +182,71 @@ class Apartment extends Model implements HasMedia
     public function booked_days($reservations)
     {
         $bookedDays = collect();
+        $today = Carbon::today()->format('Y-m-d');
+        
         if ($reservations && $reservations->count() > 0) {
             foreach ($reservations as $reservation) {
-                $period = CarbonPeriod::create($reservation->check_in, $reservation->check_out);
+                // إنشاء الفترة من check_in إلى check_out (بدون تضمين check_out)
+                $period = CarbonPeriod::create($reservation->check_in, $reservation->check_out->subDay());
+                
                 foreach ($period as $date) {
-                    $bookedDays->push($date->format('Y-m-d'));
+                    $dateString = $date->format('Y-m-d');
+                    // التأكد من عدم إضافة تواريخ سابقة عن اليوم الحالي
+                    if ($dateString >= $today) {
+                        $bookedDays->push($dateString);
+                    }
                 }
             }
         }
         return $bookedDays;
     }
+
+    public function getCalendarButton()
+    {
+        $url = url("admin/apartment/{$this->id}/calendar");
+
+        return '<a href="'.$url.'" class="btn btn-sm btn-outline-primary" >
+                    <i class="la la-calendar"></i> التقويم
+                </a>';
+    }
+    
+    public function getPricingButton()
+    {
+        $url = url("admin/apartment/{$this->id}/pricing");
+
+        return '<a href="'.$url.'" class="btn btn-sm btn-outline-success" title="إدارة الأسعار">
+                    <i class="la la-dollar"></i> التسعير
+                </a>';
+    }
+    
+    //getCopyLinkButton
+    public function getCopyLinkButton()
+    {
+        $url = route('apartments.ics', $this->id); 
+    
+        return '<a href="#" onclick="copyToClipboard(\''.$url.'\')" class="btn btn-sm btn-outline-primary">
+                    <i class="la la-copy"></i> نسخ ICS  
+                </a>
+                <script>
+                    function copyToClipboard(text) {
+                        navigator.clipboard.writeText(text).then(function() {
+                            alert("تم نسخ الرابط: " + text);
+                        }, function() {
+                            alert("فشل نسخ الرابط");
+                        });
+                    }
+                </script>';
+    }
+
+    //category
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function pricing() { return $this->hasOne(ApartmentPrice::class); }
+    public function calendarPrices() { return $this->hasMany(ApartmentPriceCalendar::class); }
+    public function seasonalPricings() { return $this->hasMany(SeasonalPricing::class); }
+    public function dayOfWeekPricings() { return $this->hasMany(DayOfWeekPricing::class); }
+
 }

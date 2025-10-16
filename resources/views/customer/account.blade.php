@@ -48,6 +48,12 @@
                         </label>
                         <label>
                             <p>
+                                {{__('customer.id_number')}}
+                            </p>
+                            <input name="id_number" value="{{$customer->id_number}}" class="w-full border border-border rounded-lg h-12" type="text" placeholder="" />
+                        </label>
+                        <label>
+                            <p>
                                 {{__('customer.phone')}}
                             </p>
                             <input dir="ltr" readonly type="tel" disabled value="{{$customer->phone}}" name="phone" class="w-full border border-border rounded-lg h-12" />

@@ -10,12 +10,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Image\Enums\CropPosition;
 use App\Traits\HasTranslations;
 use Spatie\Image\Enums\Fit;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Slider extends Model implements HasMedia
 {
-    use InteractsWithMedia;
-    use CrudTrait;
-    use HasTranslations; 
+    use InteractsWithMedia, CrudTrait, HasTranslations, LogsActivity; 
     
     protected $guarded = [];
     protected $with = ['media'];
@@ -44,5 +44,11 @@ class Slider extends Model implements HasMedia
     public function getImageEnAttribute()
     {
         return $this->getFirstMediaUrl('image_en');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

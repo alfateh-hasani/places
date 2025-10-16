@@ -8,12 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use App\Traits\HasTranslations;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class City extends Model implements HasMedia
 {
-    use CrudTrait;
-    use HasFactory;
-    use InteractsWithMedia;
-    use HasTranslations; 
+    use CrudTrait, HasFactory, InteractsWithMedia, HasTranslations, LogsActivity; 
 
     protected $with = ['media'];
     /**
@@ -69,5 +68,11 @@ class City extends Model implements HasMedia
     public function apartments()
     {
         return $this->hasManyThrough(Apartment::class, Building::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

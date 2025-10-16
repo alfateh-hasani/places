@@ -8,10 +8,11 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class Notification extends Model implements HasMedia
 {
-    use CrudTrait;
-    use InteractsWithMedia;
+    use CrudTrait, InteractsWithMedia, LogsActivity;
      public $guarded = [];
      protected $with = ['media'];
     public function user (){
@@ -43,5 +44,11 @@ class Notification extends Model implements HasMedia
             $notification = $notification->refresh();
             app(PushNotificationService::class)->send($notification);
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

@@ -96,4 +96,11 @@ return [
     'search_mobile_desc' => 'Search for hotel apartments anywhere',
     'sign_up_new' => 'Create Account',
     'seo_title' => 'The Best Hotel Apartments in the World',
+    'apartments_list'=>'Units',
+    'download_app' => 'Download the App',
+    'download_app_desc' => ' Explore the Best Hotel Apartments in the Saudi Kingdom',
+    'our_locations' => 'Our Locations',
+    'explore_our_buildings_map' => 'Explore all our building locations on the map',
+    'view_details' => 'View Details',
+    'search_buildings' => 'Search buildings...',
 ];

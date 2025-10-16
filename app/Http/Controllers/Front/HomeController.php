@@ -20,8 +20,20 @@ class HomeController extends Controller
         $data['apartments'] = Apartment::where('is_active', true) ->with('reviews')
         ->orderBy('id', 'desc') ->take(10)->paginate(8);  
 
-        $data['cities']     = City::orderBy('sort_order','asc')->withCount('apartments')->get();
+        $data['cities']     =  City::orderBy('sort_order','asc')->withCount('apartments')->get();
         $data['buildings'] = City::with('buildings')->orderBy('sort_order','asc')    ->whereHas('buildings')  ->get();
+        
+        // جلب المباني مع الإحداثيات للخريطة
+        $data['mapBuildings'] = \App\Models\Building::whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->with(['city', 'media', 'apartments'])
+            ->get()
+            ->map(function($building) {
+                $building->apartments_count = $building->apartments->count();
+                // التأكد من وجود رابط الصورة
+                $building->image = $building->getFirstMediaUrl('image');
+                return $building;
+            });
 
         // Fetch top 40 reviews
         $reviews = Review::where('rating', '>=', 4) // Adjust condition as needed

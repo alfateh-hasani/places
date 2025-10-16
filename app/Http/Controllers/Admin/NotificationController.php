@@ -14,7 +14,7 @@ class NotificationController extends CrudController
     {
         CRUD::setModel(\App\Models\Notification::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/notifications');
-        CRUD::setEntityNameStrings('notification', 'notifications');
+        CRUD::setEntityNameStrings( __('cms.notifications'), __('cms.notification'));
 
         if (!backpack_user()->can('notification.list')) {
             abort(403, 'Unauthorized Access - List');
@@ -37,16 +37,16 @@ class NotificationController extends CrudController
     {
         // Define columns for the List view in the admin panel
         CRUD::column('id');
-        CRUD::column('type')->type('text');
-        CRUD::column('title_ar')->label('Title Arabic');
-        CRUD::column('title_en')->label('Title English');
-        CRUD::column('description_ar')->type('textarea')->label('Description Arabic');
-        CRUD::column('description_en')->type('textarea')->label('Description English');
-        CRUD::column('image')->type('image');
-        CRUD::column('process_type')->type('text');
-        CRUD::column('process_status')->type('text');
-        CRUD::column('created_at');
-        CRUD::column('updated_at');
+        CRUD::column('type')->type('text')->label(__('cms.type'));
+        CRUD::column('title_ar')->label(__('cms.title_ar'));
+        CRUD::column('title_en')->label( __('cms.title_en'));
+        CRUD::column('description_ar')->type('textarea')->label( __('cms.description_ar'));
+        CRUD::column('description_en')->type('textarea')->label( __('cms.description_en'));
+        // CRUD::column('image')->type('image');
+        CRUD::column('process_type')->type('text') ->label(__('cms.process_type'));
+        CRUD::column('process_status')->type('text')->label(__('cms.process_status'));
+        // CRUD::column('created_at');
+        // CRUD::column('updated_at');
     }
 
     protected function setupCreateOperation()
@@ -72,14 +72,14 @@ class NotificationController extends CrudController
         CRUD::field('description_en')->type('textarea')->label(__('cms.description_en'))->attributes(['required' => 'required'])->wrapper(['class' => 'form-group col-md-6']);
    
 
-    CRUD::field('image')
-            ->label(__('cms.image'))
-            ->type('image')
-            ->withMedia([
-                'collection' => 'image', // will pick the collection definition from your model
-            ])->wrapperAttributes([
-                'class' => 'form-group col-md-12',
-            ]);
+    // CRUD::field('image')
+    //         ->label(__('cms.image'))
+    //         ->type('image')
+    //         ->withMedia([
+    //             'collection' => 'image', // will pick the collection definition from your model
+    //         ])->wrapperAttributes([
+    //             'class' => 'form-group col-md-12',
+    //         ]);
 
     
         CRUD::field('process_type')->type('hidden')->value('notification');
@@ -90,5 +90,10 @@ class NotificationController extends CrudController
     {
         // Reuse the setup from Create Operation for consistency
         $this->setupCreateOperation();
+    }
+    protected function setupShowOperation(){
+        $this->setupListOperation();
+        
+
     }
 }

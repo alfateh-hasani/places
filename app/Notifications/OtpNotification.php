@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+
 class OtpNotification extends Notification
 {
     use Queueable;
@@ -14,8 +15,7 @@ class OtpNotification extends Notification
      */
     public function __construct(
         protected array $data
-    )
-    {
+    ) {
         //
     }
 
@@ -35,7 +35,7 @@ class OtpNotification extends Notification
     public function toSms(object $notifiable): array
     {
         return [
-            'content' => "Hello  Your registration OTP is: ".$this->data['code'],
+            'content' => "رمز التحقق لتسجيل الدخول إلى موقع ضيافة dyafa.sa هو:  " . $this->data['code'],
         ];
     }
 

@@ -27,8 +27,8 @@ class ApartmentLabelRequest extends FormRequest
         return [
             'name_ar' => 'required',
             'name_en' => 'required',
-            'description_ar' => 'required',
-            'description_en' => 'required',
+            'description_ar' => 'nullable',
+            'description_en' => 'nullable',
         ];
     }
 

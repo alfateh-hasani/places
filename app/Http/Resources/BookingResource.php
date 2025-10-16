@@ -46,7 +46,7 @@ class BookingResource extends JsonResource
     private function checkLoginInfoShow(): bool
     {
         // Ensure status is confirmed and both check-in and check-out times exist
-        if ($this->status === 'confirmed' && $this->check_in && $this->check_out && $this->check_in_time && $this->check_out_time) {
+        if ($this->status === 'approved' && $this->check_in && $this->check_out && $this->check_in_time && $this->check_out_time) {
             // Combine check-in date and time
             $checkInDateTime = $this->check_in->setTimeFromTimeString($this->check_in_time->format('H:i:s'));
 

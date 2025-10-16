@@ -1,0 +1,14 @@
+[
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "co.Placess.app",
+        "sha256_cert_fingerprints": [
+          "E7:4A:22:33:E4:6E:D9:2F:77:AA:19:75:3B:9B:3E:22:FE:E5:CA:F0:85:85:AB:A8:16:B2:FC:6A:F2:B0:DD:D9",
+          "F0:35:C4:F0:12:82:49:2B:9E:AA:93:27:98:B7:09:95:3C:32:81:43:7C:76:3C:C3:7B:00:85:B3:9C:B5:BC:9D",
+          "B9:0D:0C:20:FC:71:AD:EB:78:BF:A8:80:98:0B:40:5F:A3:31:D9:6A:4D:A2:2C:81:DC:BD:1D:5A:BC:BB:DB:B6"
+        ]
+      }
+    }
+  ]

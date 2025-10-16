@@ -6,6 +6,17 @@ use Illuminate\Http\JsonResponse;
 
 trait ApiResponse
 {
+
+    protected function addAppInfoToResponse(JsonResponse $response): JsonResponse
+    {
+        $appVersion = env('APP_VERSION', '1.0'); 
+        $updateRequired  = env('UPDATE_REQUIRED', 'false');
+
+        return $response->header('x-app-version', $appVersion)
+                        ->header('x-update-required', $updateRequired);
+    }
+
+
     public function successResponse($data = null, $message = 'Success', $status = 200 ): JsonResponse
     {
         $response = [
@@ -14,7 +25,7 @@ trait ApiResponse
             'data' => $data,
         ];
 
-        return response()->json($response, $status );
+        return $this->addAppInfoToResponse(response()->json($response, $status));
     }
 
     public function errorResponse($errors= [] , $message = 'Error', $status = 400 ): JsonResponse
@@ -26,6 +37,6 @@ trait ApiResponse
             'data' => null,
         ];
 
-        return response()->json($response, $status );
+        return $this->addAppInfoToResponse(response()->json($response, $status));
     }
 }

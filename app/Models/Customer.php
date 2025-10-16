@@ -8,9 +8,12 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use App\Jobs\SendWelcomeNotification;
 class Customer extends Authenticatable implements HasMedia
 {
-    use HasApiTokens ,InteractsWithMedia ,Notifiable , CrudTrait;
+    use HasApiTokens, InteractsWithMedia, Notifiable, CrudTrait, LogsActivity;
     protected $fillable = [
         'first_name',
         'last_name',
@@ -20,6 +23,7 @@ class Customer extends Authenticatable implements HasMedia
         'account_verified',
         'job_title',
         'fcm_token',
+        'id_number',
     ];
     public function reviews(): HasMany
     {
@@ -29,6 +33,11 @@ class Customer extends Authenticatable implements HasMedia
     public function routeNotificationForSms()
     {
         return $this->phone;
+    }
+
+    public function routeNotificationForFirebase()
+    {
+        return $this->fcm_token;
     }
 
     public function registerMediaCollections(): void
@@ -58,6 +67,25 @@ class Customer extends Authenticatable implements HasMedia
         return $this->bookings()->count();
     }
     
-  
+
+    public function getFullNameAttribute(): string{
+        return (string) $this->first_name.' '.$this->last_name;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // إرسال إشعار الترحيب عند إنشاء حساب جديد
+        static::created(function ($customer) {
+            SendWelcomeNotification::dispatch($customer);
+        });
+    }
 
 }

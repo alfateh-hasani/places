@@ -143,6 +143,8 @@ return [
     'phone' => 'الهاتف',
     'price_per_night' => 'السعر لليلة',
     'booking_management' => 'إدارة الحجوزات',
+    'airbnb_booking_management' => 'إدارة حجوزات Airbnb',
+    'check_in_time' => 'وقت الدخول',
     'transactions' => 'المعاملات',
     'transaction' => 'المعاملة',
     'reference' => 'المرجع',
@@ -182,5 +184,13 @@ return [
     'supervisor' => 'المشرف',
     'service' => 'الخدمة',
     'services' => 'الخدمات',
- 
+    'title_ar' => 'العنوان بالعربي',
+    'title_en' => 'العنوان بالانجليزي',
+    'process_type' =>  'نوع العملية',
+    'process_status' => 'حالة العملية',
+    'apart_no' => 'رقم الشقة',
+    'supervisor_select2' => 'اختر المشرف',
+    'name' =>'الاسم',
+    'category_2' =>'التصنيفات الداخلي',
+    'category_select2' => 'اختر تصنيف',
 ];

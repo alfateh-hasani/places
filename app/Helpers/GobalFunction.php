@@ -1,15 +1,19 @@
 <?php
 function getImage($object, $collection, $thumb=''){
-    if ($object->hasMedia($collection)){
+    if ($object and $object->hasMedia($collection)){
         return $object->getMedia($collection)->first()->getUrl($thumb);
     }
     return asset('img/default.jpg');
 }
 
 //getAllImages
-function getAllImages($object, $collection, $thumb=''){
+function getAllImages($object, $collection, $thumb='', $limit = null){
     if ($object->hasMedia($collection)){
-        return $object->getMedia($collection)->map(function ($media) use ($thumb){
+        $media = $object->getMedia($collection);
+        if ($limit !== null) {
+            $media = $media->take($limit);
+        }
+        return $media->map(function ($media) use ($thumb){
             return $media->getUrl($thumb);
         });
     }
@@ -46,6 +50,6 @@ if (!function_exists('calculateTax')) {
 if (!function_exists('calculateTotalWithTax')) {
     function calculateTotalWithTax($amount)
     {
-        return $amount + calculateTax($amount);
+        return $amount;
     }
 }

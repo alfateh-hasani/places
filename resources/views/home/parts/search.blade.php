@@ -98,7 +98,7 @@
                             </button>
                             <input type="text" id="counter-input1" data-input-counter
                                 class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1"
-                                placeholder="" value="1" required />
+                                placeholder="" value="0" required />
                             <button type="button" id="increment-button" data-input-counter-increment="counter-input1"
                             class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
@@ -114,8 +114,8 @@
         </div>
         <div class="lg:col-span-1 col-span-2">
             <button
-                class="bg-price text-white w-full h-11 text-center rounded-lg lg:rounded-full hover:bg-black ease-in-out duration-200">
-                <img class="inline-block -translate-y-0.5 me-2" src="{{ asset('assets/img/search.svg') }}" />{{ __('site.search') }}
+                class="bg-price  w-full h-11 text-center rounded-lg lg:rounded-full hover:bg-black ease-in-out duration-200">
+                <img class="inline-block -translate-y-0.5 me-2" src="{{ asset('assets/img/search2.svg') }}" />{{ __('site.search') }}
             </button>
         </div>
     </form>

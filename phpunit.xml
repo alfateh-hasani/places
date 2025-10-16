@@ -29,5 +29,7 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <server name="BASSET_CACHE_DISK" value="array"/>
+
     </php>
 </phpunit>

@@ -148,6 +148,28 @@ class BuildingController extends CrudController
             ],
         ]);
 
+
+        $this->crud->addField([
+            'name' => 'ttlock_username',
+            'type' => 'text',
+            'label' => 'TTLOCK Username',
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'ttlock_password',
+            'type' => 'text',
+            'label' => 'TTLOCK Password',
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        
+        
+        
+
         $this->crud->addField([
             'name' => 'address_ar',
             'type' => 'text',
@@ -247,7 +269,7 @@ class BuildingController extends CrudController
         $this->crud->addField([
             'name' => 'map',
             'type' => 'textarea',
-            'label' =>  __('cms.map'),
+            'label' =>   'كود تضمين الخريطة من جوجل وليس الرابط',
             'attributes' => [
                 'required' => 'required',
             ],
@@ -259,9 +281,36 @@ class BuildingController extends CrudController
         $this->crud->addField([
             'name' => 'slug',
             'type' => 'text',
-            'label' => 'الاسم اللطيف',
+            'label' => 'رابط الصفحة',
             'attributes' => [
                 'placeholder' => 'slug',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
+            'name' => 'link',
+            'type' => 'text',
+            'label' => 'رابط خرائط جوجل',
+            'attributes' => [
+                
+                'placeholder' => 'link',
+            ],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+
+        $this->crud->addField([
+            'name' => 'sort_order',
+            'type' => 'number',
+            'label' =>  __('cms.sort_order'),
+            'attributes' => [
+                'min' => 0,
+                'max' => 10000,
             ],
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',

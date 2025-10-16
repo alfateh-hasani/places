@@ -19,7 +19,7 @@ return [
     | Number of characters of OTP
     |
     */
-    'length' => env('OTP_LENGTH', 6),
+    'length' => env('OTP_LENGTH', 4),
 
     /*
     |--------------------------------------------------------------------------

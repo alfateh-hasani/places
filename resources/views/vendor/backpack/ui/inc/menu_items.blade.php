@@ -56,9 +56,9 @@
             <x-backpack::menu-item title="{{__('cms.sliders_app')}}" icon="la la-mobile" :link="backpack_url('sliders-app')" />
         @endcan
 
-        @can('advantage.list')
+        {{-- @can('advantage.list')
             <x-backpack::menu-item title="{{__('cms.advantages')}}" icon="la la-thumbs-up" :link="backpack_url('advantages')" />
-        @endcan
+        @endcan --}}
 
         @can('page.list')
             <x-backpack::menu-item title="{{__('cms.pages')}}" icon="la la-file-text" :link="backpack_url('pages')" />
@@ -84,6 +84,11 @@
     <x-backpack::menu-item title="{{__('cms.booking_management')}}" icon="la la-calendar-check" :link="backpack_url('booking')" />
 @endcan
 
+{{-- Airbnb Booking Management --}}
+@can('booking.list')
+    <x-backpack::menu-item title="{{__('cms.airbnb_booking_management')}}" icon="la la-airbnb" :link="backpack_url('airbnb-booking')" />
+@endcan
+
 {{-- customer --}}
 
 @can('customer.list')
@@ -97,7 +102,7 @@
         @endcan
 
         @can('bookingService.list')
-            <x-backpack::menu-item title="{{__('cms.booking_services')}}" icon="la la-calendar" :link="backpack_url('booking-service')" />
+        <x-backpack::menu-item title="طلبات الخدمات" icon="la la-list" :link="backpack_url('service-booking')" />
         @endcan
     </x-backpack::menu-dropdown>
 @endcanany
@@ -134,8 +139,27 @@
         @can('role.list')
             <x-backpack::menu-dropdown-item title="الأدوار" icon="la la-group" :link="backpack_url('role')" />
         @endcan
-        {{-- @can('permission.list')
+        @can('permission.list')
             <x-backpack::menu-dropdown-item title="الأذونات" icon="la la-key" :link="backpack_url('permission')" />
-        @endcan --}}
+        @endcan
     </x-backpack::menu-dropdown>
 @endcanany
+<x-backpack::menu-item title="رسائل التواصل" icon="la la-envelope" :link="backpack_url('contact-us')" />
+
+<x-backpack::menu-item title="📊 التقارير" icon="la la-chart-bar" :link="backpack_url('reports')" />
+<x-backpack::menu-item title="⏳   الخروج اليومي" icon="la la-sign-out-alt" :link="backpack_url('reports/daily-checkout')" />
+
+<x-backpack::menu-item title="📝 مراجعات العملاء" icon="la la-star" :link="backpack_url('review')" />
+
+<x-backpack::menu-item title="التصنيفات" icon="la la-question" :link="backpack_url('category')" />
+
+<x-backpack::menu-item title="التعريف" icon="la la-question" :link="backpack_url('onboarding')" />
+
+
+
+
+
+
+
+<x-backpack::menu-item title='الإعدادات' icon='la la-cog' :link="backpack_url('setting')" />
+<x-backpack::menu-item title="سجل التغييرات" icon="la la-stream" :link="backpack_url('activity-log')" />

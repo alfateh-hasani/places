@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     @stack('TopCss')
     
-    <link href="{{ asset('assets/css/style.css?44')}}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/style.css?4444')}}" rel="stylesheet" />
     <link    href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css"  rel="stylesheet"  />
     <link    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"   rel="stylesheet" />
     <link rel="icon" href="{{ asset('assets/img/favicon.svg')}}" />
@@ -17,6 +17,7 @@
     <script type="text/javascript" src="https://cdn.tailwindcss.com"></script>
     <script type="text/javascript" src="{{ asset('assets/js/maplace.js?3')}}"></script>
 
+
     <script>
       tailwind.config = {
           theme: {
@@ -24,15 +25,15 @@
                   center: true,
               },
               colors: {
-                  'gri': '#303610',
+                  'gri': '#f7bb8e',
                   'white': '#fff',
                   'black': '#000',
-                  'border': '#E8E8E8',
+                  'border': '#f7bb8e',
                   'reviews': '#999999',
                   'title': '#2C2C2C',
-                  'feature': '#F6F6F6',
+                  'feature': '#343233',
                   'feature-border': '#E8E8E8',
-                  'price': '#EF552C',
+                  'price': '#f7bb8e',
                   'automated-1': 'rgba(239, 85, 44, .2)',
                   'automated-2': 'rgba(255, 90, 95, .2)',
                   'automated-3': 'rgba(233, 187, 113, .2)',
@@ -44,9 +45,9 @@
                   'filterbackground': '#fbfbfb',
                   'filterborder': '#ececec',
                   'filteritem': '#ebebe8',
-                  'filterhover': '#303610',
+                  'filterhover': '#f7bb8e',
                   'sort': '#f6f6f6',
-                  'sortactive': '#303610',
+                  'sortactive': '#f7bb8e',
                   'blue': '#0068CF',
                   'footer': '#fcfcfc',
                   'titletext': '#848484'
@@ -77,13 +78,35 @@
       .range-start {
         color: white !important;
       }
+
+      section.app {
+ 
+    background: #171515 !important;
+}
+
+@media (max-width: 768px) {
+  section.app.relative img {
+    margin: auto;
+    text-align: center;
+}
+section.app.relative a {
+    margin-right: 10px !important;
+    margin-left: 10px !important;
+    display: inline-block;
+}
+
+section.app.relative > div {
+    text-align: center;
+}
+}
     </style>
 
 
     @if(app()->getLocale() == 'ar')
-      <link    href="{{ asset('assets/css/rtl.css?'.time())}}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/rtl.css?2')}}"   rel="stylesheet" />
     @endif
 
-      <link    href="{{ asset('assets/css/custom.css?'.time())}}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/custom.css?v2') }}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/dark.css?v2') }}"   rel="stylesheet" />
 
     @stack('css')

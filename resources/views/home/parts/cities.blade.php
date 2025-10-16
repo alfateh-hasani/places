@@ -1,9 +1,9 @@
 <section class="py-2 sm:py-20 cities">
       <div class="container">
-        <p 
+        {{-- <p 
             class="text-center sm:text-left rtl:sm:text-right font-normal text-xs sm:text-base text-price">
             @lang('site.readable_content')
-        </p>
+        </p> --}}
 
         <h3 
             class="text-center sm:text-left rtl:sm:text-right font-semibold text-base sm:text-3xl text-black mt-1 sm:mt-3 mb-4 sm:mb-12">

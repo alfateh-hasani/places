@@ -38,7 +38,8 @@ return [
     'sciener'=>[
         'client_id'=>'2c959287a856409ca8b572090a4ba040',
         'client_secret'=>'dfa43b3b37160a8ef3042121c66a0dd4',
-        'access_token'=>'3107ac3e5b57eb99618cfb062ddf4632',
-    ]
+        'username'=>'abdoshahen2013@gmail.com',
+        'password'=>'AZay2025',
+    ] 
 
 ];

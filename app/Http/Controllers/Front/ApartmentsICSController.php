@@ -17,13 +17,23 @@ class ApartmentsICSController extends Controller
         // جلب الحجوزات المؤكدة (booked) لهذه الشقة
         $bookings = Booking::where('apartment_id', $apartment->id)
             ->wherein('status', ['approved','booked'])
+            ->where('is_airbnb_booking', 0)
             ->get();
 
         $calendar = Calendar::create("Apartment {$apartment->id} Bookings");
 
         foreach ($bookings as $booking) {
+            // دمج التاريخ مع الوقت للدخول
             $startDate = Carbon::parse($booking->check_in);
+            if ($booking->check_in_time) {
+                $startDate = $startDate->setTimeFromTimeString($booking->check_in_time->format('H:i:s'));
+            }
+
+            // دمج التاريخ مع الوقت للخروج
             $endDate = Carbon::parse($booking->check_out);
+            if ($booking->check_out_time) {
+                $endDate = $endDate->setTimeFromTimeString($booking->check_out_time->format('H:i:s'));
+            }
 
             $event = Event::create("booking.{$booking->id}@places.co")
                 ->uniqueIdentifier("#".$booking->id)

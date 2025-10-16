@@ -5,11 +5,12 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Policy extends Model
 {
-    use CrudTrait;
-    use HasFactory;
+    use CrudTrait, HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -32,4 +33,10 @@ class Policy extends Model
     protected $casts = [
         'id' => 'integer',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
+    }
 }

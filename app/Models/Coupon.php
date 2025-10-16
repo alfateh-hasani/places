@@ -6,10 +6,12 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Coupon extends Model
 {
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
     protected $guarded = [];
 
     protected $casts = [
@@ -31,5 +33,11 @@ class Coupon extends Model
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

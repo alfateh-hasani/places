@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\{AuthController, BookingController, CustomerController, HomeController};
+use App\Http\Controllers\Api\{AuthController, BookingController, CustomerController, HomeController, OnboardingController};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -50,11 +50,8 @@ Route::middleware('appSecret')->group(function () {
             Route::get('get-services', 'getServices');
             Route::post('add-services-to-booking', 'addServicesToBooking');
             Route::post('booking-services', 'bookingServices');
+            Route::post('cancel-booking-payment/{id}', 'cancelBookingPayment');
         });
-
-
-
-
 
     });
 
@@ -67,6 +64,11 @@ Route::middleware('appSecret')->group(function () {
         Route::get('get-page', 'getPage');
         Route::get('get-faq-page', 'getFaqPage');
         Route::post('contact-us', 'contactUs');
+    });
+
+    // Onboarding routes
+    Route::controller(OnboardingController::class)->prefix('onboarding')->group(function () {
+        Route::get('index', 'index');
     });
 
 });

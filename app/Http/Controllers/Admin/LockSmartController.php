@@ -28,19 +28,19 @@ class LockSmartController extends CrudController
         $plural = __('cms.smart_locks');
         CRUD::setEntityNameStrings($singular, $plural);
 
-        if (!backpack_user()->can('locksmart.list')) {
+        if (!backpack_user()->can('smartlock.list')) {
             abort(403, 'Unauthorized Access - List');
         }
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
         
-        if (backpack_user()->can('locksmart.create')) {
+        if (backpack_user()->can('smartlock.create')) {
             $this->crud->allowAccess('create');
         }
-        if (backpack_user()->can('locksmart.update')) {
+        if (backpack_user()->can('smartlock.update')) {
             $this->crud->allowAccess('update');
         }
-        if (backpack_user()->can('locksmart.delete')) {
+        if (backpack_user()->can('smartlock.delete')) {
             $this->crud->allowAccess('delete');
         }
     }
@@ -61,10 +61,7 @@ class LockSmartController extends CrudController
             'name' => 'lock_name',
             'label' => __('cms.lock_name'),
         ]);
-        CRUD::addColumn([
-            'name' => 'lock_alias',
-            'label' =>  __('cms.lock_alias'),
-        ]);
+        
         CRUD::addColumn([
             'name' => 'building_id',
             'label' => __('cms.building'),
@@ -74,6 +71,17 @@ class LockSmartController extends CrudController
             'model' => \App\Models\Building::class,
         ]);
 
+
+         // إضافة فلتر حسب المشروع
+         CRUD::filter('select2')
+         ->type('select2')
+         ->label('المشروع')
+         ->values(function() {
+             return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
+         })
+         ->whenActive(function($value) {
+             $this->crud->addClause('where', 'building_id', $value);
+         });
     }
 
     /**
@@ -89,17 +97,20 @@ class LockSmartController extends CrudController
             'name' => 'lock_id',
             'label' => __('cms.lock_id'),
             'type' => 'text',
+            'wrapper' => ['class' => 'col-md-6'],
+            'attributes' => [
+                'pattern' => '[a-zA-Z0-9]+', 
+                'title' => 'Only English letters are allowed',
+            ],
         ]);
+        
         $this->crud->addField([
             'name' => 'lock_name',
             'label' =>  __('cms.lock_name'),
             'type' => 'text',
+            'wrapper' => ['class' => 'col-md-6'],
         ]);
-        $this->crud->addField([
-            'name' => 'lock_alias',
-            'label' =>  __('cms.lock_alias'),
-            'type' => 'text',
-        ]);
+     
         $this->crud->addField([
             'name' => 'building_id',
             'type' => 'select',
@@ -107,6 +118,7 @@ class LockSmartController extends CrudController
             'entity' => 'building',
             'attribute' => 'name_ar',
             'model' => \App\Models\Building::class,
+            'wrapper' => ['class' => 'col-md-6'],
         ]);
     }
 
@@ -127,6 +139,52 @@ class LockSmartController extends CrudController
      }
 
 
+     //getSmartLocks
+     public function getSmartLocks(Request $request)
+    {
+   
+
+        $building_id = $request->input('building_id');
+
+        
+        
+        
+
+        // جلب الأقفال الذكية بناءً على building_id
+        $smartLocks = \App\Models\SmartLock::query();
+
+        if($building_id){
+            $smartLocks =   $smartLocks->where('building_id', $building_id);
+        }
+
+        $smartLocks = $smartLocks->get();
+        
+        // تنسيق البيانات لـ select2
+        $formattedSmartLocks = $smartLocks->map(function ($smartLock) {
+            return [
+                'id' => $smartLock->id,
+                'text' => $smartLock->full_name, // استخدم الحقل الذي تريد عرضه
+            ];
+        });
+        
+        // إرجاع البيانات كـ JSON
+        return response()->json($formattedSmartLocks);
+    }
+
+    public function getLocks(Request $request)
+    {
+        $buildingId = $request->input('building_id');
+
+        if (!$buildingId) {
+            return response()->json([]);
+        }
+
+        $locks = \App\Models\SmartLock::where('building_id', $buildingId)
+            ->select('id', 'lock_id')
+            ->get();
+
+        return response()->json($locks);
+    }
 
 
 }

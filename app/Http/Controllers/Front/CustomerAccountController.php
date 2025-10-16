@@ -33,6 +33,7 @@ class CustomerAccountController extends Controller
             'first_name' => 'required',
             'last_name' => 'required',
             'email' => 'required|email|unique:customers,email,' . $customer->id,
+            'id_number' => 'required|unique:customers,id_number,' . $customer->id,
 
         ]);
        
@@ -41,6 +42,7 @@ class CustomerAccountController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'emergency_phone' => $request->emergency_phone,
+            'id_number' => $request->id_number,
         ]);
           //josn response
         return response()->json(['success' => true, 'message' => __('customer.updated_successfully')]);
@@ -52,24 +54,33 @@ class CustomerAccountController extends Controller
         $customer = Auth::guard('customer')->user();
 
         $allBookings = Booking::where('customer_id', $customer->id)->latest()->get();
-        $pastBookings = $allBookings->filter(function ($booking) {
-            return $booking->check_out < now();
+
+        $now = now();
+        $nextCheckoutThreshold = $now;
+
+        $pastBookings = $allBookings->filter(function ($booking) use ($nextCheckoutThreshold) {
+            return Carbon::parse($booking->check_out)->setTime( 12, 0, 0)->lessThanOrEqualTo($nextCheckoutThreshold);
         });
-        $upcomingBookings = $allBookings->filter(function ($booking) {
-            return $booking->check_out >= now();
+
+        $upcomingBookings = $allBookings->filter(function ($booking) use ($nextCheckoutThreshold) {
+            return Carbon::parse($booking->check_out)->setTime( 12, 0, 0)->greaterThanOrEqualTo($nextCheckoutThreshold);
         });
+
         $data = [
             'past_bookings' => $pastBookings->values(),
             'upcoming_bookings' => $upcomingBookings->values(),
             'customer' => $customer,
             'total_bookings' => $allBookings->count(),
         ];
+
         $seo_title = __('customer.my_reservations') . ' | ' . __('site.seo_title');
         $seo_description = __('customer.my_reservations');
         $url = route('customer.booking');
         $this->generateSeo($seo_title, $seo_description, $url);
+
         return view('customer.booking', $data);
     }
+
 
     //favorite
 
@@ -125,6 +136,8 @@ class CustomerAccountController extends Controller
 
         $data['can_cancel'] = $daysBeforeCheckIn >= $cancellationWindow;
 
+        // Get active passcode for this booking
+        $data['active_passcode'] = $data['booking']->getActivePasscode();
 
         $seo_title = __('customer.booking_details'). ' #'  .$number_of_booking.  ' | ' . __('site.seo_title');
         $seo_description = __('customer.booking_details');

@@ -8,10 +8,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-    use CrudTrait,HasRoles;
+    use CrudTrait, HasRoles, LogsActivity;
     /**
      * The attributes that are mass assignable.
      *
@@ -21,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
     ];
 
     /**
@@ -65,5 +68,26 @@ class User extends Authenticatable
         });
     }
 
+    /**
+     * Get admin notifications
+     */
+    public function adminNotifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id')->where('type', 'admin');
+    }
+
+    /**
+     * Get unread admin notifications count
+     */
+    public function unreadAdminNotificationsCount()
+    {
+        return $this->adminNotifications()->whereDoesntHave('notification_seen')->count();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
+    }
 
 }

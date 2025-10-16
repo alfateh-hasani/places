@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class Feature extends Model implements HasMedia
 {
-    use CrudTrait;
-    use HasFactory;
-    use InteractsWithMedia;
+    use CrudTrait, HasFactory, InteractsWithMedia, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -48,5 +48,11 @@ class Feature extends Model implements HasMedia
     public function apartments()
     {
         return $this->belongsToMany(Apartment::class, 'apartment_features', 'feature_id', 'apartment_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
     }
 }

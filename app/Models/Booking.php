@@ -5,15 +5,20 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Illuminate\Support\Str;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use App\Jobs\SendBookingConfirmedNotification;
 class Booking extends Model
 {
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
     protected $guarded = [];
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
     }
+
+    
 
     public function apartment(): BelongsTo
     {
@@ -28,17 +33,30 @@ class Booking extends Model
             'check_in_time' => 'datetime',
             'check_out_time' => 'datetime',
             'discount' => 'float',
+            'passcode_generated_at' => 'datetime',
         ];
     }
     protected static function boot()
     {
         parent::boot();
         static::creating(function ($booking) {
-            do {
-                $randomNumber = mt_rand(0, 999999);
-                $bookingNumber = '00' . str_pad($randomNumber, 6, '0', STR_PAD_LEFT);
-            } while (Booking::where('number_of_booking', $bookingNumber)->exists());
-            $booking->number_of_booking = $bookingNumber;
+            
+            $booking->uuid = (string) Str::uuid();
+
+            if(!$booking->is_airbnb_booking){
+                do {
+                    $randomNumber = mt_rand(0, 999999);
+                    $bookingNumber = '00' . str_pad($randomNumber, 6, '0', STR_PAD_LEFT);
+                } while (Booking::where('number_of_booking', $bookingNumber)->exists());
+                $booking->number_of_booking = $bookingNumber;
+            }
+        });
+
+        // إرسال إشعار تأكيد الحجز عند تغيير الحالة إلى approved
+        static::updated(function ($booking) {
+            if ($booking->isDirty('status') && $booking->status === 'approved') {
+                SendBookingConfirmedNotification::dispatch($booking);
+            }
         });
     }
 
@@ -49,10 +67,10 @@ class Booking extends Model
         return $this->belongsTo(Coupon::class);
     }
 
-    //price_per_night
+    //price_per_night - يتم حفظه مباشرة في قاعدة البيانات
     public function getPricePerNightAttribute()
     {
-        return $this->total_price / $this->number_of_nights;
+        return $this->one_night_price ?? 0;
     }
 
 
@@ -117,5 +135,93 @@ class Booking extends Model
     }
     
     
+    //buildings
+    public function building()
+    {
+        return $this->hasOneThrough(
+            Building::class,       
+            Apartment::class,      
+            'id',                  
+            'id',                    
+            'apartment_id',      
+            'building_id'         
+        );
+    }
+
+    // Smart Lock Passcodes
+    public function smartLockPasscodes()
+    {
+        return $this->hasMany(SmartLockPasscode::class);
+    }
+
+    // Get active passcode for this booking
+    public function getActivePasscode()
+    {
+        return $this->smartLockPasscodes()
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->latest()
+            ->first();
+    }
+
+    // Passcode status methods
+    public function markPasscodeAsPending()
+    {
+        $this->update([
+            'passcode_status' => 'pending',
+            'passcode_generated_at' => null,
+            'passcode_error' => null,
+        ]);
+    }
+
+    public function markPasscodeAsGenerated()
+    {
+        $this->update([
+            'passcode_status' => 'generated',
+            'passcode_generated_at' => now(),
+            'passcode_error' => null,
+        ]);
+    }
+
+    public function markPasscodeAsFailed($error = null)
+    {
+        $this->update([
+            'passcode_status' => 'failed',
+            'passcode_error' => $error,
+            'passcode_retry_count' => $this->passcode_retry_count + 1,
+        ]);
+    }
+
+    public function markPasscodeAsRetryScheduled()
+    {
+        $this->update([
+            'passcode_status' => 'retry_scheduled',
+        ]);
+    }
+
+    // Check if passcode needs to be generated
+    public function needsPasscodeGeneration()
+    {
+        return $this->status === 'approved' && 
+               $this->passcode_status !== 'generated' && 
+               $this->smartLockPasscodes()->count() === 0;
+    }
+
+    // Get retry attempt for this booking
+    public function retryAttempt()
+    {
+        return $this->hasOne(PasscodeRetryAttempt::class);
+    }
+
+    public function getTotalPriceBeforeTaxAttribute()
+    {
+        return $this->total_price - $this->tax ;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
+    }
 
 }

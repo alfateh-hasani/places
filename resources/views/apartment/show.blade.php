@@ -111,19 +111,19 @@
             </h1>
         </div>
         <div class="float-left rtl:float-right rtl:ml-5 mr-5 w-full lg:w-auto mb-3 lg:mb-0">
-            <img class="inline-block mr-2 rtl:ml-2 -translate-y-1" src="{{asset('assets/img/location.svg')}}" />
+            <img class="inline-block mr-2 rtl:ml-2 -translate-y-1" src="{{asset('assets/img/location-check.svg')}}"style="height: 20px;" />
             <p class="inline-block font-normal text-xl text-title">
                 {{ $apartment->building->city->ml('name') }}
             </p>
         </div>
         <div class="float-left rtl:float-right mr-5 w-full lg:w-auto mb-3 lg:mb-0">
-            <img class="inline-block mr-2 rtl:ml-2 -translate-y-0.5" src="{{asset('assets/img/star.svg')}}" />
+            <img class="inline-block mr-2 rtl:ml-2 -translate-y-0.5" src="{{asset('assets/img/start-new-2.svg')}}" style="height: 20px;" />
             <p class="inline-block font-normal text-base text-reviews">
                 {{ $apartment->total_ratings }} ({{ $apartment->reviews->count() }})
             </p>
         </div>
         <div class="float-left rtl:float-right mr-5 rtl:ml-5 w-full lg:w-auto mb-3 lg:mb-0">
-            <img class="inline-block mr-2 rtl:ml-2 -translate-y-0.5" src="{{asset('assets/img/feature-3.svg')}}" />
+            <img class="inline-block mr-2 rtl:ml-2 -translate-y-0.5" src="{{asset('assets/img/space-new.svg')}}" style="height: 20px;" />
             <p class="inline-block font-normal text-base text-reviews">  
 
                 {{__('apartment.area'). $apartment->area }} <sup></sup>
@@ -145,22 +145,22 @@
     <div class="container">
         <div class="xl:flex xl:flex-row">
             <div class="xl:basis-8/12">
-                <div class="hidden xl:block py-5 px-6 bg-filterbackground border border-filterborder rounded-xl">
-                    <img class="rtl:float-right  rtl:ml-8  float-left mr-8 my-2" src="{{asset('assets/img/logo.svg')}}" />
+                <div class="hidden xl:block py-5 px-6   border border-filterborder rounded-xl">
+                    <img class="rtl:float-right  rtl:ml-8  float-left mr-8 my-2" src="{{asset('assets/img/places-logo-dark.png')}}" style="max-height: 35px" />
                     <ul>
                         <li class="inline-block w-4/12 font-semibold text-base text-title mb-2">
-                            <img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> 
+                            <img class="inline-block rtl:ml-2 mr-2" style="height: 20px;" src="{{asset('assets/img/correct.svg')}}?v=2" /> 
                             {{__('apartment.num_beds'). ' ( '.$apartment->num_beds}} ) </li>
                         <li class="inline-block w-4/12 font-semibold text-base text-title mb-2">
-                            <img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> 
+                            <img class="inline-block rtl:ml-2 mr-2" style="height: 20px;" src="{{asset('assets/img/correct.svg')}}?v=2" /> 
                             {{__('apartment.floor_number'). ' ( '.$apartment->floor_number .' ) ' . __('apartment.unit_number'). ' ( '.$apartment->unit_number }} )
                         </li>
                         <li class="inline-block w-4/12 font-semibold text-base text-title mb-2">
-                            <img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" />
+                            <img class="inline-block rtl:ml-2 mr-2" style="height: 20px;" src="{{asset('assets/img/correct.svg')}}?v=2" />
                             {{__('apartment.bathrooms_count'). ' ( '.$apartment->bathrooms_count}} ) 
                         </li>
                         <li class="inline-block w-4/12 font-semibold text-base text-title mb-2">
-                            <img class="inline-block rtl:ml-2 mr-2" src="{{asset('assets/img/feature-ok.svg')}}" /> 
+                            <img class="inline-block rtl:ml-2 mr-2" style="height: 20px;" src="{{asset('assets/img/correct.svg')}}?v=2" /> 
                             {{__('apartment.num_rooms'). ' ( '.$apartment->num_rooms }} ) 
                         </li>
                          
@@ -236,7 +236,7 @@
                                     <li class="inline-block mb-6 w-full xl:w-4/12 hover:text-price ease-in-out duration-300 cursor-pointer">
                                         <img class="inline-block rtl:ml-2 mr-2" width="20" height="20" 
                                         src="{{getImage($item,'icon')}}" />
-                                        <p class="inline-block ml-4">
+                                        <p class="inline-block text-white ml-4">
                                             {{  $item->{'name_'.app()->getLocale()}  }}
                                         </p>
                                     </li>
@@ -271,7 +271,7 @@
                                                 {{$item->created_at?->diffForHumans()}}
                                             </p>
                                         </div>
-                                        <p class="font-light text-base text-black"> 
+                                        <p class="font-light text-base text-title"> 
                                             {{$item->review_text}}
                                         </p>
                                     </li>
@@ -293,49 +293,94 @@
                             </div>
                         </div>
                         <div class="pt-8" id="tabs-4">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">
+                            <h5 class="font-semibold text-xl text-filterhover mb-6 text-white">
                                 {{__('apartment.terms_policies_title')}}
                             </h5>
                            
-                            <h6 class="mt-8">
+                            <h6 class="mt-8 text-white">
                                 {{$apartment->policy?->{'name_'.app()->getLocale()} }}
                             </h6>
-                            <p class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
+                            <div class="font-light text-white text-base mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                                 {!! $apartment->policy?->{'description_'.app()->getLocale()} !!}              
-                            </p>
+                            </div>
                          </div>
                     </div>
                 </div>
             </div>
-            <div class="hidden xl:block xl:basis-4/12 xl:ps-5">
+            <div class=" xl:block xl:basis-4/12 xl:ps-5">
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
-                    <!--<div class="checkout-slider-detail">
-                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
-                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
-                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
-                        <a><img class="w-8" src="https://places.madar-solutions.click/storage/236/ckisxb3gminw93pa-b8c6h0ykuz9sfsz-fOGz.webp" /></a>
-                    </div>-->
                     <p class="font-normal text-base text-reviews">
-                        <span class="font-bold text-2xl text-black translate-y-0.5 inline-block">
-                            {{$apartment->price}} 
+                        <span class="font-bold text-2xl text-black translate-y-0.5 inline-block" id="mainPrice">
+                            {{ $priceInfo['total'] }} 
                         </span> 
-                        {{__('apartment.sar')}}
+                        {{__('apartment.sar2')}}
                     </p>
-                    <form action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="GET">
+                    <form action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="POST">
              
+                        @csrf
+
+               
                         <div class="flex flex-wrap -mx-2">
                             <div class="flex flex-col w-1/2 px-2">
                                 <label for="checkin" class="mb-1 font-semibold">@lang('apartment.checkin_date')</label>
                                 <input type="date" id="checkin" name="checkin" 
                                 class="bg-blackopacity border border-gray-300 rounded-lg h-12 px-3" required
-                                    value="{{$started_day}}">
+                                    value="">
                             </div>
                         
                             <div class="flex flex-col w-1/2 px-2">
                                 <label for="checkout" class="mb-1 font-semibold">@lang('apartment.checkout_date')</label>
                                 <input type="date" id="checkout" name="checkout" class="bg-blackopacity border border-gray-300 rounded-lg h-12 px-3" required
-                                    value="{{ $next_started_day }}">
+                                    value="">
                             </div>
+                        </div>
+
+                        <div class="shadow-xl lg:shadow-none  lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none     cursor-pointer persons relative">
+                            
+                            
+                            <!-- قائمة اختيار عدد الضيوف -->
+                            <ul class="   bg-white p-4 border border-border rounded-lg">
+                                <li class="border-b border-blackopacity pb-4 mb-4 flex justify-between items-center">
+                                    <p class="text-lg">
+                                        الكبار
+                                        <span class="block text-xs opacity-50">أعلى من 12 سنة</span>
+                                    </p>
+                                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                        <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="adults_count">
+                                            <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h16"></path>
+                                            </svg>
+                                        </button>
+                                        <input type="number" id="adults_count" min="1" name="number_of_adults" class="text-black border-0 bg-transparent text-sm font-normal w-10 text-center p-1" value="1" required="">
+                                        <button type="button" class="counter-button increment flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="adults_count">
+                                            <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </li>
+                                
+                                <li class="  flex justify-between items-center">
+                                    <p class="text-lg">
+                                        الأطفال
+                                        <span class="block text-xs opacity-50">أقل من 12 سنة</span>
+                                    </p>
+                                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                        <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="children_count">
+                                            <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h16"></path>
+                                            </svg>
+                                        </button>
+                                        <input type="number" id="children_count" min="0" name="number_of_children" class="text-black border-0 bg-transparent text-sm font-normal w-10 text-center p-1" value="0" required="">
+                                        <button type="button" class="counter-button increment flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="children_count">
+                                            <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </li>
+                                
+                            </ul>
                         </div>
                         
                             <script>
@@ -355,8 +400,8 @@
                                 <span>
                                     {{__('apartment.one_night')}}
                                 </span>
-                                <span class="float-right rtl:float-left">
-                                    {{$apartment->price . ' ' . __('apartment.price')}} 
+                                <span class="float-right rtl:float-left" id="nightlyPrice">
+                                    {{ $priceInfo['total'] . ' ' . __('apartment.price')}} 
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -371,7 +416,7 @@
                                     ({{__('apartment.price_tax') }})
                                 </span>
                                 <span class="float-right rtl:float-left" id="totalCost"> 
-                                    {{calculateTotalWithTax($apartment->price) .' '.__('apartment.price') }} 
+                                    {{ $priceInfo['total'] .' '.__('apartment.price') }} 
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -503,9 +548,6 @@
     if ($('.desctext').html().trim().split(/\s+/).length < 50) {
         $(".showmoreApartment").hide();
     }
-
-
-    
 
         
 

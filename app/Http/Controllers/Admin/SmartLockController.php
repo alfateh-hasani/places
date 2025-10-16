@@ -27,15 +27,15 @@ class SmartLockController extends CrudController
     public function setup()
     {
         CRUD::setModel(\App\Models\SmartLock::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/smart-locks');
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/smart-lock');
         $slider = __('cms.smart_lock');
         $sliders = __('cms.smart_locks');
 
         CRUD::setEntityNameStrings($slider, $sliders);
 
-        if (!backpack_user()->can('smartlock.list')) {
-            abort(403, 'Unauthorized Access - List');
-        }
+        // if (!backpack_user()->can('smartlock.list')) {
+        //     abort(403, 'Unauthorized Access - List');
+        // }
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
         
@@ -75,6 +75,17 @@ class SmartLockController extends CrudController
             'type' => 'image',
             'label' =>  __('cms.icon'),
         ]);
+
+        // إضافة فلتر حسب المشروع
+        CRUD::filter('select2')
+            ->type('select2')
+            ->label('المشروع')
+            ->values(function() {
+                return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
+            })
+            ->whenActive(function($value) {
+                $this->crud->addClause('where', 'building_id', $value);
+            });
 
     }
 

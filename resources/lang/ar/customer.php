@@ -27,7 +27,7 @@ return [
     'error' => 'خطأ',
     'success_message' => 'تمت العملية بنجاح',
     'error_message' => 'حدث خطأ ما',
-    'upcoming_bookings' => 'الحجوزات القادمة',
+    'upcoming_bookings' => 'الحجوزات الحالية والقادمة',
     'past_bookings' => 'الحجوزات السابقة',
     'no_past_bookings' => 'لا توجد حجوزات سابقة',
     'no_upcoming_bookings' => 'لا توجد حجوزات قادمة',
@@ -35,4 +35,5 @@ return [
     'account' => 'الملف الشخصي ',
     'favorite' => 'المفضلة',
     'booking_details' => 'تفاصيل الحجز',
+    'id_number' => 'رقم الهوية',
 ];

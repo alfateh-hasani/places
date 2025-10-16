@@ -35,4 +35,5 @@ return [
     'account' => 'Profile',
     'favorite' => 'Favorite',
     'booking_details' => 'Booking Details',
+    'id_number' => 'ID Number',
 ];

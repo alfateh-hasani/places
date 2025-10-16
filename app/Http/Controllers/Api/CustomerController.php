@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Models\Notification as CustomNotification;
 use App\Models\Review;
+use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
@@ -134,12 +135,18 @@ class CustomerController extends Controller
     public function getAllBookings()
     {
         $customer = \Auth::guard('api')->user();
-        $allBookings = Booking::where('customer_id', $customer->id)->get();
-        $pastBookings = $allBookings->filter(function ($booking) {
-            return $booking->check_out < now();
+        $allBookings = Booking::where('customer_id', $customer->id)->where('status', '!=', 'pending')->latest()->get();
+        $now = now();
+        $nextCheckoutThreshold = $now;
+
+        $pastBookings = $allBookings->filter(function ($booking) use ($nextCheckoutThreshold) {
+            return Carbon::parse($booking->check_out)->setTime(12, 0, 0)->lessThanOrEqualTo($nextCheckoutThreshold);
+
         });
-        $upcomingBookings = $allBookings->filter(function ($booking) {
-            return $booking->check_out >= now();
+
+        $upcomingBookings = $allBookings->filter(function ($booking) use ($nextCheckoutThreshold) {
+             return Carbon::parse($booking->check_out)->setTime(12, 0, 0)->greaterThanOrEqualTo($nextCheckoutThreshold);
+
         });
         $data = [
             'past_bookings' => BookingResource::collection($pastBookings->values()),
@@ -314,6 +321,7 @@ class CustomerController extends Controller
 
         // If you want “current” to mean bookings that haven’t ended:
         $current = Booking::where('customer_id', $customer->id)
+            ->whereNotIn('status', ['pending', 'canceled'])
             ->where('check_out', '>=', now())
             ->get();
 
@@ -331,6 +339,10 @@ class CustomerController extends Controller
 
         $previous = Booking::where('customer_id', $customer->id)
             ->where('check_out', '<', now())
+            ->orWhere(function($query) use ($customer) {
+                $query->where('status', 'canceled')
+                    ->where('customer_id', $customer->id);
+            })
             ->get();
 
         return $this->successResponse([

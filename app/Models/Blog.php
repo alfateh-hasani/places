@@ -9,11 +9,11 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Traits\HasTranslations;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class Blog extends Model implements HasMedia
 {
-    use CrudTrait;
-    use InteractsWithMedia;
-    use HasTranslations; 
+    use CrudTrait, InteractsWithMedia, HasTranslations, LogsActivity; 
     protected $guarded = ['id'];
     public function registerMediaCollections(): void
     {
@@ -39,6 +39,10 @@ class Blog extends Model implements HasMedia
         return route('blog', $this->slug);
     }
 
-
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
+    }
 
 }

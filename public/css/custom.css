@@ -1,3 +1,13 @@
 .app-header.bg-light .navbar-brand {
     opacity: 1 !important;
 }
+
+.bg-gri {
+
+    color: #000 !important;
+}
+
+section.app {
+ 
+    background: #171515 !important;
+}

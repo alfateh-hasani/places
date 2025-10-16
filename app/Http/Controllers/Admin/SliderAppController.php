@@ -102,6 +102,7 @@ class SliderAppController extends CrudController
     protected function setupCreateOperation()
     {
         CRUD::setValidation(SliderAppRequest::class);
+       
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
@@ -125,42 +126,42 @@ class SliderAppController extends CrudController
             ]
         ]);
 
-        $this->crud->addField([
-            'name' => 'related_type',
-            'type' => 'select2_from_array',
-            'label' => __('cms.related_type'),
-            'options' => [
-                'city' => __('cms.related_city'),
-                'apartment' => __('cms.related_apartment'),
-                'page' => __('cms.related_page'),
-                'general' => __('cms.related_general'),
-            ],
-            'attribute' => 'related_type',
-            'allows_null' => false,
-            'default' => 'general',
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ]
-        ]);
+        // $this->crud->addField([
+        //     'name' => 'related_type',
+        //     'type' => 'select2_from_array',
+        //     'label' => __('cms.related_type'),
+        //     'options' => [
+        //         'city' => __('cms.related_city'),
+        //         'apartment' => __('cms.related_apartment'),
+        //         'page' => __('cms.related_page'),
+        //         'general' => __('cms.related_general'),
+        //     ],
+        //     'attribute' => 'related_type',
+        //     'allows_null' => false,
+        //     'default' => 'general',
+        //     'wrapperAttributes' => [
+        //         'class' => 'form-group col-md-6'
+        //     ]
+        // ]);
 
-        $this->crud->addField([
-            'name' => 'related_id',
-            'type' => 'select2_from_ajax',
-            'label' => __('cms.related_id'),
-            'attribute' => 'related_id',
-            'data_source' => url('admin/get-related-entities'),
-            'placeholder' => __('cms.select_related_entity'),
-            'minimum_input_length' => 0,
-            'dependencies' => ['related_type'],
-            'data' => [
-                'related_type' => 'related_type',
-                 'related_id' => 'related_id',
-            ],
-            'wrapperAttributes' => [
-                'class' => 'form-group col-md-6'
-            ],
-            'include_all_form_fields' => false,
-        ]);
+        // $this->crud->addField([
+        //     'name' => 'related_id',
+        //     'type' => 'select2_from_ajax',
+        //     'label' => __('cms.related_id'),
+        //     'attribute' => 'name',
+        //     'data_source' => url('admin/get-related-entities'),
+        //     'placeholder' => __('cms.select_related_entity'),
+        //     'minimum_input_length' => 0,
+        //     'dependencies' => ['related_type'],
+        //     // 'data' => [
+        //     //     'related_type' => 'related_type',
+        //     //      'related_id' => 'related_id',
+        //     // ],
+        //     'wrapperAttributes' => [
+        //         'class' => 'form-group col-md-6'
+        //     ],
+        //     'include_all_form_fields' => true,
+        // ]);
 
 
 

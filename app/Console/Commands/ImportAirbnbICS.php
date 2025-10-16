@@ -18,7 +18,10 @@ class ImportAirbnbICS extends Command
 
     public function handle()
     {
+
+       
         $apartments = Apartment::whereNotNull('ics_url')->get();
+        
 
         if ($apartments->isEmpty()) {
             $this->info("No apartments with ICS URL found.");
@@ -37,7 +40,7 @@ class ImportAirbnbICS extends Command
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             ])->get($icsUrl);
             
-           // dd( $response->body());
+             
             if ($response->failed()) {
                 $this->error("Failed to fetch ICS file for apartment {$apartment->id}");
                 continue;
@@ -53,19 +56,27 @@ class ImportAirbnbICS extends Command
                     $start = $event->DTSTART->getDateTime();
                     $end = $event->DTEND->getDateTime();
                     $uid = (string) $event->UID;
+                    
+                    // إنشاء معرف فريد من مزيج المعرفات (بدون الاعتماد على UID)
+                    $uniqueId = 'airbnb_' . $apartment->id . '_' . $start->format('Y-m-d') . '_' . $end->format('Y-m-d');
             
-                    // تحقق إذا كان الحجز موجودًا بالفعل
+                    // تحقق إذا كان الحجز موجودًا بالفعل باستخدام المعرف الفريد
                     $exists = Booking::where('apartment_id', $apartment->id)
-                        ->where('check_in', $start->format('Y-m-d'))
-                        ->where('check_out', $end->format('Y-m-d'))
-                        ->where('number_of_booking', 'Airbnb-' . $uid)
+                        ->where('number_of_booking', $uniqueId)
+                        ->exists();
+                    
+                    // تحقق إضافي من عدم وجود حجوزات متداخلة في نفس التواريخ
+                    $overlappingExists = Booking::where('apartment_id', $apartment->id)
+                        ->where('check_in', '<=', $end->format('Y-m-d'))
+                        ->where('check_out', '>=', $start->format('Y-m-d'))
+                        ->where('status', '!=', 'cancelled')
                         ->exists();
             
-                    if (!$exists) {
+                    if (!$exists && !$overlappingExists) {
                         Booking::create([
-                            'number_of_booking'   => 'Airbnb-' . $uid,
+                            'number_of_booking'   =>  $uniqueId,
                             'customer_full_name'  => 'External Airbnb Booking',
-                            'customer_email'      => null,
+                            'customer_email'      => 'airbnb@gmail.com',
                             'apartment_id'        => $apartment->id,
                             'check_in'            => $start->format('Y-m-d'),
                             'check_out'           => $end->format('Y-m-d'),
@@ -75,13 +86,21 @@ class ImportAirbnbICS extends Command
                             'adults_count'        => 0,
                             'children_count'      => 0,
                             'status'              => 'booked',
-                            'payment_status'      => 'pending',
-                            'payment_method_code' => 'tap',
+                            'payment_status'      => 'paid',
+                            'payment_method_code' => 'airbnb',
                             'created_at'          => now(),
                             'updated_at'          => now(),
+                            'is_airbnb_booking'   => 1,
+                            'ics_url'              => $icsUrl,
                         ]);
             
                         $this->info("Imported Airbnb booking for apartment {$apartment->id}: {$start->format('Y-m-d')} - {$end->format('Y-m-d')}");
+                    } else {
+                        if ($exists) {
+                            $this->warn("Skipped duplicate booking for apartment {$apartment->id}: {$start->format('Y-m-d')} - {$end->format('Y-m-d')} (already exists)");
+                        } elseif ($overlappingExists) {
+                            $this->warn("Skipped overlapping booking for apartment {$apartment->id}: {$start->format('Y-m-d')} - {$end->format('Y-m-d')} (dates overlap with existing booking)");
+                        }
                     }
                 }
             } catch (\Exception $e) {

@@ -28,12 +28,15 @@ class BuildingRequest extends FormRequest
             'name_ar' => 'required|min:3|max:100',
             'name_en' => 'required|min:3|max:100',
             'city_id' => 'required|exists:cities,id',
-           
+            'slug' => 'required|min:3|max:100',
             'map' => 'required',
             'latitude' => 'required',
             'longitude' => 'required',
             'supervisor_id' => 'required',
-            
+            'ttlock_username' => 'required',
+            'ttlock_password' => 'required',
+            'link' => 'required',
+            'sort_order' => 'required',
         ];
     }
 

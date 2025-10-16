@@ -8,10 +8,11 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Request ;
 use LaravelLocalization;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class Page extends Model implements HasMedia
 {
-    use CrudTrait;
-    use InteractsWithMedia;
+    use CrudTrait, InteractsWithMedia, LogsActivity;
     protected $guarded = ['id'];
     public function registerMediaCollections(): void
     {
@@ -35,5 +36,10 @@ class Page extends Model implements HasMedia
     //     return   Self::whereSlug($url)->exists();
     // }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll();
+    }
 
 }

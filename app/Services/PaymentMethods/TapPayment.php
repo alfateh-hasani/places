@@ -3,7 +3,7 @@
 namespace App\Services\PaymentMethods;
 use App\Models\Transaction;
 use App\Services\PaymentMethods\PaymentMethodInterface;
-
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Facades\Http;
 
@@ -23,7 +23,7 @@ class TapPayment implements PaymentMethodInterface
 
         $this->secretKey = $this->isTestMode
             ?  config('payments.gateways.tap.sandbox_secret_key')
-            :  config('payments.gateways.tap.secret_key');
+            :  config(key: 'payments.gateways.tap.secret_key');
     }
 
 
@@ -35,6 +35,8 @@ class TapPayment implements PaymentMethodInterface
             'Authorization' => 'Bearer ' . $this->secretKey,
             'Content-Type' => 'application/json',
         ])->post($requestUrl, $data);
+
+        Log::info($response->json());
         if ($response->successful()) {
             return $response->json();
         }
@@ -50,6 +52,8 @@ class TapPayment implements PaymentMethodInterface
             'Authorization' => 'Bearer ' . $this->secretKey,
         ])->get($requestUrl);
 
+
+       
         if ($response->successful()) {
             return $response->json();
         }

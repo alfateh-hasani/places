@@ -172,35 +172,51 @@
 
 
                    
-                    <ul>
-                        <li class="mb-4 font-semibold text-sm text-title">
-                            <span> {{__('booking.one_night')}}  </span>
-                            <span class="float-right rtl:float-left">
-                                {{$apartment->price .' '. __('apartment.price')}}
-                            </span>
-                            <div class="clear-both"></div>
-                        </li>
-                        <li class="mb-4 font-semibold text-sm text-title">
-                            <span>
-                                {{__('apartment.number_of_nights') }}
+                        <ul>
+                            <li class="mb-4 font-semibold text-sm text-title">
+                                <span> {{__('booking.one_night')}}  </span>
+                                <span class="float-right rtl:float-left">
+                                    {{$apartment->price .' '. __('apartment.price')}}
+                                </span>
+                                <div class="clear-both"></div>
+                            </li>
+                            <li class="mb-4 font-semibold text-sm text-title">
+                                <span>
+                                    {{__('apartment.number_of_nights') }}
+                                </span>
+                                <span class="float-right rtl:float-left">
+                                    {{$number_of_nights }}
+                                </span>
+                                <div class="clear-both"></div>
+                            </li>
 
-                            </span>
-                            <span class="float-right rtl:float-left">
-                                {{$number_of_nights }}
-                            </span>
-                            <div class="clear-both"></div>
-                        </li>
-                         
-                    </ul>
+                            @if($discount)
+                            <li class="mb-4 font-semibold text-sm text-title">
+                                <span>
+                                   
+                                </span>
+                                <span class="float-right rtl:float-left">
+                                    {{$discount }}
+                                </span>
+                                <div class="clear-both"></div>
+                            </li>
+
+                            @endif
+                            
+                            
+                            <!-- هنا سيتم إدراج الخصم عند تطبيق الكوبون -->
+                        </ul>
                     
-                    <p class="py-4 px-3 bg-filterbackground border border-filterborder rounded-lg font-semibold text-sm text-title mb-4">
-                        {{__('booking.total_price')}}
-                        <span class="font-normal text-base text-reviews">
-                            ({{__('apartment.price_tax') }})
-                        </span>
-                        <span id="total_price" class="float-right rtl:float-left">
-                            {{calculateTotalWithTax($total_price) .' '.__('apartment.price') }} 
-                        </span></p>
+                    <!-- تحديد ID لهذا العنصر ليكون نقطة مرجعية للإضافة -->
+                        <p id="total_price_container" class="py-4 px-3 bg-filterbackground border border-filterborder rounded-lg font-semibold text-sm text-title mb-4">
+                            {{__('booking.total_price')}}
+                            <span class="font-normal text-base text-reviews">
+                                ({{__('apartment.price_tax') }})
+                            </span>
+                            <span id="total_price" class="float-right rtl:float-left">
+                                {{ calculateTotalWithTax($total_price) .' '.__('apartment.price') }} 
+                            </span>
+                        </p>
                     <ul>
                         @foreach ($payment_details as $item)
                             <li>
@@ -245,15 +261,17 @@
 
 @push('js')
 <script>
-   $(document).ready(function() {
+    $(document).ready(function() {
         $('#verify_coupon').on('click', function() {
-            const couponCode = $('#coupon_code').val();
+            const couponCode = $('#coupon_code').val().trim();
             const apartment_id = $('#apartment_id').val();
             const totalNights = $('#number_of_nights').val();
-            if (couponCode.trim() === "") {
+    
+            if (couponCode === "") {
                 $('#coupon_message').text("{{ __('apartment.enter_coupon') }}");
                 return;
             }
+    
             $.ajax({
                 url: '{{ route("web-booking.coupons.verify") }}',
                 method: 'POST',
@@ -264,14 +282,32 @@
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
-                    // $('#verify_coupon').prop('disabled', true);
                     discount = response.discount;
+    
                     let discountText = response.type === "percentage" ? "%" : "{{ __('apartment.price_unit') }}";
-                    $('#coupon_message').text("{{ __('apartment.coupon_applied') }}: " + discount);
-                    let total_price = "{{$total_price}}";
-                     
-                    $('#total_price').text(response.final_price + ' {{ __("apartment.price") }}');
-
+                    let discountValue = response.type === "percentage" ? (response.discount + "%") : (response.discount + " {{ __('apartment.price_unit') }}");
+    
+                    $('#coupon_message').text("{{ __('apartment.coupon_applied') }}: " + discountValue);
+    
+                    let total_price = response.final_price;
+    
+                    // إزالة أي عنصر خصم قديم لمنع التكرار
+                    $('#discount_row').remove();
+    
+                    // إضافة صف جديد قبل عرض الإجمالي
+                    let discountHtml = `
+                        <li id="discount_row" class="mb-4 font-semibold text-sm text-title text-green-600">
+                            <span>{{ __('apartment.discount_applied') }}</span>
+                            <span class="float-right rtl:float-left"> -${discountValue} </span>
+                            <div class="clear-both"></div>
+                        </li>
+                    `;
+    
+                    $(discountHtml).insertBefore('#total_price_container');
+    
+                    // تحديث السعر النهائي
+                    $('#total_price').text(total_price + ' {{ __("apartment.price") }}');
+    
                     calculateNightsAndCost();
                 },
                 error: function() {
@@ -279,6 +315,7 @@
                 }
             }); 
         });
-   });
-</script>
+    });
+    </script>
+    
 @endpush
