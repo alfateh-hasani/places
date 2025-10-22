@@ -26,7 +26,13 @@
     <div class="container">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h3 class="mb-0"><i class="la la-calendar-check"></i> تقويم الحجوزات - شقة #{{ $apartmentId }}</h3>
+                @php
+                    $apartment = \App\Models\Apartment::find($apartmentId);
+                    $apartmentName = $apartment ? ($apartment->name_ar ?? $apartment->name_en) : 'غير معروف';
+                    $lang = app()->getLocale(); // Get the current language
+                    $apartmentName = $lang === 'ar' ? $apartment->name_ar : $apartment->name_en;
+                @endphp
+                <h3 class="mb-0 text-white"><i class="la la-calendar-check"></i> تقويم الحجوزات - شقة {{ $apartmentName }}</h3>
             </div>
             <div class="card-body">
                 <!-- ✅ دليل الألوان -->
