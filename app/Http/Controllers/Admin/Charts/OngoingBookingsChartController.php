@@ -18,8 +18,8 @@ class OngoingBookingsChartController extends ChartController
     public function data()
     {
         $current_date = Carbon::today();
-        $ongoing_bookings = Booking::where('check_in', '<=', $current_date)
-            ->where('check_out', '>=', $current_date)
+        $ongoing_bookings = Booking::where('check_in', '=', $current_date)
+            // ->where('check_out', '>=', $current_date)
             ->count();
 
         // في هذه الحالة مجرد قيمة واحدة (مثلاً يعرض عدد الحجوزات الجارية كرقم)

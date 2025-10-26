@@ -29,17 +29,14 @@ class TransactionController extends CrudController
         CRUD::setModel(\App\Models\Transaction::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/transaction');
         CRUD::setEntityNameStrings(__('cms.transaction'), __('cms.transaction'));
-        CRUD::denyAccess(['create', 'delete','update']);
+        CRUD::denyAccess(['create', 'delete', 'update']);
 
-        
+
         if (!backpack_user()->can('transaction.list')) {
             abort(403, 'Unauthorized Access - List');
         }
-
-       
-
     }
-    
+
 
     /**
      * Define what happens when the List operation is loaded.
@@ -49,6 +46,8 @@ class TransactionController extends CrudController
      */
     protected function setupListOperation()
     {
+            $this->crud->enableExportButtons();
+            
         // Customer ID with icon
         CRUD::addColumn([
             'name' => 'customer_id',
@@ -63,9 +62,9 @@ class TransactionController extends CrudController
         CRUD::addColumn([
             'name' => 'booking_id',
             'type' => 'text',
-            'label' =>__('cms.booking') . ' <i class="la la-book"></i>',
+            'label' => __('cms.booking') . ' <i class="la la-book"></i>',
             'value' => function ($entry) {
-                return $entry->booking?->number_of_booking ;
+                return $entry->booking?->number_of_booking;
             },
         ]);
 
@@ -86,39 +85,39 @@ class TransactionController extends CrudController
             }
         ]);
 
-     // Type with colored badges
-    CRUD::addColumn([
-        'name' => 'type',
-        'type' => 'custom_html',
-        'label' => __('cms.type') . ' <i class="la la-exchange"></i>',
-        'value' => function ($entry) {
-            $color = $entry->type === 'deposit' ? 'success' : 'danger';
-            $typeLabel = $entry->type === 'deposit' ? __('cms.type_deposit') : __('cms.type_withdrawal');
-            return "<span class='badge badge-{$color}'>" . ucfirst($typeLabel) . "</span>";
-        }
-    ]);
+        // Type with colored badges
+        CRUD::addColumn([
+            'name' => 'type',
+            'type' => 'custom_html',
+            'label' => __('cms.type') . ' <i class="la la-exchange"></i>',
+            'value' => function ($entry) {
+                $color = $entry->type === 'deposit' ? 'success' : 'danger';
+                $typeLabel = $entry->type === 'deposit' ? __('cms.type_deposit') : __('cms.type_withdrawal');
+                return "<span class='badge badge-{$color}'>" . ucfirst($typeLabel) . "</span>";
+            }
+        ]);
 
-    // Status with colored badges
-    CRUD::addColumn([
-        'name' => 'status',
-        'type' => 'custom_html',
-        'label' => __('cms.status') . ' <i class="la la-info-circle"></i>',
-        'value' => function ($entry) {
-            $statusColors = [
-                'pending' => 'warning',
-                'completed' => 'success',
-                'failed' => 'danger',
-            ];
-            $statusLabels = [
-                'pending' => __('cms.status_pending'),
-                'completed' => __('cms.status_completed'),
-                'failed' => __('cms.status_failed'),
-            ];
-            $color = $statusColors[$entry->status] ?? 'secondary';
-            $label = $statusLabels[$entry->status] ?? ucfirst($entry->status);
-            return "<span class='badge badge-{$color}'>{$label}</span>";
-        }
-    ]);
+        // Status with colored badges
+        CRUD::addColumn([
+            'name' => 'status',
+            'type' => 'custom_html',
+            'label' => __('cms.status') . ' <i class="la la-info-circle"></i>',
+            'value' => function ($entry) {
+                $statusColors = [
+                    'pending' => 'warning',
+                    'completed' => 'success',
+                    'failed' => 'danger',
+                ];
+                $statusLabels = [
+                    'pending' => __('cms.status_pending'),
+                    'completed' => __('cms.status_completed'),
+                    'failed' => __('cms.status_failed'),
+                ];
+                $color = $statusColors[$entry->status] ?? 'secondary';
+                $label = $statusLabels[$entry->status] ?? ucfirst($entry->status);
+                return "<span class='badge badge-{$color}'>{$label}</span>";
+            }
+        ]);
 
         // Payment Gateway with icons
         CRUD::addColumn([
@@ -126,7 +125,7 @@ class TransactionController extends CrudController
             'type' => 'enum',
             'label' => __('cms.payment_gateway') . ' <i class="la la-credit-card"></i>',
             'value' => function ($entry) {
-                return __('cms.'.$entry->payment_gateway)   ;
+                return __('cms.' . $entry->payment_gateway);
             }
         ]);
 
@@ -139,6 +138,20 @@ class TransactionController extends CrudController
                 return '<span class="badge badge-info">' . \Carbon\Carbon::parse($entry->created_at)->format('d M Y') . '</span>';
             }
         ]);
+
+  
+        $this->crud->addFilter([
+            'name'  => 'status',
+            'type'  => 'dropdown',
+            'label' => __('cms.status'),
+        ], [
+            'pending'   => __('cms.status_pending'),
+            'completed' => __('cms.status_completed'),
+            'failed'    => __('cms.status_failed'),
+        ], function ($value) {
+            $this->crud->addClause('where', 'status', $value);
+        });
+     
     }
 
     protected function setupShowOperation()
@@ -175,12 +188,11 @@ class TransactionController extends CrudController
                         </tr>
                         <tr>
                             <th>' . __('cms.payment_gateway') . ' <i class="la la-credit-card"></i></th>
-                            <td>' . __('cms.'.$entry->payment_gateway) . '</td>
+                            <td>' . __('cms.' . $entry->payment_gateway) . '</td>
                         </tr>
                     </table>';
             }
         ]);
-        
     }
 
     protected function getStatusBadge($status)
@@ -200,4 +212,3 @@ class TransactionController extends CrudController
         return "<span class='badge badge-{$color}'>{$label}</span>";
     }
 }
-
