@@ -13,6 +13,10 @@ class UnitsAvailableChartController extends ChartController
     {
         $this->chart = new Chart();
         $this->chart->load(backpack_url('charts/units-available'));
+            $this->chart->displayAxes(false);
+        $this->chart->displayLegend(true);
+         $labels = ['Available Units', 'Booked Units'];
+            $this->chart->labels($labels);
     }
 
     public function data()
