@@ -15,7 +15,7 @@ class UnitsAvailableChartController extends ChartController
         $this->chart->load(backpack_url('charts/units-available'));
             $this->chart->displayAxes(false);
         $this->chart->displayLegend(true);
-         $labels = ['Available Units', 'Booked Units'];
+         $labels = [__('cms.available_units'), __('cms.booked_units')];
             $this->chart->labels($labels);
     }
 
@@ -28,7 +28,7 @@ class UnitsAvailableChartController extends ChartController
             ->count();
         $units_available = $total_units - $ongoing_bookings;
 
-        $this->chart->labels(['Available Units']);
+        $this->chart->labels([__('cms.available_units'), __('cms.booked_units')]);
         $this->chart->dataset('Units Available', 'doughnut', [$units_available, $ongoing_bookings])
             ->backgroundColor(['rgba(75, 192, 192, 0.4)','rgba(201, 203, 207, 0.4)'])
             ->color(['rgba(75, 192, 192, 1)','rgba(201, 203, 207, 1)']) ;

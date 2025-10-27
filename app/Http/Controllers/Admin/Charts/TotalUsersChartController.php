@@ -7,62 +7,54 @@ use ConsoleTVs\Charts\Classes\Chartjs\Chart;
 use App\Models\Customer;
 use Carbon\Carbon;
 
-/**
- * Class WeeklyCustomersChartController
- * @package App\Http\Controllers\Admin\Charts
- */
 class TotalUsersChartController extends ChartController
 {
     public function setup()
     {
         $this->chart = new Chart();
 
-        // Set the chart type and the AJAX data loading URL
-        $this->chart->type('line'); // نوع الرسم البياني 'line'
-        $this->chart->load(backpack_url('charts/total-users'));
-    }
-
-    /**
-     * Respond to AJAX calls with the chart data.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function data()
-    {
-        // Get the current date
-        $end_date = Carbon::now();
-        // Get the start date (7 weeks ago)
-        $start_date = Carbon::now()->subWeeks(55);
-
-        // Group customers by week and count the registrations
-        $registrations_by_week = Customer::whereBetween('created_at', [$start_date, $end_date])
-            ->selectRaw('YEARWEEK(created_at) as week, COUNT(*) as count')
-            ->groupBy('week')
-            ->orderBy('week')
-            ->get();
-
-        // Prepare data for the chart
         $labels = [];
         $data = [];
+        $monthsToLookBack = 12;
 
-        foreach ($registrations_by_week as $week) {
-            $week_number = $week->week;
-            $labels[] = "Week " . substr($week_number, -2); // عرض الأسبوع بصيغة "Week XX"
-            $data[] = $week->count;
+        Carbon::setLocale('ar'); 
+
+        for ($i = $monthsToLookBack - 1; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+
+            $labels[] = $date->isoFormat('MMM YYYY'); 
+
+            $endOfMonth = $date->copy()->endOfMonth()->toDateTimeString();
+
+            $count = Customer::where('created_at', '<=', $endOfMonth)->count(); 
+            $data[] = $count;
         }
+        
+        $this->chart->options([
+            'scales' => [
+                'yAxes' => [
+                    [
+                        'ticks' => [
+                            'beginAtZero' => true,
+                            'stepSize' => 1, 
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+        
+        $this->chart->title('إجمالي العملاء التراكمي على مدى آخر 12 شهرًا');
 
-        // If no data, provide placeholder values
-        if (empty($labels)) {
-            $labels = ['No Data'];
-            $data = [0];
-        }
+        $this->chart->dataset('إجمالي العملاء', 'bar', $data) 
+             ->backgroundColor('rgba(70, 127, 208, 0.7)')
+             ->options([
+                 'borderColor' => 'rgb(70, 127, 208)',
+                 'borderWidth' => 1,
+             ]);
 
-        // Set the chart data
+        $this->chart->displayAxes(true);
+        $this->chart->displayLegend(true);
+        
         $this->chart->labels($labels);
-        $this->chart->dataset('Customer Registrations by Week', 'line', $data)
-            ->color('rgba(54, 162, 235, 1)')
-            ->backgroundColor('rgba(54, 162, 235, 0.4)');
-
-        return $this->chart->api();
     }
 }
