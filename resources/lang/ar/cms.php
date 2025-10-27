@@ -197,4 +197,5 @@ return [
     'booked_units' => 'الوحدات المحجوزة',
     'ongoing_bookings' => 'الحجوزات الجارية',
     'monthly_bookings' => 'الحجوزات الشهرية',
+    'date_range' => 'نطاق التاريخ',
 ];

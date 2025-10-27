@@ -169,4 +169,5 @@ return [
     'booked_units' => 'Booked Units',
     'ongoing_bookings' => 'Ongoing Bookings',
     'monthly_bookings' => 'Monthly Bookings',
+    'date_range' => 'Date Range',
 ];
