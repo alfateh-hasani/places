@@ -13,8 +13,10 @@ class MonthlyBookingsChartController extends ChartController
     {
         $this->chart = new Chart();
 
-        // Set the chart type and the AJAX data loading URL
-        $this->chart->type('line'); // يمكنك تغييره إلى 'bar'
+        // نوع المخطط (يمكن تغييره إلى 'bar' أو 'pie')
+        $this->chart->type('line');
+
+        // تحميل البيانات عبر Ajax
         $this->chart->load(backpack_url('charts/monthly-bookings'));
     }
 
@@ -23,21 +25,31 @@ class MonthlyBookingsChartController extends ChartController
         $start_of_month = Carbon::now()->startOfMonth();
         $end_of_month = Carbon::now()->endOfMonth();
 
+        // 📊 استعلام واحد لجلب عدد الحجوزات لكل يوم
+        $bookings = Booking::selectRaw('DATE(created_at) as date, COUNT(*) as total')
+            ->whereBetween('created_at', [$start_of_month, $end_of_month])
+            ->groupBy('date')
+            ->pluck('total', 'date'); // يُرجع [ '2025-10-01' => 5, '2025-10-02' => 7, ... ]
+
         $labels = [];
         $data = [];
 
+        // نمرّ على كل أيام الشهر الحالي
         for ($date = $start_of_month->copy(); $date->lte($end_of_month); $date->addDay()) {
-            $labels[] = $date->format('d M'); // يوم وشهر
-            $data[] = Booking::whereDate('created_at', $date->format('Y-m-d'))->count();
+            $dateString = $date->format('Y-m-d');
+            $labels[] = $date->format('d M'); // مثال: "01 Oct"
+            $data[] = $bookings[$dateString] ?? 0; // إذا لا يوجد حجز في اليوم = صفر
         }
 
+        // معالجة حالة عدم وجود بيانات
         if (empty($data)) {
             $labels[] = 'No Data';
             $data[] = 0;
         }
 
+        // إعداد بيانات المخطط
         $this->chart->labels($labels);
-        $this->chart->dataset('Bookings This Month', 'line', $data)
+        $this->chart->dataset(__('cms.monthly_bookings'), 'line', $data)
             ->color('rgba(75, 192, 192, 1)')
             ->backgroundColor('rgba(75, 192, 192, 0.4)');
 

@@ -165,4 +165,8 @@ return [
     'link_en' => 'Link in English',
     'floor_number' => 'Floor Number',
     'unit_number' => 'Unit Number',
+    'available_units' => 'Available Units',
+    'booked_units' => 'Booked Units',
+    'ongoing_bookings' => 'Ongoing Bookings',
+    'monthly_bookings' => 'Monthly Bookings',
 ];

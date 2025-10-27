@@ -193,4 +193,8 @@ return [
     'name' =>'الاسم',
     'category_2' =>'التصنيفات الداخلي',
     'category_select2' => 'اختر تصنيف',
+    'available_units' => 'الوحدات المتاحة',
+    'booked_units' => 'الوحدات المحجوزة',
+    'ongoing_bookings' => 'الحجوزات الجارية',
+    'monthly_bookings' => 'الحجوزات الشهرية',
 ];

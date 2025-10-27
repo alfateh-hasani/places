@@ -38,6 +38,7 @@ class ReportsController extends Controller
      */
     public function index(Request $request)
     {
+           
         // الحصول على الفلاتر من الطلب
         $fromDate    = $request->input('from_date', Carbon::now()->startOfMonth()->toDateString());
         $toDate      = $request->input('to_date', Carbon::now()->endOfMonth()->toDateString());

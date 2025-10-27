@@ -24,7 +24,7 @@ class OngoingBookingsChartController extends ChartController
 
         // في هذه الحالة مجرد قيمة واحدة (مثلاً يعرض عدد الحجوزات الجارية كرقم)
         $this->chart->labels([ 'Today' ]);
-        $this->chart->dataset('Ongoing Bookings', 'bar', [$ongoing_bookings])
+        $this->chart->dataset(__('cms.ongoing_bookings'), 'bar', [$ongoing_bookings])
             ->color('rgba(255, 99, 132, 1)')
             ->backgroundColor('rgba(255, 99, 132, 0.4)');
 
