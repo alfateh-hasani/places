@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\ApartmentRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Carbon\Carbon;
 
 /**
  * Class ApartmentController
@@ -46,8 +47,8 @@ class TransactionController extends CrudController
      */
     protected function setupListOperation()
     {
-            $this->crud->enableExportButtons();
-            
+        $this->crud->enableExportButtons();
+
         // Customer ID with icon
         CRUD::addColumn([
             'name' => 'customer_id',
@@ -139,7 +140,7 @@ class TransactionController extends CrudController
             }
         ]);
 
-  
+
         $this->crud->addFilter([
             'name'  => 'status',
             'type'  => 'dropdown',
@@ -151,7 +152,45 @@ class TransactionController extends CrudController
         ], function ($value) {
             $this->crud->addClause('where', 'status', $value);
         });
-     
+
+
+        $this->crud->addFilter(
+            [
+                'type'  => 'date_range',
+                'name'  => 'from_to',
+                'label' => __('cms.date_range'),
+            ],
+            false,
+            function ($value) {
+
+                // تحقق أولًا إذا كان $value موجود وصالح
+                if (empty($value)) return;
+
+                $dates = json_decode($value);
+
+                if (!isset($dates->from) || !isset($dates->to)) return;
+
+                // تحويل الأرقام العربية إلى إنجليزية
+                $mapping = ['٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9'];
+                $from = preg_replace_callback('/[٠-٩]/u', function ($m) use ($mapping) {
+                    return $mapping[$m[0]];
+                }, $dates->from);
+                $to   = preg_replace_callback('/[٠-٩]/u', function ($m) use ($mapping) {
+                    return $mapping[$m[0]];
+                }, $dates->to);
+
+                try {
+                    $from = Carbon::parse($from)->startOfDay()->format('Y-m-d H:i:s');
+                    $to   = Carbon::parse($to)->endOfDay()->format('Y-m-d H:i:s');
+
+                    $this->crud->query = $this->crud->query->whereBetween('created_at', [$from, $to]);
+                } catch (\Exception $e) {
+                    // لا تفشل العملية إذا كان التاريخ غير صالح
+                    \Log::warning('Invalid date range filter: ' . $value);
+                    return;
+                }
+            }
+        );
     }
 
     protected function setupShowOperation()
