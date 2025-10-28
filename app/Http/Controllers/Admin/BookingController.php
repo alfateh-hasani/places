@@ -64,6 +64,7 @@ class BookingController extends CrudController
      */
     protected function setupListOperation()
     {
+           $this->crud->enableExportButtons();
         // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
         $this->crud->query->where('is_airbnb_booking', '!=', 1);
         
@@ -208,6 +209,49 @@ class BookingController extends CrudController
             'type' => 'enum',
             'label' => __('cms.payment_method_code') . ' <i class="la la-wallet"></i>',
         ]);
+
+     CRUD::addFilter(
+        [
+            'type'  => 'date_range',
+            'name'  => 'from_to',
+            'label' => __('cms.date_range'),
+        ],
+        false,
+        function ($value) {
+            // Skip if empty
+            if (empty($value)) {
+                return;
+            }
+
+            $dates = json_decode($value);
+
+            if (!isset($dates->from) || !isset($dates->to)) {
+                return;
+            }
+
+            // Convert Arabic numerals → English (same as Transaction)
+            $mapping = ['٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
+                        '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9'];
+
+            $from = preg_replace_callback('/[٠-٩]/u', function ($m) use ($mapping) {
+                return $mapping[$m[0]];
+            }, $dates->from);
+
+            $to = preg_replace_callback('/[٠-٩]/u', function ($m) use ($mapping) {
+                return $mapping[$m[0]];
+            }, $dates->to);
+
+            try {
+                $from = \Carbon\Carbon::parse($from)->startOfDay()->format('Y-m-d H:i:s');
+                $to   = \Carbon\Carbon::parse($to)->endOfDay()->format('Y-m-d H:i:s');
+
+                $this->crud->query = $this->crud->query->whereBetween('created_at', [$from, $to]);
+            } catch (\Exception $e) {
+                \Log::warning('Invalid date range filter (Booking): ' . $value);
+                // silently ignore bad dates – same behaviour as TransactionController
+            }
+        }
+    );
     }
     
     
