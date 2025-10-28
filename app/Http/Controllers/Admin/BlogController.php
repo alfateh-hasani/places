@@ -210,7 +210,7 @@ class BlogController extends CrudController
 
         $this->crud->addField([
             'name' => 'content_ar',
-            'type' => 'ckeditor',
+            'type' => 'quill',
             'label' =>  __('cms.content_ar'),
             'attributes' => [
                 'rows' => 5,
@@ -221,7 +221,7 @@ class BlogController extends CrudController
         ]);
         $this->crud->addField([
             'name' => 'content_en',
-            'type' => 'ckeditor',
+            'type' => 'quill',
             'label' =>  __('cms.content_en'),
             'attributes' => [
                 'rows' => 5,
