@@ -85,7 +85,7 @@ class ApartmentResource extends JsonResource
         }
         //booked days
         if ($this->whenLoaded('bookings')) {
-            $data['booked_days'] = $this->booked_days($this->bookings->where('status', '!=', 'canceled'));
+            $data['booked_days'] = $this->booked_days($this->bookings->whereNotIn('status', ['canceled', 'customer_canceled']));
         }
 
         return $data;

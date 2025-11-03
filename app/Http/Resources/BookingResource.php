@@ -38,6 +38,12 @@ class BookingResource extends JsonResource
             'has_review' =>  Review::existsForBooking( $this->customer_id , $this->id),
             'review_avaliable' => now()->gt($this->check_out),
             'show_login_btn'  => (bool) $this->checkLoginInfoShow(),
+            'can_cancel' => (bool) $this->canBeCanceled(),
+            // معلومات الاسترداد
+            'refund_status' => $this->refund_status,
+            'refund_status_title' => $this->refund_status ? __('cms.refund_status_' . $this->refund_status) : null,
+            'refund_amount' => $this->refund_amount ? number_format($this->refund_amount, 2, '.', '') : null,
+            'refund_date' => $this->refund_date ? $this->refund_date->format('Y-m-d H:i') : null,
 
         ];
     }

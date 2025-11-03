@@ -113,7 +113,15 @@ class BookingController extends Controller
 
     private function bookingComplated($booking)
     {
-        Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+
+        try {
+
+            if($booking->customer_email) {
+                Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+            }
+        } catch (\Exception $e) {
+            //dd($e->getMessage());
+        }
 
         $building = Building::where('id', $booking?->apartment?->building_id)->first();
         if ($building) {
@@ -354,26 +362,46 @@ class BookingController extends Controller
 
     public function cancelBooking(Request $request)
     {
-        $booking_id = $request->booking_id;
-        $cancellationWindow = Config::get('settings.cancel_booking');
-        $booking = $this->booking->find($booking_id);
+        $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+        
+        $customer = auth()->user();
+        $booking = $this->booking->where([
+            ['id', $request->booking_id],
+            ['customer_id', $customer->id]
+        ])->first();
+        
         if (!$booking) {
             return redirect()->back()->with('error', __('api.booking_not_found'));
         }
-        $checkInDate = Carbon::parse($booking->check_in);
-        $currentDate = Carbon::now();
-        $daysBeforeCheckIn = $currentDate->diffInDays($checkInDate, false);
-        if ($daysBeforeCheckIn < $cancellationWindow) {
-            return response()->json([
-                'status' => 'error',
-                'message' => __('booking.cancellation_window_expired'),
-            ], 400);
+        
+        // التحقق من إمكانية إلغاء الحجز
+        if (!$booking->canBeCanceled()) {
+            return redirect()->back()->with('error', __('api.booking_cannot_be_canceled'));
         }
-        $booking->status = 'canceled';
+        
+        // تحديث حالة الحجز إلى customer_canceled وrefund_status إلى pending
+        $booking->status = 'customer_canceled';
+        $booking->refund_status = 'pending';
+        $booking->refund_amount = $booking->final_price;
         $booking->save();
-        return response()->json([
-            'status' => 'success',
-            'message' => __('booking.success'),
-        ]);
+        
+        // إرسال إيميل للمشرف عند الإلغاء
+        try {
+            $building = Building::where('id', $booking?->apartment?->building_id)->first();
+            if ($building) {
+                $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $superVisorEmail = $superVisor?->email;
+                if ($superVisorEmail) {
+                    Mail::to($superVisorEmail)->send(new \App\Mail\BookingCanceled($booking));
+                }
+            }
+        } catch (\Exception $e) {
+            // تجاهل أخطاء الإيميل لتجنب فشل عملية الإلغاء
+            \Log::error('فشل في إرسال إيميل الإلغاء للمشرف: ' . $e->getMessage());
+        }
+        
+        return redirect()->back()->with('success', __('api.booking_canceled_successfully'));
     }
 }

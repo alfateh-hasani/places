@@ -321,7 +321,7 @@ class CustomerController extends Controller
 
         // If you want “current” to mean bookings that haven’t ended:
         $current = Booking::where('customer_id', $customer->id)
-            ->whereNotIn('status', ['pending', 'canceled'])
+            ->whereNotIn('status', ['pending', 'canceled', 'customer_canceled'])
             ->where('check_out', '>=', now())
             ->get();
 
@@ -340,7 +340,7 @@ class CustomerController extends Controller
         $previous = Booking::where('customer_id', $customer->id)
             ->where('check_out', '<', now())
             ->orWhere(function($query) use ($customer) {
-                $query->where('status', 'canceled')
+                $query->whereIn('status', ['canceled', 'customer_canceled'])
                     ->where('customer_id', $customer->id);
             })
             ->get();

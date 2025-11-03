@@ -145,6 +145,12 @@ class GeideaPayment implements PaymentMethodInterface
 
         $transaction->status = $isSuccess ? 'completed' : 'failed';
         $transaction->payment_gateway_response = json_encode($data);
+        
+        // حفظ order_id من response في Transaction
+        if (isset($data['orderId'])) {
+            $transaction->order_id = $data['orderId'];
+        }
+        
         $transaction->save();
 
         return [
@@ -152,6 +158,48 @@ class GeideaPayment implements PaymentMethodInterface
             'transaction_id' => $transaction->id,
             'order_id'       => $data['orderId']   ?? null,
             'reference'      => $data['reference'] ?? null,
+        ];
+    }
+
+    /* -----------------------------------------------------------------
+     |  Refund - استرداد المبلغ
+     |-----------------------------------------------------------------*/
+    public function refund($orderId, $amount)
+    {
+        $url = $this->apiBase . "/payment-intent/api/v2/direct/refund";
+        
+        $payload = [
+            'orderId' => $orderId,
+            'amount' => $this->fmt($amount),
+        ];
+
+        $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
+            ->acceptJson()
+            ->post($url, $payload);
+
+        Log::channel('payments')->info('Geidea Refund', [
+            'orderId' => $orderId,
+            'amount' => $amount,
+            'response' => $response->json(),
+            'status' => $response->status(),
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            // التحقق من نجاح الاسترداد
+            if (isset($data['responseCode']) && $data['responseCode'] === '000') {
+                return [
+                    'success' => true,
+                    'data' => $data,
+                    'message' => 'تم استرداد المبلغ بنجاح'
+                ];
+            }
+        }
+
+        return [
+            'success' => false,
+            'message' => 'فشل في استرداد المبلغ',
+            'error' => $response->json()
         ];
     }
 

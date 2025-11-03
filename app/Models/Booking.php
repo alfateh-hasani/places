@@ -34,6 +34,8 @@ class Booking extends Model
             'check_out_time' => 'datetime',
             'discount' => 'float',
             'passcode_generated_at' => 'datetime',
+            'refund_date' => 'datetime',
+            'refund_amount' => 'float',
         ];
     }
     protected static function boot()
@@ -81,6 +83,7 @@ class Booking extends Model
             'pending' => __('cms.status_pending'),
             'approved' => __('cms.status_approved'),
             'canceled' => __('cms.status_canceled'),
+            'customer_canceled' => __('cms.status_customer_canceled'),
             'rejected' => __('cms.status_rejected'),
             'finished' => __('cms.status_finished'),
             'booked' => __('cms.status_booked'),
@@ -222,6 +225,28 @@ class Booking extends Model
     {
         return LogOptions::defaults()
             ->logAll();
+    }
+
+    /**
+     * التحقق من إمكانية إلغاء الحجز بناءً على سياسة الإلغاء
+     */
+    public function canBeCanceled(): bool
+    {
+        // التحقق من أن الحجز في حالة approved و paid
+        if ($this->status !== 'approved' || $this->payment_status !== 'paid') {
+            return false;
+        }
+
+        // الحصول على سياسة الإلغاء من جدول settings
+        $setting = \DB::table('settings')->where('key', 'cancel_before_hours')->first();
+        $cancelBeforeHours = $setting ? (int)$setting->value : 24;
+
+        // حساب الفرق بالساعات بين الآن ووقت تسجيل الدخول
+        $checkInDateTime = $this->check_in->setTimeFromTimeString($this->check_in_time->format('H:i:s'));
+        $hoursUntilCheckIn = now()->diffInHours($checkInDateTime, false);
+
+        // التحقق من أن الوقت المتبقي أكبر من أو يساوي المطلوب
+        return $hoursUntilCheckIn >= $cancelBeforeHours;
     }
 
 }

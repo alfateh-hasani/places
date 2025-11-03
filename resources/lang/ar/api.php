@@ -23,5 +23,11 @@ return [
     'booking_status_booked' => 'تم الحجز',
     'payment_failed' => 'فشلت عملية الدفع',
     'booking_status_canceled' => 'تم الإلغاء',
+    'booking_status_customer_canceled' => 'تم الإلغاء من العميل',
     'transaction_not_exists' => 'العملية غير موجودة',
+    'booking_not_found' => 'الحجز غير موجود',
+    'booking_cannot_be_canceled' => 'لا يمكن إلغاء هذا الحجز. يجب أن يكون الحجز مؤكداً ومدفوعاً ويتبقى الوقت الكافي قبل موعد الدخول حسب سياسة الإلغاء',
+    'booking_canceled_successfully' => 'تم إلغاء الحجز بنجاح وسيتم استرداد المبلغ خلال الأيام القادمة',
+    'services_added' => 'تمت إضافة الخدمات بنجاح',
+    'payment_creation_failed' => 'فشل في إنشاء عملية الدفع',
 ];

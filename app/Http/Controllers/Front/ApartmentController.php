@@ -50,7 +50,7 @@ class ApartmentController extends Controller
                 'reviews',
                 'features',
                 'bookings' => function ($query) {
-                    $query->where('check_out', '>=', now()->startOfDay())->where('status', '!=', 'canceled');
+                    $query->where('check_out', '>=', now()->startOfDay())->whereNotIn('status', ['canceled', 'customer_canceled']);
                 },
                 'policy'
             ])

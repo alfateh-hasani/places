@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\AirbnbBookingController;
+use App\Http\Controllers\Admin\CanceledBookingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\LockController;
 
@@ -51,6 +52,10 @@ Route::group([
     // Route for changing payment status
     Route::post('booking/{id}/change-payment-status/{status}', [BookingController::class, 'changePaymentStatus'])->name('admin.booking.change-payment-status');
     
+    // Routes for canceled bookings and refund process
+    Route::crud('canceled-bookings', CanceledBookingsController::class);
+    Route::post('canceled-bookings/{id}/process-refund/{action}', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.process-refund');
+    
     // Daily Occupancy
     Route::get('charts/daily-occupancy', [\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');
 
@@ -87,6 +92,11 @@ Route::group([
 
     Route::crud('category', 'CategoryCrudController');
     Route::crud('onboarding', 'OnboardingCrudController');
+    
+    // تعارضات قنوات الحجز
+    Route::crud('booking-channel-conflicts', 'BookingChannelConflictController');
+    Route::get('booking-channel-conflicts/{id}/resolve-conflict', 'BookingChannelConflictController@resolveConflict');
+    Route::get('booking-channel-conflicts/resolve-all-conflicts', 'BookingChannelConflictController@resolveAllConflicts');
 });
 
 

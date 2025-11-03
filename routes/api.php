@@ -41,7 +41,7 @@ Route::middleware('appSecret')->group(function () {
             Route::get('get-booking', 'getBooking');
             Route::get('login-apartment', 'loginApartment');
             Route::get('entry-apartment', 'entryApartment');
-            Route::post('cancel-booking', 'cancelBooking');
+            Route::post('cancel-booking', 'cancelBooking'); // إلغاء الحجز من العميل
             Route::post('add-booking', 'addBooking');
             Route::get('get-booking-via-customer', 'getBookingViaCustomer');
             Route::post('determine-booking', 'determineBookingStatus');

@@ -14,6 +14,7 @@ use Auth;
 use Mail;
 use Illuminate\Http\Request;
 use App\Services\ProcessPaymentService;
+use App\Models\Building;
 
 
 class BookingController extends Controller{
@@ -300,6 +301,51 @@ class BookingController extends Controller{
             return $this->errorResponse($response['message']);
         }
         return $this->successResponse(__('api.services_added'));
+    }
+
+    public function cancelBooking(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+        
+        $customer = Auth::guard('api')->user();
+        $booking = $this->booking->where([
+            ['id', $request->booking_id],
+            ['customer_id', $customer->id]
+        ])->first();
+        
+        if (!$booking) {
+            return $this->errorResponse(__('api.booking_not_found'));
+        }
+        
+        // التحقق من إمكانية إلغاء الحجز
+        if (!$booking->canBeCanceled()) {
+            return $this->errorResponse(__('api.booking_cannot_be_canceled'));
+        }
+        
+        // تحديث حالة الحجز إلى customer_canceled وrefund_status إلى pending
+        $booking->status = 'customer_canceled';
+        $booking->refund_status = 'pending';
+        $booking->refund_amount = $booking->final_price;
+        $booking->save();
+        
+        // إرسال إيميل للمشرف عند الإلغاء
+        try {
+            $building = \App\Models\Building::where('id', $booking?->apartment?->building_id)->first();
+            if ($building) {
+                $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $superVisorEmail = $superVisor?->email;
+                if ($superVisorEmail) {
+                    Mail::to($superVisorEmail)->send(new \App\Mail\BookingCanceled($booking));
+                }
+            }
+        } catch (\Exception $e) {
+            // تجاهل أخطاء الإيميل لتجنب فشل عملية الإلغاء
+            \Log::error('فشل في إرسال إيميل الإلغاء للمشرف: ' . $e->getMessage());
+        }
+        
+        return $this->successResponse(__('api.booking_canceled_successfully'));
     }
 
 }

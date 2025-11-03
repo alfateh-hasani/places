@@ -1,6 +1,7 @@
 @extends('layouts.master')
 @push('css')
-
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <style>
      .cancel-booking-btn[disabled] {
@@ -9,6 +10,38 @@
         cursor: not-allowed; 
         opacity: 0.6;  
     }
+    .bg-white {
+    
+    background-color: #0f0c0c;
+}
+/* SweetAlert2 buttons styling */
+.swal2-confirm {
+    background-color: #3085d6 !important;
+    background: #3085d6 !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    border-radius: 4px !important;
+    font-weight: bold !important;
+}
+.swal2-cancel {
+    background-color: #d33 !important;
+    background: #d33 !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    border-radius: 4px !important;
+    margin-right: 10px !important;
+    font-weight: bold !important;
+}
+.swal2-styled.swal2-confirm {
+    background-color: #3085d6 !important;
+    background: #3085d6 !important;
+}
+.swal2-styled.swal2-cancel {
+    background-color: #d33 !important;
+    background: #d33 !important;
+}
 </style>
 @endpush
 @section('content')
@@ -22,7 +55,7 @@
         </ul>
     </div>
 @endif
-<section class="profile py-5 lg:py-16 bg-[#eff3f6] min-h-screen lg:min-h-min">
+<section class="profile py-5 lg:py-16    min-h-screen lg:min-h-min text-white">
     <div class="container">
         <div>
             <div class="inline-block w-8 h-8 rounded-full bg-filteritem relative">
@@ -34,7 +67,7 @@
                 # {{$booking->number_of_booking }}
             </p>
         </div>
-        <div class="py-8 px-6 bg-white rounded-2xl mt-6">
+        <div class="py-8 px-6   rounded-2xl mt-6" style="background-color: #000;">
             <div class="border-b border-border pb-8 mb-8">
                <a href="{{route('apartments.show',$booking->apartment?->slug)}}" > 
                     <p class="font-semibold text-lg float-left  rtl:float-right py-2.5">
@@ -56,20 +89,27 @@
                         </span>
                     </a>
                     
+                    @if($booking->status !== 'customer_canceled' && $booking->status !== 'canceled')
                     <div class="relative group inline-block">
                         <button {{ $can_cancel ? '' : 'disabled' }}
-                            class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn" 
+                            class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}" 
                             data-booking-id="{{ $booking->id }}">
                             <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }}</span>
                         </button>
                     
                         <!-- Tooltip -->
+                        @if(!$can_cancel)
                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 translate-y-2 px-3 py-2 mb-3 
-                        bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-
-                            {{ __('booking.cancel_booking').' '.  Config::get('settings.cancel_booking') .' '. __('booking.days') }}
+                        bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            {{ __('booking.cancel_booking_required_hours', ['hours' => $cancel_before_hours ?? 24]) }}
                         </div>
+                        @endif
                     </div>
+                    @elseif($booking->status === 'customer_canceled')
+                    <div class="py-3 px-4 inline-block rounded-md bg-gray-200 text-gray-600 ml-2 cursor-not-allowed">
+                        <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ __('api.booking_status_customer_canceled') }}</span>
+                    </div>
+                    @endif
                     
 
                     @if (!$has_review and $booking->status == 'finished')
@@ -104,7 +144,20 @@
                             <p class="float-right rtl:float-left">#{{$booking->number_of_booking }}</p><div class="clear-both"></div></li>
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
                             <p class="text-gri float-left rtl:float-right">{{__('booking.status')}} :</p>
-                            <p class="float-right rtl:float-left text-[#10C13F]">{{__('booking.status_'.$booking->status )}}</p>
+                            <p class="float-right rtl:float-left {{ $booking->status === 'customer_canceled' ? 'text-red-600' : ($booking->status === 'approved' ? 'text-[#10C13F]' : 'text-gray-600') }}">
+                                @if($booking->status === 'customer_canceled')
+                                    {{__('api.booking_status_customer_canceled')}}
+                                    @if($booking->refund_status === 'pending')
+                                        <span class="block text-xs mt-1 text-orange-600">({{__('cms.refund_status_pending')}})</span>
+                                    @elseif($booking->refund_status === 'approved')
+                                        <span class="block text-xs mt-1 text-green-600">({{__('cms.refund_status_approved')}})</span>
+                                    @elseif($booking->refund_status === 'rejected')
+                                        <span class="block text-xs mt-1 text-red-600">({{__('cms.refund_status_rejected')}})</span>
+                                    @endif
+                                @else
+                                    {{__('booking.status_'.$booking->status )}}
+                                @endif
+                            </p>
                             <div class="clear-both"></div>
                         </li>
                         
@@ -134,7 +187,7 @@
                             @endif
                     </ul>
                 </div>
-                <div class="bg-footer border border-feature-border rounded-lg py-5 col-span-2">
+                <div class=" border border-feature-border rounded-lg py-5 col-span-2">
                     <div class="border-b border-feature-border pb-5 mb-5 px-5">
                         <p class="float-left rtl:float-right font-semibold">   {{__('booking.info')}} </p>
                         <svg class="float-right rtl:float-left text-price" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21">
@@ -306,10 +359,18 @@ $('#closeMe').on('click',function(){
 
 
 @push('js')
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @include('customer.section.script-form')
 <script>
 
 $(document).ready(function() {
+    // التأكد من تحميل SweetAlert2
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 is not loaded');
+        return;
+    }
+    
     $(".cancel-booking-btn").click(function() {
         var bookingId = $(this).data("booking-id");
         Swal.fire({
@@ -321,10 +382,11 @@ $(document).ready(function() {
             cancelButtonColor: '#d33',
             confirmButtonText: '{{ __("booking.yes") }}',
             cancelButtonText: '{{ __("booking.no") }}',
+            buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
+                HoldOn.open();
                 $.ajax({
-                    
                     url: "{{ route('web-booking.cancel') }}",
                     type: "POST",
                     headers: {
@@ -338,10 +400,13 @@ $(document).ready(function() {
                         Swal.fire({
                             icon: 'success',
                             title: "{{__('booking.success')}}",
-                            text: "{{__('booking.success_message')}}",
-                            button: true,
+                            text: "{{__('api.booking_canceled_successfully')}}",
+                            confirmButtonText: "{{__('booking.ok')}}",
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.reload();
+                            }
                         });
-                        // window.location.reload();
                     },
                     error: function(xhr) {
                     HoldOn.close();

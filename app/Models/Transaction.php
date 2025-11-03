@@ -9,6 +9,10 @@ class Transaction extends Model
 {
     use CrudTrait;
     protected $guarded = [];
+    
+    protected $casts = [
+        'order_id' => 'string',
+    ];
 
     public function customer(): BelongsTo
     {

@@ -13,6 +13,7 @@ use Cache;
 use Carbon\Carbon;
 use Config;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 class CustomerAccountController extends Controller
 {
     use generateSeoTrait;
@@ -128,13 +129,12 @@ class CustomerAccountController extends Controller
             'customer_id' => $user->id
         ])->first();
         
-         $cancellationWindow = Config::get('settings.cancel_booking');
-
-        $checkInDate = Carbon::parse($data['booking']->check_in);  
-        $currentDate = Carbon::now();  
-        $daysBeforeCheckIn = $currentDate->diffInDays($checkInDate, false); 
-
-        $data['can_cancel'] = $daysBeforeCheckIn >= $cancellationWindow;
+        // استخدام method canBeCanceled() من Booking model
+        $data['can_cancel'] = $data['booking']->canBeCanceled();
+        
+        // الحصول على عدد الساعات المطلوبة للإلغاء لعرضها في الواجهة
+        $cancelBeforeHoursSetting = \DB::table('settings')->where('key', 'cancel_before_hours')->first();
+        $data['cancel_before_hours'] = $cancelBeforeHoursSetting ? (int)$cancelBeforeHoursSetting->value : 24;
 
         // Get active passcode for this booking
         $data['active_passcode'] = $data['booking']->getActivePasscode();

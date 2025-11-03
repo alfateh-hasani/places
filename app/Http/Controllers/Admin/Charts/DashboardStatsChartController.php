@@ -111,7 +111,7 @@ class DashboardStatsChartController extends ChartController
 
         // 10. عدد الحجوزات الملغاة وحصتها من إجمالي الحجوزات
         $total_bookings = Booking::count();
-        $canceled_bookings_count = Booking::where('status', 'cancelled')->count();
+        $canceled_bookings_count = Booking::whereIn('status', ['canceled', 'customer_canceled'])->count();
         $canceled_bookings_rate = $total_bookings > 0 ? ($canceled_bookings_count / $total_bookings) * 100 : 0;
 
         // 11. عدد زوار الموقع 

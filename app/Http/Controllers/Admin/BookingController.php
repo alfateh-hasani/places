@@ -443,6 +443,7 @@ class BookingController extends CrudController
             'booked' => __('cms.status_booked'),
             'finished' => __('cms.status_finished'),
             'canceled' => __('cms.status_canceled'),
+            'customer_canceled' => __('cms.status_customer_canceled'),
         ];
         $statusColors = [
             'pending' => 'warning',
@@ -451,6 +452,7 @@ class BookingController extends CrudController
             'booked' => 'primary',
             'finished' => 'secondary',
             'canceled' => 'dark',
+            'customer_canceled' => 'danger',
         ];
         $color = $statusColors[$status] ?? 'info';
         $label = $statusLabels[$status] ?? ucfirst($status);
@@ -484,7 +486,7 @@ class BookingController extends CrudController
             $booking->save();
 
             $booking =  \App\Models\Booking::find($id);
-            if($status == 'canceled' && $booking->passcode_status == 'generated'){
+            if(($status == 'canceled' || $status == 'customer_canceled') && $booking->passcode_status == 'generated'){
 
                 $bookingActivePasscode = $booking->smartLockPasscodes()->first();
 
@@ -544,7 +546,8 @@ class BookingController extends CrudController
             'rejected' => __('cms.status_rejected'),
             'booked' => __('cms.status_booked'),
             'finished' => __('cms.status_finished'),
-            'canceled' => __('cms.status_canceled')
+            'canceled' => __('cms.status_canceled'),
+            'customer_canceled' => __('cms.status_customer_canceled'),
         ], function($value) {
             CRUD::addClause('where', 'status', $value);
         });
@@ -668,5 +671,6 @@ class BookingController extends CrudController
             return redirect()->back()->with('error', 'فشل في إعادة إنشاء الباس كود: ' . $e->getMessage());
         }
     }
+
 
 }

@@ -84,9 +84,19 @@
     <x-backpack::menu-item title="{{__('cms.booking_management')}}" icon="la la-calendar-check" :link="backpack_url('booking')" />
 @endcan
 
+{{-- Canceled Bookings (Customer Cancellations) --}}
+@can('booking.list')
+    <x-backpack::menu-item title="{{__('cms.canceled_bookings')}}" icon="la la-times-circle" :link="backpack_url('canceled-bookings')" />
+@endcan
+
 {{-- Airbnb Booking Management --}}
 @can('booking.list')
     <x-backpack::menu-item title="{{__('cms.airbnb_booking_management')}}" icon="la la-airbnb" :link="backpack_url('airbnb-booking')" />
+@endcan
+
+{{-- Booking Channel Conflicts --}}
+@can('booking_channel_conflict.list')
+    <x-backpack::menu-item title="{{__('cms.booking_channel_conflicts')}}" icon="la la-exclamation-triangle" :link="backpack_url('booking-channel-conflicts')" />
 @endcan
 
 {{-- customer --}}

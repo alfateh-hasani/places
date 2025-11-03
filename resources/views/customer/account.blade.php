@@ -2,11 +2,15 @@
 @push('css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css" />
 <link rel="stylesheet" href="{{asset('assets/plugin/HoldOn.min.css')}}" />
-
+<style>
+    .bg-white {
+        background-color: #0f0c0c !important;
+    }
+</style>
 @endpush
 @section('content')
 
-<section class="profile py-5 lg:py-16 bg-[#eff3f6] min-h-screen lg:min-h-min">
+<section class="profile py-5 lg:py-16  min-h-screen text-white lg:min-h-min">
     <div class="container">
         <div class="lg:grid lg:grid-cols-4 lg:gap-6 w-full mx-0">
            @include('customer.section.sidebar')
