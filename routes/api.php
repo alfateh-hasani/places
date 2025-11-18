@@ -1,10 +1,14 @@
 <?php
 
-use App\Http\Controllers\Api\{AuthController, BookingController, CustomerController, HomeController, OnboardingController};
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\GuestyController;
+use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\OnboardingController;
+use App\Http\Controllers\Api\OwnerRezWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
- 
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -12,10 +16,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('appSecret')->group(function () {
 
-    Route::post('otp/request',  [AuthController::class, 'requestOtp']);
-    Route::post('otp/verify',  [AuthController::class, 'verifyOtp'])->name('otp.verify');
-    Route::post('customer/register',  [AuthController::class, 'registerUser'])->name('otp.registerUser');
-
+    Route::post('otp/request', [AuthController::class, 'requestOtp']);
+    Route::post('otp/verify', [AuthController::class, 'verifyOtp'])->name('otp.verify');
+    Route::post('customer/register', [AuthController::class, 'registerUser'])->name('otp.registerUser');
 
     Route::middleware('auth:api')->group(function () {
         Route::controller(CustomerController::class)->prefix('customer')->group(function () {
@@ -71,10 +74,23 @@ Route::middleware('appSecret')->group(function () {
         Route::get('index', 'index');
     });
 
+    Route::controller(GuestyController::class)->prefix('guesty')->group(function () {
+        Route::get('token', 'token')->name('guesty.token');
+        Route::get('listings', 'listings')->name('guesty.listings');
+        Route::get('reservations', 'reservations')->name('guesty.reservations');
+        Route::get('reservations/{reservationId}', 'showReservation')->name('guesty.reservations.show');
+    });
+
 });
 Route::controller(BookingController::class)->prefix('payment-methods')->group(function () {
     Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
     // Route::post('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
     Route::get('success/{booking_id}/{booking_number}', 'paymentMethodSuccess')->name('paymentMethodSuccess');
     Route::get('failed', 'paymentMethodFailed')->name('paymentMethodFailed');
+});
+
+Route::controller(OwnerRezWebhookController::class)->group(function () {
+    Route::post('ownerrez', 'handle')->name('ownerrez.webhook');
+    Route::get('ownerrez', 'show')->name('ownerrez.webhook.show');
+    Route::get('ownerrez/oauth/callback', 'oauthCallback')->name('ownerrez.oauth.callback');
 });

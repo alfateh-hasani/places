@@ -1,0 +1,10 @@
+{
+    "agents": [
+        "copilot",
+        "codex"
+    ],
+    "editors": [
+        "vscode"
+    ],
+    "guidelines": []
+}

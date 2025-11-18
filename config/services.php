@@ -35,11 +35,29 @@ return [
         ],
     ],
 
-    'sciener'=>[
-        'client_id'=>'2c959287a856409ca8b572090a4ba040',
-        'client_secret'=>'dfa43b3b37160a8ef3042121c66a0dd4',
-        'username'=>'abdoshahen2013@gmail.com',
-        'password'=>'AZay2025',
-    ] 
+    'ownerrez' => [
+        'client_id' => env('OWNERREZ_CLIENT_ID'),
+        'client_secret' => env('OWNERREZ_CLIENT_SECRET'),
+        'webhook_user' => env('OWNERREZ_WEBHOOK_USER'),
+        'webhook_password' => env('OWNERREZ_WEBHOOK_PASSWORD'),
+        'cache_ttl' => (int) env('OWNERREZ_WEBHOOK_CACHE_TTL', 180),
+        'cache_key' => 'ownerrez:webhook:latest',
+    ],
+
+    'sciener' => [
+        'client_id' => '2c959287a856409ca8b572090a4ba040',
+        'client_secret' => 'dfa43b3b37160a8ef3042121c66a0dd4',
+        'username' => 'abdoshahen2013@gmail.com',
+        'password' => 'AZay2025',
+    ],
+
+    'guesty' => [
+        'client_id' => env('GUESTY_CLIENT_ID'),
+        'client_secret' => env('GUESTY_CLIENT_SECRET'),
+        'base_url' => env('GUESTY_BASE_URL', 'https://open-api.guesty.com'),
+        'token_url' => env('GUESTY_TOKEN_URL', 'https://open-api.guesty.com/oauth2/token'),
+        'timeout' => (int) env('GUESTY_TIMEOUT', 10),
+        'token_cache_key' => env('GUESTY_TOKEN_CACHE_KEY', 'guesty:access-token'),
+    ],
 
 ];
