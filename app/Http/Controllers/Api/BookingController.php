@@ -345,7 +345,14 @@ class BookingController extends Controller{
             \Log::error('فشل في إرسال إيميل الإلغاء للمشرف: ' . $e->getMessage());
         }
         
-        return $this->successResponse(__('api.booking_canceled_successfully'));
+        // إعادة تحميل الحجز للحصول على البيانات المحدثة
+        $booking->refresh();
+        
+        // إرجاع BookingResource المحدث للمبرمج لتحديث الـ state
+        $this->data['booking'] = new BookingResource($booking);
+        $this->data['message'] = __('api.booking_canceled_successfully');
+        
+        return $this->successResponse($this->data, __('api.booking_canceled_successfully'));
     }
 
 }

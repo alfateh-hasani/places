@@ -64,6 +64,14 @@ class ImportAirbnbICS extends Command
                 $events = iterator_to_array($vcal->VEVENT ?? []);
                 $this->line('   Parsed events: ' . count($events));
 
+                // حذف جميع حجوزات Airbnb القديمة من نفس المصدر قبل الاستيراد
+                if (!(bool)$this->option('dry-run')) {
+                    $deleted = $this->deleteOldAirbnbBookings($apartment->id, $icsUrl);
+                    if ($deleted > 0) {
+                        $this->line("   🗑️  Deleted {$deleted} old Airbnb booking(s)");
+                    }
+                }
+
                 foreach ($events as $event) {
                     /** @var VEvent $event */
                     $this->processEvent($apartment->id, $icsUrl, $event, (bool)$this->option('dry-run'));
@@ -136,7 +144,7 @@ class ImportAirbnbICS extends Command
     private function processEvent(int $apartmentId, string $icsUrl, VEvent $event, bool $dryRun = false): void
     {
         $uid   = (string)($event->UID ?? '');
-        $resId = $this->extractReservationId($event); // المعرّف الثابت للاعتماد
+        $resId = $this->extractReservationId($event);
 
         $start = $event->DTSTART->getDateTime();
         $end   = isset($event->DTEND) ? $event->DTEND->getDateTime() : (clone $start)->modify('+1 day');
@@ -156,66 +164,16 @@ class ImportAirbnbICS extends Command
             return;
         }
 
-        DB::transaction(function () use ($apartmentId, $uid, $resId, $sequence, $checkIn, $checkOut, $icsUrl, $status) {
-            $existing = null;
+        // تجاهل الحجوزات الملغية - تم حذفها مسبقاً
+        if ($status === 'CANCELLED') {
+            return;
+        }
 
-            if ($resId) {
-                $existing = Booking::query()
-                    ->where('apartment_id', $apartmentId)
-                    ->where('is_airbnb_booking', 1)
-                    ->where('external_reservation_id', $resId)
-                    ->lockForUpdate()
-                    ->first();
-            } elseif ($uid !== '') {
-                // Fallback محدود عند غياب resId
-                $existing = Booking::query()
-                    ->where('apartment_id', $apartmentId)
-                    ->where('is_airbnb_booking', 1)
-                    ->where('external_uid', $uid)
-                    ->lockForUpdate()
-                    ->first();
-            }
-
-            if ($status === 'CANCELLED') {
-                if ($existing) {
-                    $existing->update(['status' => 'cancelled', 'updated_at' => now()]);
-                    $this->line("   Cancelled RES={$resId} UID={$uid}");
-                    $this->cleanupConflicts($apartmentId, $resId, $uid);
-                }
-                return;
-            }
-
-            if ($existing) {
-                $oldSeq = (int)($existing->external_sequence ?? 0);
-                if ($sequence < $oldSeq) {
-                    $this->line("   Ignored older sequence RES={$resId} UID={$uid} seq={$sequence}<{$oldSeq}");
-                    return;
-                }
-
-                $existing->update([
-                    'external_reservation_id' => $resId,
-                    'external_uid'            => $uid ?: ($existing->external_uid ?? null),
-                    'external_sequence'       => $sequence,
-                    'number_of_booking'       => "airbnb_{$apartmentId}_{$checkIn}_{$checkOut}",
-                    'check_in'                => $checkIn,
-                    'check_out'               => $checkOut,
-                    'number_of_nights'        => Carbon::parse($checkIn)->diffInDays(Carbon::parse($checkOut)),
-                    'status'                  => 'booked',
-                    'payment_status'          => $existing->payment_status ?: 'paid',
-                    'payment_method_code'     => $existing->payment_method_code ?: 'airbnb',
-                    'ics_url'                 => $icsUrl,
-                    'is_airbnb_booking'       => true,
-                    'updated_at'              => now(),
-                ]);
-
-                $this->line("   Updated RES={$resId} {$checkIn} → {$checkOut}");
-                $this->cleanupConflicts($apartmentId, $resId, $uid);
-                return;
-            }
-
+        DB::transaction(function () use ($apartmentId, $uid, $resId, $sequence, $checkIn, $checkOut, $icsUrl) {
+            // التحقق من التعارضات مع مصادر أخرى (ليس Airbnb من نفس المصدر)
             $overlapping = Booking::query()
                 ->where('apartment_id', $apartmentId)
-                ->where('status', '!=', 'cancelled')
+                ->whereIn('status', ['booked', 'approved', 'pending'])
                 ->where(function ($q) use ($checkIn, $checkOut) {
                     $q->where('check_in', '<', $checkOut)
                       ->where('check_out', '>', $checkIn);
@@ -223,79 +181,45 @@ class ImportAirbnbICS extends Command
                 ->lockForUpdate()
                 ->get();
 
-                $adoptCandidate = $overlapping
-                ->sortBy('created_at')
-                ->first(function ($b) use ($checkIn, $checkOut, $icsUrl) {
-                    $sameRange = $b->check_in === $checkIn && $b->check_out === $checkOut;
-                    $sameSrc   = !empty($b->ics_url) && $b->ics_url === $icsUrl;
-                    $noIdYet   = empty($b->external_reservation_id);
-                    return $sameRange && $sameSrc && $noIdYet;
-                });
+            // البحث عن حجز داخلي يمكن تبنيه (نفس التواريخ، بدون معرّف خارجي)
+            $adoptCandidate = $overlapping->first(function ($b) use ($checkIn, $checkOut) {
+                return $b->check_in === $checkIn
+                    && $b->check_out === $checkOut
+                    && empty($b->external_reservation_id)
+                    && empty($b->external_uid)
+                    && !$b->is_airbnb_booking;
+            });
 
-                if (!$adoptCandidate) {
-                    // تبنّي بديل: مطابق تماماً للمدى بدون أي قناة، حتى لو كان داخلياً بحتاً
-                    $adoptCandidate = $overlapping->first(function ($b) use ($checkIn, $checkOut) {
-                        return $b->check_in === $checkIn
-                            && $b->check_out === $checkOut
-                            && empty($b->external_reservation_id)
-                            && empty($b->external_uid)
-                            && !$b->is_airbnb_booking;
-                    });
-                }
-
-                if ($adoptCandidate) {
-                    $adoptCandidate->update([
-                        'external_reservation_id' => $resId,
-                        'external_uid'            => $uid ?: null,
-                        'external_sequence'       => $sequence,
-                        'number_of_booking'       => "airbnb_{$apartmentId}_{$checkIn}_{$checkOut}",
-                        'payment_method_code'     => $adoptCandidate->payment_method_code ?: 'airbnb',
-                        'ics_url'                 => $icsUrl,           // توحيد المصدر
-                        'is_airbnb_booking'       => true,
-                        'updated_at'              => now(),
-                    ]);
-                    $this->line("   Adopted booking id={$adoptCandidate->id} → RES={$resId} {$checkIn} → {$checkOut}");
-                    $this->cleanupConflicts($apartmentId, $resId, $uid);
-                    return;
-                }
-
-            // إذا وُجد تداخل
-            if ($overlapping->isNotEmpty()) {
-                // هل يوجد سجل Airbnb من نفس المصدر بلا resId؟ إذن تبنّي بدل التعارض
-                $airbnbSameSourceNoId = $overlapping->first(function ($b) use ($icsUrl) {
-                    return (bool)$b->is_airbnb_booking
-                        && (!empty($b->ics_url) && $b->ics_url === $icsUrl)
-                        && empty($b->external_reservation_id);
-                });
-                if ($airbnbSameSourceNoId) {
-                    // تبنّي هذا السجل
-                    $adoptCandidate = $airbnbSameSourceNoId;
-                    $adoptCandidate->update([
-                        'external_reservation_id' => $resId,
-                        'external_uid'            => $uid ?: null,
-                        'external_sequence'       => $sequence,
-                        'number_of_booking'       => "airbnb_{$apartmentId}_{$checkIn}_{$checkOut}",
-                        'ics_url'                 => $icsUrl,
-                        'is_airbnb_booking'       => true,
-                        'updated_at'              => now(),
-                    ]);
-                    $this->line("   Adopted legacy Airbnb id={$adoptCandidate->id} → RES={$resId} {$checkIn} → {$checkOut}");
-                    $this->cleanupConflicts($apartmentId, $resId, $uid);
-                    return;
-                }
-
-                // خلاف ذلك: تعارض حقيقي مع مصدر آخر أو Airbnb مختلف
-                $this->upsertConflict($apartmentId, $resId, $uid, $checkIn, $checkOut, $overlapping->first()->id, [
-                    'ics_url'  => $icsUrl,
-                    'sequence' => $sequence,
-                    'overlaps' => $overlapping->pluck('id'),
-                    'reason'   => 'overlap-with-different-source-or-id',
+            if ($adoptCandidate) {
+                // تبني الحجز الداخلي وتحويله لحجز Airbnb
+                $adoptCandidate->update([
+                    'external_reservation_id' => $resId,
+                    'external_uid'            => $uid ?: null,
+                    'external_sequence'       => $sequence,
+                    'number_of_booking'       => "airbnb_{$apartmentId}_{$checkIn}_{$checkOut}",
+                    'payment_method_code'     => $adoptCandidate->payment_method_code ?: 'airbnb',
+                    'ics_url'                 => $icsUrl,
+                    'is_airbnb_booking'       => true,
+                    'updated_at'              => now(),
                 ]);
-                $this->warn("   Logged channel conflict RES={$resId} {$checkIn} → {$checkOut}");
+                $this->line("   ✓ Adopted internal booking id={$adoptCandidate->id} → RES={$resId} {$checkIn} → {$checkOut}");
+                $this->cleanupConflicts($apartmentId, $resId, $uid);
                 return;
             }
 
+            // إذا وُجد تعارض حقيقي مع مصدر آخر
+            if ($overlapping->isNotEmpty()) {
+                $this->upsertConflict($apartmentId, $resId, $uid, $checkIn, $checkOut, $overlapping->first()->id, [
+                    'ics_url'  => $icsUrl,
+                    'sequence' => $sequence,
+                    'overlaps' => $overlapping->pluck('id')->toArray(),
+                    'reason'   => 'overlap-with-other-source',
+                ]);
+                $this->warn("   ⚠️  Channel conflict RES={$resId} {$checkIn} → {$checkOut}");
+                return;
+            }
 
+            // إدراج حجز Airbnb جديد
             Booking::create([
                 'external_reservation_id' => $resId,
                 'external_uid'            => $uid ?: null,
@@ -320,7 +244,7 @@ class ImportAirbnbICS extends Command
                 'updated_at'              => now(),
             ]);
 
-            $this->line("   Inserted RES={$resId} {$checkIn} → {$checkOut}");
+            $this->line("   ✓ Inserted RES={$resId} {$checkIn} → {$checkOut}");
             $this->cleanupConflicts($apartmentId, $resId, $uid);
         });
     }
@@ -410,5 +334,15 @@ class ImportAirbnbICS extends Command
                 ->where('external_uid', $uid)
                 ->delete();
         }
+    }
+
+    private function deleteOldAirbnbBookings(int $apartmentId, string $icsUrl): int
+    {
+        // حذف جميع حجوزات Airbnb من نفس المصدر (ICS URL)
+        return Booking::query()
+            ->where('apartment_id', $apartmentId)
+            ->where('is_airbnb_booking', 1)
+            ->where('ics_url', $icsUrl)
+            ->delete();
     }
 }
