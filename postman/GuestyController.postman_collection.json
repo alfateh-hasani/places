@@ -1,0 +1,187 @@
+{
+  "info": {
+    "_postman_id": "18bb6274-cede-4a7b-8514-cd787c01fde1",
+    "name": "Guesty Controller",
+    "description": "Collection covering the GuestyController endpoints. All requests require the `x-secret-key` header.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Fetch Access Token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-secret-key",
+            "value": "{{api_secret_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/guesty/token",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "guesty",
+            "token"
+          ],
+          "query": [
+            {
+              "key": "refresh",
+              "value": "false",
+              "description": "Set to true to force refresh even if cached"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Listings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-secret-key",
+            "value": "{{api_secret_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/guesty/listings?limit=10&skip=0",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "guesty",
+            "listings"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of records to return"
+            },
+            {
+              "key": "skip",
+              "value": "0",
+              "description": "Offset for pagination"
+            },
+            {
+              "key": "cursor",
+              "value": "",
+              "description": "Use cursor from previous response for deep pagination"
+            },
+            {
+              "key": "status",
+              "value": "active",
+              "description": "Filter listings by status (active, inactive, etc.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Reservations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-secret-key",
+            "value": "{{api_secret_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/guesty/reservations?limit=10&from={{from_date}}&to={{to_date}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "guesty",
+            "reservations"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "from",
+              "value": "{{from_date}}",
+              "description": "ISO-8601 date"
+            },
+            {
+              "key": "to",
+              "value": "{{to_date}}",
+              "description": "ISO-8601 date"
+            },
+            {
+              "key": "cursor",
+              "value": "",
+              "description": "Use cursor from previous response"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Show Reservation",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-secret-key",
+            "value": "{{api_secret_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/guesty/reservations/{{reservation_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "guesty",
+            "reservations",
+            "{{reservation_id}}"
+          ],
+          "query": [
+            {
+              "key": "fields",
+              "value": "",
+              "description": "Optional comma separated fields"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://wwe.test"
+    },
+    {
+      "key": "api_secret_key",
+      "value": "your-api-secret"
+    },
+    {
+      "key": "from_date",
+      "value": "2024-01-01T00:00:00Z"
+    },
+    {
+      "key": "to_date",
+      "value": "2024-01-31T23:59:59Z"
+    },
+    {
+      "key": "reservation_id",
+      "value": "replace-with-reservation-id"
+    }
+  ]
+}

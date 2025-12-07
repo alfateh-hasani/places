@@ -1,0 +1,280 @@
+{
+  "info": {
+    "_postman_id": "8e3bb8a3-6bf7-47fa-a3dc-6b82d8e1ef7f",
+    "name": "Guesty Quick Start",
+    "description": "Collection generated from the Guesty quick start guide. It covers retrieving a bearer token and calling the key read-only endpoints highlighted in the guide.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://open-api.guesty.com",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "0oarj7o7npyWYYsIL5d7",
+      "type": "string"
+    },
+    {
+      "key": "client_secret",
+      "value": "xw9pXrdI35mqR45sI1NJPWJbBhbPsoiEOX1N_M_ShsTf9i3wXUlq6YL_Cd6ftCiw",
+      "type": "string"
+    },
+    {
+      "key": "default_limit",
+      "value": "25",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "access_token_expires_at",
+      "value": "0",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Request Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/oauth2/token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "oauth2",
+                "token"
+              ]
+            },
+            "description": "Obtain a 24-hour bearer token. The quick start guide recommends caching this response and refreshing only after expiry to respect the five-token-per-day cap."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Stored access token for reuse', function () {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property('access_token');",
+                  "  pm.collectionVariables.set('access_token', data.access_token);",
+                  "  const expiresIn = data.expires_in || (24 * 60 * 60);",
+                  "  const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;",
+                  "  pm.collectionVariables.set('access_token_expires_at', expiresAt.toString());",
+                  "});",
+                  "if (!pm.response.json().access_token) {",
+                  "  console.warn('Token missing in response.');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Listings",
+      "item": [
+        {
+          "name": "List Listings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/{{api_version}}/listings?limit={{default_limit}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{api_version}}",
+                "listings"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "{{default_limit}}"
+                }
+              ]
+            },
+            "description": "Fetch a page of listings, matching the \"Make your first API call\" example."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "item": [
+        {
+          "name": "List Reservations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/{{api_version}}/reservations?limit={{default_limit}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{api_version}}",
+                "reservations"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "{{default_limit}}"
+                }
+              ]
+            },
+            "description": "Inspect reservation data to validate connectivity once authentication succeeds."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Guests",
+      "item": [
+        {
+          "name": "List Guests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/{{api_version}}/guests?limit={{default_limit}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{api_version}}",
+                "guests"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "{{default_limit}}"
+                }
+              ]
+            },
+            "description": "Useful for verifying guest records access as highlighted in the guide."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/{{api_version}}/tasks?limit={{default_limit}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{api_version}}",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "{{default_limit}}"
+                }
+              ]
+            },
+            "description": "Review task automation data referenced under \"Explore key API areas\"."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "List Webhooks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/{{api_version}}/webhooks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{api_version}}",
+                "webhooks"
+              ]
+            },
+            "description": "Prepare for the \"Next steps\" webhooks guide."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
