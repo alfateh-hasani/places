@@ -66,6 +66,13 @@ class Booking extends Model
                 event(new BookingApproved($booking));
             }
         });
+
+        // إطلاق event للمزامنة مع OwnerRez عند إنشاء حجز بحالة approved مباشرة
+        static::created(function ($booking) {
+            if ($booking->status === 'approved' && $booking->payment_status === 'paid') {
+                event(new BookingApproved($booking));
+            }
+        });
     }
 
     // coupon

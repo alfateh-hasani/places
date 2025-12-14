@@ -89,6 +89,21 @@ class Customer extends Authenticatable implements HasMedia
         // إرسال إشعار الترحيب عند إنشاء حساب جديد
         static::created(function ($customer) {
             SendWelcomeNotification::dispatch($customer);
+
+            // مزامنة Guest مع OwnerRez إذا كانت المزامنة مفعلة
+            if (config('ownerrez.sync.sync_guest_data')) {
+                \App\Jobs\OwnerRez\SyncCustomerToOwnerRezJob::dispatch($customer->id);
+            }
+        });
+
+        // مزامنة Guest مع OwnerRez عند تحديث البيانات
+        static::updated(function ($customer) {
+            if (config('ownerrez.sync.sync_guest_data')) {
+                // فقط إذا تم تغيير البيانات المهمة
+                if ($customer->isDirty(['first_name', 'last_name', 'email', 'phone'])) {
+                    \App\Jobs\OwnerRez\SyncCustomerToOwnerRezJob::dispatch($customer->id);
+                }
+            }
         });
     }
 }

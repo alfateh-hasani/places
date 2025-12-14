@@ -25,7 +25,7 @@ return [
     */
 
     'webhook' => [
-        'user' => env('OWNERREZ_WEBHOOK_USER'),
+        'user' => env('OWNERREZ_WEBHOOK_USERNAME'),
         'password' => env('OWNERREZ_WEBHOOK_PASSWORD'),
         'cache_ttl' => (int) env('OWNERREZ_WEBHOOK_CACHE_TTL', 180),
     ],

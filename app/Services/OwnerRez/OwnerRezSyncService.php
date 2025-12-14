@@ -25,7 +25,7 @@ class OwnerRezSyncService
     /**
      * Check availability for a property in OwnerRez
      */
-    public function checkAvailability(int $propertyId, string $from, string $to): bool
+    public function checkAvailability(int|string $propertyId, string $from, string $to): bool
     {
         try {
             $bookings = $this->getActiveBookings($propertyId, $from, $to);
@@ -52,7 +52,7 @@ class OwnerRezSyncService
     /**
      * Get active bookings for a property
      */
-    public function getActiveBookings(int $propertyId, string $from, string $to): Collection
+    public function getActiveBookings(int|string $propertyId, string $from, string $to): Collection
     {
         $cacheKey = "ownerrez:availability:{$propertyId}:{$from}:{$to}";
         $cacheTtl = config('ownerrez.availability.cache_ttl', 300);
@@ -336,8 +336,6 @@ class OwnerRezSyncService
         // Update local booking with OwnerRez ID
         $booking->update([
             'ownerrez_booking_id' => $response['id'],
-            'booking_source' => 'local',
-            'channel_name' => 'ownerrez',
         ]);
 
         // Create OwnerRez booking record
@@ -650,7 +648,7 @@ class OwnerRezSyncService
     /**
      * Invalidate property cache
      */
-    protected function invalidatePropertyCache(int $propertyId): void
+    protected function invalidatePropertyCache(int|string $propertyId): void
     {
         $pattern = "ownerrez:availability:{$propertyId}:*";
         // Note: This is a simple implementation. For production, consider using Cache tags

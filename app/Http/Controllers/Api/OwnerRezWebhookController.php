@@ -8,7 +8,6 @@ use App\Services\OwnerRez\OwnerRezSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -91,8 +90,8 @@ class OwnerRezWebhookController extends Controller
 
     protected function guardWebhook(Request $request): void
     {
-        $expectedUser = (string) Config::get('services.ownerrez.webhook_user');
-        $expectedPassword = (string) Config::get('services.ownerrez.webhook_password');
+        $expectedUser = (string) config('ownerrez.webhook.user');
+        $expectedPassword = (string) config('ownerrez.webhook.password');
 
         $providedUser = (string) $request->getUser();
         $providedPassword = (string) $request->getPassword();
@@ -101,17 +100,23 @@ class OwnerRezWebhookController extends Controller
         $isValidPassword = $expectedPassword !== '' && hash_equals($expectedPassword, $providedPassword);
 
         if (! $isValidUser || ! $isValidPassword) {
+            Log::warning('Unauthorized OwnerRez webhook request', [
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
             abort(Response::HTTP_UNAUTHORIZED, 'Unauthorized webhook request.');
         }
+
+        Log::info('OwnerRez webhook authenticated successfully');
     }
 
     protected function cacheKey(): string
     {
-        return (string) Config::get('services.ownerrez.cache_key', 'ownerrez:webhook:latest');
+        return 'ownerrez:webhook:latest';
     }
 
     protected function cacheTtl(): int
     {
-        return (int) Config::get('services.ownerrez.cache_ttl', 180);
+        return (int) config('ownerrez.webhook.cache_ttl', 180);
     }
 }

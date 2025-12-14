@@ -122,14 +122,20 @@ class OwnerRezApiService
 
     /**
      * Register a webhook
+     * Note: type should be a single value like 'booking', not an array
+     * Note: action should be a single value like 'entity_create', not comma-separated
      */
-    public function registerWebhook(string $url, array $types, string $action = 'entity_create'): array
+    public function registerWebhook(string $url, string $type, string $action, ?string $category = null): array
     {
         $data = [
             'webhook_url' => $url,
-            'type' => implode(',', $types),
+            'type' => $type,
             'action' => $action,
         ];
+
+        if ($category) {
+            $data['category'] = $category;
+        }
 
         return $this->makeRequest('POST', '/v2/webhooksubscriptions', $data);
     }
