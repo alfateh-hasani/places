@@ -539,8 +539,15 @@ class OwnerRezSyncService
         // Calculate one night price
         $oneNightPrice = $numberOfNights > 0 ? $totalAmount / $numberOfNights : 0;
 
+        // Map OwnerRez property_id to local apartment_id
+        $apartmentId = null;
+        if (isset($data['property_id'])) {
+            $mapping = OwnerRezPropertyMapping::where('ownerrez_property_id', $data['property_id'])->first();
+            $apartmentId = $mapping?->apartment_id;
+        }
+
         $mappedData = [
-            'apartment_id' => $data['apartment_id'] ?? null,
+            'apartment_id' => $apartmentId ?? $data['apartment_id'] ?? null,
             'check_in' => $data['arrival'],
             'check_out' => $data['departure'],
             'number_of_nights' => $numberOfNights,
@@ -548,7 +555,6 @@ class OwnerRezSyncService
             'children_count' => $data['children'] ?? 0,
             'customer_full_name' => trim(($data['guest']['first_name'] ?? '').' '.($data['guest']['last_name'] ?? '')),
             'customer_email' => $data['guest']['email'] ?? null,
-            'customer_phone' => $data['guest']['phone'] ?? null,
             'total_price' => $totalAmount,
             'final_price' => $totalAmount,
             'one_night_price' => $oneNightPrice,
@@ -559,6 +565,7 @@ class OwnerRezSyncService
             'channel_name' => $data['listing_site'] ?? 'ownerrez',
             'external_reference' => $data['platform_reservation_number'] ?? null,
             'notes' => $data['notes'] ?? null,
+            'isis_airbnb_booking'=>1
         ];
 
         // Find or create customer and link OwnerRez guest ID
