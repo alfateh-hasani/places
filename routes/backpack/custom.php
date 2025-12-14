@@ -23,6 +23,8 @@ Route::group([
     Route::crud('apartment', 'ApartmentController');
     Route::crud('building', 'BuildingController');
     Route::crud('apartment-label', 'ApartmentLabelController');
+    Route::crud('ownerrez-property-mapping', 'OwnerRezPropertyMappingController');
+    Route::get('ownerrez-property-mapping/{id}/sync', 'OwnerRezPropertyMappingController@sync');
     Route::crud('policy', 'PolicyController');
     Route::crud('buildings', 'BuildingController');
     Route::crud('sliders', 'SliderController');

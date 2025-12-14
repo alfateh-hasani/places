@@ -3,23 +3,23 @@
 namespace App\Services;
 
 use App\Models\Apartment;
-use App\Models\Coupon;
 use App\Models\Booking;
 use App\Models\Building;
+use App\Models\Coupon;
 use App\Models\Service;
 use App\Models\ServiceBooking;
 use App\Models\Transaction;
+use App\Services\Pricing\PricingService;
 use Carbon\Carbon;
 use Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Log;
-use App\Services\ScienerLockService;
-use App\Services\Pricing\PricingService;
 
 class BookingService
 {
     protected $paymentService;
+
     protected $pricingService;
 
     public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService)
@@ -28,61 +28,57 @@ class BookingService
         $this->pricingService = $pricingService;
     }
 
-    
     public function validateCoupon($apartment, $couponCode)
     {
         if ($couponCode) {
             $coupon = Coupon::where('code', $couponCode)->first();
-    
-            if (!$coupon) {
+
+            if (! $coupon) {
                 throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid')]);
             }
- 
+
             $apartmentList = $coupon->apartments ?? collect([]);
             $buildingList = $coupon->building ?? collect([]);
-    
+
             if ($apartmentList->isEmpty() && $buildingList->isEmpty()) {
                 return $coupon;
             }
-    
-            if (!$apartment) {
-                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
-            }
-    
-            $hasApartment = !$apartmentList->isEmpty() && $apartmentList->contains($apartment->id);
-            $hasBuilding = !$buildingList->isEmpty() && $buildingList->contains($apartment->building_id);
 
-            if (!$hasApartment && !$hasBuilding) {
+            if (! $apartment) {
                 throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
             }
-    
+
+            $hasApartment = ! $apartmentList->isEmpty() && $apartmentList->contains($apartment->id);
+            $hasBuilding = ! $buildingList->isEmpty() && $buildingList->contains($apartment->building_id);
+
+            if (! $hasApartment && ! $hasBuilding) {
+                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
+            }
+
             return $coupon;
         }
-    
+
         return null;
     }
-    
-
-    
-
 
     public function checkAvailability(Apartment $apartment, $checkIn, $checkOut): string
     {
         try {
-            $checkInDate  = Carbon::parse($checkIn);
+            $checkInDate = Carbon::parse($checkIn);
             $checkOutDate = Carbon::parse($checkOut);
         } catch (\Exception $e) {
             throw ValidationException::withMessages([
-                'dates' => __('تنسيق التواريخ غير صالح.')
+                'dates' => __('تنسيق التواريخ غير صالح.'),
             ]);
         }
 
-        if (!$checkInDate->lt($checkOutDate)) {
+        if (! $checkInDate->lt($checkOutDate)) {
             throw ValidationException::withMessages([
-                'dates' => __('يجب أن يكون تاريخ الدخول قبل تاريخ الخروج.')
+                'dates' => __('يجب أن يكون تاريخ الدخول قبل تاريخ الخروج.'),
             ]);
         }
 
+        // 1. التحقق من الحجوزات المحلية
         $activeStatuses = ['pending', 'approved', 'booked'];
 
         $overlapExists = Booking::where('apartment_id', $apartment->id)
@@ -93,20 +89,52 @@ class BookingService
 
         if ($overlapExists) {
             throw ValidationException::withMessages([
-                'apartment_id' => __('api.already_booked')
+                'apartment_id' => __('api.already_booked'),
             ]);
         }
 
-        $formattedCheckIn  = $checkInDate->toDateString();
+        // 2. التحقق من OwnerRez إذا كان العقار مربوطاً
+        $mapping = $apartment->ownerrezMapping;
+        if ($mapping && $mapping->check_availability_enabled && config('ownerrez.availability.enabled')) {
+            try {
+                $ownerRezService = app(\App\Services\OwnerRez\OwnerRezSyncService::class);
+                $isAvailable = $ownerRezService->checkAvailability(
+                    $mapping->ownerrez_property_id,
+                    $checkInDate->format('Y-m-d'),
+                    $checkOutDate->format('Y-m-d')
+                );
+
+                if (! $isAvailable) {
+                    throw ValidationException::withMessages([
+                        'apartment_id' => __('api.apartment_not_available_external'),
+                    ]);
+                }
+            } catch (\App\Exceptions\OwnerRez\OwnerRezApiException $e) {
+                // إذا فشل الاتصال بـ OwnerRez
+                Log::error('OwnerRez availability check failed', [
+                    'apartment_id' => $apartment->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                // إذا كان strict mode مفعل، نرفض الحجز
+                if (config('ownerrez.availability.strict_mode')) {
+                    throw ValidationException::withMessages([
+                        'apartment_id' => __('api.ownerrez_service_unavailable'),
+                    ]);
+                }
+                // وإلا نسمح بالحجز مع تسجيل تحذير
+            }
+        }
+
+        $formattedCheckIn = $checkInDate->toDateString();
         $formattedCheckOut = $checkOutDate->toDateString();
 
         return "الشقة متاحة للحجز من {$formattedCheckIn} إلى {$formattedCheckOut}.";
     }
 
-     
-
     /**
      * حساب الأسعار باستخدام نظام التسعير الجديد
+     *
      * @deprecated يُفضل استخدام calculatePricesWithDates() التي تستخدم PricingService
      */
     // public function calculatePrices(float $apartmentPrice, int $numberOfNights, ?Coupon $coupon = null): array
@@ -122,8 +150,7 @@ class BookingService
 
     //     $finalPrice = max($totalPrice - $discount, 0);
 
-      
-    //     $vatRate = Config::get('settings.vat_rate', 15);  
+    //     $vatRate = Config::get('settings.vat_rate', 15);
     //     $vat = $finalPrice > 0 ? round(($vatRate / 100) * $finalPrice, 2) : 0;
 
     //     return [
@@ -145,17 +172,17 @@ class BookingService
         // تحويل التواريخ إلى Carbon objects إذا كانت strings
         $checkInDate = is_string($checkIn) ? Carbon::parse($checkIn) : $checkIn;
         $checkOutDate = is_string($checkOut) ? Carbon::parse($checkOut) : $checkOut;
-        
+
         // استخدام PricingService للحصول على السعر الفعلي (شامل الضريبة)
         $priceInfo = $this->pricingService->calculate($apartment, $checkInDate, $checkOutDate);
-        
+
         // السعر الكلي شامل الضريبة من PricingService (قبل أي خصم)
         $totalPriceWithVat = $priceInfo['total'];
-        
+
         // استخدام الضريبة والسعر بدون ضريبة من PricingService مباشرة
         $vatAmount = $priceInfo['vat'];
         $totalPriceWithoutVat = $priceInfo['net'];
-        
+
         $discount = 0;
         $couponDiscount = 0;
 
@@ -167,7 +194,7 @@ class BookingService
         }
 
         $finalPriceWithoutVat = max($totalPriceWithoutVat - $couponDiscount, 0);
-        
+
         // إعادة حساب الضريبة على السعر النهائي باستخدام نفس معدل الضريبة من PricingService
         $vatRate = Config::get('settings.vat_rate', 15);
         $finalVat = round($finalPriceWithoutVat * ($vatRate / 100), 2);
@@ -188,78 +215,70 @@ class BookingService
         ];
     }
 
-
-
-
     public function calculateNumberOfNights($checkIn, $checkOut)
     {
         return Carbon::parse($checkIn)->diffInDays(Carbon::parse($checkOut));
     }
 
-
-    public function createPayment($validatedData, $customer, $apartment , $plaform = 'web')
+    public function createPayment($validatedData, $customer, $apartment, $plaform = 'web')
     {
-                $coupon = null;
-                if (!empty($validatedData['coupon_code'])) {
-                    $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code']);
-                }
-                
-                // استخدام نظام التسعير الجديد
-                $prices = $this->calculatePricesWithDates($apartment, $validatedData['check_in'], $validatedData['check_out'], $coupon);
-                
-                $transaction = $this->paymentService->addTransaction($validatedData,$prices,$customer , $plaform);
-                $this->createBooking($transaction->id, null);
-        return  $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
-    }
+        $coupon = null;
+        if (! empty($validatedData['coupon_code'])) {
+            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code']);
+        }
 
+        // استخدام نظام التسعير الجديد
+        $prices = $this->calculatePricesWithDates($apartment, $validatedData['check_in'], $validatedData['check_out'], $coupon);
 
-    public function createPaymentV2($booking , $validatedData)
-    {
-        $transaction = $this->paymentService->addTransactionV2( $booking,$validatedData['payment_method_code']);
-         
-         
+        $transaction = $this->paymentService->addTransaction($validatedData, $prices, $customer, $plaform);
+        $this->createBooking($transaction->id, null);
+
         return $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
     }
 
+    public function createPaymentV2($booking, $validatedData)
+    {
+        $transaction = $this->paymentService->addTransactionV2($booking, $validatedData['payment_method_code']);
 
+        return $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
+    }
 
-    //createBooking
+    // createBooking
 
-    public function createBooking($transaction_id,$payment_id)
+    public function createBooking($transaction_id, $payment_id)
     {
         DB::beginTransaction();
-         $transaction = Transaction::where('id',$transaction_id)->first();
+        $transaction = Transaction::where('id', $transaction_id)->first();
 
-       
-         if (!$transaction){
-                throw ValidationException::withMessages(['transaction_id' =>  __('api.transaction_not_exists')]);
-         }
-         $data = json_decode($transaction->booking_data);
-        //  
+        if (! $transaction) {
+            throw ValidationException::withMessages(['transaction_id' => __('api.transaction_not_exists')]);
+        }
+        $data = json_decode($transaction->booking_data);
+        //
 
-        $apartment  = Apartment::where('id',$transaction->apartment_id)->first();
-        $building = Building::where('id',$apartment->building_id)->first();
+        $apartment = Apartment::where('id', $transaction->apartment_id)->first();
+        $building = Building::where('id', $apartment->building_id)->first();
 
-         $numberOfNights = $this->calculateNumberOfNights($data->check_in, $data->check_out);
-         $oneNightPrice = $numberOfNights > 0 ? $data->total_price / $numberOfNights : 0;
-         
-         $booking =  Booking::create([
+        $numberOfNights = $this->calculateNumberOfNights($data->check_in, $data->check_out);
+        $oneNightPrice = $numberOfNights > 0 ? $data->total_price / $numberOfNights : 0;
+
+        $booking = Booking::create([
             'apartment_id' => $transaction->apartment_id,
             'customer_id' => $transaction->customer_id,
-            'customer_full_name' => $transaction->customer->first_name . ' ' . $transaction->customer->last_name,
+            'customer_full_name' => $transaction->customer->first_name.' '.$transaction->customer->last_name,
             'customer_email' => $transaction->customer->email,
             'number_of_nights' => $numberOfNights,
             'adults_count' => $data->adults_count,
             'children_count' => $data->children_count,
             'total_price' => $data->total_price,
             'discount' => $data->discount,
-            'final_price' =>  $data->final_price,
+            'final_price' => $data->final_price,
             'one_night_price' => $oneNightPrice,
             'booking_source' => $data->booking_source,
-            'coupon_id' => $data->coupon_id ?? null  ,
+            'coupon_id' => $data->coupon_id ?? null,
             'coupon_code' => $data->coupon_code ?? null,
             'status' => 'pending',
-            'payment_id' => $payment_id??null,
+            'payment_id' => $payment_id ?? null,
             'payment_status' => 'pending',
             'check_in' => $data->check_in,
             'check_out' => $data->check_out,
@@ -269,36 +288,37 @@ class BookingService
 
             'transaction_id' => $transaction->id,
             'tax' => $data->vat ?? 0,
-         ]);
-         $transaction->update(['booking_id' => $booking->id]);
-         DB::commit();
-         return $booking;
+        ]);
+        $transaction->update(['booking_id' => $booking->id]);
+        DB::commit();
+
+        return $booking;
     }
 
-    public function getDetermineBooking($apartment,$check_in,$check_out , $coupon = null)
+    public function getDetermineBooking($apartment, $check_in, $check_out, $coupon = null)
     {
         $numberOfNights = $this->calculateNumberOfNights($check_in, $check_out);
-        
+
         // استخدام نظام التسعير الجديد
         $prices = $this->calculatePricesWithDates($apartment, $check_in, $check_out, $coupon);
         \Log::info('prices', $prices);
         // حساب متوسط سعر الليلة من السعر الكلي (مع الضريبة) - قبل الخصم
-        $avgPricePerNight = $numberOfNights > 0 
-            ? floatval($prices['total_price']) / $numberOfNights 
+        $avgPricePerNight = $numberOfNights > 0
+            ? floatval($prices['total_price']) / $numberOfNights
             : floatval($apartment->price);
-        
+
         return [
             'number_of_nights' => $numberOfNights,
             'one_nights' => number_format($avgPricePerNight, 2, '.', ''), // متوسط سعر الليلة (مع الضريبة)
-            'total_price' =>  number_format(round($prices['total_price']), 2, '.', ''), // السعر الكلي قبل الخصم (شامل الضريبة)
-            'discount'      => $prices['discount'],
+            'total_price' => number_format(round($prices['total_price']), 2, '.', ''), // السعر الكلي قبل الخصم (شامل الضريبة)
+            'discount' => $prices['discount'],
             'final_price' => number_format(round($prices['final_price']), 2, '.', ''), // السعر النهائي بعد الخصم (شامل الضريبة)
             'vat' => $prices['vat'],
         ];
 
     }
 
-    public function validateGuestsCount( $apartment,   $number_of_adults,   $number_of_children): void
+    public function validateGuestsCount($apartment, $number_of_adults, $number_of_children): void
     {
         $validations = [
             'number_of_adults' => ['value' => $number_of_adults, 'max' => $apartment->adults_count, 'message' => __('api.max_adults')],
@@ -311,29 +331,26 @@ class BookingService
         }
     }
 
-    
-
     public function deleteUnpaidBookings()
     {
         $tenMinutesAgo = now()->subMinutes(10);
         $unpaidBookings = Booking::where('status', 'pending')
-                                ->where('created_at', '<=', $tenMinutesAgo)
-                                ->get();
+            ->where('created_at', '<=', $tenMinutesAgo)
+            ->get();
 
         foreach ($unpaidBookings as $booking) {
             $booking->delete();
         }
     }
 
-
     public function completeBookingAfterPayment($transactionId)
     {
         DB::beginTransaction();
         try {
-        
+
             $transaction = Transaction::with('booking')->where('id', $transactionId)->first();
 
-            if (!$transaction || !$transaction->booking) {
+            if (! $transaction || ! $transaction->booking) {
                 throw new \Exception(__('api.transaction_not_exists'));
             }
 
@@ -345,10 +362,11 @@ class BookingService
             ]);
 
             DB::commit();
-           
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Error in completeBookingAfterPayment: " . $e->getMessage());
+            Log::error('Error in completeBookingAfterPayment: '.$e->getMessage());
+
             return [
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -359,14 +377,14 @@ class BookingService
         try {
             $this->addPasscodeToSmartLock($booking);
             DB::commit();
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Error in completeBookingAfterPayment: " . $e->getMessage());  
+            Log::error('Error in completeBookingAfterPayment: '.$e->getMessage());
         }
 
         return [
             'success' => true,
-            'message' =>  '',
+            'message' => '',
         ];
 
     }
@@ -375,18 +393,18 @@ class BookingService
     {
         try {
             $lockData = $this->getLockData($booking->apartment_id);
-             
-            $startDate = $booking->check_in->format('Y-m-d') .' '.$booking->check_in_time->format('H:i:s'); 
-            $endDate = $booking->check_out->format('Y-m-d') .' '.$booking->check_out_time->format('H:i:s'); 
 
-            $keyboardPwd = $this->generateRandomPasscode();  
-            $keyboardPwdName =  $booking->id;
+            $startDate = $booking->check_in->format('Y-m-d').' '.$booking->check_in_time->format('H:i:s');
+            $endDate = $booking->check_out->format('Y-m-d').' '.$booking->check_out_time->format('H:i:s');
+
+            $keyboardPwd = $this->generateRandomPasscode();
+            $keyboardPwdName = $booking->id;
 
             // استدعاء خدمة Sciener
             $scienerLockService = new ScienerLockService($lockData['ttlock_username'], $lockData['ttlock_password']);
             $response = $scienerLockService->addCustomPasscode($lockData['lock_id'], $keyboardPwd, $startDate, $endDate, $keyboardPwdName);
 
-            if (!$response) {
+            if (! $response) {
                 // تسجيل الفشل في نظام إعادة المحاولة
                 \App\Models\PasscodeRetryAttempt::createOrUpdateForBooking($booking, 'Failed to add passcode via Sciener API');
                 $booking->markPasscodeAsFailed('Failed to add passcode via Sciener API');
@@ -394,24 +412,23 @@ class BookingService
                 throw new \Exception(__('api.passcode_add_failed'));
             }
 
-
             // تخزين رمز المرور في قاعدة البيانات
             \App\Models\SmartLockPasscode::create([
-                    'smart_lock_id' => $lockData['lock_id'],
-                    'passcode_id' => $response['keyboardPwdId'],
-                    'apartment_id' => $booking->apartment_id,
-                    'customer_id' => $booking->customer_id,
-                    'booking_id' => $booking->id,  
-                    'nickname' => $booking->id,
-                    'keyboard_pwd' => $keyboardPwd,
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
+                'smart_lock_id' => $lockData['lock_id'],
+                'passcode_id' => $response['keyboardPwdId'],
+                'apartment_id' => $booking->apartment_id,
+                'customer_id' => $booking->customer_id,
+                'booking_id' => $booking->id,
+                'nickname' => $booking->id,
+                'keyboard_pwd' => $keyboardPwd,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
             ]);
 
             // إزالة أي محاولة إعادة سابقة إذا نجحت العملية
             \App\Models\PasscodeRetryAttempt::where('booking_id', $booking->id)->delete();
             $booking->markPasscodeAsGenerated();
-            
+
         } catch (\Exception $e) {
             // تسجيل الفشل في نظام إعادة المحاولة
             \App\Models\PasscodeRetryAttempt::createOrUpdateForBooking($booking, $e->getMessage());
@@ -423,90 +440,84 @@ class BookingService
 
     private function getLockData($apartmentId)
     {
-        
+
         $apartment = Apartment::where('id', $apartmentId)->first();
-    
-        if (!$apartment || !$apartment->smart_lock_id) {
+
+        if (! $apartment || ! $apartment->smart_lock_id) {
             throw new \Exception("Smart lock ID not found for apartment ID {$apartmentId}");
         }
 
         $lock = \App\Models\SmartLock::where('id', $apartment->smart_lock_id)->first();
-    
-        if (!$lock) {
+
+        if (! $lock) {
             throw new \Exception("Smart lock not found for ID {$apartment->smart_lock_id}");
         }
 
         $building = Building::where('id', $lock->building_id)->first();
-        
-        if(!$building){
+
+        if (! $building) {
             throw new \Exception("Building not found for ID {$lock->building_id}");
         }
-    
+
         return [
             'lock_id' => $lock->lock_id,
             'building_id' => $building->id,
             'ttlock_username' => $building->ttlock_username,
             'ttlock_password' => $building->ttlock_password,
-        ]; 
+        ];
     }
-    
-
 
     private function generateRandomPasscode($length = 6)
     {
         return substr(str_shuffle('0123456789'), 0, $length);
     }
 
-
-
-
-    //bookingServices
+    // bookingServices
     public function addServicesToBooking($request, $customer_id)
     {
 
-      
         $date = Carbon::now()->toDateString();
         $booking = Booking::where([
             ['id', $request->booking_id],
             ['customer_id', $customer_id],
-            ['check_out', '>',$date ]
+            ['check_out', '>', $date],
         ])->first();
-        if (!$booking) {
+        if (! $booking) {
             return [
                 'success' => false,
-                'message' => __('api.booking_not_found')
+                'message' => __('api.booking_not_found'),
             ];
         }
         try {
             $servicesData = Service::whereIn('id', $request->services)->get()->map(function ($service) use ($booking) {
                 return [
-                    'booking_id'  => $booking->id,
-                    'customer_id'  => $booking->customer_id,
+                    'booking_id' => $booking->id,
+                    'customer_id' => $booking->customer_id,
                     'apartment_id' => $booking->apartment_id,
-                    'service_id'   => $service->id,
-                    'price'        => $service->price,
+                    'service_id' => $service->id,
+                    'price' => $service->price,
                     'status' => 'pending',
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]; 
+                ];
             })->toArray();
-          
-           $servicesDat = ServiceBooking::insert($servicesData);
+
+            $servicesDat = ServiceBooking::insert($servicesData);
 
             // Send notification to apartment supervisor
             $this->sendServiceRequestNotifications($booking, $request->services);
 
             return [
                 'success' => true,
-                'message' => __('api.services_added')
+                'message' => __('api.services_added'),
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
-    
+
     }
 
     /**
@@ -516,7 +527,7 @@ class BookingService
     {
         try {
             $adminNotificationService = app(\App\Services\AdminNotificationService::class);
-            
+
             // Get the created service bookings
             $serviceBookings = ServiceBooking::where('booking_id', $booking->id)
                 ->whereIn('service_id', $serviceIds)
@@ -527,7 +538,7 @@ class BookingService
                 $adminNotificationService->sendServiceRequestNotification($serviceBooking);
             }
         } catch (\Exception $e) {
-            \Log::error("Failed to send service request notifications: " . $e->getMessage());
+            \Log::error('Failed to send service request notifications: '.$e->getMessage());
         }
     }
 
@@ -544,26 +555,19 @@ class BookingService
         // التأكد من أن checkOut أكبر من checkIn
         if ($checkOutDate->lt($checkInDate)) {
             throw ValidationException::withMessages([
-                'checkout' => __('validation.custom.checkout.after_checkin')
+                'checkout' => __('validation.custom.checkout.after_checkin'),
             ]);
         }
 
         // استخدام PricingService للحصول على السعر الفعلي (شامل الضريبة)
         $priceInfo = $this->pricingService->calculate($apartment, $checkInDate, $checkOutDate);
-        
+
         // استخراج الضريبة وإرجاع السعر بدونها
         $totalPriceWithVat = $priceInfo['total'];
         $vatRate = Config::get('settings.vat_rate', 15);
         $vatAmount = round($totalPriceWithVat * $vatRate / (100 + $vatRate), 2);
         $totalPriceWithoutVat = round($totalPriceWithVat - $vatAmount, 2);
-        
+
         return $totalPriceWithoutVat;
     }
-
-    
- 
-    
-
-
-
 }

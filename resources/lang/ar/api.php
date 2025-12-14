@@ -1,4 +1,5 @@
 <?php
+
 return [
     'registered' => 'تم تسجيلك بنجاح',
     'logout' => 'تم تسجيل الخروج بنجاح',
@@ -30,4 +31,9 @@ return [
     'booking_canceled_successfully' => 'تم إلغاء الحجز بنجاح وسيتم استرداد المبلغ خلال الأيام القادمة',
     'services_added' => 'تمت إضافة الخدمات بنجاح',
     'payment_creation_failed' => 'فشل في إنشاء عملية الدفع',
+
+    // OwnerRez Integration
+    'apartment_not_available_external' => 'الشقة محجوزة عبر منصة أخرى في هذه التواريخ',
+    'ownerrez_sync_failed' => 'فشل في المزامنة مع OwnerRez',
+    'ownerrez_service_unavailable' => 'خدمة التحقق من التوفر غير متاحة حالياً، يرجى المحاولة لاحقاً',
 ];

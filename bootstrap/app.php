@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Middleware\{ApiLocaleKeyMiddleware,ApiSecretKeyMiddleware};
+use App\Http\Middleware\ApiLocaleKeyMiddleware;
+use App\Http\Middleware\ApiSecretKeyMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,23 +16,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->api([
             ApiLocaleKeyMiddleware::class,
-            
+
         ]);
 
         $middleware->alias([
             /**** OTHER MIDDLEWARE ALIASES ****/
-            'localize'                => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRoutes::class,
-            'localizationRedirect'    => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRedirectFilter::class,
-            'localeSessionRedirect'   => \Mcamara\LaravelLocalization\Middleware\LocaleSessionRedirect::class,
-            'localeCookieRedirect'    => \Mcamara\LaravelLocalization\Middleware\LocaleCookieRedirect::class,
-            'localeViewPath'          => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationViewPath::class,
-            'appSecret'               => ApiSecretKeyMiddleware::class,
-            'GoogleReCaptchaV3'=> TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::class,
-            
+            'localize' => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRoutes::class,
+            'localizationRedirect' => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRedirectFilter::class,
+            'localeSessionRedirect' => \Mcamara\LaravelLocalization\Middleware\LocaleSessionRedirect::class,
+            'localeCookieRedirect' => \Mcamara\LaravelLocalization\Middleware\LocaleCookieRedirect::class,
+            'localeViewPath' => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationViewPath::class,
+            'appSecret' => ApiSecretKeyMiddleware::class,
+            'ownerrez.webhook' => \App\Http\Middleware\OwnerRezWebhookAuth::class,
+            'GoogleReCaptchaV3' => TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::class,
+
         ]);
-        //reddirect if authenticated
+        // reddirect if authenticated
         $middleware->redirectGuestsTo(fn () => route('home'));
-        
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -36,8 +36,8 @@ return [
     ],
 
     'ownerrez' => [
-        'client_id' => env('OWNERREZ_CLIENT_ID'),
-        'client_secret' => env('OWNERREZ_CLIENT_SECRET'),
+        'username' => env('OWNERREZ_USERNAME'),
+        'password' => env('OWNERREZ_PASSWORD'),
         'webhook_user' => env('OWNERREZ_WEBHOOK_USER'),
         'webhook_password' => env('OWNERREZ_WEBHOOK_PASSWORD'),
         'cache_ttl' => (int) env('OWNERREZ_WEBHOOK_CACHE_TTL', 180),

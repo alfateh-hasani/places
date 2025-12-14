@@ -8,17 +8,18 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
  * Class ApartmentController
- * @package App\Http\Controllers\Admin
+ *
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
 class ApartmentController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\Pro\Http\Controllers\Operations\DropzoneOperation;
+
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
      *
@@ -27,14 +28,14 @@ class ApartmentController extends CrudController
     public function setup()
     {
         CRUD::setModel(\App\Models\Apartment::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/apartment');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/apartment');
         CRUD::setEntityNameStrings(__('cms.apartment'), __('cms.apartments'));
-        if (!backpack_user()->can('apartment.list')) {
+        if (! backpack_user()->can('apartment.list')) {
             abort(403, 'Unauthorized Access - List');
         }
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
-        
+
         if (backpack_user()->can('apartment.create')) {
             $this->crud->allowAccess('create');
         }
@@ -49,22 +50,23 @@ class ApartmentController extends CrudController
                 $query->where('supervisor_id', backpack_user()->id);
             });
         }
-        
+
     }
 
     /**
      * Define what happens when the List operation is loaded.
      *
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
+     *
      * @return void
      */
     protected function setupListOperation()
     {
-       
+
         CRUD::addColumn([
             'name' => 'name_en',
             'type' => 'text',
-            'label' =>  'Name',
+            'label' => 'Name',
         ]);
         CRUD::addColumn([
             'name' => 'building_id',
@@ -74,17 +76,16 @@ class ApartmentController extends CrudController
             'attribute' => 'name_ar',
             'model' => \App\Models\Building::class,
         ]);
-        
-       
+
         CRUD::addColumn([
             'name' => 'price',
             'type' => 'number',
-            'label' =>  __('cms.price'),
+            'label' => __('cms.price'),
         ]);
         CRUD::addColumn([
             'name' => 'is_active',
             'type' => 'boolean',
-            'label' =>  __('cms.is_active'),
+            'label' => __('cms.is_active'),
         ]);
         CRUD::addColumn([
             'name' => 'smart_lock_id',
@@ -94,36 +95,58 @@ class ApartmentController extends CrudController
             'attribute' => 'lock_id',
             'model' => \App\Models\SmartLock::class,
         ]);
-       
+
         CRUD::addColumn([
             'name' => 'image_view',
             'type' => 'image',
-            'label' =>  __('cms.image'),
+            'label' => __('cms.image'),
             'height' => '50px',
             'width' => '50px',
         ]);
 
+        // عمود حالة ربط OwnerRez
+        CRUD::addColumn([
+            'name' => 'ownerrez_status',
+            'label' => 'OwnerRez',
+            'type' => 'closure',
+            'function' => function ($entry) {
+                if ($entry->ownerrezMapping) {
+                    $badge = $entry->ownerrezMapping->sync_enabled
+                        ? '<span class="badge badge-success">مربوط ✓</span>'
+                        : '<span class="badge badge-warning">معطل</span>';
+
+                    return $badge;
+                }
+
+                return '<span class="badge badge-secondary">غير مربوط</span>';
+            },
+            'escaped' => false,
+        ]);
+
         CRUD::addButtonFromModelFunction('line', 'calendar_button', 'getCalendarButton', 'beginning');
         CRUD::addButtonFromModelFunction('line', 'pricing_button', 'getPricingButton', 'beginning');
-        //add button for copy link
+        // add button for copy link
         CRUD::addButtonFromModelFunction('line', 'copy_link_button', 'getCopyLinkButton', 'beginning');
+        // زر ربط مع OwnerRez
+        CRUD::addButtonFromView('line', 'link_to_ownerrez', 'link_to_ownerrez', 'beginning');
 
         // إضافة فلتر حسب المشروع
         CRUD::filter('select2')
             ->type('select2')
-            ->label( 'المشروع')
-            ->values(function() {
+            ->label('المشروع')
+            ->values(function () {
                 return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
             })
-            ->whenActive(function($value) {
+            ->whenActive(function ($value) {
                 $this->crud->addClause('where', 'building_id', $value);
             });
-     }
+    }
 
     /**
      * Define what happens when the Create operation is loaded.
      *
      * @see https://backpackforlaravel.com/docs/crud-operation-create
+     *
      * @return void
      */
     protected function setupCreateOperation()
@@ -137,8 +160,6 @@ class ApartmentController extends CrudController
             ])->wrapperAttributes([
                 'class' => 'form-group col-md-12',
             ]);
-         
-
 
         $this->crud->addField([
             'name' => 'is_active',
@@ -152,7 +173,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
-            'label' =>  __('cms.name_ar'),
+            'label' => __('cms.name_ar'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -172,11 +193,10 @@ class ApartmentController extends CrudController
             ],
         ]);
 
-
         $this->crud->addField([
             'name' => 'apart_no',
             'type' => 'text',
-            'label' =>  __('cms.apart_no'),
+            'label' => __('cms.apart_no'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -184,8 +204,6 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
-
-
 
         $this->crud->addField([
             'name' => 'building_id',
@@ -199,7 +217,7 @@ class ApartmentController extends CrudController
             ],
             'placeholder' => __('cms.building_select2'),
         ]);
-        
+
         $this->crud->addField([
             'name' => 'smart_lock_id',
             'type' => 'select2_smart_lock',
@@ -214,13 +232,13 @@ class ApartmentController extends CrudController
             'placeholder' => __('cms.lock_select2'),
             'minimum_input_length' => 0,
             'dependencies' => ['building_id'],
-            'loading' => true,  
+            'loading' => true,
         ]);
-        
+
         $this->crud->addField([
             'name' => 'num_rooms',
             'type' => 'number',
-            'label' =>  __('cms.num_rooms'),
+            'label' => __('cms.num_rooms'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -231,7 +249,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'num_beds',
             'type' => 'number',
-            'label' =>  __('cms.num_beds'),
+            'label' => __('cms.num_beds'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -239,11 +257,11 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
-        //bathrooms_count
+        // bathrooms_count
         $this->crud->addField([
             'name' => 'bathrooms_count',
             'type' => 'number',
-            'label' =>  __('cms.bathrooms_count'),
+            'label' => __('cms.bathrooms_count'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -251,11 +269,11 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
-        //adults_count
+        // adults_count
         $this->crud->addField([
             'name' => 'adults_count',
             'type' => 'number',
-            'label' =>  __('cms.adults_count'),
+            'label' => __('cms.adults_count'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -263,11 +281,11 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-6',
             ],
         ]);
-        //children_count
+        // children_count
         $this->crud->addField([
             'name' => 'children_count',
             'type' => 'number',
-            'label' =>  __('cms.children_count'),
+            'label' => __('cms.children_count'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -278,7 +296,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'area',
             'type' => 'number',
-            'label' =>  __('cms.area'),
+            'label' => __('cms.area'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -290,7 +308,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'floor_number',
             'type' => 'number',
-            'label' =>  __('cms.floor_number'),
+            'label' => __('cms.floor_number'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -302,7 +320,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'unit_number',
             'type' => 'number',
-            'label' =>  __('cms.unit_number'),
+            'label' => __('cms.unit_number'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -311,19 +329,17 @@ class ApartmentController extends CrudController
             ],
         ]);
 
-
-        
         $this->crud->addField([
             'name' => 'features',
             'type' => 'select2_multiple',
-            'label' =>  __('cms.features'),
+            'label' => __('cms.features'),
             'entity' => 'features',
             'attribute' => 'name_ar',
             'model' => \App\Models\Feature::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
-            'placeholder' =>  __('cms.features_select2'),
+            'placeholder' => __('cms.features_select2'),
         ]);
         $this->crud->addField([
             'name' => 'policy_id',
@@ -335,13 +351,13 @@ class ApartmentController extends CrudController
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
-            'placeholder' =>  __('cms.policy_select2'),
+            'placeholder' => __('cms.policy_select2'),
         ]);
 
         $this->crud->addField([
             'name' => 'price',
             'type' => 'number',
-            'label' =>  __('cms.price') . ' (السعر القديم - للتوافق فقط)',
+            'label' => __('cms.price').' (السعر القديم - للتوافق فقط)',
             'attributes' => [
                 'required' => 'required',
             ],
@@ -354,7 +370,7 @@ class ApartmentController extends CrudController
         // ═══════════════════════════════════════════════
         // 🎯 حقول التسعير المتقدم (PricingService)
         // ═══════════════════════════════════════════════
-        
+
         $this->crud->addField([
             'name' => 'pricing_section',
             'type' => 'custom_html',
@@ -428,7 +444,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'slug',
             'type' => 'text',
-            'label' =>  __('cms.slug'),
+            'label' => __('cms.slug'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -437,13 +453,10 @@ class ApartmentController extends CrudController
             ],
         ]);
 
-
-
-
         $this->crud->addField([
             'name' => 'description_ar',
             'type' => 'ckeditor',
-            'label' =>  __('cms.description_ar'),
+            'label' => __('cms.description_ar'),
             'attributes' => [
                 'rows' => 5,
             ],
@@ -454,7 +467,7 @@ class ApartmentController extends CrudController
         $this->crud->addField([
             'name' => 'description_en',
             'type' => 'ckeditor',
-            'label' =>  __('cms.description_en'),
+            'label' => __('cms.description_en'),
             'attributes' => [
                 'rows' => 5,
             ],
@@ -462,55 +475,55 @@ class ApartmentController extends CrudController
                 'class' => 'form-group col-md-12',
             ],
         ]);
-        //seo_title_ar
+        // seo_title_ar
         $this->crud->addField([
             'name' => 'seo_title_ar',
             'type' => 'text',
-            'label' =>  __('cms.seo_title_ar'),
+            'label' => __('cms.seo_title_ar'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
         ]);
-        //seo_title_en
+        // seo_title_en
         $this->crud->addField([
             'name' => 'seo_title_en',
             'type' => 'text',
-            'label' =>  __('cms.seo_title_en'),
+            'label' => __('cms.seo_title_en'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
         ]);
-        //seo_description_ar
+        // seo_description_ar
         $this->crud->addField([
             'name' => 'seo_description_ar',
             'type' => 'text',
-            'label' =>  __('cms.seo_description_ar'),
+            'label' => __('cms.seo_description_ar'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
         ]);
-        //seo_description_en
+        // seo_description_en
         $this->crud->addField([
             'name' => 'seo_description_en',
             'type' => 'text',
-            'label' =>  __('cms.seo_description_en'),
+            'label' => __('cms.seo_description_en'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
         ]);
 
-        //Label
+        // Label
         $this->crud->addField([
             'name' => 'labels',
             'type' => 'select2_multiple',
-            'label' =>  __('cms.apartment_label'),
+            'label' => __('cms.apartment_label'),
             'entity' => 'labels',
             'attribute' => 'name_ar',
             'model' => \App\Models\ApartmentLabel::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
-            'placeholder' =>  __('cms.label_select2'),
+            'placeholder' => __('cms.label_select2'),
         ]);
         $this->crud->addField([
             'name' => 'category_id',
@@ -529,27 +542,27 @@ class ApartmentController extends CrudController
             'name' => 'ics_url',
             'label' => 'ICS URL',
             'type' => 'url',
-            'hint' => 'أدخل رابط ICS (AIRBNB).'
+            'hint' => 'أدخل رابط ICS (AIRBNB).',
         ]);
 
-     
     }
 
     /**
      * Define what happens when the Update operation is loaded.
      *
      * @see https://backpackforlaravel.com/docs/crud-operation-update
+     *
      * @return void
      */
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
-        
+
         // تحميل بيانات التسعير الحالية
         $entry = $this->crud->getCurrentEntry();
         if ($entry) {
             $entry->load('pricing');
-            
+
             if ($entry->pricing) {
                 // تعيين القيم الافتراضية للحقول
                 CRUD::field('base_price')->value($entry->pricing->base_price);
@@ -558,7 +571,7 @@ class ApartmentController extends CrudController
             }
         }
     }
-    
+
     /**
      * Override store method to save pricing data
      */
@@ -567,7 +580,7 @@ class ApartmentController extends CrudController
         $this->crud->hasAccessOrFail('create');
         $request = $this->crud->validateRequest();
         $this->crud->registerFieldEvents();
-        
+
         // إزالة حقول التسعير من البيانات قبل الحفظ
         $strippedRequest = $this->crud->getStrippedSaveRequest($request);
         $pricingData = [
@@ -576,19 +589,20 @@ class ApartmentController extends CrudController
             'long_stay_discount' => $strippedRequest['long_stay_discount'] ?? null,
         ];
         unset($strippedRequest['base_price'], $strippedRequest['weekend_price'], $strippedRequest['long_stay_discount']);
-        
+
         // حفظ الشقة بدون حقول التسعير
         $item = $this->crud->create($strippedRequest);
         $this->data['entry'] = $this->crud->entry = $item;
-        
+
         // حفظ بيانات التسعير في جدول منفصل
         $this->savePricingDataFromArray($item, $pricingData);
-        
+
         \Alert::success(trans('backpack::crud.insert_success'))->flash();
         $this->crud->setSaveAction();
+
         return $this->crud->performSaveAction($item->getKey());
     }
-    
+
     /**
      * Override update method to save pricing data
      */
@@ -597,7 +611,7 @@ class ApartmentController extends CrudController
         $this->crud->hasAccessOrFail('update');
         $request = $this->crud->validateRequest();
         $this->crud->registerFieldEvents();
-        
+
         // إزالة حقول التسعير من البيانات قبل الحفظ
         $strippedRequest = $this->crud->getStrippedSaveRequest($request);
         $pricingData = [
@@ -606,19 +620,20 @@ class ApartmentController extends CrudController
             'long_stay_discount' => $strippedRequest['long_stay_discount'] ?? null,
         ];
         unset($strippedRequest['base_price'], $strippedRequest['weekend_price'], $strippedRequest['long_stay_discount']);
-        
+
         // تحديث الشقة بدون حقول التسعير
         $item = $this->crud->update($this->crud->getCurrentEntryId(), $strippedRequest);
         $this->data['entry'] = $this->crud->entry = $item;
-        
+
         // حفظ بيانات التسعير في جدول منفصل
         $this->savePricingDataFromArray($item, $pricingData);
-        
+
         \Alert::success(trans('backpack::crud.update_success'))->flash();
         $this->crud->setSaveAction();
+
         return $this->crud->performSaveAction($item->getKey());
     }
-    
+
     /**
      * حفظ بيانات التسعير من مصفوفة
      */
@@ -639,12 +654,13 @@ class ApartmentController extends CrudController
         );
     }
 
-    protected function setupShowOperation(){
+    protected function setupShowOperation()
+    {
         $this->setupListOperation();
         CRUD::addColumn([
             'name' => 'description_ar',
             'type' => 'text',
-            'label' =>  __('cms.description_ar'),
+            'label' => __('cms.description_ar'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -653,7 +669,7 @@ class ApartmentController extends CrudController
         CRUD::addColumn([
             'name' => 'description_en',
             'type' => 'text',
-            'label' =>  __('cms.description_en'),
+            'label' => __('cms.description_en'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -661,5 +677,4 @@ class ApartmentController extends CrudController
         ]);
 
     }
-
 }

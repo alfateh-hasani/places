@@ -3,28 +3,64 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\OwnerRez\ProcessWebhookJob;
+use App\Services\OwnerRez\OwnerRezSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class OwnerRezWebhookController extends Controller
 {
+    public function __construct(
+        protected OwnerRezSyncService $syncService
+    ) {}
+
     public function handle(Request $request): JsonResponse
     {
         $this->guardWebhook($request);
 
         $payload = [
             'event' => $request->input('type') ?? $request->input('Type'),
-            'payload' => $request->all(),
+            'action' => $request->input('action') ?? $request->input('Action'),
+            'data' => $request->input('data') ?? $request->all(),
             'received_at' => now()->toIso8601String(),
         ];
 
+        // Store in cache for debugging
         Cache::put($this->cacheKey(), $payload, now()->addSeconds($this->cacheTtl()));
 
+        // Process webhook asynchronously if auto sync is enabled
+        if (config('ownerrez.sync.auto_sync_inbound')) {
+            try {
+                ProcessWebhookJob::dispatch($payload);
+
+                Log::info('OwnerRez webhook queued for processing', [
+                    'event' => $payload['event'],
+                    'action' => $payload['action'],
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to queue OwnerRez webhook', [
+                    'error' => $e->getMessage(),
+                    'payload' => $payload,
+                ]);
+
+                // Fallback to synchronous processing
+                try {
+                    $this->syncService->syncBookingFromWebhook($payload);
+                } catch (\Exception $syncError) {
+                    Log::error('Failed to process OwnerRez webhook synchronously', [
+                        'error' => $syncError->getMessage(),
+                    ]);
+                }
+            }
+        }
+
         return response()->json([
-            'stored' => true,
+            'success' => true,
+            'message' => 'Webhook received and queued for processing',
             'expires_in_seconds' => $this->cacheTtl(),
         ]);
     }
@@ -66,16 +102,6 @@ class OwnerRezWebhookController extends Controller
 
         if (! $isValidUser || ! $isValidPassword) {
             abort(Response::HTTP_UNAUTHORIZED, 'Unauthorized webhook request.');
-        }
-    }
-
-    protected function ensureClientSecretAuthorized(Request $request): void
-    {
-        $providedSecret = $request->query('secret') ?? $request->header('X-OwnerRez-Secret');
-        $expectedSecret = (string) Config::get('services.ownerrez.client_secret');
-
-        if ($expectedSecret === '' || ! is_string($providedSecret) || ! hash_equals($expectedSecret, $providedSecret)) {
-            abort(Response::HTTP_UNAUTHORIZED, 'Invalid secret.');
         }
     }
 

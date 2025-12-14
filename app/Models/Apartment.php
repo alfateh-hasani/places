@@ -2,29 +2,30 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Cache;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\Image\Enums\Fit;
-
-use App\Traits\HasTranslations;
-use Cache;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class Apartment extends Model implements HasMedia
 {
     use CrudTrait;
-    use InteractsWithMedia;
     use HasTranslations;
+    use InteractsWithMedia;
     use LogsActivity;
-    protected $with = ['media','building'];
+
+    protected $with = ['media', 'building'];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -53,17 +54,16 @@ class Apartment extends Model implements HasMedia
     {
         // log all changes
         return LogOptions::defaults()
-        ->logAll();
-         
-    }
+            ->logAll();
 
+    }
 
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
     }
 
-    //features
+    // features
     public function features()
     {
         return $this->belongsToMany(Feature::class, 'apartment_features', 'apartment_id', 'feature_id');
@@ -75,30 +75,29 @@ class Apartment extends Model implements HasMedia
         $this->addMediaCollection('video');
     }
 
-    public function registerMediaConversions(Media $media = null): void {
+    public function registerMediaConversions(?Media $media = null): void
+    {
         $this->addMediaConversion('grid')
-            ->fit(  Fit::Crop, 364, desiredHeight: 300 )
+            ->fit(Fit::Crop, 364, desiredHeight: 300)
 
             ->format('webp')                         // Convert to WebP format
             ->nonQueued();                           // Process synchronously (optional)
 
-            $this->addMediaConversion('grid-app2')
-            ->fit(  Fit::Crop, 660, desiredHeight: 432 )   
-            ->quality(75)         
-            ->format('webp')                         
-            ->nonQueued(); 
+        $this->addMediaConversion('grid-app2')
+            ->fit(Fit::Crop, 660, desiredHeight: 432)
+            ->quality(75)
+            ->format('webp')
+            ->nonQueued();
 
     }
 
-
-
-    //belongsTo polices
+    // belongsTo polices
     public function policy()
     {
         return $this->belongsTo(Policy::class);
     }
 
-    //lock_alias
+    // lock_alias
     public function lock()
     {
         return $this->belongsTo(SmartLock::class, 'smart_lock_id');
@@ -110,15 +109,15 @@ class Apartment extends Model implements HasMedia
         return $this->belongsTo(SmartLock::class, 'smart_lock_id');
     }
 
-
-    //is_favorite
+    // is_favorite
     public function getIsFavoriteAttribute()
     {
         $user = \Auth::guard('api')->check() ? \Auth::guard('api')->user() : \Auth::guard('customer')->user();
-        if (!$user) {
+        if (! $user) {
             return false;
         }
-        return  $this->favorites()->where('customer_id', $user->id)->exists();
+
+        return $this->favorites()->where('customer_id', $user->id)->exists();
     }
 
     public function favorites(): HasMany
@@ -126,10 +125,10 @@ class Apartment extends Model implements HasMedia
         return $this->hasMany(Favorites::class);
     }
 
-    //top_rated
+    // top_rated
     public function getTopRatedAttribute()
     {
-//        return $this->ratings()->avg('rating');
+        //        return $this->ratings()->avg('rating');
         return true;
     }
 
@@ -137,42 +136,42 @@ class Apartment extends Model implements HasMedia
     {
         return route('apartments.show', $this->slug);
     }
-    //ratings
+
+    // ratings
     public function getTotalRatingsAttribute()
     {
         $cacheKey = "total_ratings_{$this->id}";
         $averageRating = Cache::remember($cacheKey, 120, function () {
             return $this->reviews()->avg('rating');
         });
+
         return $averageRating ? number_format($averageRating, 1) : '';
     }
 
-    //reviews
+    // reviews
     public function reviews()
     {
         return $this->hasMany(Review::class);
     }
 
-    //image
+    // image
     public function getImageViewAttribute()
     {
         return $this->getFirstMediaUrl('image');
     }
 
-
-    //coupon_apartment
+    // coupon_apartment
 
     public function coupons()
     {
         return $this->belongsToMany(Coupon::class, 'coupon_apartment', 'apartment_id', 'coupon_id');
     }
 
-    //bookings
+    // bookings
     public function bookings()
     {
-        return $this->hasMany(Booking::class,'apartment_id');
+        return $this->hasMany(Booking::class, 'apartment_id');
     }
-
 
     public function labels()
     {
@@ -183,12 +182,12 @@ class Apartment extends Model implements HasMedia
     {
         $bookedDays = collect();
         $today = Carbon::today()->format('Y-m-d');
-        
+
         if ($reservations && $reservations->count() > 0) {
             foreach ($reservations as $reservation) {
                 // إنشاء الفترة من check_in إلى check_out (بدون تضمين check_out)
                 $period = CarbonPeriod::create($reservation->check_in, $reservation->check_out->subDay());
-                
+
                 foreach ($period as $date) {
                     $dateString = $date->format('Y-m-d');
                     // التأكد من عدم إضافة تواريخ سابقة عن اليوم الحالي
@@ -198,6 +197,7 @@ class Apartment extends Model implements HasMedia
                 }
             }
         }
+
         return $bookedDays;
     }
 
@@ -209,7 +209,7 @@ class Apartment extends Model implements HasMedia
                     <i class="la la-calendar"></i> التقويم
                 </a>';
     }
-    
+
     public function getPricingButton()
     {
         $url = url("admin/apartment/{$this->id}/pricing");
@@ -218,12 +218,12 @@ class Apartment extends Model implements HasMedia
                     <i class="la la-dollar"></i> التسعير
                 </a>';
     }
-    
-    //getCopyLinkButton
+
+    // getCopyLinkButton
     public function getCopyLinkButton()
     {
-        $url = route('apartments.ics', $this->id); 
-    
+        $url = route('apartments.ics', $this->id);
+
         return '<a href="#" onclick="copyToClipboard(\''.$url.'\')" class="btn btn-sm btn-outline-primary">
                     <i class="la la-copy"></i> نسخ ICS  
                 </a>
@@ -238,15 +238,34 @@ class Apartment extends Model implements HasMedia
                 </script>';
     }
 
-    //category
+    // category
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function pricing() { return $this->hasOne(ApartmentPrice::class); }
-    public function calendarPrices() { return $this->hasMany(ApartmentPriceCalendar::class); }
-    public function seasonalPricings() { return $this->hasMany(SeasonalPricing::class); }
-    public function dayOfWeekPricings() { return $this->hasMany(DayOfWeekPricing::class); }
+    public function pricing()
+    {
+        return $this->hasOne(ApartmentPrice::class);
+    }
 
+    public function calendarPrices()
+    {
+        return $this->hasMany(ApartmentPriceCalendar::class);
+    }
+
+    public function seasonalPricings()
+    {
+        return $this->hasMany(SeasonalPricing::class);
+    }
+
+    public function dayOfWeekPricings()
+    {
+        return $this->hasMany(DayOfWeekPricing::class);
+    }
+
+    public function ownerrezMapping()
+    {
+        return $this->hasOne(OwnerRezPropertyMapping::class);
+    }
 }
