@@ -21,11 +21,15 @@ class OwnerRezWebhookController extends Controller
     {
         $this->guardWebhook($request);
 
+        // Support both old and new webhook formats
         $payload = [
-            'event' => $request->input('type') ?? $request->input('Type'),
+            'event' => $request->input('entity_type') ?? $request->input('type') ?? $request->input('Type'),
             'action' => $request->input('action') ?? $request->input('Action'),
-            'data' => $request->input('data') ?? $request->all(),
+            'data' => $request->input('entity') ?? $request->input('data') ?? $request->all(),
+            'entity_id' => $request->input('entity_id'),
+            'categories' => $request->input('categories', []),
             'received_at' => now()->toIso8601String(),
+            'raw' => $request->all(),
         ];
 
         // Store in cache for debugging

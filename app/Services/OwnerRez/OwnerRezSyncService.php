@@ -206,16 +206,26 @@ class OwnerRezSyncService
         }
 
         try {
-            $this->updateLocalBookingFromOwnerRez($ownerrezBooking->localBooking, $bookingData);
+            // Check if booking is canceled
+            $status = $bookingData['status'] ?? null;
+            if ($status === 'canceled') {
+                $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
+                Log::info('Canceled booking from OwnerRez via update webhook', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                    'local_booking_id' => $ownerrezBooking->local_booking_id,
+                ]);
+            } else {
+                $this->updateLocalBookingFromOwnerRez($ownerrezBooking->localBooking, $bookingData);
+                Log::info('Successfully updated booking from OwnerRez', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                    'local_booking_id' => $ownerrezBooking->local_booking_id,
+                ]);
+            }
+
             $ownerrezBooking->update([
                 'raw_data' => $bookingData,
                 'sync_status' => 'synced',
                 'synced_at' => now(),
-            ]);
-
-            Log::info('Successfully updated booking from OwnerRez', [
-                'ownerrez_booking_id' => $ownerrezBookingId,
-                'local_booking_id' => $ownerrezBooking->local_booking_id,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to update booking from OwnerRez', [
@@ -504,19 +514,47 @@ class OwnerRezSyncService
      */
     protected function mapOwnerRezToLocal(array $data): array
     {
+        // Handle both old and new webhook formats
+        $totalAmount = $data['total_amount'] ?? $data['amount'] ?? 0;
+        $totalPaid = $data['total_paid'] ?? $data['paid'] ?? 0;
+
+        // Determine payment status
+        $paymentStatus = 'pending';
+        if ($totalAmount > 0 && $totalPaid >= $totalAmount) {
+            $paymentStatus = 'paid';
+        } elseif ($totalPaid > 0) {
+            $paymentStatus = 'partial';
+        }
+
+        // If no amount info, assume paid for active bookings
+        if ($totalAmount == 0 && ($data['status'] ?? '') === 'active') {
+            $paymentStatus = 'paid';
+        }
+
+        // Calculate number of nights
+        $checkIn = \Carbon\Carbon::parse($data['arrival']);
+        $checkOut = \Carbon\Carbon::parse($data['departure']);
+        $numberOfNights = $checkIn->diffInDays($checkOut);
+
+        // Calculate one night price
+        $oneNightPrice = $numberOfNights > 0 ? $totalAmount / $numberOfNights : 0;
+
         $mappedData = [
             'apartment_id' => $data['apartment_id'] ?? null,
             'check_in' => $data['arrival'],
             'check_out' => $data['departure'],
+            'number_of_nights' => $numberOfNights,
             'adults_count' => $data['adults'] ?? 1,
             'children_count' => $data['children'] ?? 0,
-            'customer_name' => $data['guest']['first_name'] ?? ''.' '.$data['guest']['last_name'] ?? '',
+            'customer_full_name' => trim(($data['guest']['first_name'] ?? '').' '.($data['guest']['last_name'] ?? '')),
             'customer_email' => $data['guest']['email'] ?? null,
             'customer_phone' => $data['guest']['phone'] ?? null,
-            'total_price' => $data['total_amount'] ?? 0,
-            'final_price' => $data['total_amount'] ?? 0,
+            'total_price' => $totalAmount,
+            'final_price' => $totalAmount,
+            'one_night_price' => $oneNightPrice,
+            'tax' => 0, // OwnerRez doesn't provide tax separately
             'status' => $this->mapOwnerRezStatus($data['status'] ?? 'pending'),
-            'payment_status' => $data['total_paid'] >= $data['total_amount'] ? 'paid' : 'pending',
+            'payment_status' => $paymentStatus,
             'booking_source' => 'ownerrez',
             'channel_name' => $data['listing_site'] ?? 'ownerrez',
             'external_reference' => $data['platform_reservation_number'] ?? null,
