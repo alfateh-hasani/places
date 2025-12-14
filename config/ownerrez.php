@@ -74,4 +74,18 @@ return [
 
     'log_api_calls' => env('OWNERREZ_LOG_API_CALLS', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | OAuth Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'oauth' => [
+        'client_id' => env('OWNERREZ_OAUTH_CLIENT_ID'),
+        'client_secret' => env('OWNERREZ_OAUTH_CLIENT_SECRET'),
+        'redirect_uri' => env('OWNERREZ_OAUTH_REDIRECT_URI', env('APP_URL').'/api/ownerrez/oauth/callback'),
+        'access_token' => env('OWNERREZ_ACCESS_TOKEN'),
+        'user_id' => env('OWNERREZ_USER_ID'),
+    ],
+
 ];

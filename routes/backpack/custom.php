@@ -1,11 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\BookingController;
-use App\Http\Controllers\Admin\AirbnbBookingController;
 use App\Http\Controllers\Admin\CanceledBookingsController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\LockController;
-
+use Illuminate\Support\Facades\Route;
 
 Route::group([
     'prefix' => config('backpack.base.route_prefix', 'admin'),
@@ -40,24 +38,22 @@ Route::group([
     Route::post('booking/{id}/update-check-in-time', 'BookingController@updateCheckInTime');
     Route::post('booking/{id}/regenerate-passcode', 'BookingController@regeneratePasscode');
     Route::crud('airbnb-booking', 'AirbnbBookingController');
-    Route::crud('faq', 'FaqController'); 
+    Route::crud('faq', 'FaqController');
     Route::crud('faq-category', 'FaqCategoryController');
     Route::crud('site-feature', 'SiteFeatureController');
-    
+
     Route::crud('transaction', 'TransactionController');
     Route::crud('customer', 'CustomerController');
     Route::crud('service', 'ServiceController');
- 
- 
-  
+
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');
     // Route for changing payment status
     Route::post('booking/{id}/change-payment-status/{status}', [BookingController::class, 'changePaymentStatus'])->name('admin.booking.change-payment-status');
-    
+
     // Routes for canceled bookings and refund process
     Route::crud('canceled-bookings', CanceledBookingsController::class);
     Route::post('canceled-bookings/{id}/process-refund/{action}', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.process-refund');
-    
+
     // Daily Occupancy
     Route::get('charts/daily-occupancy', [\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');
 
@@ -74,7 +70,7 @@ Route::group([
     Route::get('charts/monthly-bookings', [\App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController::class, 'data'])->name('charts.monthly-bookings');
 
     Route::get('charts/total-users', [\App\Http\Controllers\Admin\Charts\TotalUsersChartController::class, 'data'])
-    ->name('charts.total-users');
+        ->name('charts.total-users');
     Route::get('reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');
     Route::get('/reports/daily-checkout', [\App\Http\Controllers\Admin\ReportsController::class, 'dailyCheckOutReport']);
     Route::crud('contact-us', 'ContactUsCrudController');
@@ -84,7 +80,7 @@ Route::group([
     // تقويم الحجوزات
     Route::get('apartment/{id}/calendar', [\App\Http\Controllers\Admin\CalenderController::class, 'showCalendar']);
     Route::get('apartment/{id}/bookings', [\App\Http\Controllers\Admin\CalenderController::class, 'getApartmentBookings']);
-    
+
     // تقويم الأسعار (منفصل)
     Route::get('apartment/{id}/pricing', [\App\Http\Controllers\Admin\CalenderController::class, 'showPricingCalendar']);
     Route::get('apartment/{id}/custom-prices', [\App\Http\Controllers\Admin\CalenderController::class, 'getCustomPrices']);
@@ -94,14 +90,17 @@ Route::group([
 
     Route::crud('category', 'CategoryCrudController');
     Route::crud('onboarding', 'OnboardingCrudController');
-    
+
     // تعارضات قنوات الحجز
     Route::crud('booking-channel-conflicts', 'BookingChannelConflictController');
     Route::get('booking-channel-conflicts/{id}/resolve-conflict', 'BookingChannelConflictController@resolveConflict');
     Route::get('booking-channel-conflicts/resolve-all-conflicts', 'BookingChannelConflictController@resolveAllConflicts');
+
+    // OwnerRez OAuth
+    Route::get('ownerrez/oauth', 'OwnerRezOAuthController@index')->name('admin.ownerrez.oauth');
+    Route::get('ownerrez/oauth/authorize', 'OwnerRezOAuthController@authorize')->name('admin.ownerrez.oauth.authorize');
+    Route::delete('ownerrez/oauth/disconnect', 'OwnerRezOAuthController@disconnect')->name('admin.ownerrez.oauth.disconnect');
 });
-
-
 
 // Route::post('admin/lock/{id}/unlock', [LockController::class, 'unlock'])->name('lock.unlock');
 // Route::post('admin/lock/{id}/add-passcode', [LockController::class, 'addPasscode'])->name('lock.add_passcode');

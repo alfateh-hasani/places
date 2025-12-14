@@ -79,13 +79,133 @@ class OwnerRezWebhookController extends Controller
         return response()->json($payload);
     }
 
-    public function oauthCallback(Request $request): JsonResponse
+    public function oauthCallback(Request $request)
     {
-        return response()->json([
-            'message' => 'OwnerRez OAuth callback received.',
-            'received_at' => now()->toIso8601String(),
-            'state' => $request->query('state'),
+        $code = $request->query('code');
+        $state = $request->query('state');
+        $error = $request->query('error');
+
+        // Handle error from OwnerRez
+        if ($error) {
+            Log::error('OwnerRez OAuth error', [
+                'error' => $error,
+                'error_description' => $request->query('error_description'),
+            ]);
+
+            return view('ownerrez.oauth-error', [
+                'error' => $error,
+                'description' => $request->query('error_description'),
+            ]);
+        }
+
+        // Validate code
+        if (! $code) {
+            return view('ownerrez.oauth-error', [
+                'error' => 'missing_code',
+                'description' => 'Authorization code is missing',
+            ]);
+        }
+
+        try {
+            // Exchange code for access token
+            $tokenData = $this->exchangeCodeForToken($code);
+
+            // Store the access token
+            $this->storeAccessToken($tokenData);
+
+            Log::info('OwnerRez OAuth successful', [
+                'user_id' => $tokenData['user_id'] ?? null,
+            ]);
+
+            return view('ownerrez.oauth-success', [
+                'user_id' => $tokenData['user_id'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to exchange OAuth code', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return view('ownerrez.oauth-error', [
+                'error' => 'exchange_failed',
+                'description' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    protected function exchangeCodeForToken(string $code): array
+    {
+        $clientId = config('ownerrez.oauth.client_id');
+        $clientSecret = config('ownerrez.oauth.client_secret');
+        $redirectUri = config('ownerrez.oauth.redirect_uri');
+
+        if (! $clientId || ! $clientSecret) {
+            throw new \Exception('OAuth credentials not configured');
+        }
+
+        $response = \Illuminate\Support\Facades\Http::withBasicAuth($clientId, $clientSecret)
+            ->asForm()
+            ->post('https://api.ownerrez.com/oauth/access_token', [
+                'grant_type' => 'authorization_code',
+                'code' => $code,
+                'redirect_uri' => $redirectUri,
+            ]);
+
+        if (! $response->successful()) {
+            $error = $response->json('error', 'unknown_error');
+            $description = $response->json('error_description', 'Failed to exchange code for token');
+            throw new \Exception("{$error}: {$description}");
+        }
+
+        return $response->json();
+    }
+
+    protected function storeAccessToken(array $tokenData): void
+    {
+        // Store in config file or database
+        $accessToken = $tokenData['access_token'];
+        $userId = $tokenData['user_id'];
+
+        // For now, store in cache (you can change this to database)
+        Cache::forever('ownerrez_access_token', $accessToken);
+        Cache::forever('ownerrez_user_id', $userId);
+
+        // Also update .env file (optional)
+        $this->updateEnvFile([
+            'OWNERREZ_ACCESS_TOKEN' => $accessToken,
+            'OWNERREZ_USER_ID' => $userId,
         ]);
+
+        Log::info('Stored OwnerRez access token', [
+            'user_id' => $userId,
+        ]);
+    }
+
+    protected function updateEnvFile(array $data): void
+    {
+        $envPath = base_path('.env');
+
+        if (! file_exists($envPath)) {
+            return;
+        }
+
+        $envContent = file_get_contents($envPath);
+
+        foreach ($data as $key => $value) {
+            // Check if key exists
+            if (preg_match("/^{$key}=/m", $envContent)) {
+                // Update existing
+                $envContent = preg_replace(
+                    "/^{$key}=.*/m",
+                    "{$key}={$value}",
+                    $envContent
+                );
+            } else {
+                // Add new
+                $envContent .= "\n{$key}={$value}";
+            }
+        }
+
+        file_put_contents($envPath, $envContent);
     }
 
     protected function guardWebhook(Request $request): void
