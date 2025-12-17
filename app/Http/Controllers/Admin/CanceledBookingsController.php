@@ -48,6 +48,54 @@ class CanceledBookingsController extends CrudController
             'type' => 'text',
             'label' => __('cms.number_of_booking'),
         ]);
+
+        // Booking Source
+        CRUD::addColumn([
+            'name' => 'booking_source',
+            'type' => 'custom_html',
+            'label' => 'مصدر الحجز',
+            'value' => function($entry) {
+                $sourceIcons = [
+                    'web' => '<i class="la la-globe"></i>',
+                    'android' => '<i class="la la-android"></i>',
+                    'ios' => '<i class="la la-apple"></i>',
+                    'ownerrez' => '<i class="la la-link"></i>',
+                    'airbnb' => '<i class="la la-home"></i>',
+                    'booking_com' => '<i class="la la-bed"></i>',
+                    'guesty' => '<i class="la la-building"></i>',
+                    'other' => '<i class="la la-question-circle"></i>',
+                ];
+                
+                $sourceLabels = [
+                    'web' => 'ويب',
+                    'android' => 'أندرويد',
+                    'ios' => 'iOS',
+                    'ownerrez' => 'OwnerRez',
+                    'airbnb' => 'Airbnb',
+                    'booking_com' => 'Booking',
+                    'guesty' => 'Guesty',
+                    'other' => 'أخرى',
+                ];
+                
+                $sourceColors = [
+                    'web' => 'primary',
+                    'android' => 'success',
+                    'ios' => 'dark',
+                    'ownerrez' => 'info',
+                    'airbnb' => 'danger',
+                    'booking_com' => 'primary',
+                    'guesty' => 'warning',
+                    'other' => 'secondary',
+                ];
+                
+                $bookingSource = $entry->booking_source ?? 'web';
+                $icon = $sourceIcons[$bookingSource] ?? $sourceIcons['other'];
+                $label = $sourceLabels[$bookingSource] ?? ucfirst($bookingSource);
+                $color = $sourceColors[$bookingSource] ?? 'secondary';
+                
+                return "<span class='badge badge-{$color}'>{$icon} {$label}</span>";
+            }
+        ]);
         
         CRUD::addColumn([
             'name' => 'customer_id',

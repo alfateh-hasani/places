@@ -143,13 +143,32 @@ class OwnerRezSyncService
             return;
         }
 
+        // Fetch full booking data from API before creating
+        try {
+            $fullBookingData = $this->apiService->getBooking($ownerrezBookingId);
+            Log::info('Full booking data from API', ['full_booking_data' => $fullBookingData]);
+            if (! empty($fullBookingData)) {
+                // Merge API data with webhook data (API takes precedence)
+                $bookingData =  $fullBookingData;
+                Log::info('F full booking data from API', [
+                    'booking_id' => $ownerrezBookingId,
+                     'booking_data' => $bookingData,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to fetch full booking before creation, using webhook data', [
+                'booking_id' => $ownerrezBookingId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         // Create local booking
         try {
             DB::beginTransaction();
 
             $localBooking = $this->createLocalBookingFromOwnerRez($bookingData, $mapping->apartment_id);
 
-            // Create OwnerRez booking record
+            // Create OwnerRez booking record with full data
             OwnerRezBooking::create([
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'local_booking_id' => $localBooking->id,
@@ -177,11 +196,13 @@ class OwnerRezSyncService
                 $this->logConflict([
                     'apartment_id' => $mapping->apartment_id,
                     'channel' => 'ownerrez',
-                    'external_booking_id' => $ownerrezBookingId,
-                    'check_in' => $bookingData['arrival'],
-                    'check_out' => $bookingData['departure'],
-                    'conflict_type' => 'date_overlap',
-                    'details' => $e->getMessage(),
+                    'external_reservation_id' => (string) $ownerrezBookingId,
+                    'ext_check_in' => $bookingData['arrival'],
+                    'ext_check_out' => $bookingData['departure'],
+                    'context' => json_encode([
+                        'conflict_type' => 'date_overlap',
+                        'details' => $e->getMessage(),
+                    ]),
                 ]);
             }
         }
@@ -488,13 +509,15 @@ class OwnerRezSyncService
 
             return $this->logConflict([
                 'apartment_id' => $booking->apartment_id,
-                'local_booking_id' => $booking->id,
+                'conflicting_booking_id' => $booking->id,
                 'channel' => 'ownerrez',
-                'external_booking_id' => $conflictingBooking['id'],
-                'check_in' => $conflictingBooking['arrival'],
-                'check_out' => $conflictingBooking['departure'],
-                'conflict_type' => 'date_overlap',
-                'details' => json_encode($conflictingBooking),
+                'external_reservation_id' => (string) $conflictingBooking['id'],
+                'ext_check_in' => $conflictingBooking['arrival'],
+                'ext_check_out' => $conflictingBooking['departure'],
+                'context' => json_encode([
+                    'conflict_type' => 'date_overlap',
+                    'details' => $conflictingBooking,
+                ]),
             ]);
         }
 
@@ -546,6 +569,24 @@ class OwnerRezSyncService
             $apartmentId = $mapping?->apartment_id;
         }
 
+        // Note: Full booking data should already be fetched in handleBookingCreated()
+        // This method just maps the data to local format
+
+        // Extract customer email from guest data
+        $customerEmail = null;
+        if (isset($data['guest']['email'])) {
+            $customerEmail = $data['guest']['email'];
+        } elseif (isset($data['guest']['email_addresses']) && is_array($data['guest']['email_addresses'])) {
+            foreach ($data['guest']['email_addresses'] as $emailData) {
+                if (isset($emailData['address'])) {
+                    $customerEmail = $emailData['address'];
+                    if ($emailData['is_default'] ?? false) {
+                        break;
+                    }
+                }
+            }
+        }
+
         $mappedData = [
             'apartment_id' => $apartmentId ?? $data['apartment_id'] ?? null,
             'check_in' => $data['arrival'],
@@ -553,8 +594,8 @@ class OwnerRezSyncService
             'number_of_nights' => $numberOfNights,
             'adults_count' => $data['adults'] ?? 1,
             'children_count' => $data['children'] ?? 0,
-            'customer_full_name' => trim(($data['guest']['first_name'] ?? '').' '.($data['guest']['last_name'] ?? '')),
-            'customer_email' => $data['guest']['email'] ?? null,
+            'customer_full_name' => trim(($data['guest']['first_name'] ?? 'Guest').' '.($data['guest']['last_name'] ?? '')),
+            'customer_email' => $customerEmail,
             'total_price' => $totalAmount,
             'final_price' => $totalAmount,
             'one_night_price' => $oneNightPrice,
@@ -565,11 +606,11 @@ class OwnerRezSyncService
             'channel_name' => $data['listing_site'] ?? 'ownerrez',
             'external_reference' => $data['platform_reservation_number'] ?? null,
             'notes' => $data['notes'] ?? null,
-            'isis_airbnb_booking'=>1
+            'is_airbnb_booking' => 0,
         ];
 
         // Find or create customer and link OwnerRez guest ID
-        if (isset($data['guest']) && isset($data['guest']['email'])) {
+        if (isset($data['guest'])) {
             $customer = $this->findOrCreateCustomerFromOwnerRez($data['guest']);
             if ($customer) {
                 $mappedData['customer_id'] = $customer->id;
@@ -584,14 +625,19 @@ class OwnerRezSyncService
      */
     protected function findOrCreateCustomerFromOwnerRez(array $guestData): ?Customer
     {
+      
 
-        $email = $guestData['email'] ?? null;
-        $phone = $guestData['phone'] ?? null;
+        // Extract phone from different possible formats
+        $phone = null;
+        if (isset($guestData['phone'])) {
+            $phone = $guestData['phone'];
+        }  
+
+        // Clean phone number: remove spaces, dashes, parentheses, and other non-digit characters except +
+        
+
         $ownerrezGuestId = $guestData['id'] ?? null;
 
-        if (! $email && ! $phone) {
-            return null;
-        }
 
         // Try to find customer by OwnerRez guest ID first
         if ($ownerrezGuestId) {
@@ -601,25 +647,27 @@ class OwnerRezSyncService
             }
         }
 
-        // Try to find by email
-        if ($email) {
-            $customer = Customer::where('email', $email)->first();
-            if ($customer) {
+        
 
-                // Update OwnerRez guest ID if not set
-                if (! $customer->ownerrez_guest_id && $ownerrezGuestId) {
-                    $customer->update(['ownerrez_guest_id' => $ownerrezGuestId]);
-                }
-
-                return $customer;
-            }
+        if (!$phone) {
+             $Guest = $this->apiService->getGuest($ownerrezGuestId);
+             Log::info('Guest data', ['guest' => $Guest]);
+             if ($Guest) {
+                $phone = $Guest['phone'];
+             }
         }
+
+    
+
+        if ($phone) {
+            $phone =  str_replace(' ', '', $phone);
+        }
+
 
         // Try to find by phone
         if ($phone) {
             $customer = Customer::where('phone', $phone)->first();
             if ($customer) {
-
                 // Update OwnerRez guest ID if not set
                 if (! $customer->ownerrez_guest_id && $ownerrezGuestId) {
                     $customer->update(['ownerrez_guest_id' => $ownerrezGuestId]);
@@ -684,9 +732,9 @@ class OwnerRezSyncService
     {
         return match (strtolower($ownerrezStatus)) {
             'active' => 'approved',
-            'pending' => 'pending',
+            'pending' => 'approved',
             'canceled' => 'canceled',
-            default => 'pending',
+            default => 'approved',
         };
     }
 

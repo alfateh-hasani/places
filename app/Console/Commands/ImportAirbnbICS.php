@@ -46,6 +46,11 @@ class ImportAirbnbICS extends Command
         $this->info("Found {$apartments->count()} apartment(s) with ICS URL.");
 
         foreach ($apartments as $apartment) {
+
+            if(isset($apartment->ownerrezMapping->ownerrez_property_id) && $apartment->ownerrezMapping->ownerrez_property_id !== null) {
+                continue;
+            }
+            
             $icsUrl = trim((string)$apartment->ics_url);
             if ($icsUrl === '') {
                 continue;

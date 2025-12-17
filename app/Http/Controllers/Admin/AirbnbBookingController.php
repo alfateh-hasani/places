@@ -129,6 +129,54 @@ class AirbnbBookingController extends CrudController
             'type' => 'text',
         ]);
 
+        // عمود مصدر الحجز
+        CRUD::addColumn([
+            'name' => 'booking_source',
+            'type' => 'custom_html',
+            'label' => 'مصدر الحجز <i class="la la-source"></i>',
+            'value' => function($entry) {
+                $sourceIcons = [
+                    'web' => '<i class="la la-globe"></i>',
+                    'android' => '<i class="la la-android"></i>',
+                    'ios' => '<i class="la la-apple"></i>',
+                    'ownerrez' => '<i class="la la-link"></i>',
+                    'airbnb' => '<i class="la la-home"></i>',
+                    'booking_com' => '<i class="la la-bed"></i>',
+                    'guesty' => '<i class="la la-building"></i>',
+                    'other' => '<i class="la la-question-circle"></i>',
+                ];
+                
+                $sourceLabels = [
+                    'web' => 'ويب',
+                    'android' => 'أندرويد',
+                    'ios' => 'iOS',
+                    'ownerrez' => 'OwnerRez',
+                    'airbnb' => 'Airbnb',
+                    'booking_com' => 'Booking',
+                    'guesty' => 'Guesty',
+                    'other' => 'أخرى',
+                ];
+                
+                $sourceColors = [
+                    'web' => 'primary',
+                    'android' => 'success',
+                    'ios' => 'dark',
+                    'ownerrez' => 'info',
+                    'airbnb' => 'danger',
+                    'booking_com' => 'primary',
+                    'guesty' => 'warning',
+                    'other' => 'secondary',
+                ];
+                
+                $bookingSource = $entry->booking_source ?? 'airbnb';
+                $icon = $sourceIcons[$bookingSource] ?? $sourceIcons['other'];
+                $label = $sourceLabels[$bookingSource] ?? ucfirst($bookingSource);
+                $color = $sourceColors[$bookingSource] ?? 'secondary';
+                
+                return "<span class='badge badge-{$color}'>{$icon} {$label}</span>";
+            }
+        ]);
+
         // عمود تاريخ الإنشاء
         CRUD::addColumn([
             'name' => 'created_at',
@@ -152,12 +200,26 @@ class AirbnbBookingController extends CrudController
             'name' => 'معلومات الحجز',
             'type' => 'custom_html',
             'value' => function($entry) {
+                $sourceLabels = [
+                    'web' => 'الموقع الإلكتروني',
+                    'android' => 'أندرويد',
+                    'ios' => 'آيفون',
+                    'ownerrez' => 'OwnerRez',
+                    'airbnb' => 'Airbnb',
+                    'booking_com' => 'Booking.com',
+                    'guesty' => 'Guesty',
+                    'other' => 'أخرى',
+                ];
+                $bookingSource = $entry->booking_source ?? 'airbnb';
+                $sourceLabel = $sourceLabels[$bookingSource] ?? ucfirst($bookingSource);
+                
                 return '<div class="card">
                     <div class="card-header">
                         <h4><i class="la la-info-circle"></i> معلومات الحجز</h4>
                     </div>
                     <div class="card-body">
                         <p><strong>رقم الحجز:</strong> ' . $entry->number_of_booking . '</p>
+                        <p><strong>مصدر الحجز:</strong> <span class="badge badge-info">' . $sourceLabel . '</span></p>
                         <p><strong>الحالة:</strong> ' . $this->getStatusBadge($entry->status) . '</p>
                         <p><strong>حالة الدفع:</strong> ' . $this->getPaymentStatusBadge($entry->payment_status) . '</p>
                         <p><strong>تاريخ الإنشاء:</strong> ' . $entry->created_at->format('Y-m-d H:i:s') . '</p>

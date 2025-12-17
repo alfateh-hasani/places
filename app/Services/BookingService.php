@@ -394,8 +394,8 @@ class BookingService
         try {
             $lockData = $this->getLockData($booking->apartment_id);
 
-            $startDate = $booking->check_in->format('Y-m-d').' '.$booking->check_in_time->format('H:i:s');
-            $endDate = $booking->check_out->format('Y-m-d').' '.$booking->check_out_time->format('H:i:s');
+            $startDate = $booking->check_in->format('Y-m-d').' '.$booking->check_in_time?->format('H:i:s');
+            $endDate = $booking->check_out->format('Y-m-d').' '.$booking->check_out_time?->format('H:i:s');
 
             $keyboardPwd = $this->generateRandomPasscode();
             $keyboardPwdName = $booking->id;

@@ -70,6 +70,7 @@ class BookingController extends CrudController
         
         $this->addStatusFilter();
         $this->addPaymentStatusFilter();
+        $this->addBookingSourceFilter();
         
         if (backpack_user()->can('booking.changeStatus')) {
             CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
@@ -136,6 +137,54 @@ class BookingController extends CrudController
             'name' => 'number_of_booking',
             'type' => 'text',
             'label' => __('cms.number_of_booking') . ' <i class="la la-bookmark"></i>',
+        ]);
+
+        // Booking Source
+        CRUD::addColumn([
+            'name' => 'booking_source',
+            'type' => 'custom_html',
+            'label' => 'مصدر الحجز <i class="la la-source"></i>',
+            'value' => function($entry) {
+                $sourceIcons = [
+                    'web' => '<i class="la la-globe"></i>',
+                    'android' => '<i class="la la-android"></i>',
+                    'ios' => '<i class="la la-apple"></i>',
+                    'ownerrez' => '<i class="la la-link"></i>',
+                    'airbnb' => '<i class="la la-home"></i>',
+                    'booking_com' => '<i class="la la-bed"></i>',
+                    'guesty' => '<i class="la la-building"></i>',
+                    'other' => '<i class="la la-question-circle"></i>',
+                ];
+                
+                $sourceLabels = [
+                    'web' => 'ويب',
+                    'android' => 'أندرويد',
+                    'ios' => 'iOS',
+                    'ownerrez' => 'OwnerRez',
+                    'airbnb' => 'Airbnb',
+                    'booking_com' => 'Booking',
+                    'guesty' => 'Guesty',
+                    'other' => 'أخرى',
+                ];
+                
+                $sourceColors = [
+                    'web' => 'primary',
+                    'android' => 'success',
+                    'ios' => 'dark',
+                    'ownerrez' => 'info',
+                    'airbnb' => 'danger',
+                    'booking_com' => 'primary',
+                    'guesty' => 'warning',
+                    'other' => 'secondary',
+                ];
+                
+                $bookingSource = $entry->booking_source ?? 'web';
+                $icon = $sourceIcons[$bookingSource] ?? $sourceIcons['other'];
+                $label = $sourceLabels[$bookingSource] ?? ucfirst($bookingSource);
+                $color = $sourceColors[$bookingSource] ?? 'secondary';
+                
+                return "<span class='badge badge-{$color}'>{$icon} {$label}</span>";
+            }
         ]);
 
         // Booking date (created_at)
@@ -314,9 +363,71 @@ class BookingController extends CrudController
             'name' =>  '   تفاصيل&nbsp;  الحجز',
             'type' => 'custom_html',
             'value' => function ($entry) {
+                // تحديد الأيقونة واللون حسب مصدر الحجز
+                $sourceIcons = [
+                    'web' => '<i class="la la-globe text-primary"></i>',
+                    'android' => '<i class="la la-android text-success"></i>',
+                    'ios' => '<i class="la la-apple text-dark"></i>',
+                    'ownerrez' => '<i class="la la-link text-info"></i>',
+                    'airbnb' => '<i class="la la-home text-danger"></i>',
+                    'booking_com' => '<i class="la la-bed text-primary"></i>',
+                    'guesty' => '<i class="la la-building text-warning"></i>',
+                    'other' => '<i class="la la-question-circle text-secondary"></i>',
+                ];
+                
+                $sourceLabels = [
+                    'web' => 'الموقع الإلكتروني',
+                    'android' => 'أندرويد',
+                    'ios' => 'آيفون',
+                    'ownerrez' => 'OwnerRez',
+                    'airbnb' => 'Airbnb',
+                    'booking_com' => 'Booking.com',
+                    'guesty' => 'Guesty',
+                    'other' => 'أخرى',
+                ];
+                
+                $bookingSource = $entry->booking_source ?? 'web';
+                $sourceIcon = $sourceIcons[$bookingSource] ?? $sourceIcons['other'];
+                $sourceLabel = $sourceLabels[$bookingSource] ?? ucfirst($bookingSource);
+                
+                // إضافة معلومات إضافية لحجوزات OwnerRez
+                $ownerrezInfo = '';
+                if ($bookingSource === 'ownerrez' && $entry->ownerrez_booking_id) {
+                    $ownerrezInfo = '
+                        <tr>
+                            <th>رقم حجز OwnerRez <i class="la la-link"></i></th>
+                            <td><span class="badge badge-secondary">' . $entry->ownerrez_booking_id . '</span></td>
+                        </tr>';
+                    
+                    if ($entry->channel_name) {
+                        $ownerrezInfo .= '
+                        <tr>
+                            <th>اسم القناة <i class="la la-tag"></i></th>
+                            <td><span class="badge badge-warning">' . $entry->channel_name . '</span></td>
+                        </tr>';
+                    }
+                    
+                    if ($entry->external_reference) {
+                        $ownerrezInfo .= '
+                        <tr>
+                            <th>المرجع الخارجي <i class="la la-code"></i></th>
+                            <td><span class="badge badge-light">' . $entry->external_reference . '</span></td>
+                        </tr>';
+                    }
+                }
+                
                 return '
                     <h5><strong>' . __('cms.booking_details') . '</strong></h5>
                     <table class="table table-bordered">
+                        <tr>
+                            <th>رقم الحجز <i class="la la-bookmark"></i></th>
+                            <td><span class="badge badge-dark">' . $entry->number_of_booking . '</span></td>
+                        </tr>
+                        <tr>
+                            <th>مصدر الحجز ' . $sourceIcon . '</th>
+                            <td><span class="badge badge-info">' . $sourceLabel . '</span></td>
+                        </tr>
+                        ' . $ownerrezInfo . '
                         <tr>
                             <th>' . __('cms.check_in') . ' <i class="la la-calendar-check"></i></th>
                             <td><span class="badge badge-success">' . \Carbon\Carbon::parse($entry->check_in)->format('d F Y') . '</span></td>
@@ -565,6 +676,26 @@ class BookingController extends CrudController
             'failed' => __('cms.payment_status_failed')
         ], function($value) {
             CRUD::addClause('where', 'payment_status', $value);
+        });
+    }
+
+    protected function addBookingSourceFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'booking_source',
+            'type' => 'dropdown',
+            'label' => 'مصدر الحجز'
+        ], [
+            'web' => 'الموقع الإلكتروني',
+            'android' => 'أندرويد',
+            'ios' => 'آيفون',
+            'ownerrez' => 'OwnerRez',
+            'airbnb' => 'Airbnb',
+            'booking_com' => 'Booking.com',
+            'guesty' => 'Guesty',
+            'other' => 'أخرى'
+        ], function($value) {
+            CRUD::addClause('where', 'booking_source', $value);
         });
     }
 

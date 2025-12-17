@@ -26,7 +26,7 @@
                         <td>{{ $report->apartment?->name_ar ?? 'غير محدد' }}</td>
                         <td>{{ $report->apartment?->building?->name_ar ?? 'غير محدد' }}</td>
                         <td>{{ $report->check_out->format('Y-m-d') }}</td>
-                        <td>{{ $report->check_out_time->format('H:i') }}</td>
+                        <td>{{ $report->check_out_time ?? 'غير محدد' }}</td>
                     </tr>
                 @endforeach
             </tbody>
