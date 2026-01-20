@@ -23,6 +23,7 @@ Route::group([
     Route::crud('apartment-label', 'ApartmentLabelController');
     Route::crud('ownerrez-property-mapping', 'OwnerRezPropertyMappingController');
     Route::get('ownerrez-property-mapping/{id}/sync', 'OwnerRezPropertyMappingController@sync');
+    Route::get('api/ownerrez-properties', 'OwnerRezPropertyController@index')->name('admin.ownerrez-properties.index');
     Route::crud('policy', 'PolicyController');
     Route::crud('buildings', 'BuildingController');
     Route::crud('sliders', 'SliderController');
@@ -72,7 +73,7 @@ Route::group([
     Route::get('charts/total-users', [\App\Http\Controllers\Admin\Charts\TotalUsersChartController::class, 'data'])
         ->name('charts.total-users');
     Route::get('reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');
-    Route::get('/reports/daily-checkout', [\App\Http\Controllers\Admin\ReportsController::class, 'dailyCheckOutReport']);
+    Route::get('/reports/daily-checkout', [\App\Http\Controllers\Admin\ReportsController::class, 'dailyCheckOutReport'])->name('admin.reports.daily-checkout');
     Route::crud('contact-us', 'ContactUsCrudController');
     Route::crud('service-booking', 'ServiceBookingCrudController');
     Route::crud('review', 'ReviewCrudController');

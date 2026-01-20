@@ -38,8 +38,9 @@ return [
     'ownerrez' => [
         'username' => env('OWNERREZ_USERNAME'),
         'password' => env('OWNERREZ_PASSWORD'),
-        'webhook_user' => env('OWNERREZ_WEBHOOK_USER'),
+        'webhook_user' => env('OWNERREZ_WEBHOOK_USERNAME'),
         'webhook_password' => env('OWNERREZ_WEBHOOK_PASSWORD'),
+        'api_url' => env('OWNERREZ_API_URL', 'https://api.ownerrez.com'),
         'cache_ttl' => (int) env('OWNERREZ_WEBHOOK_CACHE_TTL', 180),
         'cache_key' => 'ownerrez:webhook:latest',
     ],

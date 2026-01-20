@@ -292,15 +292,39 @@ class ReportsController extends Controller
         // تحديد تاريخ اليوم الحالي
         $today = Carbon::now()->toDateString();
 
-        $reports = Booking::whereDate('check_out', Carbon::today())
-        ->where('is_airbnb_booking', 0)
-         
-        ->with(['apartment.building'])
-        ->get();
+        // فلتر المصدر (all, app, airbnb)
+        $source = $request->input('source', 'all');
 
-        return view('admin.reports.daily_check_out', compact('reports'));
+        $query = Booking::whereDate('check_out', Carbon::today())
+            ->with(['apartment.building']);
 
-        
+        // تطبيق الفلتر حسب المصدر
+        if ($source === 'app') {
+            // حجوزات من التطبيق (web, android, ios) وليست من Airbnb
+            $query->where(function($q) {
+                $q->where(function($q1) {
+                    $q1->whereIn('booking_source', ['web', 'android', 'ios'])
+                       ->where('is_airbnb_booking', 0);
+                })->orWhere(function($q2) {
+                    $q2->whereNull('ownerrez_booking_id')
+                       ->where('is_airbnb_booking', 0);
+                });
+            });
+        } elseif ($source === 'airbnb') {
+            // حجوزات Airbnb (من OwnerRez مع channel_name = airbnb أو is_airbnb_booking = 1)
+            $query->where(function($q) {
+                $q->where('is_airbnb_booking', 1)
+                  ->orWhere(function($q2) {
+                      $q2->whereNotNull('ownerrez_booking_id')
+                         ->whereRaw('LOWER(channel_name) = ?', ['airbnb']);
+                  });
+            });
+        }
+        // إذا كان 'all' لا نضيف فلتر - يعرض جميع الحجوزات
+
+        $reports = $query->orderBy('check_out_time', 'asc')->get();
+
+        return view('admin.reports.daily_check_out', compact('reports', 'source'));
     }
 
 }

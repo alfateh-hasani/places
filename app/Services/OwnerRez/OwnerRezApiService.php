@@ -19,10 +19,17 @@ class OwnerRezApiService
 
     public function __construct()
     {
-        $this->baseUrl = config('ownerrez.api_url');
-        $this->username = config('ownerrez.username');
-        $this->password = config('ownerrez.password');
+        $this->baseUrl = (string) (config('ownerrez.api_url') ?? '');
+        $this->username = (string) (config('ownerrez.username') ?? '');
+        $this->password = (string) (config('ownerrez.password') ?? '');
         $this->timeout = config('ownerrez.availability.timeout', 10);
+
+        if ($this->username === '' || $this->password === '') {
+            Log::warning('OwnerRez API credentials are missing.', [
+                'username_set' => $this->username !== '',
+                'password_set' => $this->password !== '',
+            ]);
+        }
     }
 
     /**
@@ -30,7 +37,25 @@ class OwnerRezApiService
      */
     public function getProperties(): array
     {
-        return $this->makeRequest('GET', '/v2/properties');
+        return $this->makeCurlRequest('/v2/properties');
+    }
+
+    /**
+     * Get all properties across pages
+     */
+    public function getAllProperties(): array
+    {
+        $response = $this->getProperties();
+        $items = $response['items'] ?? [];
+        $nextPageUrl = $response['next_page_url'] ?? null;
+
+        while (! empty($nextPageUrl)) {
+            $response = $this->makeRequest('GET', $nextPageUrl);
+            $items = array_merge($items, $response['items'] ?? []);
+            $nextPageUrl = $response['next_page_url'] ?? null;
+        }
+
+        return $items;
     }
 
     /**
@@ -235,6 +260,58 @@ class OwnerRezApiService
                 $e
             );
         }
+    }
+
+    /**
+     * Make HTTP request using cURL (for properties list)
+     */
+    protected function makeCurlRequest(string $endpoint): array
+    {
+        if ($this->username === '' || $this->password === '') {
+            throw new OwnerRezApiException('OwnerRez API credentials are missing.', $endpoint, [], 401);
+        }
+
+        $url = $this->baseUrl.$endpoint;
+        $auth = base64_encode($this->username.':'.$this->password);
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+                'Authorization: Basic '.$auth,
+            ],
+        ]);
+
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if ($response === false) {
+            throw new OwnerRezApiException('OwnerRez API request failed: '.$curlError, $endpoint, [], 500);
+        }
+
+        $decoded = json_decode($response, true);
+        if ($httpCode >= 400) {
+            throw new OwnerRezApiException(
+                'OwnerRez API request failed',
+                $endpoint,
+                $decoded ?? [],
+                $httpCode
+            );
+        }
+
+        return $decoded ?? [];
     }
 
     /**
