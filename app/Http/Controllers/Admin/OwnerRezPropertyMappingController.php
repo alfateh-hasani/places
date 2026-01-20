@@ -3,16 +3,23 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\OwnerRezPropertyMappingRequest;
+use App\Services\OwnerRez\OwnerRezApiService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class OwnerRezPropertyMappingController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
+        store as traitStore;
+    }
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation {
+        update as traitUpdate;
+    }
 
     public function setup()
     {
@@ -78,17 +85,42 @@ class OwnerRezPropertyMappingController extends CrudController
             ->default($apartmentId)
             ->wrapper(['class' => 'form-group col-md-6']);
 
-        CRUD::field('ownerrez_property_id')
-            ->type('text')
-            ->label('Property ID في OwnerRez')
-            ->hint('يمكنك الحصول عليه من لوحة تحكم OwnerRez')
+        $ownerRezPropertyOptions = $this->getOwnerRezPropertyOptions();
+        $currentEntry = $this->crud->getCurrentEntry();
+
+        if ($currentEntry && $currentEntry->ownerrez_property_id) {
+            $currentId = $currentEntry->ownerrez_property_id;
+            if (! array_key_exists($currentId, $ownerRezPropertyOptions)) {
+                $currentName = $currentEntry->ownerrez_property_name ?: 'العقار الحالي';
+                $ownerRezPropertyOptions[$currentId] = "{$currentName} (ID: {$currentId})";
+            }
+        }
+
+        $ownerRezField = CRUD::field('ownerrez_property_id')
+            ->label('العقار في OwnerRez')
             ->wrapper(['class' => 'form-group col-md-6']);
 
-        CRUD::field('ownerrez_property_name')
+        if (! empty($ownerRezPropertyOptions)) {
+            $ownerRezField
+                ->type('select2_from_array')
+                ->options($ownerRezPropertyOptions)
+                ->allows_null(false)
+                ->hint('اختر العقار من OwnerRez');
+        } else {
+            $ownerRezField
+                ->type('text')
+                ->hint('تعذر جلب العقارات حالياً، يمكنك إدخال Property ID يدوياً');
+        }
+
+        $ownerRezNameField = CRUD::field('ownerrez_property_name')
             ->type('text')
             ->label('اسم العقار في OwnerRez')
-            ->hint('اختياري - سيتم جلبه تلقائياً من OwnerRez')
+            ->hint('سيتم جلبه تلقائياً من OwnerRez')
             ->wrapper(['class' => 'form-group col-md-12']);
+
+        if (! empty($ownerRezPropertyOptions)) {
+            $ownerRezNameField->attributes(['readonly' => 'readonly']);
+        }
 
         CRUD::field('sync_enabled')
             ->type('switch')
@@ -115,6 +147,20 @@ class OwnerRezPropertyMappingController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+    }
+
+    public function store()
+    {
+        $this->syncOwnerRezPropertyName();
+
+        return $this->traitStore();
+    }
+
+    public function update()
+    {
+        $this->syncOwnerRezPropertyName();
+
+        return $this->traitUpdate();
     }
 
     protected function setupShowOperation()
@@ -154,5 +200,60 @@ class OwnerRezPropertyMappingController extends CrudController
         }
 
         return redirect()->back();
+    }
+
+    protected function getOwnerRezPropertyOptions(): array
+    {
+        $cacheKey = 'ownerrez:properties:dropdown';
+        $cacheTtl = 300;
+
+        try {
+            return Cache::remember($cacheKey, $cacheTtl, function () {
+                $apiService = app(OwnerRezApiService::class);
+                $properties = $apiService->getAllProperties();
+
+                return collect($properties)->mapWithKeys(function ($property) {
+                    $id = $property['id'] ?? null;
+                    if ($id === null) {
+                        return [];
+                    }
+
+                    $name = $property['name'] ?? 'بدون اسم';
+
+                    return [$id => "{$name} (ID: {$id})"];
+                })->toArray();
+            });
+        } catch (\Exception $e) {
+            Log::warning('Failed to load OwnerRez properties for dropdown', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    protected function syncOwnerRezPropertyName(): void
+    {
+        $request = $this->crud->getRequest();
+        $propertyId = $request->input('ownerrez_property_id');
+
+        if (! $propertyId || ! ctype_digit((string) $propertyId)) {
+            return;
+        }
+
+        try {
+            $apiService = app(OwnerRezApiService::class);
+            $property = $apiService->getProperty((int) $propertyId);
+            $propertyName = $property['name'] ?? null;
+
+            if ($propertyName) {
+                $request->merge(['ownerrez_property_name' => $propertyName]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to fetch OwnerRez property name', [
+                'property_id' => $propertyId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

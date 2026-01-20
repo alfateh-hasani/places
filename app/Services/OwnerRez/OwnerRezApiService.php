@@ -34,6 +34,24 @@ class OwnerRezApiService
     }
 
     /**
+     * Get all properties across pages
+     */
+    public function getAllProperties(): array
+    {
+        $response = $this->getProperties();
+        $items = $response['items'] ?? [];
+        $nextPageUrl = $response['next_page_url'] ?? null;
+
+        while (! empty($nextPageUrl)) {
+            $response = $this->makeRequest('GET', $nextPageUrl);
+            $items = array_merge($items, $response['items'] ?? []);
+            $nextPageUrl = $response['next_page_url'] ?? null;
+        }
+
+        return $items;
+    }
+
+    /**
      * Get single property
      */
     public function getProperty(int $propertyId): array
