@@ -211,18 +211,7 @@ class OwnerRezPropertyMappingController extends CrudController
                 return $cached;
             }
 
-            $apiService = app(OwnerRezApiService::class);
-            $properties = $apiService->getAllProperties();
-            $options = collect($properties)->mapWithKeys(function ($property) {
-                $id = $property['id'] ?? null;
-                if ($id === null) {
-                    return [];
-                }
-
-                $name = $property['name'] ?? 'بدون اسم';
-
-                return [$id => "{$name} (ID: {$id})"];
-            })->toArray();
+            $options = OwnerRezPropertyController::options();
 
             if (! empty($options)) {
                 Cache::put($cacheKey, $options, $cacheTtl);
