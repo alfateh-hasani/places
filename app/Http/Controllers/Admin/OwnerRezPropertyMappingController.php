@@ -6,7 +6,6 @@ use App\Http\Requests\OwnerRezPropertyMappingRequest;
 use App\Services\OwnerRez\OwnerRezApiService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class OwnerRezPropertyMappingController extends CrudController
@@ -85,32 +84,13 @@ class OwnerRezPropertyMappingController extends CrudController
             ->default($apartmentId)
             ->wrapper(['class' => 'form-group col-md-6']);
 
-        $ownerRezPropertyOptions = $this->getOwnerRezPropertyOptions();
-        $currentEntry = $this->crud->getCurrentEntry();
-
-        if ($currentEntry && $currentEntry->ownerrez_property_id) {
-            $currentId = $currentEntry->ownerrez_property_id;
-            if (! array_key_exists($currentId, $ownerRezPropertyOptions)) {
-                $currentName = $currentEntry->ownerrez_property_name ?: 'العقار الحالي';
-                $ownerRezPropertyOptions[$currentId] = "{$currentName} (ID: {$currentId})";
-            }
-        }
-
-        $ownerRezField = CRUD::field('ownerrez_property_id')
+        CRUD::field('ownerrez_property_id')
             ->type('select2_from_array')
             ->label('العقار في OwnerRez')
-            ->options($ownerRezPropertyOptions)
+            ->options($this->getOwnerRezPropertyOptions())
+            ->allows_null(true)
+            ->hint('اختر العقار من OwnerRez')
             ->wrapper(['class' => 'form-group col-md-6']);
-
-        if (! empty($ownerRezPropertyOptions)) {
-            $ownerRezField
-                ->allows_null(false)
-                ->hint('اختر العقار من OwnerRez');
-        } else {
-            $ownerRezField
-                ->allows_null(true)
-                ->hint('تعذر جلب العقارات حالياً، جرّب تحديث الصفحة');
-        }
 
         $ownerRezNameField = CRUD::field('ownerrez_property_name')
             ->type('text')
@@ -202,22 +182,8 @@ class OwnerRezPropertyMappingController extends CrudController
 
     protected function getOwnerRezPropertyOptions(): array
     {
-        $cacheKey = 'ownerrez:properties:dropdown';
-        $cacheTtl = 300;
-
         try {
-            $cached = Cache::get($cacheKey);
-            if (is_array($cached) && ! empty($cached)) {
-                return $cached;
-            }
-
-            $options = OwnerRezPropertyController::options();
-
-            if (! empty($options)) {
-                Cache::put($cacheKey, $options, $cacheTtl);
-            }
-
-            return $options;
+            return OwnerRezPropertyController::options();
         } catch (\Exception $e) {
             Log::warning('Failed to load OwnerRez properties for dropdown', [
                 'error' => $e->getMessage(),

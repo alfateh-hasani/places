@@ -9,129 +9,108 @@ use Illuminate\Support\Facades\Log;
 
 class OwnerRezPropertyController
 {
+    /**
+     * Get all OwnerRez properties as options array (for select2_from_array)
+     */
     public static function options(): array
     {
-        $user = (string) (config('services.ownerrez.webhook_user')
-            ?? config('services.ownerrez.username')
-            ?? config('ownerrez.username')
-            ?? '');
-        $password = (string) (config('services.ownerrez.webhook_password')
-            ?? config('services.ownerrez.password')
-            ?? config('ownerrez.password')
-            ?? '');
-        $baseUrl = rtrim((string) (config('ownerrez.api_url') ?? 'https://api.ownerrez.com'), '/');
-        $fallback = ['469630' => 'unit 1 (#469630)'];
+        $user = (string) config('services.ownerrez.webhook_user');
+        $password = (string) config('services.ownerrez.webhook_password');
+        $baseUrl = rtrim((string) config('services.ownerrez.api_url', 'https://api.ownerrez.com'), '/');
 
         if ($user === '' || $password === '') {
-            return $fallback;
+            Log::warning('ownerrez.properties.no_credentials');
+
+            return [];
         }
 
         try {
-            $response = Http::withBasicAuth($user, $password)
-                ->acceptJson()
-                ->get("{$baseUrl}/v2/properties", [
-                    'page' => 1,
-                    'page_size' => 200,
-                    'embed' => 'units',
-                ]);
+            $allItems = [];
+            $limit = 100;
+            $offset = 0;
+            $maxPages = 20;
+            $page = 0;
 
-            if ($response->failed()) {
-                Log::warning('ownerrez.properties.fetch_failed', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
+            do {
+                $page++;
+                $url = $baseUrl.'/v2/properties';
 
-                return $fallback;
-            }
+                $response = Http::withBasicAuth($user, $password)
+                    ->acceptJson()
+                    ->get($url, [
+                        'limit' => $limit,
+                        'offset' => $offset,
+                    ]);
 
-            $data = $response->json() ?? [];
-            $rawItems = $data['items'] ?? $data['data'] ?? $data;
+                if ($response->failed()) {
+                    Log::warning('ownerrez.properties.fetch_failed', [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                    break;
+                }
 
-            $items = collect(is_array($rawItems) ? $rawItems : [])
+                $data = $response->json() ?? [];
+                $pageItems = $data['items'] ?? [];
+                $pageCount = count($pageItems);
+
+                if ($pageCount === 0) {
+                    break;
+                }
+
+                $allItems = array_merge($allItems, $pageItems);
+                $offset += $pageCount;
+
+                if ($pageCount < $limit) {
+                    break;
+                }
+
+            } while ($page < $maxPages);
+
+            $options = collect($allItems)
                 ->filter(fn ($item) => isset($item['id']))
                 ->mapWithKeys(fn ($item) => [
                     (string) $item['id'] => trim(($item['name'] ?? 'Property').' (#'.($item['id'] ?? '').')'),
                 ])
                 ->all();
 
-            Log::info('ownerrez.properties.fetch_ok', ['count' => count($items)]);
+            Log::info('ownerrez.properties.fetch_ok', ['total_count' => count($options)]);
 
-            return $items !== [] ? $items : $fallback;
+            return $options;
         } catch (\Throwable $e) {
             Log::error('ownerrez.properties.fetch_exception', ['error' => $e->getMessage()]);
 
-            return $fallback;
+            return [];
         }
     }
 
+    /**
+     * AJAX endpoint for select2
+     */
     public function index(Request $request): JsonResponse
     {
-        $user = (string) (config('services.ownerrez.webhook_user')
-            ?? config('services.ownerrez.username')
-            ?? config('ownerrez.username')
-            ?? '');
-        $password = (string) (config('services.ownerrez.webhook_password')
-            ?? config('services.ownerrez.password')
-            ?? config('ownerrez.password')
-            ?? '');
-        $baseUrl = rtrim((string) (config('ownerrez.api_url') ?? 'https://api.ownerrez.com'), '/');
+        $options = self::options();
 
-        if ($user === '' || $password === '') {
-            return response()->json(['results' => [], 'pagination' => ['more' => false]]);
-        }
+        $search = trim((string) ($request->get('term') ?? $request->get('q') ?? ''));
 
-        try {
-            $response = Http::withBasicAuth($user, $password)
-                ->acceptJson()
-                ->get("{$baseUrl}/v2/properties", [
-                    'page' => 1,
-                    'page_size' => 200,
-                    'embed' => 'units',
-                ]);
+        $results = collect($options)
+            ->when($search !== '', function ($collection) use ($search) {
+                $needle = strtolower($search);
 
-            if ($response->failed()) {
-                Log::warning('ownerrez.properties.fetch_failed', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
+                return $collection->filter(function ($text, $id) use ($needle) {
+                    return str_contains(strtolower($text), $needle) || str_contains((string) $id, $needle);
+                });
+            })
+            ->map(fn ($text, $id) => [
+                'id' => (string) $id,
+                'text' => $text,
+            ])
+            ->values()
+            ->all();
 
-                return response()->json(['results' => [], 'pagination' => ['more' => false]], $response->status());
-            }
-
-            $data = $response->json() ?? [];
-            $rawItems = $data['items'] ?? $data['data'] ?? $data;
-
-            $search = trim((string) ($request->get('term') ?? $request->get('q') ?? ''));
-
-            $items = collect(is_array($rawItems) ? $rawItems : [])
-                ->filter(fn ($item) => isset($item['id']))
-                ->when($search !== '', function ($collection) use ($search) {
-                    $needle = strtolower($search);
-
-                    return $collection->filter(function ($item) use ($needle) {
-                        $name = strtolower((string) ($item['name'] ?? ''));
-                        $id = (string) ($item['id'] ?? '');
-
-                        return str_contains($name, $needle) || str_contains($id, $needle);
-                    });
-                })
-                ->map(fn ($item) => [
-                    'id' => (string) $item['id'],
-                    'text' => trim(($item['name'] ?? 'Property').' (#'.($item['id'] ?? '').')'),
-                ])
-                ->values()
-                ->all();
-
-            Log::info('ownerrez.properties.fetch_ok', ['count' => count($items)]);
-
-            return response()->json([
-                'results' => $items,
-                'pagination' => ['more' => false],
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('ownerrez.properties.fetch_exception', ['error' => $e->getMessage()]);
-
-            return response()->json(['results' => [], 'pagination' => ['more' => false]], 500);
-        }
+        return response()->json([
+            'results' => $results,
+            'pagination' => ['more' => false],
+        ]);
     }
 }
