@@ -97,19 +97,19 @@ class OwnerRezPropertyMappingController extends CrudController
         }
 
         $ownerRezField = CRUD::field('ownerrez_property_id')
+            ->type('select2_from_array')
             ->label('العقار في OwnerRez')
+            ->options($ownerRezPropertyOptions)
             ->wrapper(['class' => 'form-group col-md-6']);
 
         if (! empty($ownerRezPropertyOptions)) {
             $ownerRezField
-                ->type('select2_from_array')
-                ->options($ownerRezPropertyOptions)
                 ->allows_null(false)
                 ->hint('اختر العقار من OwnerRez');
         } else {
             $ownerRezField
-                ->type('text')
-                ->hint('تعذر جلب العقارات حالياً، يمكنك إدخال Property ID يدوياً');
+                ->allows_null(true)
+                ->hint('تعذر جلب العقارات حالياً، جرّب تحديث الصفحة');
         }
 
         $ownerRezNameField = CRUD::field('ownerrez_property_name')
@@ -118,9 +118,7 @@ class OwnerRezPropertyMappingController extends CrudController
             ->hint('سيتم جلبه تلقائياً من OwnerRez')
             ->wrapper(['class' => 'form-group col-md-12']);
 
-        if (! empty($ownerRezPropertyOptions)) {
-            $ownerRezNameField->attributes(['readonly' => 'readonly']);
-        }
+        $ownerRezNameField->attributes(['readonly' => 'readonly']);
 
         CRUD::field('sync_enabled')
             ->type('switch')
@@ -208,21 +206,29 @@ class OwnerRezPropertyMappingController extends CrudController
         $cacheTtl = 300;
 
         try {
-            return Cache::remember($cacheKey, $cacheTtl, function () {
-                $apiService = app(OwnerRezApiService::class);
-                $properties = $apiService->getAllProperties();
+            $cached = Cache::get($cacheKey);
+            if (is_array($cached) && ! empty($cached)) {
+                return $cached;
+            }
 
-                return collect($properties)->mapWithKeys(function ($property) {
-                    $id = $property['id'] ?? null;
-                    if ($id === null) {
-                        return [];
-                    }
+            $apiService = app(OwnerRezApiService::class);
+            $properties = $apiService->getAllProperties();
+            $options = collect($properties)->mapWithKeys(function ($property) {
+                $id = $property['id'] ?? null;
+                if ($id === null) {
+                    return [];
+                }
 
-                    $name = $property['name'] ?? 'بدون اسم';
+                $name = $property['name'] ?? 'بدون اسم';
 
-                    return [$id => "{$name} (ID: {$id})"];
-                })->toArray();
-            });
+                return [$id => "{$name} (ID: {$id})"];
+            })->toArray();
+
+            if (! empty($options)) {
+                Cache::put($cacheKey, $options, $cacheTtl);
+            }
+
+            return $options;
         } catch (\Exception $e) {
             Log::warning('Failed to load OwnerRez properties for dropdown', [
                 'error' => $e->getMessage(),
