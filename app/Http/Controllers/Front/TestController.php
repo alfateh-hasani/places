@@ -21,7 +21,9 @@ class TestController extends Controller
     }
   
     public function index() 
-    {
+    {   
+
+        return ; 
 
         $fullBookingData = $this->apiService->getBooking(15863300);
         dd($fullBookingData);

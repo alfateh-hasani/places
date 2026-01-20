@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px 0;
+            border-right: 2px solid #34495e;
+        }
+
+        .sidebar h2 {
+            padding: 15px 20px;
+            font-size: 18px;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 10px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            border-bottom: 1px solid #34495e;
+        }
+
+        .sidebar ul li a {
+            display: block;
+            padding: 12px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar ul li a.active {
+            background-color: #3498db;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 30px;
+            max-width: 900px;
+            background-color: #ffffff;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #34495e;
+        }
+
+        .endpoint {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        .method.get {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .method.post {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .method.put {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .method.delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .url {
+            font-family: 'Courier New', monospace;
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 3px;
+            display: inline-block;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .description {
+            margin: 15px 0;
+            color: #555;
+        }
+
+        .params {
+            margin-top: 15px;
+        }
+
+        .params table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .params table th,
+        .params table td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .params table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .auth-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        pre {
+            background-color: #f4f4f4;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>API Documentation</h2>
+            <ul>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#authentication">Authentication</a></li>
+                <li><a href="#auth-endpoints">Auth Endpoints</a></li>
+                <li><a href="#customer-endpoints">Customer Endpoints</a></li>
+                <li><a href="#booking-endpoints">Booking Endpoints</a></li>
+                <li><a href="#home-endpoints">Home Endpoints</a></li>
+                <li><a href="#onboarding-endpoints">Onboarding</a></li>
+                <li><a href="#guesty-endpoints">Guesty</a></li>
+                <li><a href="#payment-endpoints">Payment Methods</a></li>
+                <li><a href="#webhook-endpoints">Webhooks</a></li>
+                <li><a href="#error-handling">Error Handling</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h1>API Documentation</h1>
+
+            <section id="introduction" class="section">
+                <h2>Introduction</h2>
+                <p>This RESTful API provides comprehensive endpoints for managing bookings, customers, apartments, and integrations with third-party services like Guesty and OwnerRez.</p>
+                <p><strong>Base URL:</strong> <code>/api</code></p>
+                <p><strong>API Version:</strong> v1</p>
+                <p><strong>Content-Type:</strong> <code>application/json</code></p>
+                <p>All endpoints require the <code>appSecret</code> middleware unless otherwise specified. The API uses JSON for request and response payloads.</p>
+                
+                <h3>Response Format</h3>
+                <p>All API responses follow a consistent JSON structure:</p>
+                <pre><code>{
+    "status": true|false,
+    "message": "Response message",
+    "data": { ... }
+}</code></pre>
+                
+                <h3>HTTP Status Codes</h3>
+                <div class="params">
+                    <table>
+                        <tr>
+                            <th>Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>200</td>
+                            <td>Success - Request completed successfully</td>
+                        </tr>
+                        <tr>
+                            <td>201</td>
+                            <td>Created - Resource created successfully</td>
+                        </tr>
+                        <tr>
+                            <td>400</td>
+                            <td>Bad Request - Invalid request parameters</td>
+                        </tr>
+                        <tr>
+                            <td>401</td>
+                            <td>Unauthorized - Authentication required or invalid token</td>
+                        </tr>
+                        <tr>
+                            <td>403</td>
+                            <td>Forbidden - Insufficient permissions</td>
+                        </tr>
+                        <tr>
+                            <td>404</td>
+                            <td>Not Found - Resource not found</td>
+                        </tr>
+                        <tr>
+                            <td>422</td>
+                            <td>Unprocessable Entity - Validation errors</td>
+                        </tr>
+                        <tr>
+                            <td>500</td>
+                            <td>Internal Server Error - Server error occurred</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <section id="authentication" class="section">
+                <h2>Authentication</h2>
+                <p>The API uses OTP (One-Time Password) based authentication. The authentication flow consists of three steps:</p>
+                <ol>
+                    <li>Request OTP - Send phone number to receive OTP code</li>
+                    <li>Verify OTP - Verify the OTP code to receive authentication token</li>
+                    <li>Use Token - Include the token in subsequent API requests</li>
+                </ol>
+                
+                <div class="auth-note">
+                    <strong>Authentication Required:</strong> Most endpoints require authentication using the <code>auth:api</code> middleware. 
+                    You must include a valid bearer token in the Authorization header for protected endpoints.
+                </div>
+                
+                <h3>Header Format</h3>
+                <p>Include the authentication token in the request headers:</p>
+                <pre><code>Authorization: Bearer {your_access_token}
+Content-Type: application/json
+Accept: application/json</code></pre>
+                
+                <h3>App Secret</h3>
+                <p>All endpoints require an <code>appSecret</code> header or parameter. This secret is used to validate API requests and should be kept secure.</p>
+                
+                <h3>Token Expiration</h3>
+                <p>Authentication tokens expire after a certain period. When a token expires, you will receive a 401 Unauthorized response. You must request a new OTP and verify it to obtain a new token.</p>
+            </section>
+
+            <section id="auth-endpoints" class="section">
+                <h2>Authentication Endpoints</h2>
+                <p>These endpoints handle user authentication using OTP (One-Time Password) verification.</p>
+
+                <div class="endpoint">
+                    <h3>Request OTP</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/otp/request</span>
+                    <div class="description">
+                        <p>Request a one-time password (OTP) to be sent to the user's phone number. The OTP is typically sent via SMS and is valid for a limited time period.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Request Body Parameters</h4>
+                        <table>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>phone</td>
+                                <td>string</td>
+                                <td>Yes</td>
+                                <td>Phone number in international format (e.g., +1234567890)</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>POST /api/otp/request
+Content-Type: application/json
+
+{
+    "phone": "+1234567890"
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (200 OK)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "OTP sent successfully",
+    "data": {
+        "expires_in": 300
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Verify OTP</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/otp/verify</span>
+                    <div class="description">
+                        <p>Verify the OTP code received by the user. Upon successful verification, an authentication token is returned that should be used for subsequent API requests.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Request Body Parameters</h4>
+                        <table>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>phone</td>
+                                <td>string</td>
+                                <td>Yes</td>
+                                <td>Phone number used to request OTP</td>
+                            </tr>
+                            <tr>
+                                <td>otp</td>
+                                <td>string</td>
+                                <td>Yes</td>
+                                <td>The OTP code received via SMS</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>POST /api/otp/verify
+Content-Type: application/json
+
+{
+    "phone": "+1234567890",
+    "otp": "123456"
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (200 OK)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "OTP verified successfully",
+    "data": {
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+        "user": {
+            "id": 1,
+            "name": "John Doe",
+            "phone": "+1234567890",
+            "email": "john@example.com"
+        }
+    }
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Error Responses</h4>
+                        <p><strong>400 Bad Request:</strong> Invalid OTP code or expired OTP</p>
+                        <pre><code>{
+    "status": false,
+    "message": "Invalid or expired OTP code"
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Register Customer</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/register</span>
+                    <div class="description">
+                        <p>Register a new customer account. This endpoint is typically called after OTP verification to complete the registration process with additional user information.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Request Body Parameters</h4>
+                        <table>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>phone</td>
+                                <td>string</td>
+                                <td>Yes</td>
+                                <td>Phone number</td>
+                            </tr>
+                            <tr>
+                                <td>name</td>
+                                <td>string</td>
+                                <td>Yes</td>
+                                <td>Full name of the customer</td>
+                            </tr>
+                            <tr>
+                                <td>email</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Email address</td>
+                            </tr>
+                            <tr>
+                                <td>password</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Account password (if applicable)</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>POST /api/customer/register
+Content-Type: application/json
+
+{
+    "phone": "+1234567890",
+    "name": "John Doe",
+    "email": "john@example.com"
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (201 Created)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "Customer registered successfully",
+    "data": {
+        "id": 1,
+        "name": "John Doe",
+        "phone": "+1234567890",
+        "email": "john@example.com",
+        "created_at": "2024-01-01T00:00:00.000000Z"
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section id="customer-endpoints" class="section">
+                <h2>Customer Endpoints</h2>
+                <div class="auth-note">
+                    <strong>Authentication Required:</strong> All customer endpoints require authentication.
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get My Profile</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/my-profile</span>
+                    <div class="description">
+                        <p>Retrieve the authenticated customer's complete profile information including personal details, preferences, and account status.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Headers</h4>
+                        <table>
+                            <tr>
+                                <th>Header</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>Authorization</td>
+                                <td>Yes</td>
+                                <td>Bearer token for authentication</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>GET /api/customer/my-profile
+Authorization: Bearer {token}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (200 OK)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "Profile retrieved successfully",
+    "data": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john@example.com",
+        "phone": "+1234567890",
+        "avatar": "https://example.com/avatars/user.jpg",
+        "created_at": "2024-01-01T00:00:00.000000Z",
+        "updated_at": "2024-01-15T00:00:00.000000Z"
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Logout</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/logout</span>
+                    <div class="description">
+                        <p>Log out the authenticated customer and invalidate the current authentication token. After logout, the token can no longer be used for API requests.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>POST /api/customer/logout
+Authorization: Bearer {token}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (200 OK)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "Logged out successfully"
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Update Profile</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/update-profile</span>
+                    <div class="description">
+                        <p>Update the authenticated customer's profile information. Only provided fields will be updated.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Request Body Parameters</h4>
+                        <table>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>name</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Full name</td>
+                            </tr>
+                            <tr>
+                                <td>email</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Email address (must be valid email format)</td>
+                            </tr>
+                            <tr>
+                                <td>avatar</td>
+                                <td>file</td>
+                                <td>No</td>
+                                <td>Profile picture image file</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>POST /api/customer/update-profile
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+    "name": "John Smith",
+    "email": "johnsmith@example.com"
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (200 OK)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "Profile updated successfully",
+    "data": {
+        "id": 1,
+        "name": "John Smith",
+        "email": "johnsmith@example.com",
+        "phone": "+1234567890",
+        "updated_at": "2024-01-15T00:00:00.000000Z"
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Delete Profile</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/delete-profile</span>
+                    <div class="description">
+                        <p>Delete the authenticated customer's account.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Add Review</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/add-review</span>
+                    <div class="description">
+                        <p>Add a review for an apartment or service.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get My Favorites</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/my-favorite</span>
+                    <div class="description">
+                        <p>Get all favorite apartments for the authenticated customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Add Favorite</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/add-favorite</span>
+                    <div class="description">
+                        <p>Add an apartment to the customer's favorites list.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Remove Favorite</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/remove-favorite</span>
+                    <div class="description">
+                        <p>Remove an apartment from the customer's favorites list.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get All Bookings</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/get-all-bookings</span>
+                    <div class="description">
+                        <p>Get all bookings for the authenticated customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Current Bookings</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/current-bookings</span>
+                    <div class="description">
+                        <p>Get current active bookings for the authenticated customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Previous Bookings</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/previous-bookings</span>
+                    <div class="description">
+                        <p>Get previous completed bookings for the authenticated customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Update FCM Token</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/fmc-token</span>
+                    <div class="description">
+                        <p>Update Firebase Cloud Messaging token for push notifications.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Mark Notification as Seen</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/customer/notification/mark-seen/{id}</span>
+                    <div class="description">
+                        <p>Mark a specific notification as seen.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Unread Notification Count</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/notification/unread-count</span>
+                    <div class="description">
+                        <p>Get the count of unread notifications for the authenticated customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Notifications</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/notifications</span>
+                    <div class="description">
+                        <p>Get all notifications for the authenticated customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Notification Details</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/customer/notification/{id}</span>
+                    <div class="description">
+                        <p>Get details of a specific notification.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="booking-endpoints" class="section">
+                <h2>Booking Endpoints</h2>
+                <div class="auth-note">
+                    <strong>Authentication Required:</strong> All booking endpoints require authentication.
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Booking</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/booking/get-booking</span>
+                    <div class="description">
+                        <p>Get booking details.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Login Apartment</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/booking/login-apartment</span>
+                    <div class="description">
+                        <p>Get login credentials for apartment access.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Entry Apartment</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/booking/entry-apartment</span>
+                    <div class="description">
+                        <p>Get entry information for apartment access.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Cancel Booking</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/booking/cancel-booking</span>
+                    <div class="description">
+                        <p>Cancel a booking by the customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Add Booking</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/booking/add-booking</span>
+                    <div class="description">
+                        <p>Create a new booking for an apartment. This endpoint validates availability, calculates pricing, and creates the booking record. The booking status will be set to pending until payment is confirmed.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Request Body Parameters</h4>
+                        <table>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>apartment_id</td>
+                                <td>integer</td>
+                                <td>Yes</td>
+                                <td>ID of the apartment to book</td>
+                            </tr>
+                            <tr>
+                                <td>check_in</td>
+                                <td>date</td>
+                                <td>Yes</td>
+                                <td>Check-in date (format: YYYY-MM-DD)</td>
+                            </tr>
+                            <tr>
+                                <td>check_out</td>
+                                <td>date</td>
+                                <td>Yes</td>
+                                <td>Check-out date (format: YYYY-MM-DD)</td>
+                            </tr>
+                            <tr>
+                                <td>guests</td>
+                                <td>integer</td>
+                                <td>Yes</td>
+                                <td>Number of guests</td>
+                            </tr>
+                            <tr>
+                                <td>coupon_code</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Optional coupon code for discount</td>
+                            </tr>
+                            <tr>
+                                <td>services</td>
+                                <td>array</td>
+                                <td>No</td>
+                                <td>Array of service IDs to include</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>POST /api/booking/add-booking
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+    "apartment_id": 123,
+    "check_in": "2024-02-01",
+    "check_out": "2024-02-05",
+    "guests": 2,
+    "coupon_code": "SUMMER2024",
+    "services": [1, 3]
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (201 Created)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "Booking created successfully",
+    "data": {
+        "id": 456,
+        "booking_number": "BK-2024-001",
+        "apartment_id": 123,
+        "check_in": "2024-02-01",
+        "check_out": "2024-02-05",
+        "guests": 2,
+        "total_amount": 500.00,
+        "discount_amount": 50.00,
+        "final_amount": 450.00,
+        "status": "pending",
+        "created_at": "2024-01-15T00:00:00.000000Z"
+    }
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Error Responses</h4>
+                        <p><strong>400 Bad Request:</strong> Invalid dates or apartment not available</p>
+                        <pre><code>{
+    "status": false,
+    "message": "Apartment is not available for the selected dates"
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Booking via Customer</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/booking/get-booking-via-customer</span>
+                    <div class="description">
+                        <p>Get booking information for the authenticated customer.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Determine Booking Status</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/booking/determine-booking</span>
+                    <div class="description">
+                        <p>Update or determine the status of a booking.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Calculate Price with Coupon</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/booking/calculate-price-with-coupon</span>
+                    <div class="description">
+                        <p>Calculate booking price with a coupon code applied.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Calculate Price without Coupon</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/booking/calculate-price-withOut-coupon</span>
+                    <div class="description">
+                        <p>Calculate booking price without any coupon.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Services</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/booking/get-services</span>
+                    <div class="description">
+                        <p>Get available services for booking.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Add Services to Booking</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/booking/add-services-to-booking</span>
+                    <div class="description">
+                        <p>Add services to an existing booking.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Booking Services</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/booking/booking-services</span>
+                    <div class="description">
+                        <p>Manage services for a booking.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Cancel Booking Payment</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/booking/cancel-booking-payment/{id}</span>
+                    <div class="description">
+                        <p>Cancel payment for a specific booking.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="home-endpoints" class="section">
+                <h2>Home Endpoints</h2>
+                <p>Public endpoints for home page content and apartment listings.</p>
+
+                <div class="endpoint">
+                    <h3>Home Index</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/home/index</span>
+                    <div class="description">
+                        <p>Get home page content and featured apartments.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Filter Apartments</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/home/get-filter-apartments</span>
+                    <div class="description">
+                        <p>Retrieve apartments filtered by various criteria such as location, price range, dates, amenities, and more. This endpoint supports pagination and sorting options.</p>
+                    </div>
+                    <div class="params">
+                        <h4>Request Body Parameters</h4>
+                        <table>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>check_in</td>
+                                <td>date</td>
+                                <td>No</td>
+                                <td>Check-in date for availability filter</td>
+                            </tr>
+                            <tr>
+                                <td>check_out</td>
+                                <td>date</td>
+                                <td>No</td>
+                                <td>Check-out date for availability filter</td>
+                            </tr>
+                            <tr>
+                                <td>guests</td>
+                                <td>integer</td>
+                                <td>No</td>
+                                <td>Number of guests</td>
+                            </tr>
+                            <tr>
+                                <td>min_price</td>
+                                <td>decimal</td>
+                                <td>No</td>
+                                <td>Minimum price per night</td>
+                            </tr>
+                            <tr>
+                                <td>max_price</td>
+                                <td>decimal</td>
+                                <td>No</td>
+                                <td>Maximum price per night</td>
+                            </tr>
+                            <tr>
+                                <td>location</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Location or city name</td>
+                            </tr>
+                            <tr>
+                                <td>amenities</td>
+                                <td>array</td>
+                                <td>No</td>
+                                <td>Array of amenity IDs</td>
+                            </tr>
+                            <tr>
+                                <td>page</td>
+                                <td>integer</td>
+                                <td>No</td>
+                                <td>Page number for pagination (default: 1)</td>
+                            </tr>
+                            <tr>
+                                <td>per_page</td>
+                                <td>integer</td>
+                                <td>No</td>
+                                <td>Items per page (default: 15, max: 100)</td>
+                            </tr>
+                            <tr>
+                                <td>sort_by</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Sort field (price, rating, created_at)</td>
+                            </tr>
+                            <tr>
+                                <td>sort_order</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Sort order (asc, desc)</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="params">
+                        <h4>Example Request</h4>
+                        <pre><code>POST /api/home/get-filter-apartments
+Content-Type: application/json
+
+{
+    "check_in": "2024-02-01",
+    "check_out": "2024-02-05",
+    "guests": 2,
+    "min_price": 50,
+    "max_price": 200,
+    "location": "New York",
+    "amenities": [1, 5, 8],
+    "page": 1,
+    "per_page": 20,
+    "sort_by": "price",
+    "sort_order": "asc"
+}</code></pre>
+                    </div>
+                    <div class="params">
+                        <h4>Example Response (200 OK)</h4>
+                        <pre><code>{
+    "status": true,
+    "message": "Apartments retrieved successfully",
+    "data": {
+        "apartments": [
+            {
+                "id": 1,
+                "title": "Luxury Downtown Apartment",
+                "description": "Beautiful apartment in the heart of the city",
+                "price_per_night": 150.00,
+                "location": "New York, NY",
+                "rating": 4.5,
+                "reviews_count": 120,
+                "images": ["url1", "url2"],
+                "amenities": ["WiFi", "Parking", "Kitchen"],
+                "available": true
+            }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "per_page": 20,
+            "total": 45,
+            "last_page": 3
+        }
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Apartments</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/home/get-apartment</span>
+                    <div class="description">
+                        <p>Get list of available apartments.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Reviews for Apartment</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/home/get-review-for-apartment</span>
+                    <div class="description">
+                        <p>Get reviews for a specific apartment.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Support</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/home/get-support</span>
+                    <div class="description">
+                        <p>Get support contact information.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Page</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/home/get-page</span>
+                    <div class="description">
+                        <p>Get page content by slug or identifier.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get FAQ Page</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/home/get-faq-page</span>
+                    <div class="description">
+                        <p>Get frequently asked questions page content.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Contact Us</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/home/contact-us</span>
+                    <div class="description">
+                        <p>Submit a contact form message.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="onboarding-endpoints" class="section">
+                <h2>Onboarding Endpoints</h2>
+                <p>Endpoints for onboarding and initial setup.</p>
+
+                <div class="endpoint">
+                    <h3>Onboarding Index</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/onboarding/index</span>
+                    <div class="description">
+                        <p>Get onboarding content and initial setup data.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="guesty-endpoints" class="section">
+                <h2>Guesty Integration Endpoints</h2>
+                <p>Endpoints for integrating with Guesty property management system.</p>
+
+                <div class="endpoint">
+                    <h3>Get Guesty Token</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/guesty/token</span>
+                    <div class="description">
+                        <p>Get or refresh Guesty API authentication token.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Listings</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/guesty/listings</span>
+                    <div class="description">
+                        <p>Get list of properties from Guesty.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Reservations</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/guesty/reservations</span>
+                    <div class="description">
+                        <p>Get list of reservations from Guesty.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Get Reservation Details</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/guesty/reservations/{reservationId}</span>
+                    <div class="description">
+                        <p>Get detailed information about a specific reservation.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="payment-endpoints" class="section">
+                <h2>Payment Methods Endpoints</h2>
+                <p>Endpoints for handling payment callbacks and status updates.</p>
+
+                <div class="endpoint">
+                    <h3>Payment Method Callback</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/payment-methods/{code}/callback/{transaction_id}</span>
+                    <div class="description">
+                        <p>Handle payment gateway callback for a specific payment method.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Payment Success</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/payment-methods/success/{booking_id}/{booking_number}</span>
+                    <div class="description">
+                        <p>Handle successful payment redirect.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>Payment Failed</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/payment-methods/failed</span>
+                    <div class="description">
+                        <p>Handle failed payment redirect.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="webhook-endpoints" class="section">
+                <h2>Webhook Endpoints</h2>
+                <p>Endpoints for receiving webhooks from third-party services.</p>
+
+                <div class="endpoint">
+                    <h3>OwnerRez Webhook Handler</h3>
+                    <span class="method post">POST</span>
+                    <span class="url">/api/ownerrez</span>
+                    <div class="description">
+                        <p>Handle webhook events from OwnerRez property management system.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>OwnerRez Webhook Show</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/ownerrez</span>
+                    <div class="description">
+                        <p>Display webhook information or status.</p>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>OwnerRez OAuth Callback</h3>
+                    <span class="method get">GET</span>
+                    <span class="url">/api/ownerrez/oauth/callback</span>
+                    <div class="description">
+                        <p>Handle OAuth callback from OwnerRez authentication.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="error-handling" class="section">
+                <h2>Error Handling</h2>
+                <p>The API uses standard HTTP status codes and returns error responses in a consistent JSON format.</p>
+                
+                <h3>Error Response Format</h3>
+                <p>All error responses follow this structure:</p>
+                <pre><code>{
+    "status": false,
+    "message": "Error message describing what went wrong",
+    "errors": {
+        "field_name": ["Validation error message"]
+    }
+}</code></pre>
+                
+                <h3>Common Error Scenarios</h3>
+                <div class="params">
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Scenario</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>400</td>
+                            <td>Bad Request</td>
+                            <td>Invalid request parameters or malformed JSON</td>
+                        </tr>
+                        <tr>
+                            <td>401</td>
+                            <td>Unauthorized</td>
+                            <td>Missing or invalid authentication token</td>
+                        </tr>
+                        <tr>
+                            <td>403</td>
+                            <td>Forbidden</td>
+                            <td>Valid token but insufficient permissions</td>
+                        </tr>
+                        <tr>
+                            <td>404</td>
+                            <td>Not Found</td>
+                            <td>Requested resource does not exist</td>
+                        </tr>
+                        <tr>
+                            <td>422</td>
+                            <td>Validation Error</td>
+                            <td>Request validation failed with field-specific errors</td>
+                        </tr>
+                        <tr>
+                            <td>429</td>
+                            <td>Too Many Requests</td>
+                            <td>Rate limit exceeded</td>
+                        </tr>
+                        <tr>
+                            <td>500</td>
+                            <td>Server Error</td>
+                            <td>Internal server error occurred</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <h3>Validation Errors Example</h3>
+                <p>When validation fails, the response includes field-specific error messages:</p>
+                <pre><code>{
+    "status": false,
+    "message": "Validation failed",
+    "errors": {
+        "email": ["The email must be a valid email address."],
+        "phone": ["The phone field is required."],
+        "check_in": ["The check-in date must be after today."]
+    }
+}</code></pre>
+                
+                <h3>Rate Limiting</h3>
+                <p>The API implements rate limiting to ensure fair usage. Rate limit information is included in response headers:</p>
+                <ul>
+                    <li><code>X-RateLimit-Limit</code>: Maximum number of requests allowed</li>
+                    <li><code>X-RateLimit-Remaining</code>: Number of requests remaining in current window</li>
+                    <li><code>X-RateLimit-Reset</code>: Timestamp when the rate limit resets</li>
+                </ul>
+                <p>When rate limit is exceeded, a 429 status code is returned with a Retry-After header indicating when to retry.</p>
+            </section>
+
+        </main>
+    </div>
+</body>
+</html>
