@@ -118,10 +118,23 @@ class OwnerRezSyncService
      */
     protected function handleBookingCreated(array $bookingData): void
     {
+        $logger = Log::channel('ownerrez');
         $ownerrezBookingId = $bookingData['id'] ?? null;
         $propertyId = $bookingData['property_id'] ?? null;
 
+        $logger->info('OwnerRez booking storage started', [
+            'ownerrez_booking_id' => $ownerrezBookingId,
+            'property_id' => $propertyId,
+            'arrival' => $bookingData['arrival'] ?? null,
+            'departure' => $bookingData['departure'] ?? null,
+        ]);
+
         if (! $ownerrezBookingId || ! $propertyId) {
+            $logger->warning('OwnerRez booking storage skipped', [
+                'reason' => 'missing_booking_id_or_property_id',
+                'ownerrez_booking_id' => $ownerrezBookingId,
+                'property_id' => $propertyId,
+            ]);
             Log::warning('Invalid booking data from webhook', $bookingData);
 
             return;
@@ -130,6 +143,13 @@ class OwnerRezSyncService
         // Find apartment mapping
         $mapping = OwnerRezPropertyMapping::where('ownerrez_property_id', $propertyId)->first();
         if (! $mapping || ! $mapping->sync_enabled) {
+            $logger->warning('OwnerRez booking storage skipped', [
+                'reason' => 'property_not_mapped_or_sync_disabled',
+                'ownerrez_booking_id' => $ownerrezBookingId,
+                'property_id' => $propertyId,
+                'mapping_found' => (bool) $mapping,
+                'sync_enabled' => $mapping?->sync_enabled,
+            ]);
             Log::info('Property not mapped or sync disabled', ['property_id' => $propertyId]);
 
             return;
@@ -138,6 +158,12 @@ class OwnerRezSyncService
         // Check if booking already exists
         $existingOwnerrezBooking = OwnerRezBooking::where('ownerrez_booking_id', $ownerrezBookingId)->first();
         if ($existingOwnerrezBooking) {
+            $logger->info('OwnerRez booking storage skipped', [
+                'reason' => 'booking_already_exists',
+                'ownerrez_booking_id' => $ownerrezBookingId,
+                'local_booking_id' => $existingOwnerrezBooking->local_booking_id,
+                'ownerrez_bookings_row_id' => $existingOwnerrezBooking->id,
+            ]);
             Log::info('OwnerRez booking already exists', ['ownerrez_booking_id' => $ownerrezBookingId]);
 
             return;
@@ -163,10 +189,13 @@ class OwnerRezSyncService
         }
 
         // Create local booking
+        $storageStage = 'transaction_not_started';
         try {
             DB::beginTransaction();
+            $storageStage = 'transaction_started';
 
             $localBooking = $this->createLocalBookingFromOwnerRez($bookingData, $mapping->apartment_id);
+            $storageStage = 'local_booking_created';
 
             // Create OwnerRez booking record with full data
             OwnerRezBooking::create([
@@ -178,14 +207,34 @@ class OwnerRezSyncService
                 'sync_direction' => 'inbound',
                 'synced_at' => now(),
             ]);
+            $storageStage = 'ownerrez_booking_link_created';
 
             DB::commit();
+            $storageStage = 'transaction_committed';
+
+            $logger->info('OwnerRez booking storage success', [
+                'ownerrez_booking_id' => $ownerrezBookingId,
+                'property_id' => $propertyId,
+                'apartment_id' => $mapping->apartment_id,
+                'local_booking_id' => $localBooking->id,
+                'stage' => $storageStage,
+            ]);
             Log::info('Successfully created booking from OwnerRez', [
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'local_booking_id' => $localBooking->id,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            $logger->error('OwnerRez booking storage failed', [
+                'ownerrez_booking_id' => $ownerrezBookingId,
+                'property_id' => $propertyId,
+                'apartment_id' => $mapping->apartment_id,
+                'arrival' => $bookingData['arrival'] ?? null,
+                'departure' => $bookingData['departure'] ?? null,
+                'failed_stage' => $storageStage,
+                'exception_class' => get_class($e),
+                'error' => $e->getMessage(),
+            ]);
             Log::error('Failed to create booking from OwnerRez', [
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'error' => $e->getMessage(),
