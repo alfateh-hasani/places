@@ -29,10 +29,11 @@ class SyncPropertyBookingsJob implements ShouldQueue
 
     public function handle(OwnerRezApiService $apiService, OwnerRezSyncService $syncService): void
     {
+        $logger = Log::channel('ownerrez');
         $mapping = OwnerRezPropertyMapping::find($this->propertyMappingId);
 
         if (! $mapping || ! $mapping->sync_enabled) {
-            Log::warning('Property mapping not found or sync disabled', [
+            $logger->warning('Property mapping not found or sync disabled', [
                 'mapping_id' => $this->propertyMappingId,
             ]);
 
@@ -40,7 +41,7 @@ class SyncPropertyBookingsJob implements ShouldQueue
         }
 
         try {
-            Log::info('Syncing bookings for property', [
+            $logger->info('Syncing bookings for property', [
                 'mapping_id' => $this->propertyMappingId,
                 'property_id' => $mapping->ownerrez_property_id,
             ]);
@@ -56,6 +57,15 @@ class SyncPropertyBookingsJob implements ShouldQueue
             ]);
 
             $bookings = $response['items'] ?? [];
+            $logger->info('OwnerRez fetch bookings result', [
+                'mapping_id' => $this->propertyMappingId,
+                'property_id' => $mapping->ownerrez_property_id,
+                'from' => $from,
+                'to' => $to,
+                'status' => 'Active',
+                'fetched_count' => count($bookings),
+                'next_page_url' => $response['next_page_url'] ?? null,
+            ]);
             $syncedCount = 0;
 
             foreach ($bookings as $bookingData) {
@@ -66,7 +76,7 @@ class SyncPropertyBookingsJob implements ShouldQueue
                     ]);
                     $syncedCount++;
                 } catch (\Exception $e) {
-                    Log::error('Failed to sync individual booking', [
+                    $logger->error('Failed to sync individual booking', [
                         'ownerrez_booking_id' => $bookingData['id'] ?? null,
                         'error' => $e->getMessage(),
                     ]);
@@ -75,13 +85,13 @@ class SyncPropertyBookingsJob implements ShouldQueue
 
             $mapping->markAsSynced();
 
-            Log::info('Successfully synced property bookings', [
+            $logger->info('Successfully synced property bookings', [
                 'mapping_id' => $this->propertyMappingId,
                 'total_bookings' => count($bookings),
                 'synced_count' => $syncedCount,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to sync property bookings', [
+            $logger->error('Failed to sync property bookings', [
                 'mapping_id' => $this->propertyMappingId,
                 'error' => $e->getMessage(),
             ]);
@@ -92,7 +102,7 @@ class SyncPropertyBookingsJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        Log::error('Sync property bookings job failed after all retries', [
+        Log::channel('ownerrez')->error('Sync property bookings job failed after all retries', [
             'mapping_id' => $this->propertyMappingId,
             'error' => $exception->getMessage(),
         ]);

@@ -73,6 +73,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'ownerrez' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/ownerrez.log'),
+            'level' => env('LOG_LEVEL_OWNERREZ', 'info'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
