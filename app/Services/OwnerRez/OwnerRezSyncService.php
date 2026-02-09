@@ -254,6 +254,8 @@ class OwnerRezSyncService
                     ]),
                 ]);
             }
+
+            throw $e;
         }
     }
 
@@ -676,11 +678,14 @@ class OwnerRezSyncService
     {
       
 
+        // Extract email from guest data
+        $email = $guestData['email_addresses'][0]['address'] ?? null;
+
         // Extract phone from different possible formats
         $phone = null;
         if (isset($guestData['phone'])) {
             $phone = $guestData['phone'];
-        }  
+        }
 
         // Clean phone number: remove spaces, dashes, parentheses, and other non-digit characters except +
         
@@ -702,7 +707,10 @@ class OwnerRezSyncService
              $Guest = $this->apiService->getGuest($ownerrezGuestId);
              Log::info('Guest data', ['guest' => $Guest]);
              if ($Guest) {
-                $phone = $Guest['phone'];
+                $phone = $Guest['phones'][0]['number'] ?? null;
+                if (!$email) {
+                    $email = $Guest['email_addresses'][0]['address'] ?? null;
+                }
              }
         }
 
