@@ -18,6 +18,7 @@ class SetCustomFieldsCommand extends Command
 
         $query = Booking::whereNotNull('ownerrez_booking_id')
             ->whereNotIn('booking_source', ['ownerrez', 'airbnb', 'booking_com', 'guesty'])
+            ->whereNull('site')
             ->where('created_at', '>=', now()->subMonths(2));
 
         if ($bookingId) {

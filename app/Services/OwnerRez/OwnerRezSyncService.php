@@ -418,9 +418,10 @@ class OwnerRezSyncService
         // Set custom field to identify this booking as from our platform
         $this->ensureBookingCustomField($response['id']);
 
-        // Update local booking with OwnerRez ID
+        // Update local booking with OwnerRez ID and site
         $booking->update([
             'ownerrez_booking_id' => $response['id'],
+            'site' => config('ownerrez.sync.custom_field_value', 'places'),
         ]);
 
         // Create OwnerRez booking record
@@ -661,6 +662,7 @@ class OwnerRezSyncService
             'payment_status' => $paymentStatus,
             'booking_source' => 'ownerrez',
             'channel_name' => $data['listing_site'] ?? 'ownerrez',
+            'site' => $data['listing_site'] ?? null,
             'external_reference' => $data['platform_reservation_number'] ?? null,
             'notes' => $data['notes'] ?? null,
             'is_airbnb_booking' => 0,
@@ -782,6 +784,11 @@ class OwnerRezSyncService
             ->firstWhere('code', 'BXBXSOURCEDOMAIN');
 
         if ($existingField && $existingField['value'] === $fieldValue) {
+            // Update local booking site if not already set
+            Booking::where('ownerrez_booking_id', $ownerrezBookingId)
+                ->whereNull('site')
+                ->update(['site' => $fieldValue]);
+
             return;
         }
 
@@ -791,6 +798,10 @@ class OwnerRezSyncService
             fieldDefinitionId: $fieldDefinitionId,
             value: $fieldValue
         );
+
+        // Update local booking site
+        Booking::where('ownerrez_booking_id', $ownerrezBookingId)
+            ->update(['site' => $fieldValue]);
 
         Log::info('Custom field set on OwnerRez booking', [
             'ownerrez_booking_id' => $ownerrezBookingId,
