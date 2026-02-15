@@ -17,12 +17,15 @@ class SetCustomFieldsCommand extends Command
         $bookingId = $this->option('booking-id');
 
         $query = Booking::whereNotNull('ownerrez_booking_id')
-            ->whereNotIn('booking_source', ['ownerrez', 'airbnb', 'booking_com', 'guesty'])
             ->whereNull('site')
             ->where('created_at', '>=', now()->subMonths(2));
 
         if ($bookingId) {
+            // When specific booking ID is provided, skip source filter
             $query->where('id', $bookingId);
+        } else {
+            // Only process bookings created from this app (exclude external sources)
+            $query->whereNotIn('booking_source', ['ownerrez', 'airbnb', 'booking_com', 'guesty']);
         }
 
         $bookings = $query->get();
