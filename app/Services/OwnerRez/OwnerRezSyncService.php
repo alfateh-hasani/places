@@ -415,6 +415,9 @@ class OwnerRezSyncService
         // Create booking in OwnerRez
         $response = $this->apiService->createBooking($ownerrezData);
 
+        // Set custom field to identify this booking as from our platform
+        $this->ensureBookingCustomField($response['id']);
+
         // Update local booking with OwnerRez ID
         $booking->update([
             'ownerrez_booking_id' => $response['id'],
@@ -537,6 +540,9 @@ class OwnerRezSyncService
 
         $ownerrezData = $this->mapLocalToOwnerRez($booking);
         $this->apiService->updateBooking($booking->ownerrez_booking_id, $ownerrezData);
+
+        // Ensure custom field is set
+        $this->ensureBookingCustomField((int) $booking->ownerrez_booking_id);
     }
 
     /**
@@ -761,6 +767,35 @@ class OwnerRezSyncService
 
             return null;
         }
+    }
+
+    /**
+     * Ensure custom field exists on an OwnerRez booking to identify it as from our platform
+     */
+    public function ensureBookingCustomField(int $ownerrezBookingId): void
+    {
+        $fieldDefinitionId = (int) config('ownerrez.sync.custom_field_definition_id', 294966319);
+        $fieldValue = config('ownerrez.sync.custom_field_value', 'places');
+
+        $bookingData = $this->apiService->getBooking($ownerrezBookingId);
+        $existingField = collect($bookingData['fields'] ?? [])
+            ->firstWhere('code', 'BXBXSOURCEDOMAIN');
+
+        if ($existingField && $existingField['value'] === $fieldValue) {
+            return;
+        }
+
+        $this->apiService->createCustomField(
+            entityId: $ownerrezBookingId,
+            entityType: 'booking',
+            fieldDefinitionId: $fieldDefinitionId,
+            value: $fieldValue
+        );
+
+        Log::info('Custom field set on OwnerRez booking', [
+            'ownerrez_booking_id' => $ownerrezBookingId,
+            'value' => $fieldValue,
+        ]);
     }
 
     /**

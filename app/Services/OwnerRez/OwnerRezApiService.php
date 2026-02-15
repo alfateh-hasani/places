@@ -193,6 +193,19 @@ class OwnerRezApiService
     }
 
     /**
+     * Create a custom field on an entity
+     */
+    public function createCustomField(int $entityId, string $entityType, int $fieldDefinitionId, string $value): array
+    {
+        return $this->makeRequest('POST', '/v2/fields', [
+            'entity_id' => $entityId,
+            'entity_type' => $entityType,
+            'field_definition_id' => $fieldDefinitionId,
+            'value' => $value,
+        ]);
+    }
+
+    /**
      * Make HTTP request to OwnerRez API
      */
     protected function makeRequest(string $method, string $endpoint, array $data = []): array

@@ -53,6 +53,8 @@ return [
         'auto_sync_outbound' => env('OWNERREZ_AUTO_SYNC_OUTBOUND', true),
         'auto_sync_inbound' => env('OWNERREZ_AUTO_SYNC_INBOUND', true),
         'sync_guest_data' => env('OWNERREZ_SYNC_GUEST_DATA', true),
+        'custom_field_definition_id' => (int) env('OWNERREZ_CUSTOM_FIELD_DEFINITION_ID', 294966319),
+        'custom_field_value' => env('OWNERREZ_CUSTOM_FIELD_VALUE', 'places'),
     ],
 
     /*
