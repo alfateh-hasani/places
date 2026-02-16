@@ -662,7 +662,8 @@ class OwnerRezSyncService
             'payment_status' => $paymentStatus,
             'booking_source' => 'ownerrez',
             'channel_name' => $data['listing_site'] ?? 'ownerrez',
-            'site' => $data['listing_site'] ?? null,
+            'site' => $data['listing_site']
+                ?? (collect($data['fields'] ?? [])->firstWhere('code', 'BXSOURCEDOMAIN')['value'] ?? null),
             'external_reference' => $data['platform_reservation_number'] ?? null,
             'notes' => $data['notes'] ?? null,
             'is_airbnb_booking' => 0,
@@ -781,7 +782,7 @@ class OwnerRezSyncService
 
         $bookingData = $this->apiService->getBooking($ownerrezBookingId);
         $existingField = collect($bookingData['fields'] ?? [])
-            ->firstWhere('code', 'BXBXSOURCEDOMAIN');
+            ->firstWhere('code', 'BXSOURCEDOMAIN');
 
         if ($existingField && $existingField['value'] === $fieldValue) {
             // Update local booking site if not already set
