@@ -781,7 +781,7 @@ class OwnerRezSyncService
 
         $bookingData = $this->apiService->getBooking($ownerrezBookingId);
         $existingField = collect($bookingData['fields'] ?? [])
-            ->firstWhere('code', 'BXBXSOURCEDOMAIN');
+            ->firstWhere('code', 'BXSOURCEDOMAIN');
 
         if ($existingField && $existingField['value'] === $fieldValue) {
             // Update local booking site if not already set
