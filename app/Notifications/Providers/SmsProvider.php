@@ -9,7 +9,8 @@ class SmsProvider
 {
     public static function sendSms($phoneNumber, $otp)
     {
-        Log::info("Sending SMS to {$phoneNumber} with OTP: {$otp}");
+        $otpLog = Log::channel('otp');
+        $otpLog->info('[SMS] Sending via Taqnyat', ['phone' => $phoneNumber, 'body_length' => strlen($otp)]);
 
         $token = '20cb5a2c8e08f04c5f67791bac035ef5';
         $sender = 'Ad.Dyafa';
@@ -25,14 +26,20 @@ class SmsProvider
                 ->asJson()
                 ->post('https://api.taqnyat.sa/v1/messages', $payload);
 
-            Log::info('Taqnyat response', $response->json());
+            $responseData = $response->json();
+            $otpLog->info('[SMS] Taqnyat response', [
+                'phone' => $phoneNumber,
+                'http_status' => $response->status(),
+                'response' => $responseData,
+                'successful' => $response->successful(),
+            ]);
 
-            return $response->successful();  // true إذا 2xx/201
+            return $response->successful();
         } catch (\Throwable $e) {
-            // يُفضَّل رفع استثناء مخصّص أو إعادة false حسب هندسة مشروعك
-            Log::error('Taqnyat sendSms failed', [
-                'error'   => $e->getMessage(),
-                'line'    => $e->getLine(),
+            $otpLog->error('[SMS] Taqnyat exception', [
+                'phone' => $phoneNumber,
+                'error' => $e->getMessage(),
+                'line'  => $e->getLine(),
             ]);
 
             return false;
