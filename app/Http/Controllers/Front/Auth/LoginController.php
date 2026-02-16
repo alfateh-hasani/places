@@ -22,6 +22,8 @@ class LoginController extends Controller
 
     public function requestOtp(Request $request)
     {
+        $otpLog = Log::channel('otp');
+
         try {
             $request->merge([
                 'phone' =>  convertArabicNumbers($request->phone),
@@ -33,12 +35,15 @@ class LoginController extends Controller
 
             $customerExists = Customer::where('phone', $request->phone)->exists();
 
+            $otpLog->info('[Web] Sending OTP', ['phone' => $request->phone, 'has_account' => $customerExists]);
+
             $otp = Otp::identifier('otp_' . $request->phone)
                 ->send(new CustomerRegistrationOtp($request->phone),
                     Notification::route('sms', $request->phone)
                 );
 
             if ($otp['status'] === Otp::OTP_SENT) {
+                $otpLog->info('[Web] OTP sent successfully', ['phone' => $request->phone]);
                 return response()->json([
                     'status' => 'success',
                     'message' => __('auth.otp_sent'),
@@ -47,14 +52,18 @@ class LoginController extends Controller
                 ], 200);
             }
 
+            $otpLog->error('[Web] OTP send failed', ['phone' => $request->phone, 'status' => $otp['status']]);
             return response()->json(['status' => 'error', 'message' => __('auth.something_went_wrong')], 422);
         } catch (ValidationException $e) {
+            $otpLog->warning('[Web] OTP request validation failed', ['phone' => $request->phone ?? null, 'error' => $e->getMessage()]);
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
 
     public function verifyOtp(Request $request)
     {
+        $otpLog = Log::channel('otp');
+
         $request->merge([
             'phone' =>  convertArabicNumbers($request->phone),
             'otp'   =>  convertArabicNumbers($request->otp),
@@ -65,22 +74,29 @@ class LoginController extends Controller
             'otp'   => 'required|digits:4',
         ]);
 
+        $otpLog->info('[Web] Verifying OTP', ['phone' => $request->phone]);
+
         $otpStatus = Otp::identifier('otp_' . $request->phone)->attempt($request->otp);
 
         if ($otpStatus['status'] !== Otp::OTP_PROCESSED  && $request->otp != '2020') {
+            $otpLog->warning('[Web] OTP verification failed', [
+                'phone' => $request->phone,
+                'status' => $otpStatus['status'],
+            ]);
             return response()->json([
                 'status' => 'error',
                 'message' => __('auth.otp_invalid'),
             ], 400);
         }elseif($request->otp == '2020'){
-           
+            $otpLog->info('[Web] OTP bypassed with master code', ['phone' => $request->phone]);
         }
 
         $customer = Customer::where('phone', $request->phone)->first();
 
         if ($customer) {
-            Auth::guard('customer')->login($customer); // Use the customer guard for login
+            Auth::guard('customer')->login($customer);
 
+            $otpLog->info('[Web] Login successful', ['phone' => $request->phone, 'customer_id' => $customer->id]);
             return response()->json([
                 'status' => 'success',
                 'message' => trans('site.logged_in_successfully'),
@@ -91,6 +107,7 @@ class LoginController extends Controller
         $token = Str::random(60);
         Cache::put('verified_phone_' . $token, $request->phone, now()->addMinutes(10));
 
+        $otpLog->info('[Web] OTP verified - registration required', ['phone' => $request->phone]);
         return response()->json([
             'status' => 'success',
             'register_required' => true,

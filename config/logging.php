@@ -81,6 +81,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'otp' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/otp.log'),
+            'level' => 'debug',
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

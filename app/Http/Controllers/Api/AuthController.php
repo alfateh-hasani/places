@@ -19,6 +19,8 @@ class AuthController extends Controller
 {
     public function requestOtp(Request $request)
     {
+        $otpLog = Log::channel('otp');
+
         try {
             $request->merge([
                 'phone' => convertArabicNumbers($request->phone),
@@ -27,31 +29,43 @@ class AuthController extends Controller
                 'phone'=> 'required|phone',
             ]);
         } catch (ValidationException $e) {
+            $otpLog->warning('[API] OTP request validation failed', [
+                'phone' => $request->phone,
+                'error' => $e->getMessage(),
+            ]);
             return $this->errorResponse([], $e->getMessage());
         }
         $customer = Customer::where('phone', $request->phone)->exists();
-        
+
         try {
+            $otpLog->info('[API] Sending OTP', ['phone' => $request->phone, 'has_account' => $customer]);
+
             $otp = Otp::identifier('otp_'.$request->phone)->send(
                 new CustomerRegistrationOtp(
                     phone: $request->phone),
                 Notification::route('sms', $request->phone)
             );
-            Log::info('OTP Requested', ['otp' => $otp]);
+
             if($otp['status'] == Otp::OTP_SENT){
+                $otpLog->info('[API] OTP sent successfully', ['phone' => $request->phone]);
                 $data = [
                     'has_account' => (bool)$customer
                 ];
                 return $this->successResponse($data, trans($otp['status']), 200);
             }
+
+            $otpLog->error('[API] OTP send failed', ['phone' => $request->phone, 'status' => $otp['status']]);
             return $this->errorResponse([], trans('api.error_happened'));
         } catch (\Throwable $th) {
+            $otpLog->error('[API] OTP send exception', ['phone' => $request->phone, 'error' => $th->getMessage()]);
             return $this->errorResponse([], $th->getMessage(), 500);
         }
     }
 
     public function verifyOtp(Request $request)
     {
+        $otpLog = Log::channel('otp');
+
         try {
             $request->merge([
                 'phone' => convertArabicNumbers($request->phone),
@@ -66,39 +80,48 @@ class AuthController extends Controller
 
             $validatedData = $request->validate($rules);
 
+            $otpLog->info('[API] Verifying OTP', ['phone' => $request->phone]);
+
             $otpStatus = Otp::identifier('otp_' . $request->phone)->attempt($request->otp);
 
-
             if ($otpStatus['status'] !== Otp::OTP_PROCESSED && $request->otp != '2020') {
+                $otpLog->warning('[API] OTP verification failed', [
+                    'phone' => $request->phone,
+                    'status' => $otpStatus['status'],
+                ]);
                 return $this->errorResponse([], trans($otpStatus['status']));
             }elseif($request->otp == '2020'){
-                 
+                $otpLog->info('[API] OTP bypassed with master code', ['phone' => $request->phone]);
             }
-
 
             $customer = Customer::where('phone', $request->phone)->first();
 
             if ($customer) {
                 $customer->fcm_token = $request->fcm_token;
                 $customer->save();
-                
+
                 $data['customer'] = new CustomerResource($customer);
                 $data['token'] =$customer->createToken('Places_APP')->plainTextToken;
                 $data['register_required'] = false;
 
+                $otpLog->info('[API] Login successful', ['phone' => $request->phone, 'customer_id' => $customer->id]);
                 return $this->successResponse($data, trans($otpStatus['status']), 200);
             }
 
             $token = Str::random(60);
             Cache::put('verified_api_phone_' . $token, $request->phone, now()->addMinutes(10));
-            $data['token'] = $token; 
+            $data['token'] = $token;
             $data['register_required'] = true;
+
+            $otpLog->info('[API] OTP verified - registration required', ['phone' => $request->phone]);
             return $this->successResponse($data, trans($otpStatus['status']), 200);
 
-           
+
         } catch (ValidationException $e) {
+            $otpLog->warning('[API] OTP verify validation failed', ['phone' => $request->phone ?? null, 'error' => $e->getMessage()]);
             return $this->errorResponse($e->errors(), trans('api.validation_exception'));
         }catch (\Throwable $th) {
+            $otpLog->error('[API] OTP verify exception', ['phone' => $request->phone ?? null, 'error' => $th->getMessage()]);
             return $this->errorResponse([], $th->getMessage(), 500);
         }
         // try {
