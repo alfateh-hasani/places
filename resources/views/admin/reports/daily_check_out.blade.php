@@ -7,13 +7,22 @@
             <h2>📋 تقرير الخروج بعد 12 منتصف الليل</h2>
         </div>
         <div class="col-md-6 text-right">
-            <form method="GET" action="{{ route('admin.reports.daily-checkout') }}" class="form-inline">
-                <div class="form-group">
+            <form method="GET" action="{{ route('admin.reports.daily-checkout') }}" class="form-inline justify-content-end">
+                <div class="form-group mr-2">
                     <label for="source" class="mr-2">فلتر المصدر:</label>
                     <select name="source" id="source" class="form-control" onchange="this.form.submit()">
                         <option value="all" {{ $source === 'all' ? 'selected' : '' }}>جميع الحجوزات</option>
                         <option value="app" {{ $source === 'app' ? 'selected' : '' }}>من التطبيق</option>
                         <option value="airbnb" {{ $source === 'airbnb' ? 'selected' : '' }}>من Airbnb</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="site" class="mr-2">الموقع:</label>
+                    <select name="site" id="site" class="form-control" onchange="this.form.submit()">
+                        <option value="all" {{ $site === 'all' ? 'selected' : '' }}>الكل</option>
+                        @foreach($availableSites as $siteOption)
+                            <option value="{{ $siteOption }}" {{ $site === $siteOption ? 'selected' : '' }}>{{ $siteOption }}</option>
+                        @endforeach
                     </select>
                 </div>
             </form>
@@ -34,6 +43,8 @@
                         <th>تاريخ الخروج</th>
                         <th>وقت الخروج</th>
                         <th>المصدر</th>
+                        <th>القناة</th>
+                        <th>الموقع (Site)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,14 +63,26 @@
                                 @endif
                             </td>
                             <td>
-                                @if($report->is_airbnb_booking || ($report->ownerrez_booking_id && strtolower($report->channel_name ?? '') === 'airbnb'))
-                                    <span class="badge badge-danger">
-                                        <i class="la la-home"></i> Airbnb
-                                    </span>
+                                @if($report->booking_source)
+                                    <span class="badge badge-success">{{ $report->booking_source }}</span>
+                                @elseif($report->ownerrez_booking_id)
+                                    <span class="badge badge-info">ownerrez</span>
                                 @else
-                                    <span class="badge badge-success">
-                                        <i class="la la-mobile"></i> تطبيق
-                                    </span>
+                                    <span class="text-muted">غير محدد</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($report->channel_name)
+                                    <span class="badge badge-warning">{{ $report->channel_name }}</span>
+                                @else
+                                    <span class="text-muted">غير محدد</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($report->site)
+                                    <span class="badge badge-info">{{ $report->site }}</span>
+                                @else
+                                    <span class="text-muted">غير محدد</span>
                                 @endif
                             </td>
                         </tr>

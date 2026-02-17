@@ -294,6 +294,7 @@ class ReportsController extends Controller
 
         // فلتر المصدر (all, app, airbnb)
         $source = $request->input('source', 'all');
+        $site = $request->input('site', 'all');
 
         $query = Booking::whereDate('check_out', Carbon::today())
             ->with(['apartment.building']);
@@ -322,9 +323,19 @@ class ReportsController extends Controller
         }
         // إذا كان 'all' لا نضيف فلتر - يعرض جميع الحجوزات
 
+        // تطبيق فلتر الموقع (site)
+        if ($site !== 'all') {
+            $query->where('site', $site);
+        }
+
         $reports = $query->orderBy('check_out_time', 'asc')->get();
 
-        return view('admin.reports.daily_check_out', compact('reports', 'source'));
+        // جلب جميع قيم site المتاحة في النظام للفلتر
+        $availableSites = Booking::whereNotNull('site')
+            ->distinct()
+            ->pluck('site');
+
+        return view('admin.reports.daily_check_out', compact('reports', 'source', 'site', 'availableSites'));
     }
 
 }
