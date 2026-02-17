@@ -27,4 +27,7 @@ Schedule::command('notifications:send-checkout-reminders')->dailyAt('10:00');
 
 // تنظيف سجلات Activity Log القديمة يومياً
 Schedule::command('activitylog:clean')->daily();
+
+// تنظيف ملفات اللوج القديمة (أكثر من 60 يوم) يومياً
+Schedule::command('log:clean')->daily();
  
