@@ -15,6 +15,8 @@ class Booking extends Model
 {
     use CrudTrait, LogsActivity;
 
+    protected $connection = 'mysql';
+
     protected $guarded = [];
 
     public function customer(): BelongsTo

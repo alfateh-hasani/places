@@ -15,6 +15,8 @@ class Onboarding extends Model implements HasMedia
 {
     use HasFactory, CrudTrait, InteractsWithMedia, LogsActivity;
 
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'title_ar',
         'title_en',

@@ -12,6 +12,8 @@ class Policy extends Model
 {
     use CrudTrait, HasFactory, LogsActivity;
 
+    protected $connection = 'mysql';
+
     /**
      * The attributes that are mass assignable.
      *

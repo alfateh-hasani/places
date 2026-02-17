@@ -17,6 +17,8 @@ class Customer extends Authenticatable implements HasMedia
 {
     use CrudTrait, HasApiTokens, InteractsWithMedia, LogsActivity, Notifiable;
 
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'first_name',
         'last_name',

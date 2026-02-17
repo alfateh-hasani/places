@@ -14,6 +14,9 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
     use CrudTrait, HasRoles, LogsActivity;
+
+    protected $connection = 'mysql';
+
     /**
      * The attributes that are mass assignable.
      *

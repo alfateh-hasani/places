@@ -14,6 +14,8 @@ class City extends Model implements HasMedia
 {
     use CrudTrait, HasFactory, InteractsWithMedia, HasTranslations, LogsActivity; 
 
+    protected $connection = 'mysql';
+
     protected $with = ['media'];
     /**
      * The attributes that are mass assignable.

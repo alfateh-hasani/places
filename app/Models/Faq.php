@@ -11,6 +11,8 @@ use Spatie\Activitylog\LogOptions;
 class Faq extends Model
 {
     use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     public function faqCategory(): BelongsTo
     {
         return $this->belongsTo(FaqCategory::class);

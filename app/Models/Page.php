@@ -13,6 +13,8 @@ use Spatie\Activitylog\LogOptions;
 class Page extends Model implements HasMedia
 {
     use CrudTrait, InteractsWithMedia, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $guarded = ['id'];
     public function registerMediaCollections(): void
     {

@@ -14,6 +14,8 @@ class OwnerRezPropertyMapping extends Model
     use CrudTrait;
     use LogsActivity;
 
+    protected $connection = 'mysql';
+
 
  
 

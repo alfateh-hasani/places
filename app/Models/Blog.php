@@ -14,6 +14,8 @@ use Spatie\Activitylog\LogOptions;
 class Blog extends Model implements HasMedia
 {
     use CrudTrait, InteractsWithMedia, HasTranslations, LogsActivity; 
+
+    protected $connection = 'mysql';
     protected $guarded = ['id'];
     public function registerMediaCollections(): void
     {

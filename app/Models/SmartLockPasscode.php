@@ -10,6 +10,8 @@ class SmartLockPasscode extends Model
 {
     use HasFactory, LogsActivity;
 
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'smart_lock_id',
         'apartment_id',

@@ -9,6 +9,8 @@ use Spatie\Activitylog\LogOptions;
 class ApartmentPrice extends Model
 {
     use LogsActivity;
+
+    protected $connection = 'mysql';
     protected $fillable = [
         'apartment_id','base_price','weekend_price','long_stay_discount','is_active'
     ];

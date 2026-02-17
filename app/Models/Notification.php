@@ -13,6 +13,8 @@ use Spatie\Activitylog\LogOptions;
 class Notification extends Model implements HasMedia
 {
     use CrudTrait, InteractsWithMedia, LogsActivity;
+
+    protected $connection = 'mysql';
      public $guarded = [];
      protected $with = ['media'];
     public function user (){

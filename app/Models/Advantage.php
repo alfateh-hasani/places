@@ -12,6 +12,8 @@ use Spatie\Activitylog\LogOptions;
 class Advantage extends Model implements HasMedia
 {
     use InteractsWithMedia, CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $guarded = [];
 
     public function registerMediaCollections(): void

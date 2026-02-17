@@ -12,6 +12,8 @@ use Spatie\Activitylog\LogOptions;
 class Coupon extends Model
 {
     use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $guarded = [];
 
     protected $casts = [

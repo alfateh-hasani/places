@@ -10,6 +10,8 @@ use Spatie\Activitylog\LogOptions;
 class ContactUs extends Model
 {
     use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $guarded = [];
 
     public function getActivitylogOptions(): LogOptions

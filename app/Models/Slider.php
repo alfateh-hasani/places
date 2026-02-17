@@ -16,6 +16,8 @@ use Spatie\Activitylog\LogOptions;
 class Slider extends Model implements HasMedia
 {
     use InteractsWithMedia, CrudTrait, HasTranslations, LogsActivity; 
+
+    protected $connection = 'mysql';
     
     protected $guarded = [];
     protected $with = ['media'];

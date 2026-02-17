@@ -12,6 +12,8 @@ class BookingChannelConflict extends Model
 {
     use CrudTrait, LogsActivity;
 
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'apartment_id',
         'channel',
