@@ -11,7 +11,7 @@ return [
      * When the clean-command is executed, all recording activities older than
      * the number of days specified here will be deleted.
      */
-    'delete_records_older_than_days' => 365,
+    'delete_records_older_than_days' => 90,
 
     /*
      * If no log name is passed to the activity() helper
@@ -48,5 +48,5 @@ return [
      * the Activity model shipped with this package. In case it's not set
      * Laravel's database.default will be used instead.
      */
-    'database_connection' => env('ACTIVITY_LOGGER_DB_CONNECTION'),
+    'database_connection' => env('ACTIVITY_LOG_DB_CONNECTION'),
 ];

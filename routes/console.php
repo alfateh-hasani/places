@@ -24,4 +24,7 @@ Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
 
 // إرسال إشعارات الخروج يومياً في الساعة 10 صباحاً
 Schedule::command('notifications:send-checkout-reminders')->dailyAt('10:00');
+
+// تنظيف سجلات Activity Log القديمة يومياً
+Schedule::command('activitylog:clean')->daily();
  
