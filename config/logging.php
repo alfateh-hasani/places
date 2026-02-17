@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\SanitizeContextTap;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -60,6 +61,7 @@ return [
 
         'single' => [
             'driver' => 'single',
+            'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
@@ -75,6 +77,7 @@ return [
 
         'ownerrez' => [
             'driver' => 'daily',
+            'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/ownerrez.log'),
             'level' => env('LOG_LEVEL_OWNERREZ', 'info'),
             'days' => env('LOG_DAILY_DAYS', 14),
@@ -83,8 +86,18 @@ return [
 
         'otp' => [
             'driver' => 'daily',
+            'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/otp.log'),
             'level' => 'debug',
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'payments' => [
+            'driver' => 'daily',
+            'tap' => [SanitizeContextTap::class],
+            'path' => storage_path('logs/payments.log'),
+            'level' => env('LOG_LEVEL_PAYMENTS', 'info'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
         ],
