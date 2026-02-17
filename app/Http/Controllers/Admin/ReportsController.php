@@ -330,9 +330,8 @@ class ReportsController extends Controller
 
         $reports = $query->orderBy('check_out_time', 'asc')->get();
 
-        // جلب قيم site المتاحة لحجوزات اليوم للفلتر
-        $availableSites = Booking::whereDate('check_out', Carbon::today())
-            ->whereNotNull('site')
+        // جلب جميع قيم site المتاحة في النظام للفلتر
+        $availableSites = Booking::whereNotNull('site')
             ->distinct()
             ->pluck('site');
 
