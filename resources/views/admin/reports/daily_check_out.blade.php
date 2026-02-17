@@ -40,6 +40,7 @@
                         <th>اسم العميل</th>
                         <th>الشقة</th>
                         <th>المبنى</th>
+                        <th>تاريخ الدخول</th>
                         <th>تاريخ الخروج</th>
                         <th>وقت الخروج</th>
                         <th>المصدر</th>
@@ -54,7 +55,8 @@
                             <td>{{ $report->customer_full_name }}</td>
                             <td>{{ $report->apartment?->name_ar ?? 'غير محدد' }}</td>
                             <td>{{ $report->apartment?->building?->name_ar ?? 'غير محدد' }}</td>
-                            <td>{{ $report->check_out->format('Y-m-d') }}</td>
+                            <td>{{ $report->check_in?->format('Y-m-d') ?? 'غير محدد' }}</td>
+                            <td>{{ $report->check_out?->format('Y-m-d') ?? 'غير محدد' }}</td>
                             <td>
                                 @if($report->check_out_time)
                                     {{ $report->check_out_time->format('H:i') }}
