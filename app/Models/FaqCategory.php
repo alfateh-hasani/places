@@ -10,6 +10,8 @@ use Spatie\Activitylog\LogOptions;
 class FaqCategory extends Model
 {
     use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $table = 'faq_categories';
     protected $fillable = ['name_ar', 'name_en', 'sort','slug'];
 

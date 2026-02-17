@@ -11,6 +11,8 @@ class SmartLock extends Model
 {
     use CrudTrait, LogsActivity;
 
+    protected $connection = 'mysql';
+
     protected $guarded = [];
 
 

@@ -11,6 +11,8 @@ use Spatie\Activitylog\LogOptions;
 class Category extends Model
 {
     use CrudTrait, HasFactory, LogsActivity;
+
+    protected $connection = 'mysql';
  
 
     protected $table = 'categories';

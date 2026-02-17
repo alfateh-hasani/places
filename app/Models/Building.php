@@ -15,6 +15,8 @@ use Spatie\Image\Enums\Fit;
 class Building extends Model implements HasMedia
 {
     use CrudTrait, InteractsWithMedia, HasTranslations, LogsActivity;
+
+    protected $connection = 'mysql';
     /**
      * The attributes that are mass assignable.
      *

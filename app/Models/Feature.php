@@ -13,6 +13,8 @@ class Feature extends Model implements HasMedia
 {
     use CrudTrait, HasFactory, InteractsWithMedia, LogsActivity;
 
+    protected $connection = 'mysql';
+
     /**
      * The attributes that are mass assignable.
      *

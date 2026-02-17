@@ -11,6 +11,8 @@ use Spatie\Activitylog\LogOptions;
 class Review extends Model
 {
     use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $fillable = [
         'customer_id',
         'rating',

@@ -12,6 +12,8 @@ use Spatie\Activitylog\LogOptions;
 class ApartmentLabel extends Model implements HasMedia
 {
     use InteractsWithMedia, CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $fillable = [
         'name_ar',
         'name_en',
