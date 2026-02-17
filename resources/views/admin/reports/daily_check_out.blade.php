@@ -43,6 +43,7 @@
                         <th>تاريخ الخروج</th>
                         <th>وقت الخروج</th>
                         <th>المصدر</th>
+                        <th>القناة</th>
                         <th>الموقع (Site)</th>
                     </tr>
                 </thead>
@@ -66,6 +67,13 @@
                                     <span class="badge badge-success">{{ $report->booking_source }}</span>
                                 @elseif($report->ownerrez_booking_id)
                                     <span class="badge badge-info">ownerrez</span>
+                                @else
+                                    <span class="text-muted">غير محدد</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($report->channel_name)
+                                    <span class="badge badge-warning">{{ $report->channel_name }}</span>
                                 @else
                                     <span class="text-muted">غير محدد</span>
                                 @endif
