@@ -140,6 +140,17 @@ class OwnerRezSyncService
             return;
         }
 
+        // Skip blocks - they are not real bookings
+        if (! empty($bookingData['is_block'])) {
+            $logger->info('OwnerRez booking storage skipped', [
+                'reason' => 'is_block',
+                'ownerrez_booking_id' => $ownerrezBookingId,
+                'property_id' => $propertyId,
+            ]);
+
+            return;
+        }
+
         // Find apartment mapping
         $mapping = OwnerRezPropertyMapping::where('ownerrez_property_id', $propertyId)->first();
         if (! $mapping || ! $mapping->sync_enabled) {
