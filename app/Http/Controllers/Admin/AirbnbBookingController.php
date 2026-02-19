@@ -41,9 +41,12 @@ class AirbnbBookingController extends CrudController
      */
     protected function setupListOperation()
     {
+        // إضافة فلتر حسب المبنى
+        $this->addBuildingFilter();
+
         // إضافة فلتر للحالة
         $this->addStatusFilter();
-        
+
         // إضافة فلتر لحالة الدفع
         $this->addPaymentStatusFilter();
         
@@ -266,6 +269,24 @@ class AirbnbBookingController extends CrudController
                 </div>';
             }
         ]);
+    }
+
+    /**
+     * إضافة فلتر حسب المبنى
+     */
+    private function addBuildingFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'building_id',
+            'type' => 'dropdown',
+            'label' => __('cms.building'),
+        ], function () {
+            return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
+        }, function ($value) {
+            CRUD::addClause('whereHas', 'apartment', function ($query) use ($value) {
+                $query->where('building_id', $value);
+            });
+        });
     }
 
     /**

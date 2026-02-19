@@ -680,102 +680,133 @@ class OwnerRezSyncService
             'is_airbnb_booking' => 0,
         ];
 
-        // Find or create customer and link OwnerRez guest ID
-        if (isset($data['guest'])) {
-            $customer = $this->findOrCreateCustomerFromOwnerRez($data['guest']);
-            if ($customer) {
-                $mappedData['customer_id'] = $customer->id;
-            }
+        // Find or create customer - booking cannot be created without a customer
+        $guestId = $data['guest_id'] ?? ($data['guest']['id'] ?? null);
+        $guestData = $data['guest'] ?? null;
+
+        $customer = $this->findOrCreateCustomerFromOwnerRez($guestId, $guestData);
+
+        if (! $customer) {
+            throw new \RuntimeException(
+                "Cannot create booking: failed to find or create customer for OwnerRez guest_id {$guestId}"
+            );
         }
+
+        $mappedData['customer_id'] = $customer->id;
 
         return $mappedData;
     }
 
     /**
      * Find or create customer from OwnerRez guest data
+     *
+     * @param int|null $guestId OwnerRez guest_id from booking data
+     * @param array|null $guestData Guest object from full booking data (if available)
      */
-    protected function findOrCreateCustomerFromOwnerRez(array $guestData): ?Customer
+    protected function findOrCreateCustomerFromOwnerRez(?int $guestId, ?array $guestData = null): ?Customer
     {
-      
+        $logger = Log::channel('ownerrez');
 
-        // Extract email from guest data
-        $email = $guestData['email_addresses'][0]['address'] ?? null;
+        if (! $guestId) {
+            $logger->warning('No guest_id provided for customer lookup');
 
-        // Extract phone from different possible formats
-        $phone = null;
-        if (isset($guestData['phone'])) {
-            $phone = $guestData['phone'];
+            return null;
         }
 
-        // Clean phone number: remove spaces, dashes, parentheses, and other non-digit characters except +
-        
+        // Step 1: Search customer by ownerrez_guest_id
+        $customer = Customer::where('ownerrez_guest_id', $guestId)->first();
+        if ($customer) {
+            $logger->info('Found existing customer by ownerrez_guest_id', [
+                'customer_id' => $customer->id,
+                'ownerrez_guest_id' => $guestId,
+            ]);
 
-        $ownerrezGuestId = $guestData['id'] ?? null;
+            return $customer;
+        }
 
+        // Step 2: Fetch full guest details from OwnerRez API
+        $apiGuestData = null;
+        try {
+            $apiGuestData = $this->apiService->getGuest($guestId);
+            $logger->info('Fetched guest data from OwnerRez API', [
+                'ownerrez_guest_id' => $guestId,
+                'guest_data' => $apiGuestData,
+            ]);
+        } catch (\Exception $e) {
+            $logger->warning('Failed to fetch guest from OwnerRez API', [
+                'ownerrez_guest_id' => $guestId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
-        // Try to find customer by OwnerRez guest ID first
-        if ($ownerrezGuestId) {
-            $customer = Customer::where('ownerrez_guest_id', $ownerrezGuestId)->first();
+        // Merge API data with any existing guest data (API takes precedence)
+        $mergedData = array_merge($guestData ?? [], $apiGuestData ?? []);
+
+        if (empty($mergedData)) {
+            $logger->error('No guest data available to create customer', [
+                'ownerrez_guest_id' => $guestId,
+            ]);
+
+            return null;
+        }
+
+        // Extract contact info
+        $email = $mergedData['email_addresses'][0]['address'] ?? null;
+        $phone = $mergedData['phones'][0]['number'] ?? null;
+
+        if ($phone) {
+            $phone = str_replace(' ', '', $phone);
+        }
+
+        // Step 3: Try to find by email
+        if ($email) {
+            $customer = Customer::where('email', $email)->first();
             if ($customer) {
+                $customer->update(['ownerrez_guest_id' => $guestId]);
+                $logger->info('Found existing customer by email, linked ownerrez_guest_id', [
+                    'customer_id' => $customer->id,
+                    'ownerrez_guest_id' => $guestId,
+                    'email' => $email,
+                ]);
+
                 return $customer;
             }
         }
 
-        
-
-        if (!$phone) {
-             $Guest = $this->apiService->getGuest($ownerrezGuestId);
-             Log::info('Guest data', ['guest' => $Guest]);
-             if ($Guest) {
-                $phone = $Guest['phones'][0]['number'] ?? null;
-                if (!$email) {
-                    $email = $Guest['email_addresses'][0]['address'] ?? null;
-                }
-             }
-        }
-
-    
-
-        if ($phone) {
-            $phone =  str_replace(' ', '', $phone);
-        }
-
-
-        // Try to find by phone
+        // Step 4: Try to find by phone
         if ($phone) {
             $customer = Customer::where('phone', $phone)->first();
             if ($customer) {
-                // Update OwnerRez guest ID if not set
-                if (! $customer->ownerrez_guest_id && $ownerrezGuestId) {
-                    $customer->update(['ownerrez_guest_id' => $ownerrezGuestId]);
-                }
+                $customer->update(['ownerrez_guest_id' => $guestId]);
+                $logger->info('Found existing customer by phone, linked ownerrez_guest_id', [
+                    'customer_id' => $customer->id,
+                    'ownerrez_guest_id' => $guestId,
+                ]);
 
                 return $customer;
             }
         }
 
-        // Create new customer
+        // Step 5: Create new customer
         try {
-
             $customer = Customer::create([
-                'first_name' => $guestData['first_name'] ?? '',
-                'last_name' => $guestData['last_name'] ?? '',
+                'first_name' => $mergedData['first_name'] ?? '',
+                'last_name' => $mergedData['last_name'] ?? '',
                 'email' => $email,
                 'phone' => $phone ?? 'N/A',
-                'ownerrez_guest_id' => $ownerrezGuestId,
+                'ownerrez_guest_id' => $guestId,
                 'account_verified' => false,
             ]);
 
-            Log::info('Created new customer from OwnerRez guest', [
+            $logger->info('Created new customer from OwnerRez guest', [
                 'customer_id' => $customer->id,
-                'ownerrez_guest_id' => $ownerrezGuestId,
+                'ownerrez_guest_id' => $guestId,
             ]);
 
             return $customer;
         } catch (\Exception $e) {
-
-            Log::error('Failed to create customer from OwnerRez guest', [
-                'guest_data' => $guestData,
+            $logger->error('Failed to create customer from OwnerRez guest', [
+                'ownerrez_guest_id' => $guestId,
                 'error' => $e->getMessage(),
             ]);
 

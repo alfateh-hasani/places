@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\GuestyController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\OwnerRezWebhookController;
+use App\Http\Controllers\Api\TestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -93,4 +94,9 @@ Route::controller(OwnerRezWebhookController::class)->group(function () {
     Route::post('ownerrez', 'handle')->name('ownerrez.webhook');
     Route::get('ownerrez', 'show')->name('ownerrez.webhook.show');
     Route::get('ownerrez/oauth/callback', 'oauthCallback')->name('ownerrez.oauth.callback');
+});
+
+Route::controller(TestController::class)->group(function () {
+    Route::get('test', 'test')->name('api.test');
+    Route::get('test2', 'test2')->name('api.test2');
 });
