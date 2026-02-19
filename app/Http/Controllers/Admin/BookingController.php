@@ -482,7 +482,7 @@ class BookingController extends CrudController
                         </tr>
                         <tr>
                             <th>نسبة الخصم (%)</th>
-                            <td><span class="font-weight-bold text-danger">' . number_format(($entry->discount / $entry->total_price) * 100) . '%</span></td>
+                            <td><span class="font-weight-bold text-danger">' . (($entry->total_price > 0) ? number_format(($entry->discount / $entry->total_price) * 100) : '0') . '%</span></td>
                         </tr>' : '') . '
                         ' . ($entry->coupon ? '<tr>
                             <th>' . __('cms.coupon') . ' <i class="la la-tag"></i></th>
