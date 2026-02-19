@@ -98,4 +98,5 @@ Route::controller(OwnerRezWebhookController::class)->group(function () {
 
 Route::controller(TestController::class)->group(function () {
     Route::get('test', 'test')->name('api.test');
+    Route::get('test2', 'test2')->name('api.test2');
 });

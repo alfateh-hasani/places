@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\OwnerRez\SyncPropertyBookingsJob;
 use App\Models\Booking;
+use App\Models\OwnerRezPropertyMapping;
 use Illuminate\Http\Request;
 
 class TestController extends Controller
@@ -54,5 +56,58 @@ class TestController extends Controller
             'apartment_id' => $validated['apartment_id'],
             'events' => $events,
         ], 'Apartment calendar bookings fetched successfully');
+    }
+
+    public function test2(Request $request)
+    {
+        $apartmentId = $request->input('apartment_id', $request->input('apartment-id'));
+
+        if ($apartmentId) {
+            $request->merge(['apartment_id' => $apartmentId]);
+            $validated = $request->validate([
+                'apartment_id' => 'required|integer|exists:apartments,id',
+            ]);
+
+            $mapping = OwnerRezPropertyMapping::where('apartment_id', $validated['apartment_id'])->first();
+
+            if (! $mapping) {
+                return $this->errorResponse([
+                    'apartment_id' => $validated['apartment_id'],
+                ], "OwnerRez property mapping not found for apartment: {$validated['apartment_id']}", 404);
+            }
+
+            SyncPropertyBookingsJob::dispatch($mapping->id);
+
+            return $this->successResponse([
+                'mode' => 'single',
+                'apartment_id' => $mapping->apartment_id,
+                'mapping_id' => $mapping->id,
+                'ownerrez_property_id' => $mapping->ownerrez_property_id,
+                'ownerrez_property_name' => $mapping->ownerrez_property_name,
+                'job' => SyncPropertyBookingsJob::class,
+                'dispatched' => true,
+            ], 'Sync job dispatched');
+        }
+
+        $mappings = OwnerRezPropertyMapping::where('sync_enabled', true)->get();
+
+        $dispatched = [];
+
+        foreach ($mappings as $mapping) {
+            SyncPropertyBookingsJob::dispatch($mapping->id);
+            $dispatched[] = [
+                'apartment_id' => $mapping->apartment_id,
+                'mapping_id' => $mapping->id,
+                'ownerrez_property_id' => $mapping->ownerrez_property_id,
+                'ownerrez_property_name' => $mapping->ownerrez_property_name,
+            ];
+        }
+
+        return $this->successResponse([
+            'mode' => 'all_enabled',
+            'total' => $mappings->count(),
+            'job' => SyncPropertyBookingsJob::class,
+            'dispatched' => $dispatched,
+        ], "Syncing bookings for {$mappings->count()} properties");
     }
 }

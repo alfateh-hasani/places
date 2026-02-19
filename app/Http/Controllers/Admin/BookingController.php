@@ -68,6 +68,7 @@ class BookingController extends CrudController
         // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
         $this->crud->query->where('is_airbnb_booking', '!=', 1);
         
+        $this->addBuildingFilter();
         $this->addStatusFilter();
         $this->addPaymentStatusFilter();
         $this->addBookingSourceFilter();
@@ -645,6 +646,21 @@ class BookingController extends CrudController
         return back();
     }
     
+    protected function addBuildingFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'building_id',
+            'type' => 'dropdown',
+            'label' => __('cms.building')
+        ], function () {
+            return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
+        }, function ($value) {
+            CRUD::addClause('whereHas', 'apartment', function ($query) use ($value) {
+                $query->where('building_id', $value);
+            });
+        });
+    }
+
     protected function addStatusFilter()
     {
         CRUD::addFilter([
