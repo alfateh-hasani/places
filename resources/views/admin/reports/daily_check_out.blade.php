@@ -115,6 +115,11 @@
 
         {{-- تاب OwnerRez --}}
         <div class="tab-pane fade" id="ownerrez" role="tabpanel">
+            <div class="text-left mb-2" style="display:none;" id="ownerrez-refresh-bar">
+                <button id="ownerrez-refresh-btn" class="btn btn-sm btn-outline-secondary">
+                    &#x21bb; تحديث
+                </button>
+            </div>
             <div id="ownerrez-loading" class="text-center py-4" style="display:none;">
                 <div class="spinner-border text-primary" role="status">
                     <span class="sr-only">جارٍ التحميل...</span>
@@ -158,17 +163,13 @@
 (function () {
     var loaded = false;
 
-    $('#ownerrez-tab').on('shown.bs.tab', function () {
-        // إخفاء فلاتر النظام عند التبديل لتاب OwnerRez
-        $('#local-filters').hide();
-
-        if (loaded) return;
+    function fetchOwnerRez() {
         loaded = true;
-
         $('#ownerrez-loading').show();
         $('#ownerrez-error').hide();
         $('#ownerrez-content').hide();
         $('#ownerrez-empty').hide();
+        $('#ownerrez-refresh-bar').hide();
 
         $.ajax({
             url: '{{ route('admin.reports.daily-checkout.ownerrez') }}',
@@ -240,6 +241,7 @@
 
                 $('#ownerrez-tbody').html(rows);
                 $('#ownerrez-content').show();
+                $('#ownerrez-refresh-bar').show();
             },
             error: function (xhr) {
                 $('#ownerrez-loading').hide();
@@ -249,8 +251,19 @@
                     if (resp.message) msg = resp.message;
                 } catch (e) {}
                 $('#ownerrez-error').text(msg).show();
+                $('#ownerrez-refresh-bar').show();
             }
         });
+    }
+
+    $('#ownerrez-tab').on('shown.bs.tab', function () {
+        $('#local-filters').hide();
+        if (loaded) return;
+        fetchOwnerRez();
+    });
+
+    $('#ownerrez-refresh-btn').on('click', function () {
+        fetchOwnerRez();
     });
 
     // إظهار الفلاتر عند العودة لتاب النظام
