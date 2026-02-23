@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\Building;
+use App\Models\OwnerRezPropertyMapping;
 use App\Models\User;
 use App\Services\OwnerRez\OwnerRezApiService;
 use Illuminate\Http\Request;
@@ -346,16 +347,32 @@ class ReportsController extends Controller
 
         try {
             $apiService = new OwnerRezApiService();
-            $apiService->withoutLogging();
+            $apiService->withoutLogging()->withTimeout(30);
 
-            // since_utc مطلوب من الـ API - نضع بداية السنة
-            // from/to = اليوم لجلب الحجوزات النشطة اليوم فقط (arrival <= today <= departure)
-            $items = $apiService->getAllBookings([
-                'since_utc'     => Carbon::today()->startOfYear()->toDateString(),
-                'from'          => $today,
-                'to'            => $today,
-                'include_guest' => 'true',
+            // جلب property_ids من قاعدة البيانات
+            $propertyIds = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
+                ->filter()
+                ->implode(',');
+
+            if (empty($propertyIds)) {
+                return response()->json([
+                    'success'  => true,
+                    'bookings' => [],
+                    'date'     => $today,
+                    'warning'  => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
+                ]);
+            }
+
+            // from/to = اليوم لجلب الحجوزات النشطة اليوم فقط
+            $response = $apiService->getBookings([
+                'property_ids'   => $propertyIds,
+                'from'           => $today,
+                'to'             => $today,
+                'include_guest'  => 'true',
+                'include_fields' => 'true',
+                'limit'          => 100,
             ]);
+            $items = $response['items'] ?? [];
 
             // فلترة نهائية: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
             $bookings = collect($items)

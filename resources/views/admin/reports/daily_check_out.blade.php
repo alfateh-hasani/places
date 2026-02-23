@@ -128,11 +128,16 @@
                         <thead>
                             <tr>
                                 <th>رقم الحجز</th>
+                                <th>رقم الحجز الخارجي</th>
                                 <th>اسم الضيف</th>
-                                <th>العقار</th>
+                                <th>معرف العقار</th>
                                 <th>تاريخ الدخول</th>
+                                <th>وقت الدخول</th>
                                 <th>تاريخ الخروج</th>
+                                <th>وقت الخروج</th>
+                                <th>النزلاء</th>
                                 <th>القناة</th>
+                                <th>المبلغ</th>
                                 <th>الحالة</th>
                             </tr>
                         </thead>
@@ -189,22 +194,47 @@
 
                 var rows = '';
                 $.each(data.bookings, function (i, b) {
+                    // دالة مساعدة: أرجع القيمة أو listing_site أو '—'
+                    function val(v) {
+                        if (v !== null && v !== undefined && v !== '') return v;
+                        return b.listing_site || '—';
+                    }
+
                     var guestName = (b.guest && (b.guest.first_name || b.guest.last_name))
                         ? ((b.guest.first_name || '') + ' ' + (b.guest.last_name || '')).trim()
-                        : (b.guest_name || '—');
+                        : val(null);
 
-                    var channel = b.channel_name || b.source || '—';
+                    // استخراج BXSOURCEDOMAIN من الـ fields إن وُجد
+                    var sourceDomain = null;
+                    if (b.fields && b.fields.length) {
+                        var f = b.fields.find(function(x) { return x.code === 'BXSOURCEDOMAIN'; });
+                        if (f) sourceDomain = f.value || null;
+                    }
+                    var channel = sourceDomain || b.listing_site || '—';
                     var status  = b.status || '—';
-                    var propId  = b.property_id || b.property || '—';
+                    var guests  = (b.adults || 0) + ' بالغ' + (b.children > 0 ? ' / ' + b.children + ' أطفال' : '');
+                    var amount  = b.total_amount ? b.total_amount + ' ' + (b.currency_code || '') : val(null);
+                    var extRef  = val(b.platform_reservation_number);
+
+                    var channelBadge = channel !== '—'
+                        ? '<span class="badge badge-warning">' + channel + '</span>'
+                        : '<span class="text-muted">—</span>';
+
+                    var statusBadge = '<span class="badge badge-' + (status === 'active' ? 'success' : 'secondary') + '">' + status + '</span>';
 
                     rows += '<tr>'
-                        + '<td>' + (b.id || '—') + '</td>'
+                        + '<td>' + val(b.id) + '</td>'
+                        + '<td>' + extRef + '</td>'
                         + '<td>' + guestName + '</td>'
-                        + '<td>' + propId + '</td>'
-                        + '<td>' + (b.arrival || '—') + '</td>'
-                        + '<td>' + (b.departure || '—') + '</td>'
-                        + '<td><span class="badge badge-warning">' + channel + '</span></td>'
-                        + '<td><span class="badge badge-info">' + status + '</span></td>'
+                        + '<td>' + val(b.property_id) + '</td>'
+                        + '<td>' + val(b.arrival) + '</td>'
+                        + '<td>' + val(b.check_in) + '</td>'
+                        + '<td>' + val(b.departure) + '</td>'
+                        + '<td>' + val(b.check_out) + '</td>'
+                        + '<td>' + guests + '</td>'
+                        + '<td>' + channelBadge + '</td>'
+                        + '<td>' + amount + '</td>'
+                        + '<td>' + statusBadge + '</td>'
                         + '</tr>';
                 });
 
