@@ -7,9 +7,11 @@ use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\Building;
 use App\Models\User;
+use App\Services\OwnerRez\OwnerRezApiService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ReportsController extends Controller
 {
@@ -336,6 +338,46 @@ class ReportsController extends Controller
             ->pluck('site');
 
         return view('admin.reports.daily_check_out', compact('reports', 'source', 'site', 'availableSites'));
+    }
+
+    public function ownerRezCheckoutToday(Request $request)
+    {
+        $today = Carbon::today()->toDateString();
+
+        try {
+            $apiService = new OwnerRezApiService();
+            $apiService->withoutLogging();
+
+            // since_utc مطلوب من الـ API - نضع بداية السنة
+            // from/to = اليوم لجلب الحجوزات النشطة اليوم فقط (arrival <= today <= departure)
+            $items = $apiService->getAllBookings([
+                'since_utc'     => Carbon::today()->startOfYear()->toDateString(),
+                'from'          => $today,
+                'to'            => $today,
+                'include_guest' => 'true',
+            ]);
+
+            // فلترة نهائية: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
+            $bookings = collect($items)
+                ->filter(fn($b) =>
+                    ($b['departure'] ?? '') === $today &&
+                    ($b['type'] ?? '') !== 'block'
+                )
+                ->values();
+
+            return response()->json([
+                'success'  => true,
+                'bookings' => $bookings,
+                'date'     => $today,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('OwnerRez checkout today report failed', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في جلب البيانات من OwnerRez: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
 }

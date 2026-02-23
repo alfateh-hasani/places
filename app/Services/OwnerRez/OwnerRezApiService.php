@@ -17,6 +17,18 @@ class OwnerRezApiService
 
     protected int $timeout;
 
+    protected bool $logging = true;
+
+    /**
+     * Disable DB logging for this request chain
+     */
+    public function withoutLogging(): static
+    {
+        $this->logging = false;
+
+        return $this;
+    }
+
     public function __construct()
     {
         $this->baseUrl = (string) (config('ownerrez.api_url') ?? '');
@@ -74,6 +86,27 @@ class OwnerRezApiService
         $queryString = http_build_query($filters);
 
         return $this->makeRequest('GET', "/v2/bookings?{$queryString}");
+    }
+
+    /**
+     * Get all bookings across pages with filters
+     */
+    public function getAllBookings(array $filters = []): array
+    {
+        $response = $this->getBookings($filters);
+        $items = $response['items'] ?? [];
+        $nextPageUrl = $response['next_page_url'] ?? null;
+
+        while (! empty($nextPageUrl)) {
+            // next_page_url is a full URL, extract the path+query part
+            $parsedUrl = parse_url($nextPageUrl);
+            $endpoint  = ($parsedUrl['path'] ?? '') . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
+            $response  = $this->makeRequest('GET', $endpoint);
+            $items     = array_merge($items, $response['items'] ?? []);
+            $nextPageUrl = $response['next_page_url'] ?? null;
+        }
+
+        return $items;
     }
 
     /**
@@ -231,8 +264,10 @@ class OwnerRezApiService
             $responseData = $response->json();
             $statusCode = $response->status();
 
-            // Log the request
-            $this->logRequest($endpoint, $method, $data, $responseData, $statusCode, $duration);
+            // Log the request (only if logging is enabled)
+            if ($this->logging) {
+                $this->logRequest($endpoint, $method, $data, $responseData, $statusCode, $duration);
+            }
 
             // Handle rate limiting
             if ($statusCode === 429) {
