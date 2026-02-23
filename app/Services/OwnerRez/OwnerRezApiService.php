@@ -29,6 +29,13 @@ class OwnerRezApiService
         return $this;
     }
 
+    public function withTimeout(int $seconds): static
+    {
+        $this->timeout = $seconds;
+
+        return $this;
+    }
+
     public function __construct()
     {
         $this->baseUrl = (string) (config('ownerrez.api_url') ?? '');
@@ -83,7 +90,15 @@ class OwnerRezApiService
      */
     public function getBookings(array $filters = []): array
     {
+        // property_ids must not have commas URL-encoded (%2C) - build manually
+        $propertyIds = isset($filters['property_ids']) ? $filters['property_ids'] : null;
+        unset($filters['property_ids']);
+
         $queryString = http_build_query($filters);
+
+        if ($propertyIds !== null) {
+            $queryString .= ($queryString ? '&' : '') . 'property_ids=' . $propertyIds;
+        }
 
         return $this->makeRequest('GET', "/v2/bookings?{$queryString}");
     }
