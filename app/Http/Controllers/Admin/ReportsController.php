@@ -350,12 +350,15 @@ class ReportsController extends Controller
 
             // since_utc مطلوب من الـ API - نضع بداية السنة
             // from/to = اليوم لجلب الحجوزات النشطة اليوم فقط (arrival <= today <= departure)
-            $items = $apiService->getAllBookings([
-                'since_utc'     => Carbon::today()->startOfYear()->toDateString(),
-                'from'          => $today,
-                'to'            => $today,
-                'include_guest' => 'true',
+            $response = $apiService->getBookings([
+                'since_utc'      => Carbon::today()->startOfYear()->toDateString(),
+                'from'           => $today,
+                'to'             => $today,
+                'include_guest'  => 'true',
+                'include_fields' => 'true',
+                'limit'          => 100,
             ]);
+            $items = $response['items'] ?? [];
 
             // فلترة نهائية: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
             $bookings = collect($items)
