@@ -97,7 +97,7 @@ class OwnerRezApiService
         $queryString = http_build_query($filters);
 
         if ($propertyIds !== null) {
-            $queryString .= ($queryString ? '&' : '') . 'property_ids=' . $propertyIds;
+            $queryString .= ($queryString ? '&' : '').'property_ids='.$propertyIds;
         }
 
         return $this->makeRequest('GET', "/v2/bookings?{$queryString}");
@@ -115,13 +115,24 @@ class OwnerRezApiService
         while (! empty($nextPageUrl)) {
             // next_page_url is a full URL, extract the path+query part
             $parsedUrl = parse_url($nextPageUrl);
-            $endpoint  = ($parsedUrl['path'] ?? '') . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
-            $response  = $this->makeRequest('GET', $endpoint);
-            $items     = array_merge($items, $response['items'] ?? []);
+            $endpoint = ($parsedUrl['path'] ?? '').(isset($parsedUrl['query']) ? '?'.$parsedUrl['query'] : '');
+            $response = $this->makeRequest('GET', $endpoint);
+            $items = array_merge($items, $response['items'] ?? []);
             $nextPageUrl = $response['next_page_url'] ?? null;
         }
 
         return $items;
+    }
+
+    /**
+     * Fetch a specific bookings page by its full next_page_url from a previous response.
+     */
+    public function getBookingsPageByUrl(string $pageUrl): array
+    {
+        $parsedUrl = parse_url($pageUrl);
+        $endpoint = ($parsedUrl['path'] ?? '').(isset($parsedUrl['query']) ? '?'.$parsedUrl['query'] : '');
+
+        return $this->makeRequest('GET', $endpoint);
     }
 
     /**

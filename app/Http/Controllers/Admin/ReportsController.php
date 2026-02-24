@@ -5,14 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
-use App\Models\Building;
 use App\Models\OwnerRezPropertyMapping;
-use App\Models\User;
 use App\Services\OwnerRez\OwnerRezApiService;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ReportsController extends Controller
@@ -37,29 +35,28 @@ class ReportsController extends Controller
      * - المستخدم (user_id)
      * - المدينة (city) (نفترض أن قيمة هذا الحقل تُطابق قيمة buildings.city_id)
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
     {
-           
+
         // الحصول على الفلاتر من الطلب
-        $fromDate    = $request->input('from_date', Carbon::now()->startOfMonth()->toDateString());
-        $toDate      = $request->input('to_date', Carbon::now()->endOfMonth()->toDateString());
+        $fromDate = $request->input('from_date', Carbon::now()->startOfMonth()->toDateString());
+        $toDate = $request->input('to_date', Carbon::now()->endOfMonth()->toDateString());
         $apartmentId = $request->input('apartment_id');   // لتقارير شقة محددة
-        $buildingId  = $request->input('building_id');    // لتقارير مبنى محدد
-        $userId      = $request->input('user_id');        // لتقارير عن يوزر (عميل) محدد
-        $city        = $request->input('city');           // لتصفية المبيعات حسب المدينة (قيمته تمثل city_id)
+        $buildingId = $request->input('building_id');    // لتقارير مبنى محدد
+        $userId = $request->input('user_id');        // لتقارير عن يوزر (عميل) محدد
+        $city = $request->input('city');           // لتصفية المبيعات حسب المدينة (قيمته تمثل city_id)
 
         // فلتر الفترة الزمنية (يُعتبر أي حجز يتقاطع مع الفترة)
-        $dateFilter = function($query) use ($fromDate, $toDate) {
-            $query->where(function($q) use ($fromDate, $toDate) {
+        $dateFilter = function ($query) use ($fromDate, $toDate) {
+            $query->where(function ($q) use ($fromDate, $toDate) {
                 $q->whereBetween('check_in', [$fromDate, $toDate])
-                  ->orWhereBetween('check_out', [$fromDate, $toDate])
-                  ->orWhere(function($q2) use ($fromDate, $toDate) {
-                      $q2->where('check_in', '<=', $fromDate)
-                         ->where('check_out', '>=', $toDate);
-                  });
+                    ->orWhereBetween('check_out', [$fromDate, $toDate])
+                    ->orWhere(function ($q2) use ($fromDate, $toDate) {
+                        $q2->where('check_in', '<=', $fromDate)
+                            ->where('check_out', '>=', $toDate);
+                    });
             });
         };
 
@@ -86,7 +83,7 @@ class ReportsController extends Controller
             if ($city) {
                 // انضمام جدول buildings لتصفية المدينة
                 $overallQuery->join('buildings', 'apartments.building_id', '=', 'buildings.id')
-                             ->where('buildings.city_id', $city);
+                    ->where('buildings.city_id', $city);
             }
             // لضمان استرجاع أعمدة bookings
             $overallQuery->select('bookings.*');
@@ -110,9 +107,9 @@ class ReportsController extends Controller
         }
         if ($city) {
             $availableUnitsQuery->join('buildings', 'apartments.building_id', '=', 'buildings.id')
-                                ->where('buildings.city_id', $city);
+                ->where('buildings.city_id', $city);
         }
-        $availableUnits = $availableUnitsQuery->whereDoesntHave('bookings', function($q) use ($fromDate, $toDate, $dateFilter) {
+        $availableUnits = $availableUnitsQuery->whereDoesntHave('bookings', function ($q) use ($dateFilter) {
             $q->where($dateFilter);
         })->count();
 
@@ -173,8 +170,8 @@ class ReportsController extends Controller
         if ($buildingId) {
             $bldQuery = Booking::query();
             $bldQuery->where($dateFilter)
-                     ->join('apartments', 'bookings.apartment_id', '=', 'apartments.id')
-                     ->where('apartments.building_id', $buildingId);
+                ->join('apartments', 'bookings.apartment_id', '=', 'apartments.id')
+                ->where('apartments.building_id', $buildingId);
             $buildingDailySales = (clone $bldQuery)
                 ->select(
                     DB::raw('DATE(check_in) as day'),
@@ -244,7 +241,7 @@ class ReportsController extends Controller
         }
         if ($city) {
             $topApartmentsQuery->join('buildings', 'apartments.building_id', '=', 'buildings.id')
-                               ->where('buildings.city_id', $city);
+                ->where('buildings.city_id', $city);
         }
         $topApartments = $topApartmentsQuery->select(
             'bookings.apartment_id',
@@ -252,10 +249,10 @@ class ReportsController extends Controller
             DB::raw('SUM(final_price) as total_sales'),
             DB::raw('COUNT(*) as total_bookings')
         )
-        ->groupBy('bookings.apartment_id', 'apartments.name_ar')
-        ->orderByDesc('total_sales')
-        ->limit(5)
-        ->get();
+            ->groupBy('bookings.apartment_id', 'apartments.name_ar')
+            ->orderByDesc('total_sales')
+            ->limit(5)
+            ->get();
 
         // مبيعات حسب المدينة: الانضمام إلى جداول apartments وbuildings والتجميع حسب buildings.city_id
         $salesByCityQuery = Booking::query();
@@ -290,7 +287,6 @@ class ReportsController extends Controller
         ));
     }
 
-
     public function dailyCheckOutReport(Request $request)
     {
         // تحديد تاريخ اليوم الحالي
@@ -306,23 +302,23 @@ class ReportsController extends Controller
         // تطبيق الفلتر حسب المصدر
         if ($source === 'app') {
             // حجوزات من التطبيق (web, android, ios) وليست من Airbnb
-            $query->where(function($q) {
-                $q->where(function($q1) {
+            $query->where(function ($q) {
+                $q->where(function ($q1) {
                     $q1->whereIn('booking_source', ['web', 'android', 'ios'])
-                       ->where('is_airbnb_booking', 0);
-                })->orWhere(function($q2) {
+                        ->where('is_airbnb_booking', 0);
+                })->orWhere(function ($q2) {
                     $q2->whereNull('ownerrez_booking_id')
-                       ->where('is_airbnb_booking', 0);
+                        ->where('is_airbnb_booking', 0);
                 });
             });
         } elseif ($source === 'airbnb') {
             // حجوزات Airbnb (من OwnerRez مع channel_name = airbnb أو is_airbnb_booking = 1)
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('is_airbnb_booking', 1)
-                  ->orWhere(function($q2) {
-                      $q2->whereNotNull('ownerrez_booking_id')
-                         ->whereRaw('LOWER(channel_name) = ?', ['airbnb']);
-                  });
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('ownerrez_booking_id')
+                            ->whereRaw('LOWER(channel_name) = ?', ['airbnb']);
+                    });
             });
         }
         // إذا كان 'all' لا نضيف فلتر - يعرض جميع الحجوزات
@@ -332,12 +328,12 @@ class ReportsController extends Controller
             $query->where('site', $site);
         }
 
-        $reports = $query->orderBy('check_out_time', 'asc')->get();
+        $reports = $query->orderBy('check_out_time', 'asc')->paginate(25)->withQueryString();
 
-        // جلب جميع قيم site المتاحة في النظام للفلتر
-        $availableSites = Booking::whereNotNull('site')
-            ->distinct()
-            ->pluck('site');
+        // جلب قيم site المتاحة مع caching لتجنب full table scan في كل طلب
+        $availableSites = Cache::remember('booking_available_sites', now()->addHours(1), function () {
+            return Booking::whereNotNull('site')->distinct()->pluck('site');
+        });
 
         return view('admin.reports.daily_check_out', compact('reports', 'source', 'site', 'availableSites'));
     }
@@ -345,55 +341,64 @@ class ReportsController extends Controller
     public function ownerRezCheckoutToday(Request $request)
     {
         $today = Carbon::today()->toDateString();
-        $cacheKey = 'ownerrez_checkout_today_' . $today;
         $bust = $request->boolean('bust');
+        $offset = max(0, (int) $request->input('offset', 0));
 
-        if ($bust) {
+        $cacheKey = "ownerrez_checkout_{$today}_offset_{$offset}";
+
+        // Busting only clears offset=0; subsequent offsets expire naturally
+        if ($bust && $offset === 0) {
             Cache::forget($cacheKey);
         }
 
         try {
-            $data = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($today) {
-                $apiService = new OwnerRezApiService();
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $offset) {
+                $apiService = new OwnerRezApiService;
                 $apiService->withoutLogging()->withTimeout(30);
 
-                // جلب property_ids من قاعدة البيانات
                 $propertyIds = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
                     ->filter()
                     ->implode(',');
 
                 if (empty($propertyIds)) {
                     return [
-                        'success'  => true,
+                        'success' => true,
                         'bookings' => [],
-                        'date'     => $today,
-                        'warning'  => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
+                        'has_more' => false,
+                        'next_offset' => null,
+                        'date' => $today,
+                        'warning' => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
                     ];
                 }
 
-                // from/to = اليوم لجلب الحجوزات النشطة اليوم فقط
                 $response = $apiService->getBookings([
-                    'property_ids'   => $propertyIds,
-                    'from'           => $today,
-                    'to'             => $today,
-                    'include_guest'  => 'true',
+                    'property_ids' => $propertyIds,
+                    'from' => $today,
+                    'to' => $today,
+                    'include_guest' => 'true',
                     'include_fields' => 'true',
-                    'limit'          => 100,
+                    'limit' => 100,
+                    'offset' => $offset,
                 ]);
+
                 $items = $response['items'] ?? [];
 
-                // فلترة نهائية: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
+                // إذا عادت 100 سجل بالضبط، قد توجد صفحة تالية
+                $hasMore = count($items) >= 100;
+
+                // فلترة: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
                 $bookings = collect($items)
-                    ->filter(fn($b) =>
-                        ($b['departure'] ?? '') === $today &&
+                    ->filter(fn ($b) => ($b['departure'] ?? '') === $today &&
                         ($b['type'] ?? '') !== 'block'
                     )
                     ->values();
 
                 return [
-                    'success'  => true,
+                    'success' => true,
                     'bookings' => $bookings,
-                    'date'     => $today,
+                    'has_more' => $hasMore,
+                    'next_offset' => $hasMore ? $offset + 100 : null,
+                    'date' => $today,
                 ];
             });
 
@@ -403,9 +408,8 @@ class ReportsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'فشل في جلب البيانات من OwnerRez: ' . $e->getMessage(),
+                'message' => 'فشل في جلب البيانات من OwnerRez: '.$e->getMessage(),
             ], 500);
         }
     }
-
 }
