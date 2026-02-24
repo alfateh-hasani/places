@@ -143,6 +143,7 @@
                                 <th>رقم الحجز</th>
                                 <th>رقم الحجز الخارجي</th>
                                 <th>اسم الضيف</th>
+                                <th>اسم الشقة</th>
                                 <th>معرف العقار</th>
                                 <th>تاريخ الدخول</th>
                                 <th>وقت الدخول</th>
@@ -169,10 +170,11 @@
 @push('after_scripts')
 <script>
 (function () {
-    var loaded       = false;
-    var activeXhr    = null;
-    var failedOffset = 0; // الـ offset الذي فشل، للرجوع إليه عند الضغط على إعادة المحاولة
-    var baseUrl      = '{{ route('admin.reports.daily-checkout.ownerrez') }}';
+    var loaded           = false;
+    var activeXhr        = null;
+    var failedOffset     = 0; // الـ offset الذي فشل، للرجوع إليه عند الضغط على إعادة المحاولة
+    var propertyNameMap  = {}; // property_id → اسم الشقة
+    var baseUrl          = '{{ route('admin.reports.daily-checkout.ownerrez') }}';
 
     function updateLoadingText(text) {
         $('#ownerrez-loading-text').text(text);
@@ -214,10 +216,15 @@
                 : '<span class="text-muted">—</span>';
             var statusBadge = '<span class="badge badge-' + (status === 'active' ? 'success' : 'secondary') + '">' + status + '</span>';
 
+            var aptName = (b.property_id && propertyNameMap[String(b.property_id)])
+                ? propertyNameMap[String(b.property_id)]
+                : '<span class="text-muted">—</span>';
+
             rows += '<tr>'
                 + '<td>' + val(b.id) + '</td>'
                 + '<td>' + extRef + '</td>'
                 + '<td>' + guestName + '</td>'
+                + '<td>' + aptName + '</td>'
                 + '<td>' + val(b.property_id) + '</td>'
                 + '<td>' + val(b.arrival) + '</td>'
                 + '<td>' + val(b.check_in) + '</td>'
@@ -248,6 +255,11 @@
                 if (! data.success) {
                     showError(data.message || 'حدث خطأ غير متوقع', offset);
                     return;
+                }
+
+                // تخزين خريطة أسماء الشقق إن وُجدت
+                if (data.property_name_map) {
+                    $.extend(propertyNameMap, data.property_name_map);
                 }
 
                 if (data.warning) {

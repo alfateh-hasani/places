@@ -402,6 +402,19 @@ class ReportsController extends Controller
                 ];
             });
 
+            // أضف خريطة أسماء الشقق (cached منفصلة) في كل response
+            if (! empty($data['success'])) {
+                $data['property_name_map'] = Cache::remember('ownerrez_property_name_map', now()->addHours(1), function () {
+                    return OwnerRezPropertyMapping::with('apartment')
+                        ->get()
+                        ->mapWithKeys(fn ($m) => [
+                            (string) $m->ownerrez_property_id => $m->apartment?->name_ar,
+                        ])
+                        ->filter()
+                        ->all();
+                });
+            }
+
             return response()->json($data);
         } catch (\Exception $e) {
             Log::error('OwnerRez checkout today report failed', ['error' => $e->getMessage()]);
