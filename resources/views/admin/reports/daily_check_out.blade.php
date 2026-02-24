@@ -110,6 +110,9 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="mt-3">
+                    {{ $reports->links() }}
+                </div>
             @endif
         </div>
 
@@ -124,9 +127,14 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="sr-only">جارٍ التحميل...</span>
                 </div>
-                <p class="mt-2">جارٍ جلب البيانات من OwnerRez...</p>
+                <p class="mt-2" id="ownerrez-loading-text">جارٍ جلب البيانات من OwnerRez...</p>
             </div>
-            <div id="ownerrez-error" class="alert alert-danger" style="display:none;"></div>
+            <div id="ownerrez-error" class="alert alert-danger" style="display:none;">
+                <span id="ownerrez-error-msg"></span>
+                <div class="mt-2">
+                    <button id="ownerrez-retry-btn" class="btn btn-sm btn-danger">&#x21bb; إعادة المحاولة</button>
+                </div>
+            </div>
             <div id="ownerrez-content" style="display:none;">
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
@@ -161,11 +169,130 @@
 @push('after_scripts')
 <script>
 (function () {
-    var loaded = false;
-    var activeXhr = null;
+    var loaded       = false;
+    var activeXhr    = null;
+    var failedOffset = 0; // الـ offset الذي فشل، للرجوع إليه عند الضغط على إعادة المحاولة
+    var baseUrl      = '{{ route('admin.reports.daily-checkout.ownerrez') }}';
 
-    function fetchOwnerRez(bust) {
-        // إلغاء أي طلب سابق لا يزال قيد التنفيذ
+    function updateLoadingText(text) {
+        $('#ownerrez-loading-text').text(text);
+    }
+
+    function showError(msg, offset) {
+        failedOffset = offset;
+        $('#ownerrez-loading').hide();
+        $('#ownerrez-error-msg').text(msg);
+        $('#ownerrez-error').removeClass('alert-warning').addClass('alert-danger').show();
+        loaded = false;
+    }
+
+    function buildRows(bookings) {
+        var rows = '';
+        $.each(bookings, function (i, b) {
+            function val(v) {
+                if (v !== null && v !== undefined && v !== '') { return v; }
+                return b.listing_site || '—';
+            }
+
+            var guestName = (b.guest && (b.guest.first_name || b.guest.last_name))
+                ? ((b.guest.first_name || '') + ' ' + (b.guest.last_name || '')).trim()
+                : '—';
+
+            var sourceDomain = null;
+            if (b.fields && b.fields.length) {
+                var f = b.fields.find(function (x) { return x.code === 'BXSOURCEDOMAIN'; });
+                if (f) { sourceDomain = f.value || null; }
+            }
+            var channel = sourceDomain || b.listing_site || '—';
+            var status  = b.status || '—';
+            var guests  = (b.adults || 0) + ' بالغ' + (b.children > 0 ? ' / ' + b.children + ' أطفال' : '');
+            var amount  = b.total_amount ? b.total_amount + ' ' + (b.currency_code || '') : '—';
+            var extRef  = val(b.platform_reservation_number);
+
+            var channelBadge = channel !== '—'
+                ? '<span class="badge badge-warning">' + channel + '</span>'
+                : '<span class="text-muted">—</span>';
+            var statusBadge = '<span class="badge badge-' + (status === 'active' ? 'success' : 'secondary') + '">' + status + '</span>';
+
+            rows += '<tr>'
+                + '<td>' + val(b.id) + '</td>'
+                + '<td>' + extRef + '</td>'
+                + '<td>' + guestName + '</td>'
+                + '<td>' + val(b.property_id) + '</td>'
+                + '<td>' + val(b.arrival) + '</td>'
+                + '<td>' + val(b.check_in) + '</td>'
+                + '<td>' + val(b.departure) + '</td>'
+                + '<td>' + val(b.check_out) + '</td>'
+                + '<td>' + guests + '</td>'
+                + '<td>' + channelBadge + '</td>'
+                + '<td>' + amount + '</td>'
+                + '<td>' + statusBadge + '</td>'
+                + '</tr>';
+        });
+        return rows;
+    }
+
+    // جلب صفحة واحدة بـ offset محدد، وعند الفشل تظهر رسالة + زر إعادة المحاولة
+    function fetchPage(offset, bust) {
+        var params = { offset: offset };
+        if (bust && offset === 0) { params.bust = 1; }
+
+        activeXhr = $.ajax({
+            url: baseUrl,
+            method: 'GET',
+            data: params,
+            timeout: 35000,
+            success: function (data) {
+                activeXhr = null;
+
+                if (! data.success) {
+                    showError(data.message || 'حدث خطأ غير متوقع', offset);
+                    return;
+                }
+
+                if (data.warning) {
+                    $('#ownerrez-loading').hide();
+                    $('#ownerrez-error-msg').text(data.warning);
+                    $('#ownerrez-error').removeClass('alert-danger').addClass('alert-warning').show();
+                    $('#ownerrez-retry-btn').hide();
+                    return;
+                }
+
+                if (data.bookings && data.bookings.length > 0) {
+                    $('#ownerrez-tbody').append(buildRows(data.bookings));
+                    $('#ownerrez-content').show();
+                }
+
+                if (data.has_more && data.next_offset !== null) {
+                    // استمرار جلب الصفحة التالية تلقائياً
+                    var count = $('#ownerrez-tbody tr').length;
+                    updateLoadingText('جارٍ تحميل المزيد... (' + count + ' سجل حتى الآن)');
+                    fetchPage(data.next_offset, false);
+                } else {
+                    // انتهى التحميل
+                    $('#ownerrez-loading').hide();
+                    if ($('#ownerrez-tbody tr').length === 0) {
+                        $('#ownerrez-empty').show();
+                    }
+                }
+            },
+            error: function (xhr, status) {
+                activeXhr = null;
+                if (status === 'abort') { return; }
+
+                var msg = status === 'timeout'
+                    ? 'انتهت مهلة الاتصال بـ OwnerRez، حاول مرة أخرى'
+                    : 'فشل الاتصال بـ OwnerRez';
+                try {
+                    var resp = JSON.parse(xhr.responseText);
+                    if (resp && resp.message) { msg = resp.message; }
+                } catch (e) {}
+                showError(msg, offset);
+            }
+        });
+    }
+
+    function startFetch(bust) {
         if (activeXhr) {
             activeXhr.abort();
             activeXhr = null;
@@ -173,113 +300,34 @@
 
         loaded = true;
         $('#ownerrez-loading').show();
-        $('#ownerrez-error').hide().removeClass('alert-warning').addClass('alert-danger');
+        updateLoadingText('جارٍ جلب البيانات من OwnerRez...');
+        $('#ownerrez-error').hide();
+        $('#ownerrez-retry-btn').show();
         $('#ownerrez-content').hide();
         $('#ownerrez-empty').hide();
-        $('#ownerrez-refresh-bar').show(); // إظهار زر التحديث فورًا
+        $('#ownerrez-tbody').empty();
+        $('#ownerrez-refresh-bar').show();
 
-        var url = '{{ route('admin.reports.daily-checkout.ownerrez') }}';
-        if (bust) url += '?bust=1';
-
-        activeXhr = $.ajax({
-            url: url,
-            method: 'GET',
-            timeout: 35000, // 35 ثانية timeout من جهة الـ client
-            success: function (data) {
-                activeXhr = null;
-                $('#ownerrez-loading').hide();
-
-                if (!data.success) {
-                    $('#ownerrez-error').text(data.message || 'حدث خطأ غير متوقع').show();
-                    loaded = false; // السماح بإعادة المحاولة عبر التاب
-                    return;
-                }
-
-                if (data.warning) {
-                    $('#ownerrez-error').removeClass('alert-danger').addClass('alert-warning')
-                        .text(data.warning).show();
-                    return;
-                }
-
-                if (!data.bookings || data.bookings.length === 0) {
-                    $('#ownerrez-empty').show();
-                    return;
-                }
-
-                var rows = '';
-                $.each(data.bookings, function (i, b) {
-                    function val(v) {
-                        if (v !== null && v !== undefined && v !== '') return v;
-                        return b.listing_site || '—';
-                    }
-
-                    var guestName = (b.guest && (b.guest.first_name || b.guest.last_name))
-                        ? ((b.guest.first_name || '') + ' ' + (b.guest.last_name || '')).trim()
-                        : val(null);
-
-                    var sourceDomain = null;
-                    if (b.fields && b.fields.length) {
-                        var f = b.fields.find(function(x) { return x.code === 'BXSOURCEDOMAIN'; });
-                        if (f) sourceDomain = f.value || null;
-                    }
-                    var channel = sourceDomain || b.listing_site || '—';
-                    var status  = b.status || '—';
-                    var guests  = (b.adults || 0) + ' بالغ' + (b.children > 0 ? ' / ' + b.children + ' أطفال' : '');
-                    var amount  = b.total_amount ? b.total_amount + ' ' + (b.currency_code || '') : val(null);
-                    var extRef  = val(b.platform_reservation_number);
-
-                    var channelBadge = channel !== '—'
-                        ? '<span class="badge badge-warning">' + channel + '</span>'
-                        : '<span class="text-muted">—</span>';
-
-                    var statusBadge = '<span class="badge badge-' + (status === 'active' ? 'success' : 'secondary') + '">' + status + '</span>';
-
-                    rows += '<tr>'
-                        + '<td>' + val(b.id) + '</td>'
-                        + '<td>' + extRef + '</td>'
-                        + '<td>' + guestName + '</td>'
-                        + '<td>' + val(b.property_id) + '</td>'
-                        + '<td>' + val(b.arrival) + '</td>'
-                        + '<td>' + val(b.check_in) + '</td>'
-                        + '<td>' + val(b.departure) + '</td>'
-                        + '<td>' + val(b.check_out) + '</td>'
-                        + '<td>' + guests + '</td>'
-                        + '<td>' + channelBadge + '</td>'
-                        + '<td>' + amount + '</td>'
-                        + '<td>' + statusBadge + '</td>'
-                        + '</tr>';
-                });
-
-                $('#ownerrez-tbody').html(rows);
-                $('#ownerrez-content').show();
-            },
-            error: function (xhr, status) {
-                activeXhr = null;
-                loaded = false; // السماح بإعادة المحاولة عبر التاب
-                $('#ownerrez-loading').hide();
-                var msg = status === 'timeout'
-                    ? 'انتهت مهلة الاتصال بـ OwnerRez، حاول مرة أخرى'
-                    : 'فشل الاتصال بـ OwnerRez';
-                if (status !== 'abort') {
-                    try {
-                        var resp = JSON.parse(xhr.responseText);
-                        if (resp && resp.message) msg = resp.message;
-                    } catch (e) {}
-                    $('#ownerrez-error').text(msg).show();
-                }
-            }
-        });
+        fetchPage(0, bust || false);
     }
 
     $('#ownerrez-tab').on('shown.bs.tab', function () {
         $('#local-filters').hide();
-        if (loaded) return;
-        fetchOwnerRez(false);
+        if (loaded) { return; }
+        startFetch(false);
     });
 
-    // زر التحديث يكسر الـ cache
     $('#ownerrez-refresh-btn').on('click', function () {
-        fetchOwnerRez(true);
+        startFetch(true);
+    });
+
+    // زر إعادة المحاولة يكمل من الـ offset الذي فشل
+    $('#ownerrez-retry-btn').on('click', function () {
+        $('#ownerrez-error').hide();
+        $('#ownerrez-loading').show();
+        updateLoadingText('جارٍ إعادة المحاولة...');
+        loaded = true;
+        fetchPage(failedOffset, false);
     });
 
     $('#local-tab').on('shown.bs.tab', function () {

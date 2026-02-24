@@ -19,12 +19,8 @@ return [
 
 
         'geidea' => [
-            'public_key'     =>  'dd87268d-dcd7-4595-8970-7f05659a7511',
-            'api_password'   =>  'e7bfead9-14ea-47cc-812a-2291f170c033',
-
-            //test
-            // 'public_key'     =>  '71cca805-d1d4-4c90-9aff-08bbe95d8ad1',
-            // 'api_password'   =>  '82b4c616-f60a-4fac-9ec0-75a3c8cf5c95',
+            'public_key'     =>  env('GEIDEA_PUBLIC_KEY', 'dd87268d-dcd7-4595-8970-7f05659a7511'),
+            'api_password'   =>  env('GEIDEA_API_PASSWORD', 'e7bfead9-14ea-47cc-812a-2291f170c033'),
 
             'api_base'     =>   'https://api.ksamerchant.geidea.net',
             'hpp_base'     =>  'https://www.ksamerchant.geidea.net/hpp/checkout',
