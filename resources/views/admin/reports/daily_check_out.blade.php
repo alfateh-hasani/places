@@ -115,7 +115,7 @@
 
         {{-- تاب OwnerRez --}}
         <div class="tab-pane fade" id="ownerrez" role="tabpanel">
-            <div class="text-left mb-2" style="display:none;" id="ownerrez-refresh-bar">
+            <div class="text-left mb-2" id="ownerrez-refresh-bar" style="display:none;">
                 <button id="ownerrez-refresh-btn" class="btn btn-sm btn-outline-secondary">
                     &#x21bb; تحديث
                 </button>
@@ -162,23 +162,36 @@
 <script>
 (function () {
     var loaded = false;
+    var activeXhr = null;
 
-    function fetchOwnerRez() {
+    function fetchOwnerRez(bust) {
+        // إلغاء أي طلب سابق لا يزال قيد التنفيذ
+        if (activeXhr) {
+            activeXhr.abort();
+            activeXhr = null;
+        }
+
         loaded = true;
         $('#ownerrez-loading').show();
-        $('#ownerrez-error').hide();
+        $('#ownerrez-error').hide().removeClass('alert-warning').addClass('alert-danger');
         $('#ownerrez-content').hide();
         $('#ownerrez-empty').hide();
-        $('#ownerrez-refresh-bar').hide();
+        $('#ownerrez-refresh-bar').show(); // إظهار زر التحديث فورًا
 
-        $.ajax({
-            url: '{{ route('admin.reports.daily-checkout.ownerrez') }}',
+        var url = '{{ route('admin.reports.daily-checkout.ownerrez') }}';
+        if (bust) url += '?bust=1';
+
+        activeXhr = $.ajax({
+            url: url,
             method: 'GET',
+            timeout: 35000, // 35 ثانية timeout من جهة الـ client
             success: function (data) {
+                activeXhr = null;
                 $('#ownerrez-loading').hide();
 
                 if (!data.success) {
                     $('#ownerrez-error').text(data.message || 'حدث خطأ غير متوقع').show();
+                    loaded = false; // السماح بإعادة المحاولة عبر التاب
                     return;
                 }
 
@@ -195,7 +208,6 @@
 
                 var rows = '';
                 $.each(data.bookings, function (i, b) {
-                    // دالة مساعدة: أرجع القيمة أو listing_site أو '—'
                     function val(v) {
                         if (v !== null && v !== undefined && v !== '') return v;
                         return b.listing_site || '—';
@@ -205,7 +217,6 @@
                         ? ((b.guest.first_name || '') + ' ' + (b.guest.last_name || '')).trim()
                         : val(null);
 
-                    // استخراج BXSOURCEDOMAIN من الـ fields إن وُجد
                     var sourceDomain = null;
                     if (b.fields && b.fields.length) {
                         var f = b.fields.find(function(x) { return x.code === 'BXSOURCEDOMAIN'; });
@@ -241,17 +252,21 @@
 
                 $('#ownerrez-tbody').html(rows);
                 $('#ownerrez-content').show();
-                $('#ownerrez-refresh-bar').show();
             },
-            error: function (xhr) {
+            error: function (xhr, status) {
+                activeXhr = null;
+                loaded = false; // السماح بإعادة المحاولة عبر التاب
                 $('#ownerrez-loading').hide();
-                var msg = 'فشل الاتصال بـ OwnerRez';
-                try {
-                    var resp = JSON.parse(xhr.responseText);
-                    if (resp.message) msg = resp.message;
-                } catch (e) {}
-                $('#ownerrez-error').text(msg).show();
-                $('#ownerrez-refresh-bar').show();
+                var msg = status === 'timeout'
+                    ? 'انتهت مهلة الاتصال بـ OwnerRez، حاول مرة أخرى'
+                    : 'فشل الاتصال بـ OwnerRez';
+                if (status !== 'abort') {
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        if (resp && resp.message) msg = resp.message;
+                    } catch (e) {}
+                    $('#ownerrez-error').text(msg).show();
+                }
             }
         });
     }
@@ -259,14 +274,14 @@
     $('#ownerrez-tab').on('shown.bs.tab', function () {
         $('#local-filters').hide();
         if (loaded) return;
-        fetchOwnerRez();
+        fetchOwnerRez(false);
     });
 
+    // زر التحديث يكسر الـ cache
     $('#ownerrez-refresh-btn').on('click', function () {
-        fetchOwnerRez();
+        fetchOwnerRez(true);
     });
 
-    // إظهار الفلاتر عند العودة لتاب النظام
     $('#local-tab').on('shown.bs.tab', function () {
         $('#local-filters').show();
     });

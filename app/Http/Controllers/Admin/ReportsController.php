@@ -12,6 +12,7 @@ use App\Services\OwnerRez\OwnerRezApiService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class ReportsController extends Controller
@@ -344,49 +345,59 @@ class ReportsController extends Controller
     public function ownerRezCheckoutToday(Request $request)
     {
         $today = Carbon::today()->toDateString();
+        $cacheKey = 'ownerrez_checkout_today_' . $today;
+        $bust = $request->boolean('bust');
+
+        if ($bust) {
+            Cache::forget($cacheKey);
+        }
 
         try {
-            $apiService = new OwnerRezApiService();
-            $apiService->withoutLogging()->withTimeout(30);
+            $data = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($today) {
+                $apiService = new OwnerRezApiService();
+                $apiService->withoutLogging()->withTimeout(30);
 
-            // جلب property_ids من قاعدة البيانات
-            $propertyIds = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
-                ->filter()
-                ->implode(',');
+                // جلب property_ids من قاعدة البيانات
+                $propertyIds = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
+                    ->filter()
+                    ->implode(',');
 
-            if (empty($propertyIds)) {
-                return response()->json([
-                    'success'  => true,
-                    'bookings' => [],
-                    'date'     => $today,
-                    'warning'  => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
+                if (empty($propertyIds)) {
+                    return [
+                        'success'  => true,
+                        'bookings' => [],
+                        'date'     => $today,
+                        'warning'  => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
+                    ];
+                }
+
+                // from/to = اليوم لجلب الحجوزات النشطة اليوم فقط
+                $response = $apiService->getBookings([
+                    'property_ids'   => $propertyIds,
+                    'from'           => $today,
+                    'to'             => $today,
+                    'include_guest'  => 'true',
+                    'include_fields' => 'true',
+                    'limit'          => 100,
                 ]);
-            }
+                $items = $response['items'] ?? [];
 
-            // from/to = اليوم لجلب الحجوزات النشطة اليوم فقط
-            $response = $apiService->getBookings([
-                'property_ids'   => $propertyIds,
-                'from'           => $today,
-                'to'             => $today,
-                'include_guest'  => 'true',
-                'include_fields' => 'true',
-                'limit'          => 100,
-            ]);
-            $items = $response['items'] ?? [];
+                // فلترة نهائية: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
+                $bookings = collect($items)
+                    ->filter(fn($b) =>
+                        ($b['departure'] ?? '') === $today &&
+                        ($b['type'] ?? '') !== 'block'
+                    )
+                    ->values();
 
-            // فلترة نهائية: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
-            $bookings = collect($items)
-                ->filter(fn($b) =>
-                    ($b['departure'] ?? '') === $today &&
-                    ($b['type'] ?? '') !== 'block'
-                )
-                ->values();
+                return [
+                    'success'  => true,
+                    'bookings' => $bookings,
+                    'date'     => $today,
+                ];
+            });
 
-            return response()->json([
-                'success'  => true,
-                'bookings' => $bookings,
-                'date'     => $today,
-            ]);
+            return response()->json($data);
         } catch (\Exception $e) {
             Log::error('OwnerRez checkout today report failed', ['error' => $e->getMessage()]);
 
