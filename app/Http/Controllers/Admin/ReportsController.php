@@ -344,9 +344,9 @@ class ReportsController extends Controller
         $bust = $request->boolean('bust');
         $offset = max(0, (int) $request->input('offset', 0));
 
-        $cacheKey = "ownerrez_checkout_{$today}_offset_{$offset}";
+        // كل batch يغطي 3 صفحات متوازية (300 حجز)
+        $cacheKey = "ownerrez_checkout_{$today}_batch_{$offset}";
 
-        // Busting only clears offset=0; subsequent offsets expire naturally
         if ($bust && $offset === 0) {
             Cache::forget($cacheKey);
         }
@@ -371,23 +371,39 @@ class ReportsController extends Controller
                     ];
                 }
 
-                $response = $apiService->getBookings([
+                // جلب 3 صفحات بالتوازي (limit=100 لكل صفحة = 300 حجز في وقت طلب واحد)
+                $batchOffsets = [$offset, $offset + 100, $offset + 200];
+                $pageResults = $apiService->getBookingsConcurrent([
                     'property_ids' => $propertyIds,
                     'from' => $today,
                     'to' => $today,
                     'include_guest' => 'true',
                     'include_fields' => 'true',
                     'limit' => 100,
-                    'offset' => $offset,
-                ]);
+                ], $batchOffsets);
 
-                $items = $response['items'] ?? [];
+                $allItems = [];
+                $hasMore = false;
+                $nextOffset = null;
 
-                // إذا عادت 100 سجل بالضبط، قد توجد صفحة تالية
-                $hasMore = count($items) >= 100;
+                foreach ($batchOffsets as $i => $batchOffset) {
+                    $items = $pageResults[$batchOffset]['items'] ?? [];
+                    $allItems = array_merge($allItems, $items);
+
+                    if (count($items) < 100) {
+                        // صفحة جزئية أو فارغة - لا توجد صفحات أخرى
+                        break;
+                    }
+
+                    // آخر صفحة في الـ batch كانت ممتلئة - ربما توجد المزيد
+                    if ($i === count($batchOffsets) - 1) {
+                        $hasMore = true;
+                        $nextOffset = $batchOffset + 100;
+                    }
+                }
 
                 // فلترة: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
-                $bookings = collect($items)
+                $bookings = collect($allItems)
                     ->filter(fn ($b) => ($b['departure'] ?? '') === $today &&
                         ($b['type'] ?? '') !== 'block'
                     )
@@ -397,7 +413,7 @@ class ReportsController extends Controller
                     'success' => true,
                     'bookings' => $bookings,
                     'has_more' => $hasMore,
-                    'next_offset' => $hasMore ? $offset + 100 : null,
+                    'next_offset' => $nextOffset,
                     'date' => $today,
                 ];
             });
