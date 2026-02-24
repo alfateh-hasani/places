@@ -4,8 +4,6 @@ namespace App\Services\OwnerRez;
 
 use App\Exceptions\OwnerRez\OwnerRezApiException;
 use App\Models\OwnerRezApiLog;
-use Illuminate\Http\Client\Pool;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -124,53 +122,6 @@ class OwnerRezApiService
         }
 
         return $items;
-    }
-
-    /**
-     * Fetch bookings from multiple offsets concurrently using HTTP connection pooling.
-     * Returns an array keyed by offset, each containing the raw API response array.
-     *
-     * @param  array<string, mixed>  $filters
-     * @param  int[]  $offsets
-     * @return array<int, array<string, mixed>>
-     */
-    public function getBookingsConcurrent(array $filters, array $offsets): array
-    {
-        $propertyIds = $filters['property_ids'] ?? null;
-        $baseFilters = $filters;
-        unset($baseFilters['property_ids']);
-
-        $baseQuery = http_build_query($baseFilters);
-        if ($propertyIds !== null) {
-            $baseQuery .= ($baseQuery ? '&' : '').'property_ids='.$propertyIds;
-        }
-
-        $baseUrl = $this->baseUrl;
-        $username = $this->username;
-        $password = $this->password;
-        $timeout = $this->timeout;
-
-        $poolResponses = Http::pool(function (Pool $pool) use ($baseUrl, $baseQuery, $offsets, $username, $password, $timeout): array {
-            $calls = [];
-            foreach ($offsets as $offset) {
-                $calls[] = $pool->as("o{$offset}")
-                    ->withBasicAuth($username, $password)
-                    ->timeout($timeout)
-                    ->get("{$baseUrl}/v2/bookings?{$baseQuery}&offset={$offset}");
-            }
-
-            return $calls;
-        });
-
-        $results = [];
-        foreach ($offsets as $offset) {
-            $response = $poolResponses["o{$offset}"] ?? null;
-            $results[$offset] = ($response instanceof Response && $response->ok())
-                ? ($response->json() ?? [])
-                : ['items' => []];
-        }
-
-        return $results;
     }
 
     /**
