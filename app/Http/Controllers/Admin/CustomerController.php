@@ -152,6 +152,19 @@ class CustomerController extends CrudController
     protected function setupShowOperation()
     {
         $this->setupListOperation();
+
+        CRUD::modifyColumn('phone', [
+            'wrapper' => [
+                'element' => 'span',
+                'style' => 'direction: ltr; display: inline-block;',
+            ],
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'ownerrez_guest_id',
+            'type' => 'text',
+            'label' => 'OwnerRez Guest ID',
+        ]);
     }
 
 
