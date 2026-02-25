@@ -41,6 +41,11 @@
                 حجوزات OwnerRez
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" id="maintenance-tab" data-toggle="tab" href="#maintenance" role="tab">
+                الصيانة
+            </a>
+        </li>
     </ul>
 
     <div class="tab-content" id="checkoutTabsContent">
@@ -114,6 +119,47 @@
                     {{ $reports->links() }}
                 </div>
             @endif
+        </div>
+
+        {{-- تاب الصيانة --}}
+        <div class="tab-pane fade" id="maintenance" role="tabpanel">
+            <div class="text-left mb-2" id="maintenance-refresh-bar" style="display:none;">
+                <button id="maintenance-refresh-btn" class="btn btn-sm btn-outline-secondary">
+                    &#x21bb; تحديث
+                </button>
+            </div>
+            <div id="maintenance-loading" class="text-center py-4" style="display:none;">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="sr-only">جارٍ التحميل...</span>
+                </div>
+                <p class="mt-2" id="maintenance-loading-text">جارٍ جلب بيانات الصيانة من OwnerRez...</p>
+            </div>
+            <div id="maintenance-error" class="alert alert-danger" style="display:none;">
+                <span id="maintenance-error-msg"></span>
+                <div class="mt-2">
+                    <button id="maintenance-retry-btn" class="btn btn-sm btn-danger">&#x21bb; إعادة المحاولة</button>
+                </div>
+            </div>
+            <div id="maintenance-content" style="display:none;">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>رقم الحجز</th>
+                                <th>اسم الشقة</th>
+                                <th>معرف العقار</th>
+                                <th>تاريخ البداية</th>
+                                <th>تاريخ النهاية</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintenance-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="maintenance-empty" class="alert alert-warning text-center" style="display:none;">
+                لا توجد وحدات صيانة تنتهي اليوم في OwnerRez
+            </div>
         </div>
 
         {{-- تاب OwnerRez --}}
@@ -344,6 +390,145 @@
 
     $('#local-tab').on('shown.bs.tab', function () {
         $('#local-filters').show();
+    });
+})();
+
+(function () {
+    var loaded           = false;
+    var activeXhr        = null;
+    var failedOffset     = 0;
+    var propertyNameMap  = {};
+    var baseUrl          = '{{ route('admin.reports.daily-checkout.ownerrez-maintenance') }}';
+
+    function updateLoadingText(text) {
+        $('#maintenance-loading-text').text(text);
+    }
+
+    function showError(msg, offset) {
+        failedOffset = offset;
+        $('#maintenance-loading').hide();
+        $('#maintenance-error-msg').text(msg);
+        $('#maintenance-error').show();
+        loaded = false;
+    }
+
+    function buildRows(blocks) {
+        var rows = '';
+        $.each(blocks, function (i, b) {
+            var aptName = (b.property_id && propertyNameMap[String(b.property_id)])
+                ? propertyNameMap[String(b.property_id)]
+                : '<span class="text-muted">—</span>';
+
+            var notes = b.notes || b.name || b.title || '<span class="text-muted">—</span>';
+
+            rows += '<tr>'
+                + '<td>' + (b.id || '—') + '</td>'
+                + '<td>' + aptName + '</td>'
+                + '<td>' + (b.property_id || '—') + '</td>'
+                + '<td>' + (b.arrival || '—') + '</td>'
+                + '<td>' + (b.departure || '—') + '</td>'
+                + '<td>' + notes + '</td>'
+                + '</tr>';
+        });
+        return rows;
+    }
+
+    function fetchPage(offset, bust) {
+        var params = { offset: offset };
+        if (bust && offset === 0) { params.bust = 1; }
+
+        activeXhr = $.ajax({
+            url: baseUrl,
+            method: 'GET',
+            data: params,
+            timeout: 35000,
+            success: function (data) {
+                activeXhr = null;
+
+                if (! data.success) {
+                    showError(data.message || 'حدث خطأ غير متوقع', offset);
+                    return;
+                }
+
+                if (data.property_name_map) {
+                    $.extend(propertyNameMap, data.property_name_map);
+                }
+
+                if (data.warning) {
+                    $('#maintenance-loading').hide();
+                    $('#maintenance-error-msg').text(data.warning);
+                    $('#maintenance-error').removeClass('alert-danger').addClass('alert-warning').show();
+                    $('#maintenance-retry-btn').hide();
+                    return;
+                }
+
+                if (data.blocks && data.blocks.length > 0) {
+                    $('#maintenance-tbody').append(buildRows(data.blocks));
+                    $('#maintenance-content').show();
+                }
+
+                if (data.has_more && data.next_offset !== null) {
+                    var count = $('#maintenance-tbody tr').length;
+                    updateLoadingText('جارٍ تحميل المزيد... (' + count + ' سجل حتى الآن)');
+                    fetchPage(data.next_offset, false);
+                } else {
+                    $('#maintenance-loading').hide();
+                    if ($('#maintenance-tbody tr').length === 0) {
+                        $('#maintenance-empty').show();
+                    }
+                }
+            },
+            error: function (xhr, status) {
+                activeXhr = null;
+                if (status === 'abort') { return; }
+
+                var msg = status === 'timeout'
+                    ? 'انتهت مهلة الاتصال بـ OwnerRez، حاول مرة أخرى'
+                    : 'فشل الاتصال بـ OwnerRez';
+                try {
+                    var resp = JSON.parse(xhr.responseText);
+                    if (resp && resp.message) { msg = resp.message; }
+                } catch (e) {}
+                showError(msg, offset);
+            }
+        });
+    }
+
+    function startFetch(bust) {
+        if (activeXhr) {
+            activeXhr.abort();
+            activeXhr = null;
+        }
+
+        loaded = true;
+        $('#maintenance-loading').show();
+        updateLoadingText('جارٍ جلب بيانات الصيانة من OwnerRez...');
+        $('#maintenance-error').hide();
+        $('#maintenance-retry-btn').show();
+        $('#maintenance-content').hide();
+        $('#maintenance-empty').hide();
+        $('#maintenance-tbody').empty();
+        $('#maintenance-refresh-bar').show();
+
+        fetchPage(0, bust || false);
+    }
+
+    $('#maintenance-tab').on('shown.bs.tab', function () {
+        $('#local-filters').hide();
+        if (loaded) { return; }
+        startFetch(false);
+    });
+
+    $('#maintenance-refresh-btn').on('click', function () {
+        startFetch(true);
+    });
+
+    $('#maintenance-retry-btn').on('click', function () {
+        $('#maintenance-error').hide();
+        $('#maintenance-loading').show();
+        updateLoadingText('جارٍ إعادة المحاولة...');
+        loaded = true;
+        fetchPage(failedOffset, false);
     });
 })();
 </script>

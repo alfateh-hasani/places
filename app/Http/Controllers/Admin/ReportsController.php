@@ -425,4 +425,86 @@ class ReportsController extends Controller
             ], 500);
         }
     }
+
+    public function ownerRezMaintenanceToday(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $today = Carbon::today()->toDateString();
+        $bust = $request->boolean('bust');
+        $offset = max(0, (int) $request->input('offset', 0));
+
+        $cacheKey = "ownerrez_maintenance_{$today}_offset_{$offset}";
+
+        if ($bust && $offset === 0) {
+            Cache::forget($cacheKey);
+        }
+
+        try {
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $offset) {
+                $apiService = new OwnerRezApiService;
+                $apiService->withoutLogging()->withTimeout(30);
+
+                $propertyIds = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
+                    ->filter()
+                    ->implode(',');
+
+                if (empty($propertyIds)) {
+                    return [
+                        'success' => true,
+                        'blocks' => [],
+                        'has_more' => false,
+                        'next_offset' => null,
+                        'date' => $today,
+                        'warning' => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
+                    ];
+                }
+
+                $response = $apiService->getBookings([
+                    'property_ids' => $propertyIds,
+                    'from' => $today,
+                    'to' => $today,
+                    'limit' => 100,
+                    'offset' => $offset,
+                ]);
+
+                $items = $response['items'] ?? [];
+                $hasMore = count($items) >= 100;
+
+                // فقط الـ blocks التي تنتهي اليوم (الصيانة والحجوزات المغلقة)
+                $blocks = collect($items)
+                    ->filter(fn ($b) => ($b['departure'] ?? '') === $today &&
+                        ($b['type'] ?? '') === 'block'
+                    )
+                    ->values();
+
+                return [
+                    'success' => true,
+                    'blocks' => $blocks,
+                    'has_more' => $hasMore,
+                    'next_offset' => $hasMore ? $offset + 100 : null,
+                    'date' => $today,
+                ];
+            });
+
+            if (! empty($data['success'])) {
+                $data['property_name_map'] = Cache::remember('ownerrez_property_name_map', now()->addHours(1), function () {
+                    return OwnerRezPropertyMapping::with('apartment')
+                        ->get()
+                        ->mapWithKeys(fn ($m) => [
+                            (string) $m->ownerrez_property_id => $m->apartment?->name_ar,
+                        ])
+                        ->filter()
+                        ->all();
+                });
+            }
+
+            return response()->json($data);
+        } catch (\Exception $e) {
+            Log::error('OwnerRez maintenance today report failed', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في جلب بيانات الصيانة من OwnerRez: '.$e->getMessage(),
+            ], 500);
+        }
+    }
 }
