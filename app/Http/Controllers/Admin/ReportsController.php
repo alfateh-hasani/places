@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
+use App\Models\Building;
 use App\Models\OwnerRezPropertyMapping;
 use App\Services\OwnerRez\OwnerRezApiService;
 use Carbon\Carbon;
@@ -335,7 +336,11 @@ class ReportsController extends Controller
             return Booking::whereNotNull('site')->distinct()->pluck('site');
         });
 
-        return view('admin.reports.daily_check_out', compact('reports', 'source', 'site', 'availableSites'));
+        $availableBuildings = Cache::remember('available_buildings_list', now()->addHours(6), function () {
+            return Building::orderBy('name_ar')->get(['id', 'name_ar']);
+        });
+
+        return view('admin.reports.daily_check_out', compact('reports', 'source', 'site', 'availableSites', 'availableBuildings'));
     }
 
     public function ownerRezCheckoutToday(Request $request)
@@ -343,8 +348,9 @@ class ReportsController extends Controller
         $today = Carbon::today()->toDateString();
         $bust = $request->boolean('bust');
         $offset = max(0, (int) $request->input('offset', 0));
+        $buildingId = $request->input('building_id', 'all');
 
-        $cacheKey = "ownerrez_checkout_{$today}_offset_{$offset}";
+        $cacheKey = "ownerrez_checkout_{$today}_offset_{$offset}_b_{$buildingId}";
 
         // Busting only clears offset=0; subsequent offsets expire naturally
         if ($bust && $offset === 0) {
@@ -352,11 +358,15 @@ class ReportsController extends Controller
         }
 
         try {
-            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $offset) {
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $offset, $buildingId) {
                 $apiService = new OwnerRezApiService;
                 $apiService->withoutLogging()->withTimeout(30);
 
-                $propertyIds = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
+                $mappingQuery = OwnerRezPropertyMapping::query();
+                if ($buildingId !== 'all') {
+                    $mappingQuery->whereHas('apartment', fn ($q) => $q->where('building_id', $buildingId));
+                }
+                $propertyIds = $mappingQuery->pluck('ownerrez_property_id')
                     ->filter()
                     ->implode(',');
 
