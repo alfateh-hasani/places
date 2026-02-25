@@ -6,6 +6,19 @@
         <div class="col-md-6">
             <h2>📋 تقرير الخروج بعد 12 منتصف الليل</h2>
         </div>
+        <div class="col-md-6 text-right" id="ownerrez-filters" style="display:none;">
+            <div class="form-inline justify-content-end">
+                <div class="form-group">
+                    <label for="ownerrez-building" class="mr-2">المبنى:</label>
+                    <select id="ownerrez-building" class="form-control">
+                        <option value="all">الكل</option>
+                        @foreach($availableBuildings as $building)
+                            <option value="{{ $building->id }}">{{ $building->name_ar }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
         <div class="col-md-6 text-right" id="local-filters">
             <form method="GET" action="{{ route('admin.reports.daily-checkout') }}" class="form-inline justify-content-end">
                 <div class="form-group mr-2">
@@ -222,6 +235,10 @@
     var propertyNameMap  = {}; // property_id → اسم الشقة
     var baseUrl          = '{{ route('admin.reports.daily-checkout.ownerrez') }}';
 
+    function selectedBuilding() {
+        return $('#ownerrez-building').val() || 'all';
+    }
+
     function updateLoadingText(text) {
         $('#ownerrez-loading-text').text(text);
     }
@@ -287,7 +304,7 @@
 
     // جلب صفحة واحدة بـ offset محدد، وعند الفشل تظهر رسالة + زر إعادة المحاولة
     function fetchPage(offset, bust) {
-        var params = { offset: offset };
+        var params = { offset: offset, building_id: selectedBuilding() };
         if (bust && offset === 0) { params.bust = 1; }
 
         activeXhr = $.ajax({
@@ -371,6 +388,7 @@
 
     $('#ownerrez-tab').on('shown.bs.tab', function () {
         $('#local-filters').hide();
+        $('#ownerrez-filters').show();
         if (loaded) { return; }
         startFetch(false);
     });
@@ -388,8 +406,19 @@
         fetchPage(failedOffset, false);
     });
 
+    $('#ownerrez-building').on('change', function () {
+        loaded = false;
+        propertyNameMap = {};
+        startFetch(true);
+    });
+
     $('#local-tab').on('shown.bs.tab', function () {
+        $('#ownerrez-filters').hide();
         $('#local-filters').show();
+    });
+
+    $('#maintenance-tab').on('shown.bs.tab', function () {
+        $('#ownerrez-filters').hide();
     });
 })();
 
