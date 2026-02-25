@@ -704,7 +704,7 @@ class OwnerRezSyncService
      * @param int|null $guestId OwnerRez guest_id from booking data
      * @param array|null $guestData Guest object from full booking data (if available)
      */
-    protected function findOrCreateCustomerFromOwnerRez(?int $guestId, ?array $guestData = null): ?Customer
+    public function findOrCreateCustomerFromOwnerRez(?int $guestId, ?array $guestData = null): ?Customer
     {
         $logger = Log::channel('ownerrez');
 
