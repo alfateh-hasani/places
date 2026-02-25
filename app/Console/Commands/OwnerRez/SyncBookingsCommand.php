@@ -11,15 +11,27 @@ use Illuminate\Console\Command;
 
 class SyncBookingsCommand extends Command
 {
-    protected $signature = 'ownerrez:sync-bookings {--property-id= : Specific property mapping ID to sync}';
+    protected $signature = 'ownerrez:sync-bookings {--property-id= : Specific property mapping ID to sync} {--apartment-id= : Specific apartment ID to sync}';
 
     protected $description = 'Sync bookings from OwnerRez';
 
     public function handle(OwnerRezApiService $apiService, OwnerRezSyncService $syncService): int
     {
         $propertyId = $this->option('property-id');
+        $apartmentId = $this->option('apartment-id');
 
-        if ($propertyId) {
+        if ($apartmentId) {
+            $mapping = OwnerRezPropertyMapping::where('apartment_id', $apartmentId)
+                ->where('sync_enabled', true)
+                ->first();
+            if (! $mapping) {
+                $this->error("No active mapping found for apartment_id: {$apartmentId}");
+
+                return self::FAILURE;
+            }
+
+            $this->syncProperty($mapping, $apiService, $syncService);
+        } elseif ($propertyId) {
             $mapping = OwnerRezPropertyMapping::find($propertyId);
             if (! $mapping) {
                 $this->error("Property mapping not found: {$propertyId}");

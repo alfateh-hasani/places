@@ -658,6 +658,7 @@ class OwnerRezSyncService
 
         $mappedData = [
             'apartment_id' => $apartmentId ?? $data['apartment_id'] ?? null,
+            'ownerrez_booking_id' => $data['id'] ?? null,
             'check_in' => $data['arrival'],
             'check_out' => $data['departure'],
             'number_of_nights' => $numberOfNights,
@@ -758,22 +759,7 @@ class OwnerRezSyncService
             $phone = str_replace(' ', '', $phone);
         }
 
-        // Step 3: Try to find by email
-        if ($email) {
-            $customer = Customer::where('email', $email)->first();
-            if ($customer) {
-                $customer->update(['ownerrez_guest_id' => $guestId]);
-                $logger->info('Found existing customer by email, linked ownerrez_guest_id', [
-                    'customer_id' => $customer->id,
-                    'ownerrez_guest_id' => $guestId,
-                    'email' => $email,
-                ]);
-
-                return $customer;
-            }
-        }
-
-        // Step 4: Try to find by phone
+        // Step 3: Try to find by phone
         if ($phone) {
             $customer = Customer::where('phone', $phone)->first();
             if ($customer) {
