@@ -8,13 +8,25 @@ use Illuminate\Console\Command;
 
 class SyncCustomersCommand extends Command
 {
-    protected $signature = 'ownerrez:sync-customers';
+    protected $signature = 'ownerrez:sync-customers {--customer-id= : Specific customer ID to sync}';
 
     protected $description = 'Sync customers data from OwnerRez using their guest ID';
 
     public function handle(OwnerRezApiService $apiService): int
     {
-        $customers = Customer::whereNotNull('ownerrez_guest_id')->get();
+        $customerId = $this->option('customer-id');
+
+        if ($customerId) {
+            $customer = Customer::whereNotNull('ownerrez_guest_id')->find($customerId);
+            if (! $customer) {
+                $this->error("Customer not found or has no OwnerRez guest ID: {$customerId}");
+
+                return self::FAILURE;
+            }
+            $customers = collect([$customer]);
+        } else {
+            $customers = Customer::whereNotNull('ownerrez_guest_id')->get();
+        }
 
         $this->info("Found {$customers->count()} customers with OwnerRez guest ID");
 
