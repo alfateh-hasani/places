@@ -75,6 +75,7 @@ Route::group([
     Route::get('reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');
     Route::get('/reports/daily-checkout', [\App\Http\Controllers\Admin\ReportsController::class, 'dailyCheckOutReport'])->name('admin.reports.daily-checkout');
     Route::get('/reports/daily-checkout/ownerrez', [\App\Http\Controllers\Admin\ReportsController::class, 'ownerRezCheckoutToday'])->name('admin.reports.daily-checkout.ownerrez');
+    Route::get('/reports/daily-checkout/ownerrez-maintenance', [\App\Http\Controllers\Admin\ReportsController::class, 'ownerRezMaintenanceToday'])->name('admin.reports.daily-checkout.ownerrez-maintenance');
     Route::crud('contact-us', 'ContactUsCrudController');
     Route::crud('service-booking', 'ServiceBookingCrudController');
     Route::crud('review', 'ReviewCrudController');
