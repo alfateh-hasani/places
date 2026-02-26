@@ -171,6 +171,7 @@ class CalenderController extends CrudController
                             'type' => $hasConflict ? 'ownerrez_conflict' : 'ownerrez_unsynced',
                             'source' => 'OwnerRez',
                             'has_conflict' => $hasConflict,
+                            'customer_name' => trim(($b['guest']['first_name'] ?? '').' '.($b['guest']['last_name'] ?? '')) ?: null,
                         ],
                     ];
                 }

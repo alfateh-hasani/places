@@ -107,12 +107,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="conflictAlert" class="alert alert-danger d-none">
+                        ⚠ هذا الحجز يتعارض مع حجز موجود في النظام
+                    </div>
                     <p><strong>رقم الحجز:</strong> <span id="bookingNumber"></span></p>
                     <p><strong>العميل:</strong> <span id="customerName"></span></p>
-                    <p><strong>البريد الإلكتروني:</strong> <span id="customerEmail"></span></p>
+                    <p id="rowEmail"><strong>البريد الإلكتروني:</strong> <span id="customerEmail"></span></p>
                     <p><strong>المصدر:</strong> <span id="bookingSource"></span></p>
-                    <p><strong>الحالة:</strong> <span id="bookingStatus"></span></p>
-                    <p><strong>الإجمالي:</strong> <span id="totalPrice"></span> ريال</p>
+                    <p id="rowStatus"><strong>الحالة:</strong> <span id="bookingStatus"></span></p>
+                    <p id="rowTotal"><strong>الإجمالي:</strong> <span id="totalPrice"></span> ريال</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
@@ -165,13 +168,25 @@
                         events: allEvents,
                         editable: false,
                         eventClick: function (info) {
-                            const ev = info.event.extendedProps;
-                            document.getElementById('bookingNumber').textContent  = info.event.title;
-                            document.getElementById('customerName').textContent   = ev.customer_name ?? '-';
-                            document.getElementById('customerEmail').textContent  = ev.customer_email ?? '-';
-                            document.getElementById('bookingSource').textContent  = ev.source ?? '-';
-                            document.getElementById('bookingStatus').textContent  = ev.status ?? '-';
-                            document.getElementById('totalPrice').textContent     = ev.total_price ?? '-';
+                            const ev      = info.event.extendedProps;
+                            const isOwner = ev.type === 'ownerrez_conflict' || ev.type === 'ownerrez_unsynced';
+
+                            document.getElementById('bookingNumber').textContent = info.event.title;
+                            document.getElementById('customerName').textContent  = ev.customer_name ?? '-';
+                            document.getElementById('bookingSource').textContent = ev.source ?? '-';
+
+                            // حقول خاصة بالحجوزات المحلية فقط
+                            document.getElementById('rowEmail').style.display  = isOwner ? 'none' : '';
+                            document.getElementById('rowStatus').style.display = isOwner ? 'none' : '';
+                            document.getElementById('rowTotal').style.display  = isOwner ? 'none' : '';
+                            document.getElementById('customerEmail').textContent = ev.customer_email ?? '-';
+                            document.getElementById('bookingStatus').textContent = ev.status ?? '-';
+                            document.getElementById('totalPrice').textContent    = ev.total_price ?? '-';
+
+                            // تنبيه التعارض
+                            const alert = document.getElementById('conflictAlert');
+                            alert.classList.toggle('d-none', !ev.has_conflict);
+
                             new bootstrap.Modal(document.getElementById('bookingModal')).show();
                         }
                     });
