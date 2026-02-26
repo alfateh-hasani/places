@@ -390,6 +390,16 @@ class OwnerRezSyncService
     public function updateLocalBookingFromOwnerRez(Booking $booking, array $ownerrezBooking): void
     {
         $localData = $this->mapOwnerRezToLocal($ownerrezBooking);
+
+        // Never overwrite pricing fields with OwnerRez data — prices are managed locally
+        unset(
+            $localData['total_price'],
+            $localData['final_price'],
+            $localData['one_night_price'],
+            $localData['tax'],
+            $localData['discount'],
+        );
+
         $booking->update($localData);
     }
 
