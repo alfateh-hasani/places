@@ -2,36 +2,36 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\AdvantageRequest;
-use Backpack\CRUD\app\Http\Controllers\CrudController;
-use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use App\Models\Booking;
 use App\Models\Apartment;
+use App\Models\Booking;
+use App\Models\OwnerRezBooking;
+use App\Models\OwnerRezPropertyMapping;
+use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\Pricing\PricingService;
+use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
+
 /**
  * Class FeatureController
- * @package App\Http\Controllers\Admin
+ *
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
 class CalenderController extends CrudController
 {
- 
     public function showCalendar($apartmentId)
     {
         return view('admin.apartments.calendar', compact('apartmentId'));
     }
-    
+
     /**
      * عرض تقويم الأسعار المخصصة (منفصل عن تقويم الحجوزات)
      */
     public function showPricingCalendar($apartmentId)
     {
         $apartment = Apartment::with('pricing')->findOrFail($apartmentId);
-        
+
         // إنشاء سجل pricing إذا لم يكن موجوداً
-        if (!$apartment->pricing) {
+        if (! $apartment->pricing) {
             \App\Models\ApartmentPrice::create([
                 'apartment_id' => $apartment->id,
                 'base_price' => $apartment->price,
@@ -41,10 +41,10 @@ class CalenderController extends CrudController
             ]);
             $apartment->load('pricing');
         }
-        
+
         return view('admin.apartments.pricing-calendar', compact('apartmentId', 'apartment'));
     }
-    
+
     /**
      * جلب الأسعار المخصصة للتقويم
      */
@@ -52,14 +52,14 @@ class CalenderController extends CrudController
     {
         $customPrices = \App\Models\ApartmentPriceCalendar::where('apartment_id', $apartmentId)->get();
         $apartment = Apartment::findOrFail($apartmentId);
-        
+
         $events = [];
-        
+
         // إضافة الأسعار المخصصة
         foreach ($customPrices as $price) {
             $events[] = [
-                'id' => 'price_' . $price->id,
-                'title' => $price->custom_price . ' ر.س',
+                'id' => 'price_'.$price->id,
+                'title' => $price->custom_price.' ر.س',
                 'start' => $price->date,
                 'end' => $price->date,
                 'backgroundColor' => '#17A2B8',
@@ -74,7 +74,7 @@ class CalenderController extends CrudController
                 ],
             ];
         }
-        
+
         return response()->json($events);
     }
 
@@ -87,19 +87,15 @@ class CalenderController extends CrudController
         $events = [];
 
         foreach ($bookings as $booking) {
-            // ✅ تحديد لون حسب المصدر (Airbnb / Website)
-            $sourceColor = $booking->is_airbnb_booking ? '#FF5733' : '#2ECC71'; // 🔴 Airbnb - 🟢 موقع
+            $sourceColor = $booking->is_airbnb_booking ? '#FF5733' : '#2ECC71';
 
-            // ✅ تحديد لون حسب حالة الحجز
             $statusColors = [
-                'pending' => '#FFC107', // 🟡 معلق
-                'approved' => '#28A745', // 🟢 مقبول
-                'rejected' => '#DC3545', // 🔴 مرفوض
-                'booked' => '#007BFF', // 🔵 مؤكد
+                'pending' => '#FFC107',
+                'approved' => '#28A745',
+                'rejected' => '#DC3545',
+                'booked' => '#007BFF',
             ];
-            $statusColor = $statusColors[$booking->status] ?? '#6C757D'; // افتراضي رمادي
-
-            // ✅ دمج اللونين (المصدر + الحالة)
+            $statusColor = $statusColors[$booking->status] ?? '#6C757D';
             $finalColor = "linear-gradient(135deg, $sourceColor 50%, $statusColor 50%)";
 
             $events[] = [
@@ -121,9 +117,56 @@ class CalenderController extends CrudController
             ];
         }
 
+        // طبقة OwnerRez: إضافة الحجوزات غير المزامنة من Airbnb
+        $mapping = OwnerRezPropertyMapping::where('apartment_id', $apartmentId)
+            ->where('sync_enabled', true)
+            ->first();
+
+        if ($mapping && config('ownerrez.availability.enabled')) {
+            try {
+                $syncedIds = OwnerRezBooking::where('apartment_id', $apartmentId)
+                    ->pluck('ownerrez_booking_id')
+                    ->flip();
+
+                $from = now()->format('Y-m-d');
+                $to = now()->addYear()->format('Y-m-d');
+
+                $ownerRezBookings = app(OwnerRezSyncService::class)->getActiveBookings(
+                    $mapping->ownerrez_property_id,
+                    $from,
+                    $to
+                );
+
+                foreach ($ownerRezBookings as $b) {
+                    if ($syncedIds->has((string) $b['id'])) {
+                        continue;
+                    }
+
+                    $events[] = [
+                        'id' => 'ownerrez_'.$b['id'],
+                        'title' => 'Airbnb #'.$b['id'].' (غير مزامن)',
+                        'start' => $b['arrival'],
+                        'end' => $b['departure'],
+                        'backgroundColor' => '#FF8C00',
+                        'borderColor' => '#FF8C00',
+                        'textColor' => '#fff',
+                        'extendedProps' => [
+                            'type' => 'ownerrez_unsynced',
+                            'source' => 'OwnerRez',
+                        ],
+                    ];
+                }
+            } catch (\Exception $e) {
+                \Log::warning('OwnerRez admin calendar fetch failed', [
+                    'apartment_id' => $apartmentId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return response()->json($events);
     }
-    
+
     /**
      * حفظ أو تحديث سعر مخصص ليوم معين
      */
@@ -133,7 +176,7 @@ class CalenderController extends CrudController
             'date' => 'required|date',
             'custom_price' => 'required|numeric|min:0',
         ]);
-        
+
         $price = \App\Models\ApartmentPriceCalendar::updateOrCreate(
             [
                 'apartment_id' => $apartmentId,
@@ -143,14 +186,14 @@ class CalenderController extends CrudController
                 'custom_price' => $validated['custom_price'],
             ]
         );
-        
+
         return response()->json([
             'success' => true,
             'message' => 'تم حفظ السعر المخصص بنجاح',
             'data' => $price,
         ]);
     }
-    
+
     /**
      * حذف سعر مخصص
      */
@@ -159,21 +202,22 @@ class CalenderController extends CrudController
         $price = \App\Models\ApartmentPriceCalendar::where('apartment_id', $apartmentId)
             ->where('id', $priceId)
             ->first();
-            
+
         if ($price) {
             $price->delete();
+
             return response()->json([
                 'success' => true,
                 'message' => 'تم حذف السعر المخصص بنجاح',
             ]);
         }
-        
+
         return response()->json([
             'success' => false,
             'message' => 'السعر غير موجود',
         ], 404);
     }
-    
+
     /**
      * معاينة حساب السعر لفترة معينة
      */
@@ -183,27 +227,27 @@ class CalenderController extends CrudController
             'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
         ]);
-        
+
         $apartment = Apartment::findOrFail($apartmentId);
         $checkIn = Carbon::parse($validated['check_in']);
         $checkOut = Carbon::parse($validated['check_out']);
-        
+
         $pricingService = app(PricingService::class);
         $result = $pricingService->calculate($apartment, $checkIn, $checkOut);
-        
+
         // إضافة تفاصيل إضافية
         $nights = $checkIn->diffInDays($checkOut);
         $result['nights'] = $nights;
         $result['check_in'] = $checkIn->format('Y-m-d');
         $result['check_out'] = $checkOut->format('Y-m-d');
         $result['breakdown'] = $this->getPriceBreakdown($apartment, $checkIn, $checkOut, $pricingService);
-        
+
         return response()->json([
             'success' => true,
             'data' => $result,
         ]);
     }
-    
+
     /**
      * الحصول على تفصيل الأسعار لكل ليلة
      */
@@ -211,13 +255,13 @@ class CalenderController extends CrudController
     {
         $nights = $checkIn->diffInDays($checkOut);
         $breakdown = [];
-        
+
         for ($day = 0; $day < $nights; $day++) {
             $date = $checkIn->copy()->addDays($day);
             $nextDate = $date->copy()->addDay();
-            
+
             $result = $pricingService->calculate($apartment, $date, $nextDate);
-            
+
             $breakdown[] = [
                 'date' => $date->format('Y-m-d'),
                 'day_name' => $date->locale('ar')->dayName,
@@ -225,11 +269,7 @@ class CalenderController extends CrudController
                 'is_weekend' => in_array($date->dayOfWeek, [Carbon::FRIDAY, Carbon::SATURDAY]),
             ];
         }
-        
+
         return $breakdown;
     }
-
-
-
-
 }
