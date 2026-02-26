@@ -5,7 +5,6 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
@@ -22,6 +21,7 @@ Schedule::command('booking:check-missing-passcodes')->cron('*/10 * * * *');
 
 Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
 Schedule::command('ownerrez:sync-bookings')->everyFiveMinutes();
+Schedule::command('ownerrez:warm-cache')->everyFiveMinutes();
 
 // إرسال إشعارات الخروج يومياً في الساعة 10 صباحاً
 Schedule::command('notifications:send-checkout-reminders')->dailyAt('10:00');
@@ -31,4 +31,3 @@ Schedule::command('activitylog:clean')->daily();
 
 // تنظيف ملفات اللوج القديمة (أكثر من 60 يوم) يومياً
 Schedule::command('log:clean')->daily();
- 
