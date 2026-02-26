@@ -54,7 +54,7 @@ class OwnerRezSyncService
      */
     public function getActiveBookings(int|string $propertyId, string $from, string $to): Collection
     {
-        $cacheKey = "ownerrez:availability:{$propertyId}:{$from}:{$to}";
+        $cacheKey = "ownerrez:availability:v2:{$propertyId}:{$from}:{$to}";
         $cacheTtl = config('ownerrez.availability.cache_ttl', 300);
 
         $bookings = Cache::remember($cacheKey, $cacheTtl, function () use ($propertyId, $from, $to) {
@@ -63,6 +63,7 @@ class OwnerRezSyncService
                 'from' => $from,
                 'to' => $to,
                 'status' => 'Active',
+                'include_guest' => 'true',
             ]);
 
             return collect($response['items'] ?? []);
@@ -186,10 +187,10 @@ class OwnerRezSyncService
             Log::info('Full booking data from API', ['full_booking_data' => $fullBookingData]);
             if (! empty($fullBookingData)) {
                 // Merge API data with webhook data (API takes precedence)
-                $bookingData =  $fullBookingData;
+                $bookingData = $fullBookingData;
                 Log::info('F full booking data from API', [
                     'booking_id' => $ownerrezBookingId,
-                     'booking_data' => $bookingData,
+                    'booking_data' => $bookingData,
                 ]);
             }
         } catch (\Exception $e) {
@@ -701,8 +702,8 @@ class OwnerRezSyncService
     /**
      * Find or create customer from OwnerRez guest data
      *
-     * @param int|null $guestId OwnerRez guest_id from booking data
-     * @param array|null $guestData Guest object from full booking data (if available)
+     * @param  int|null  $guestId  OwnerRez guest_id from booking data
+     * @param  array|null  $guestData  Guest object from full booking data (if available)
      */
     public function findOrCreateCustomerFromOwnerRez(?int $guestId, ?array $guestData = null): ?Customer
     {
