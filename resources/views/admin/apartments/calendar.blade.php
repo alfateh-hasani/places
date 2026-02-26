@@ -41,6 +41,7 @@
                     <div>
                         <span class="legend-box" style="background-color: #FF5733;"></span> حجوزات Airbnb
                         <span class="legend-box" style="background-color: #FF8C00;"></span> Airbnb غير مزامن
+                        <span class="legend-box" style="background-color: #8B0000;"></span> ⚠ تعارض Airbnb
                         <span class="legend-box" style="background-color: #2ECC71;"></span> حجوزات الموقع
                         <span class="legend-box" style="background-color: #FFC107;"></span> معلق
                         <span class="legend-box" style="background-color: #28A745;"></span> مقبول

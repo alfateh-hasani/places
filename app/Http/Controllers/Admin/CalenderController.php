@@ -117,7 +117,7 @@ class CalenderController extends CrudController
             ];
         }
 
-        // طبقة OwnerRez: إضافة الحجوزات غير المزامنة من Airbnb
+        // طبقة OwnerRez: إضافة الحجوزات غير المزامنة من Airbnb + كشف التعارض
         $mapping = OwnerRezPropertyMapping::where('apartment_id', $apartmentId)
             ->where('sync_enabled', true)
             ->first();
@@ -127,6 +127,14 @@ class CalenderController extends CrudController
                 $syncedIds = OwnerRezBooking::where('apartment_id', $apartmentId)
                     ->pluck('ownerrez_booking_id')
                     ->flip();
+
+                // الحجوزات النشطة محلياً لمقارنة التعارض
+                $activeLocalBookings = $bookings->whereIn('status', ['pending', 'approved', 'booked'])
+                    ->map(fn ($b) => [
+                        'check_in' => Carbon::parse($b->check_in),
+                        'check_out' => Carbon::parse($b->check_out),
+                    ])
+                    ->values();
 
                 $from = now()->format('Y-m-d');
                 $to = now()->addYear()->format('Y-m-d');
@@ -142,17 +150,27 @@ class CalenderController extends CrudController
                         continue;
                     }
 
+                    $arrival = Carbon::parse($b['arrival']);
+                    $departure = Carbon::parse($b['departure']);
+
+                    $hasConflict = $activeLocalBookings->contains(
+                        fn ($local) => $arrival->lt($local['check_out']) && $departure->gt($local['check_in'])
+                    );
+
                     $events[] = [
                         'id' => 'ownerrez_'.$b['id'],
-                        'title' => 'Airbnb #'.$b['id'].' (غير مزامن)',
+                        'title' => $hasConflict
+                            ? '⚠ تعارض Airbnb #'.$b['id']
+                            : 'Airbnb #'.$b['id'].' (غير مزامن)',
                         'start' => $b['arrival'],
                         'end' => $b['departure'],
-                        'backgroundColor' => '#FF8C00',
-                        'borderColor' => '#FF8C00',
+                        'backgroundColor' => $hasConflict ? '#8B0000' : '#FF8C00',
+                        'borderColor' => $hasConflict ? '#8B0000' : '#FF8C00',
                         'textColor' => '#fff',
                         'extendedProps' => [
-                            'type' => 'ownerrez_unsynced',
+                            'type' => $hasConflict ? 'ownerrez_conflict' : 'ownerrez_unsynced',
                             'source' => 'OwnerRez',
+                            'has_conflict' => $hasConflict,
                         ],
                     ];
                 }
