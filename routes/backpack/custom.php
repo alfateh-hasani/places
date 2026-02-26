@@ -83,6 +83,7 @@ Route::group([
     // تقويم الحجوزات
     Route::get('apartment/{id}/calendar', [\App\Http\Controllers\Admin\CalenderController::class, 'showCalendar']);
     Route::get('apartment/{id}/bookings', [\App\Http\Controllers\Admin\CalenderController::class, 'getApartmentBookings']);
+    Route::get('apartment/{id}/ownerrez-bookings', [\App\Http\Controllers\Admin\CalenderController::class, 'getOwnerRezBookings']);
 
     // تقويم الأسعار (منفصل)
     Route::get('apartment/{id}/pricing', [\App\Http\Controllers\Admin\CalenderController::class, 'showPricingCalendar']);

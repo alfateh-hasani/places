@@ -153,7 +153,31 @@
                 });
             });
 
-            // ===== جلب البيانات (مرة واحدة) =====
+            // ===== دالة eventClick مشتركة =====
+            function onEventClick(info) {
+                const ev      = info.event.extendedProps;
+                const isOwner = ev.type === 'ownerrez_conflict' || ev.type === 'ownerrez_unsynced';
+
+                document.getElementById('bookingNumber').textContent = info.event.title;
+                document.getElementById('customerName').textContent  = ev.customer_name ?? '-';
+                document.getElementById('bookingSource').textContent = ev.source ?? '-';
+
+                // حقول خاصة بالحجوزات المحلية فقط
+                document.getElementById('rowEmail').style.display  = isOwner ? 'none' : '';
+                document.getElementById('rowStatus').style.display = isOwner ? 'none' : '';
+                document.getElementById('rowTotal').style.display  = isOwner ? 'none' : '';
+                document.getElementById('customerEmail').textContent = ev.customer_email ?? '-';
+                document.getElementById('bookingStatus').textContent = ev.status ?? '-';
+                document.getElementById('totalPrice').textContent    = ev.total_price ?? '-';
+
+                // تنبيه التعارض
+                const alert = document.getElementById('conflictAlert');
+                alert.classList.toggle('d-none', !ev.has_conflict);
+
+                new bootstrap.Modal(document.getElementById('bookingModal')).show();
+            }
+
+            // ===== المرحلة الأولى: حجوزات قاعدة البيانات (فورية) =====
             fetch(`/admin/apartment/${apartmentId}/bookings`)
                 .then(r => r.json())
                 .then(events => {
@@ -167,33 +191,28 @@
                         direction: 'rtl',
                         events: allEvents,
                         editable: false,
-                        eventClick: function (info) {
-                            const ev      = info.event.extendedProps;
-                            const isOwner = ev.type === 'ownerrez_conflict' || ev.type === 'ownerrez_unsynced';
-
-                            document.getElementById('bookingNumber').textContent = info.event.title;
-                            document.getElementById('customerName').textContent  = ev.customer_name ?? '-';
-                            document.getElementById('bookingSource').textContent = ev.source ?? '-';
-
-                            // حقول خاصة بالحجوزات المحلية فقط
-                            document.getElementById('rowEmail').style.display  = isOwner ? 'none' : '';
-                            document.getElementById('rowStatus').style.display = isOwner ? 'none' : '';
-                            document.getElementById('rowTotal').style.display  = isOwner ? 'none' : '';
-                            document.getElementById('customerEmail').textContent = ev.customer_email ?? '-';
-                            document.getElementById('bookingStatus').textContent = ev.status ?? '-';
-                            document.getElementById('totalPrice').textContent    = ev.total_price ?? '-';
-
-                            // تنبيه التعارض
-                            const alert = document.getElementById('conflictAlert');
-                            alert.classList.toggle('d-none', !ev.has_conflict);
-
-                            new bootstrap.Modal(document.getElementById('bookingModal')).show();
-                        }
+                        eventClick: onEventClick,
                     });
                     calendar.render();
 
                     // بناء الجدول
                     renderTable(allEvents);
+
+                    // ===== المرحلة الثانية: حجوزات OwnerRez (بعدين) =====
+                    fetch(`/admin/apartment/${apartmentId}/ownerrez-bookings`)
+                        .then(r => r.json())
+                        .then(ownerRezEvents => {
+                            if (!ownerRezEvents.length) { return; }
+
+                            // إضافة الأحداث إلى التقويم
+                            ownerRezEvents.forEach(ev => calendar.addEvent(ev));
+
+                            // دمجها في allEvents وإعادة رسم الجدول
+                            allEvents = [...allEvents, ...ownerRezEvents]
+                                .sort((a, b) => (a.start ?? '').localeCompare(b.start ?? ''));
+                            renderTable(allEvents);
+                        })
+                        .catch(err => console.warn('OwnerRez bookings fetch failed:', err));
                 })
                 .catch(err => console.error('Error fetching bookings:', err));
 
