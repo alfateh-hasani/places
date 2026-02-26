@@ -123,7 +123,7 @@ class GeideaPayment implements PaymentMethodInterface
             $array = [
                 'session_id' => $session['session']['id'],
                 'transaction' => [
-                    'url' => $this->hppBase.'?sessionId='.$session['session']['id'],
+                    'url' => $this->hppBase.'/?' .$session['session']['id'],
                 ],
                 'booking_id' => $transaction->booking_id,
             ];
