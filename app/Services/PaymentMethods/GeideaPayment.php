@@ -10,16 +10,19 @@ class GeideaPayment implements PaymentMethodInterface
 {
     /* ======== مفاتيح الاعتماديات ======== */
     private string $publicKey;
+
     private string $apiPassword;
+
     private string $apiBase;         // https://api.ksamerchant.geidea.net مثلاً
+
     private string $hppBase;         // https://www.ksamerchant.geidea.net/hpp/checkout
 
     public function __construct()
     {
-        $this->publicKey   = config('payments.gateways.geidea.public_key');
+        $this->publicKey = config('payments.gateways.geidea.public_key');
         $this->apiPassword = config('payments.gateways.geidea.api_password');
-        $this->apiBase     = rtrim(config('payments.gateways.geidea.api_base'), '/');
-        $this->hppBase     = rtrim(config('payments.gateways.geidea.hpp_base'), '/');
+        $this->apiBase = rtrim(config('payments.gateways.geidea.api_base'), '/');
+        $this->hppBase = rtrim(config('payments.gateways.geidea.hpp_base'), '/');
     }
 
     /* -----------------------------------------------------------------
@@ -28,15 +31,19 @@ class GeideaPayment implements PaymentMethodInterface
     /** Tap كانت تستخدم هذا الاسم؛ هنا نعيد توجيهه لإنشاء Session */
     public function createCharge($payload)
     {
-        $url      = $this->apiBase . '/payment-intent/api/v2/direct/session';
+        $url = $this->apiBase.'/payment-intent/api/v2/direct/session';
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
             ->acceptJson()
             ->post($url, $payload);
 
+        Log::channel('payments')->info('Geidea createSession', [
+            'url' => $url,
+            'payload' => $payload,
+            'status' => $response->status(),
+            'response' => $response->json(),
+        ]);
 
-        if (
-            $response->successful()
-        ) {
+        if ($response->successful()) {
             return $response->json();
         }
 
@@ -46,16 +53,16 @@ class GeideaPayment implements PaymentMethodInterface
     /** جلب حالة طلب/مدفوعات من Geidea */
     private function retrievePayment($orderId)
     {
-        $url      = $this->apiBase . "/payment-intent/api/v2/direct/orders/{$orderId}";
+        $url = $this->apiBase."/payment-intent/api/v2/direct/orders/{$orderId}";
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
             ->acceptJson()
             ->get($url);
 
         Log::channel('payments')
             ->info('Geidea retrievePayment', [
-                'orderId'  => $orderId,
+                'orderId' => $orderId,
                 'response' => $response->json(),
-                'status'   => $response->status(),
+                'status' => $response->status(),
             ]);
 
         return $response->successful() ? $response->json() : false;
@@ -76,54 +83,53 @@ class GeideaPayment implements PaymentMethodInterface
         $timestamp = now()->format('Y/m/d H:i:s');
 
         $payload = [
-            'amount'            => $this->fmt($transaction->amount),
-            'currency'          => $transaction->currency,
+            'amount' => $this->fmt($transaction->amount),
+            'currency' => $transaction->currency,
             'merchantReferenceId' => $transaction->transaction_reference,
-            'timestamp'         => $timestamp,
-            'signature'         => $this->signature(
+            'timestamp' => $timestamp,
+            'signature' => $this->signature(
                 $transaction->amount,
                 $transaction->currency,
                 $transaction->transaction_reference,
                 $timestamp
             ),
-            'language'          => 'en',
-            'callbackUrl'       => $callbackUrl,
-            'returnUrl'         => $callbackUrl,
-            'customer'          => [
-                'email'            => $transaction->customer?->email,
-                'phoneNumber'      => $transaction->customer?->phone,
+            'language' => 'en',
+            'callbackUrl' => $callbackUrl,
+            'returnUrl' => $callbackUrl,
+            'customer' => [
+                'email' => $transaction->customer?->email,
+                'phoneNumber' => $transaction->customer?->phone,
                 'phonecountrycode' => '+966',
-                'firstName'        => $transaction->customer?->first_name,
-                'lastName'         => $transaction->customer?->last_name,
+                'firstName' => $transaction->customer?->first_name,
+                'lastName' => $transaction->customer?->last_name,
             ],
             'order' => [
                 'items' => [[
                     'merchantItemId' => "BOOK-{$transaction->id}",
-                    'name'           => 'Apartment Booking',
-                    'description'    => "Reservation {$transaction->transaction_reference}",
-                    'categories'     => 'real-estate',
-                    'count'          => 1,
-                    'price'          => $this->fmt($transaction->amount),
-                    'sku'            => "APT-{$transaction->id}",
+                    'name' => 'Apartment Booking',
+                    'description' => "Reservation {$transaction->transaction_reference}",
+                    'categories' => 'real-estate',
+                    'count' => 1,
+                    'price' => $this->fmt($transaction->amount),
+                    'sku' => "APT-{$transaction->id}",
                 ]],
             ],
         ];
 
         $session = $this->createCharge($payload);
 
-
-
         if (isset($session['session']['id'])) {
             $transaction->refresh();
-            $array =  [
-                'session_id'   => $session['session']['id'],
+            $array = [
+                'session_id' => $session['session']['id'],
                 'transaction' => [
-                    'url' => "https://www.ksamerchant.geidea.net/hpp/checkout/?" . $session['session']['id']
+                    'url' => $this->hppBase.'?sessionId='.$session['session']['id'],
                 ],
                 'booking_id' => $transaction->booking_id,
             ];
 
             \Log::info($array);
+
             return $array;
         }
 
@@ -137,7 +143,7 @@ class GeideaPayment implements PaymentMethodInterface
     {
         $transaction = Transaction::find($data['transaction_id'] ?? null);
 
-        if (!$transaction) {
+        if (! $transaction) {
             return ['status' => false, 'message' => 'Transaction not found'];
         }
 
@@ -145,19 +151,19 @@ class GeideaPayment implements PaymentMethodInterface
 
         $transaction->status = $isSuccess ? 'completed' : 'failed';
         $transaction->payment_gateway_response = json_encode($data);
-        
+
         // حفظ order_id من response في Transaction
         if (isset($data['orderId'])) {
             $transaction->order_id = $data['orderId'];
         }
-        
+
         $transaction->save();
 
         return [
-            'status'         => $isSuccess,
+            'status' => $isSuccess,
             'transaction_id' => $transaction->id,
-            'order_id'       => $data['orderId']   ?? null,
-            'reference'      => $data['reference'] ?? null,
+            'order_id' => $data['orderId'] ?? null,
+            'reference' => $data['reference'] ?? null,
         ];
     }
 
@@ -166,8 +172,8 @@ class GeideaPayment implements PaymentMethodInterface
      |-----------------------------------------------------------------*/
     public function refund($orderId, $amount)
     {
-        $url = $this->apiBase . "/payment-intent/api/v2/direct/refund";
-        
+        $url = $this->apiBase.'/payment-intent/api/v2/direct/refund';
+
         $payload = [
             'orderId' => $orderId,
             'amount' => $this->fmt($amount),
@@ -191,7 +197,7 @@ class GeideaPayment implements PaymentMethodInterface
                 return [
                     'success' => true,
                     'data' => $data,
-                    'message' => 'تم استرداد المبلغ بنجاح'
+                    'message' => 'تم استرداد المبلغ بنجاح',
                 ];
             }
         }
@@ -199,7 +205,7 @@ class GeideaPayment implements PaymentMethodInterface
         return [
             'success' => false,
             'message' => 'فشل في استرداد المبلغ',
-            'error' => $response->json()
+            'error' => $response->json(),
         ];
     }
 
@@ -209,6 +215,7 @@ class GeideaPayment implements PaymentMethodInterface
     private function signature(float $amount, string $currency, string $ref, string $ts): string
     {
         $plain = "{$this->publicKey}{$this->fmt($amount)}{$currency}{$ref}{$ts}";
+
         return base64_encode(hash_hmac('sha256', $plain, $this->apiPassword, true));
     }
 
