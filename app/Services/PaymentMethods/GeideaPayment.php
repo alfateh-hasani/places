@@ -32,7 +32,10 @@ class GeideaPayment implements PaymentMethodInterface
     public function createCharge($payload)
     {
         $url = $this->apiBase.'/payment-intent/api/v2/direct/session';
-        $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
+        $response = Http::
+        // withoutVerifying()
+        // ->
+        withBasicAuth($this->publicKey, $this->apiPassword)
             ->acceptJson()
             ->post($url, $payload);
 
