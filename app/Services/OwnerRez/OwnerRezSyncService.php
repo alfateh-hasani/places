@@ -23,7 +23,7 @@ class OwnerRezSyncService
     ) {}
 
     /**
-     * Check availability for a property in OwnerRez
+     * Check availability for a property in OwnerRez (active bookings and blocks)
      */
     public function checkAvailability(int|string $propertyId, string $from, string $to): bool
     {
@@ -70,6 +70,7 @@ class OwnerRezSyncService
 
     /**
      * Refresh calendar cache from OwnerRez API.
+     * Fetches active bookings and calendar blocks (is_block=true) in one request.
      * Only updates the cache on success — never clears old data on failure.
      */
     public function refreshCalendarCache(int|string $propertyId): bool
@@ -83,16 +84,19 @@ class OwnerRezSyncService
                 'property_ids' => $propertyId,
                 'from' => $from,
                 'to' => $to,
-                'status' => 'Active',
                 'include_guest' => 'true',
             ]);
 
-            $bookings = collect($response['items'] ?? []);
+            // Include active bookings and calendar blocks (is_block=true) from the same endpoint
+            $bookings = collect($response['items'] ?? [])->filter(function ($item) {
+                return ! empty($item['is_block']) || strtolower($item['status'] ?? '') === 'active';
+            })->values();
+
             Cache::forever($cacheKey, $bookings->toArray());
 
             Log::info('OwnerRez calendar cache refreshed', [
                 'property_id' => $propertyId,
-                'bookings_count' => $bookings->count(),
+                'count' => $bookings->count(),
             ]);
 
             return true;
@@ -107,11 +111,13 @@ class OwnerRezSyncService
     }
 
     /**
-     * Get active bookings for a property
+     * Get active bookings and blocks for a property.
+     * Fetches all entries without status filter so calendar blocks (is_block=true)
+     * are included alongside active bookings.
      */
     public function getActiveBookings(int|string $propertyId, string $from, string $to): Collection
     {
-        $cacheKey = "ownerrez:availability:v2:{$propertyId}:{$from}:{$to}";
+        $cacheKey = "ownerrez:availability:v3:{$propertyId}:{$from}:{$to}";
         $cacheTtl = config('ownerrez.availability.cache_ttl', 300);
 
         $bookings = Cache::remember($cacheKey, $cacheTtl, function () use ($propertyId, $from, $to) {
@@ -119,14 +125,16 @@ class OwnerRezSyncService
                 'property_ids' => $propertyId,
                 'from' => $from,
                 'to' => $to,
-                'status' => 'Active',
                 'include_guest' => 'true',
             ]);
 
-            return collect($response['items'] ?? []);
+            // Include active bookings and calendar blocks (is_block=true)
+            return collect($response['items'] ?? [])->filter(function ($item) {
+                return ! empty($item['is_block']) || strtolower($item['status'] ?? '') === 'active';
+            })->values();
         });
 
-        // Filter bookings that overlap with requested dates
+        // Filter entries that overlap with requested dates
         return $bookings->filter(function ($booking) use ($from, $to) {
             return $this->datesOverlap(
                 $from,
@@ -945,6 +953,9 @@ class OwnerRezSyncService
     {
         Cache::forget("ownerrez:bookings:{$propertyId}");
         Cache::forget("ownerrez:property:{$propertyId}");
+
+        // مسح كاش الـ availability (blocks + bookings) بحيث يُعاد جلبها
+        Cache::forget("ownerrez:calendar:v1:{$propertyId}");
 
         \App\Jobs\OwnerRez\RefreshCalendarCacheJob::dispatch($propertyId);
     }
