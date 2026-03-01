@@ -174,7 +174,7 @@ class HomeController extends Controller
 
         // دمج حجوزات OwnerRez من الكاش مع حجوزات قاعدة البيانات
         $mapping = $apartments->ownerrezMapping;
-        if ($mapping && config('ownerrez.availability.enabled')) {
+        if (filter_var($request->input('withOwnerrez', true), FILTER_VALIDATE_BOOLEAN) && $mapping && config('ownerrez.availability.enabled')) {
             try {
                 $today = Carbon::today()->format('Y-m-d');
 
