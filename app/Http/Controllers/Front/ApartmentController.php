@@ -79,17 +79,12 @@ class ApartmentController extends Controller
             'check_out' => $b->check_out->format('Y-m-d'),
         ])->toArray();
 
-        // طبقة ثانية: قفل تواريخ OwnerRez (قراءة فقط - بدون مزامنة)
+        // طبقة ثانية: قفل تواريخ OwnerRez من الكاش الدائم (stale-while-revalidate)
         $mapping = $apartment->ownerrezMapping;
         if ($mapping && config('ownerrez.availability.enabled')) {
             try {
-                $from = now()->format('Y-m-d');
-                $to = now()->addYear()->format('Y-m-d');
-
-                $ownerRezDays = $this->ownerRezSync->getActiveBookings(
-                    $mapping->ownerrez_property_id,
-                    $from,
-                    $to
+                $ownerRezDays = $this->ownerRezSync->getCalendarBookings(
+                    $mapping->ownerrez_property_id
                 )->map(fn ($b) => [
                     'check_in' => $b['arrival'],
                     'check_out' => $b['departure'],
@@ -232,6 +227,38 @@ class ApartmentController extends Controller
         SEOTools::opengraph()->setUrl($url);
         SEOTools::setCanonical($url);
         SEOTools::opengraph()->addProperty('type', 'articles');
+    }
+
+    /**
+     * API endpoint لإرجاع التواريخ المحجوزة من الكاش (للتحديث التلقائي للتقويم)
+     */
+    public function blockedDates(Request $request, int $id): \Illuminate\Http\JsonResponse
+    {
+        $apartment = Apartment::with('ownerrezMapping')->where('is_active', true)->findOrFail($id);
+
+        $bookedDays = $apartment->bookings()
+            ->where('check_out', '>=', now()->startOfDay())
+            ->whereNotIn('status', ['canceled', 'customer_canceled'])
+            ->get()
+            ->map(fn ($b) => [
+                'check_in' => $b->check_in->format('Y-m-d'),
+                'check_out' => $b->check_out->format('Y-m-d'),
+            ])->toArray();
+
+        $mapping = $apartment->ownerrezMapping;
+        if ($mapping && config('ownerrez.availability.enabled')) {
+            $ownerRezDays = $this->ownerRezSync->getCalendarBookings($mapping->ownerrez_property_id)
+                ->map(fn ($b) => [
+                    'check_in' => $b['arrival'],
+                    'check_out' => $b['departure'],
+                ])->values()->toArray();
+
+            $bookedDays = array_merge($bookedDays, $ownerRezDays);
+        }
+
+        return response()->json([
+            'booked_days' => $bookedDays,
+        ]);
     }
 
     /**

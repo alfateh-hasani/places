@@ -50,6 +50,63 @@ class OwnerRezSyncService
     }
 
     /**
+     * Get calendar bookings from permanent cache (stale-while-revalidate).
+     * Returns stale data if available; only populates cache on first miss.
+     */
+    public function getCalendarBookings(int|string $propertyId): Collection
+    {
+        $cacheKey = "ownerrez:calendar:v1:{$propertyId}";
+        $cached = Cache::get($cacheKey);
+
+        if ($cached === null) {
+            $this->refreshCalendarCache($propertyId);
+            $cached = Cache::get($cacheKey, []);
+        }
+
+        return collect($cached)->filter(
+            fn ($booking) => Carbon::parse($booking['departure'])->gte(now()->startOfDay())
+        )->values();
+    }
+
+    /**
+     * Refresh calendar cache from OwnerRez API.
+     * Only updates the cache on success — never clears old data on failure.
+     */
+    public function refreshCalendarCache(int|string $propertyId): bool
+    {
+        $from = now()->format('Y-m-d');
+        $to = now()->addYear()->format('Y-m-d');
+        $cacheKey = "ownerrez:calendar:v1:{$propertyId}";
+
+        try {
+            $response = $this->apiService->getBookings([
+                'property_ids' => $propertyId,
+                'from' => $from,
+                'to' => $to,
+                'status' => 'Active',
+                'include_guest' => 'true',
+            ]);
+
+            $bookings = collect($response['items'] ?? []);
+            Cache::forever($cacheKey, $bookings->toArray());
+
+            Log::info('OwnerRez calendar cache refreshed', [
+                'property_id' => $propertyId,
+                'bookings_count' => $bookings->count(),
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::warning('OwnerRez calendar cache refresh failed, keeping old cache', [
+                'property_id' => $propertyId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * Get active bookings for a property
      */
     public function getActiveBookings(int|string $propertyId, string $from, string $to): Collection
@@ -882,13 +939,13 @@ class OwnerRezSyncService
     }
 
     /**
-     * Invalidate property cache
+     * Invalidate property cache and schedule a calendar cache refresh
      */
     protected function invalidatePropertyCache(int|string $propertyId): void
     {
-        $pattern = "ownerrez:availability:{$propertyId}:*";
-        // Note: This is a simple implementation. For production, consider using Cache tags
         Cache::forget("ownerrez:bookings:{$propertyId}");
         Cache::forget("ownerrez:property:{$propertyId}");
+
+        \App\Jobs\OwnerRez\RefreshCalendarCacheJob::dispatch($propertyId);
     }
 }

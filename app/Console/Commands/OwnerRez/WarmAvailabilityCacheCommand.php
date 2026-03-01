@@ -4,7 +4,6 @@ namespace App\Console\Commands\OwnerRez;
 
 use App\Models\OwnerRezPropertyMapping;
 use App\Services\OwnerRez\OwnerRezSyncService;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
@@ -12,7 +11,7 @@ class WarmAvailabilityCacheCommand extends Command
 {
     protected $signature = 'ownerrez:warm-cache {--apartment-id= : Warm cache for a specific apartment only}';
 
-    protected $description = 'Pre-warm OwnerRez availability cache for all active property mappings';
+    protected $description = 'Refresh OwnerRez calendar cache for all active property mappings (stale-while-revalidate)';
 
     public function handle(OwnerRezSyncService $syncService): int
     {
@@ -32,38 +31,33 @@ class WarmAvailabilityCacheCommand extends Command
             return self::SUCCESS;
         }
 
-        $from = Carbon::now()->format('Y-m-d');
-        $to = Carbon::now()->addYear()->format('Y-m-d');
+        $this->info("Refreshing OwnerRez calendar cache for {$mappings->count()} properties");
 
-        $this->info("Warming OwnerRez availability cache for {$mappings->count()} properties ({$from} → {$to})");
-
-        $success = 0;
-        $failed = 0;
+        $successCount = 0;
+        $failedCount = 0;
 
         foreach ($mappings as $mapping) {
             $propertyId = $mapping->ownerrez_property_id;
-            $cacheKey = "ownerrez:availability:v2:{$propertyId}:{$from}:{$to}";
+            $cacheKey = "ownerrez:calendar:v1:{$propertyId}";
 
-            try {
-                // نمسح الكاش القديم لضمان جلب بيانات طازجة
-                Cache::forget($cacheKey);
+            $refreshed = $syncService->refreshCalendarCache($propertyId);
 
-                $bookings = $syncService->getActiveBookings($propertyId, $from, $to);
-
-                $this->line("  ✓ {$mapping->ownerrez_property_name} (property: {$propertyId}) — {$bookings->count()} bookings cached");
-                $success++;
-            } catch (\Exception $e) {
-                $this->error("  ✗ {$mapping->ownerrez_property_name} (property: {$propertyId}) — {$e->getMessage()}");
-                $failed++;
+            if ($refreshed) {
+                $bookingsCount = count(Cache::get($cacheKey, []));
+                $this->line("  ✓ {$mapping->ownerrez_property_name} (property: {$propertyId}) — {$bookingsCount} bookings cached");
+                $successCount++;
+            } else {
+                $this->warn("  ~ {$mapping->ownerrez_property_name} (property: {$propertyId}) — API failed, old cache kept");
+                $failedCount++;
             }
         }
 
         $this->newLine();
         $this->table(
-            ['Success', 'Failed'],
-            [[$success, $failed]]
+            ['Success', 'Failed (old cache kept)'],
+            [[$successCount, $failedCount]]
         );
 
-        return $failed > 0 ? self::FAILURE : self::SUCCESS;
+        return $failedCount > 0 ? self::FAILURE : self::SUCCESS;
     }
 }

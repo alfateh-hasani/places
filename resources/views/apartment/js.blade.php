@@ -171,35 +171,35 @@ $(document).ready(function() {
     });
 
     const bookedDays = @json($booked_days);
-    
-    // إنشاء قائمة التواريخ الممنوعة (بسيط)
-    const disabledDates = [];
-    bookedDays.forEach(booking => {
-        const checkIn = new Date(booking.check_in);
-        const checkOut = new Date(booking.check_out);
-        
-        // إضافة التواريخ من check_in إلى check_out - 1
-        const current = new Date(checkIn);
-        while (current < checkOut) {
-            disabledDates.push(current.toISOString().split('T')[0]);
-            current.setDate(current.getDate() + 1);
-        }
-    });
+
+    function buildDisabledDates(bookings) {
+        const dates = [];
+        bookings.forEach(booking => {
+            const checkIn = new Date(booking.check_in);
+            const checkOut = new Date(booking.check_out);
+            const current = new Date(checkIn);
+            while (current < checkOut) {
+                dates.push(current.toISOString().split('T')[0]);
+                current.setDate(current.getDate() + 1);
+            }
+        });
+        return dates;
+    }
+
+    const disabledDates = buildDisabledDates(bookedDays);
 
     const commonOptions = {
         dateFormat: "Y-m-d",
         minDate: "today",
         allowInput: false,
         disable: disabledDates,
-        locale: "ar", // استخدام اللغة الإنجليزية لتجنب مشاكل المنطقة الزمنية
+        locale: "ar",
         time_24hr: true,
         weekNumbers: false,
         static: true,
-        
         enableTime: false,
         noCalendar: false,
         inline: false,
- 
     };
 
     var checkinPicker = flatpickr("#checkin", {
@@ -227,6 +227,23 @@ $(document).ready(function() {
             calculateNightsAndCost();
         }
     });
+
+    // تحديث التقويم بالتواريخ الجديدة من الكاش
+    function refreshCalendarBlockedDates() {
+        $.getJSON("{{ route('apartments.blocked-dates', $apartment_id) }}", function(response) {
+            if (response.booked_days) {
+                const newDisabled = buildDisabledDates(response.booked_days);
+                checkinPicker.set('disable', newDisabled);
+                checkoutPicker.set('disable', newDisabled);
+            }
+        });
+    }
+
+    // جلب أحدث بيانات فور فتح الصفحة
+    refreshCalendarBlockedDates();
+
+    // تحديث تلقائي كل 5 دقائق (يتزامن مع تحديث الكاش)
+    setInterval(refreshCalendarBlockedDates, 5 * 60 * 1000);
 
     // منع إدخال تواريخ غير صحيحة يدويًا
     $('#checkout').on('change', function() {
