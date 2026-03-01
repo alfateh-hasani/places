@@ -270,7 +270,7 @@
                     
                     <div id="coupon_message" class="mt-2 text-green-500"></div>
                     
-                    <button class="bg-price rounded-lg h-12 w-full font-semibold text-white hidden md:block">
+                    <button id="book_now_desktop" class="bg-price rounded-lg h-12 w-full font-semibold text-white hidden md:block">
                         {{__('booking.book_now')}}
                     </button>
                 </form>
@@ -386,6 +386,11 @@
     });
 });
 
+
+$('#book_now_desktop').on('click', function() {
+    $(this).prop('disabled', true);
+    $('#booking_form').submit();
+});
 
 $('#book_now_mobile').on('click', function() {
     $(this).prop('disabled', true);
