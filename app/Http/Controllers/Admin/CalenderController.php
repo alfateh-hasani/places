@@ -81,7 +81,7 @@ class CalenderController extends CrudController
     public function getApartmentBookings($apartmentId)
     {
         $bookings = Booking::where('apartment_id', $apartmentId)
-            ->select('id', 'number_of_booking', 'check_in', 'check_out', 'is_airbnb_booking', 'customer_full_name', 'customer_email', 'total_price', 'status')
+            ->select('id', 'number_of_booking', 'ownerrez_booking_id', 'check_in', 'check_out', 'is_airbnb_booking', 'customer_full_name', 'customer_email', 'total_price', 'status')
             ->get();
 
         $events = [];
@@ -113,6 +113,7 @@ class CalenderController extends CrudController
                     'total_price' => $booking->total_price,
                     'status' => ucfirst($booking->status),
                     'source' => $booking->is_airbnb_booking ? 'Airbnb' : 'Website',
+                    'ownerrez_booking_id' => $booking->ownerrez_booking_id,
                 ],
             ];
         }

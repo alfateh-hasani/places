@@ -111,6 +111,7 @@
                         ⚠ هذا الحجز يتعارض مع حجز موجود في النظام
                     </div>
                     <p><strong>رقم الحجز:</strong> <span id="bookingNumber"></span></p>
+                    <p id="rowOwnerRez"><strong>رقم OwnerRez:</strong> <span id="ownerRezNumber"></span></p>
                     <p><strong>العميل:</strong> <span id="customerName"></span></p>
                     <p id="rowEmail"><strong>البريد الإلكتروني:</strong> <span id="customerEmail"></span></p>
                     <p><strong>المصدر:</strong> <span id="bookingSource"></span></p>
@@ -161,6 +162,15 @@
                 document.getElementById('bookingNumber').textContent = info.event.title;
                 document.getElementById('customerName').textContent  = ev.customer_name ?? '-';
                 document.getElementById('bookingSource').textContent = ev.source ?? '-';
+
+                // رقم OwnerRez
+                const ownerRezRow = document.getElementById('rowOwnerRez');
+                if (ev.ownerrez_booking_id) {
+                    document.getElementById('ownerRezNumber').textContent = '#' + ev.ownerrez_booking_id;
+                    ownerRezRow.style.display = '';
+                } else {
+                    ownerRezRow.style.display = 'none';
+                }
 
                 // حقول خاصة بالحجوزات المحلية فقط
                 document.getElementById('rowEmail').style.display  = isOwner ? 'none' : '';
@@ -261,7 +271,10 @@
 
                     return `<tr style="background:${bg}">
                         <td>${i + 1}</td>
-                        <td><strong>${e.title}</strong></td>
+                        <td>
+                            <strong>${e.title}</strong>
+                            ${e.extendedProps?.ownerrez_booking_id ? `<br><small class="text-muted">OwnerRez: #${e.extendedProps.ownerrez_booking_id}</small>` : ''}
+                        </td>
                         <td>${formatDate(e.start)}</td>
                         <td>${formatDate(e.end)}</td>
                         <td><span class="badge bg-${typeInfo.badge}">${typeInfo.label}</span><br><small class="text-muted">${source}</small></td>
