@@ -104,32 +104,67 @@ class OwnerRezApiService
     }
 
     /**
-     * Get bookings by batching property IDs to avoid URL length limits (max ~100 IDs per request)
+     * Get bookings by batching property IDs to avoid URL length limits (max ~100 IDs per request).
+     * Deduplicates IDs first, then uses binary-split retry to isolate any bad IDs without
+     * losing valid ones in the same batch.
      *
      * @param  array<int>  $propertyIds
      */
     public function getBookingsBatched(array $propertyIds, array $filters = [], int $batchSize = 100): array
     {
+        $uniqueIds = array_values(array_unique($propertyIds));
         $allItems = [];
 
-        foreach (array_chunk($propertyIds, $batchSize) as $batch) {
-            try {
-                $response = $this->getBookings(array_merge(
-                    ['property_ids' => implode(',', $batch)],
-                    $filters
-                ));
-
-                array_push($allItems, ...($response['items'] ?? []));
-            } catch (\Exception $e) {
-                Log::warning('OwnerRez batched request failed for a batch, skipping', [
-                    'error' => $e->getMessage(),
-                    'batch_first_id' => $batch[0] ?? null,
-                    'batch_size' => count($batch),
-                ]);
-            }
+        foreach (array_chunk($uniqueIds, $batchSize) as $batch) {
+            array_push($allItems, ...$this->fetchBatchWithFallback($batch, $filters));
         }
 
         return $allItems;
+    }
+
+    /**
+     * Attempt to fetch a batch; on failure split in half and retry each side recursively,
+     * so only the individual bad IDs are skipped rather than the entire batch.
+     *
+     * @param  array<int>  $batch
+     */
+    private function fetchBatchWithFallback(array $batch, array $filters): array
+    {
+        try {
+            $response = $this->getBookings(array_merge(
+                ['property_ids' => implode(',', $batch)],
+                $filters
+            ));
+
+            $items = $response['items'] ?? [];
+
+            // Follow next_page_url to collect all pages for this batch
+            $nextPageUrl = $response['next_page_url'] ?? null;
+            while (! empty($nextPageUrl)) {
+                $nextResponse = $this->getBookingsPageByUrl($nextPageUrl);
+                array_push($items, ...($nextResponse['items'] ?? []));
+                $nextPageUrl = $nextResponse['next_page_url'] ?? null;
+            }
+
+            return $items;
+        } catch (\Exception $e) {
+            if (count($batch) === 1) {
+                Log::warning('OwnerRez property ID is invalid or unavailable, skipping', [
+                    'property_id' => $batch[0],
+                    'error' => $e->getMessage(),
+                ]);
+
+                return [];
+            }
+
+            // Split and retry each half to isolate the bad ID(s)
+            $mid = (int) (count($batch) / 2);
+
+            return array_merge(
+                $this->fetchBatchWithFallback(array_slice($batch, 0, $mid), $filters),
+                $this->fetchBatchWithFallback(array_slice($batch, $mid), $filters)
+            );
+        }
     }
 
     /**
