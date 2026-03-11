@@ -38,8 +38,8 @@ class OwnerRezSyncServiceTest extends TestCase
         // overflow issues with varchar/int columns while still avoiding real production data
         $suffix = (int) (microtime(true) * 1000) % 100000;
         $this->ownerrezPropertyId = 999000000 + $suffix;
-        $this->ownerrezBookingId  = 998000000 + $suffix;
-        $this->ownerrezGuestId    = 997000000 + $suffix;
+        $this->ownerrezBookingId = 998000000 + $suffix;
+        $this->ownerrezGuestId = 997000000 + $suffix;
 
         config(['ownerrez.sync.sync_guest_data' => false]);
     }
@@ -49,6 +49,7 @@ class OwnerRezSyncServiceTest extends TestCase
         // Clean up in reverse dependency order to avoid FK violations
         OwnerRezBooking::where('ownerrez_booking_id', $this->ownerrezBookingId)->delete();
         Booking::where('ownerrez_booking_id', $this->ownerrezBookingId)->delete();
+        Customer::where('ownerrez_guest_id', $this->ownerrezGuestId)->forceDelete();
         Customer::whereIn('id', $this->createdCustomerIds)->forceDelete();
         OwnerRezPropertyMapping::where('ownerrez_property_id', $this->ownerrezPropertyId)->delete();
         Apartment::whereIn('id', $this->createdApartmentIds)->delete();
@@ -275,6 +276,53 @@ class OwnerRezSyncServiceTest extends TestCase
             'id' => $localBooking->id,
             'total_price' => 999.00,
             'final_price' => 999.00,
+        ]);
+    }
+
+    public function test_entity_update_ignores_email_and_creates_customer_using_phone_only(): void
+    {
+        $apartment = $this->createApartment();
+        $this->createMapping($apartment->id);
+
+        $existingCustomer = $this->createCustomer([
+            'email' => 'duplicate-ownerrez@example.com',
+            'phone' => '+9660555555555',
+        ]);
+
+        $localBooking = $this->createLocalBooking($apartment->id, $existingCustomer->id);
+        $this->createOwnerRezBooking($localBooking->id, $apartment->id);
+
+        $mockApi = $this->mockApiService();
+        $mockApi->shouldReceive('getGuest')
+            ->once()
+            ->with($this->ownerrezGuestId)
+            ->andReturn([
+                'id' => $this->ownerrezGuestId,
+                'first_name' => 'OwnerRez',
+                'last_name' => 'Guest',
+                'email_addresses' => [
+                    ['address' => 'duplicate-ownerrez@example.com', 'is_default' => true, 'type' => 'home'],
+                ],
+                'phones' => [
+                    ['number' => '+966 50 123 4567', 'is_default' => true, 'type' => 'mobile'],
+                ],
+            ]);
+
+        $this->syncService->syncBookingFromWebhook($this->buildWebhookPayload(
+            action: 'entity_update',
+            entity: $this->realBookingEntityData(),
+        ));
+
+        $createdCustomer = Customer::where('ownerrez_guest_id', $this->ownerrezGuestId)->first();
+
+        $this->assertNotNull($createdCustomer);
+        $this->assertSame('+966501234567', $createdCustomer->phone);
+        $this->assertNull($createdCustomer->email);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $localBooking->id,
+            'customer_id' => $createdCustomer->id,
+            'customer_full_name' => 'Ibrahim Alshahrani',
         ]);
     }
 

@@ -44,23 +44,16 @@ class SyncCustomersCommand extends Command
                     ? str_replace(' ', '', $guestData['phones'][0]['number'])
                     : null;
 
-                $email = $guestData['email_addresses'][0]['address'] ?? null;
-
-                // Skip email if already used by another customer
-                $emailAlreadyTaken = $email && Customer::where('email', $email)
-                    ->where('id', '!=', $customer->id)
-                    ->exists();
-
                 $updateData = array_filter([
                     'first_name' => $guestData['first_name'] ?? null,
                     'last_name' => $guestData['last_name'] ?? null,
-                    'email' => $emailAlreadyTaken ? null : $email,
                     'phone' => $phone,
                 ]);
 
                 if (empty($updateData)) {
-                    $this->warn("  └ SKIPPED: no data to update");
+                    $this->warn('  └ SKIPPED: no data to update');
                     $skippedCount++;
+
                     continue;
                 }
 

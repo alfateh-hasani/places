@@ -827,26 +827,26 @@ class OwnerRezSyncService
             return null;
         }
 
-        // Extract contact info
-        $email = $mergedData['email_addresses'][0]['address'] ?? null;
-        $phone = $mergedData['phones'][0]['number'] ?? null;
+        $phone = $this->extractOwnerRezPhoneNumber($mergedData);
 
-        if ($phone) {
-            $phone = str_replace(' ', '', $phone);
+        if (! $phone) {
+            $logger->error('No phone number available to create customer', [
+                'ownerrez_guest_id' => $guestId,
+            ]);
+
+            return null;
         }
 
         // Step 3: Try to find by phone
-        if ($phone) {
-            $customer = Customer::where('phone', $phone)->first();
-            if ($customer) {
-                $customer->update(['ownerrez_guest_id' => $guestId]);
-                $logger->info('Found existing customer by phone, linked ownerrez_guest_id', [
-                    'customer_id' => $customer->id,
-                    'ownerrez_guest_id' => $guestId,
-                ]);
+        $customer = Customer::where('phone', $phone)->first();
+        if ($customer) {
+            $customer->update(['ownerrez_guest_id' => $guestId]);
+            $logger->info('Found existing customer by phone, linked ownerrez_guest_id', [
+                'customer_id' => $customer->id,
+                'ownerrez_guest_id' => $guestId,
+            ]);
 
-                return $customer;
-            }
+            return $customer;
         }
 
         // Step 5: Create new customer
@@ -854,8 +854,8 @@ class OwnerRezSyncService
             $customer = Customer::create([
                 'first_name' => $mergedData['first_name'] ?? '',
                 'last_name' => $mergedData['last_name'] ?? '',
-                'email' => $email,
-                'phone' => $phone ?? 'N/A',
+                'email' => null,
+                'phone' => $phone,
                 'ownerrez_guest_id' => $guestId,
                 'account_verified' => false,
             ]);
@@ -874,6 +874,24 @@ class OwnerRezSyncService
 
             return null;
         }
+    }
+
+    protected function extractOwnerRezPhoneNumber(array $guestData): ?string
+    {
+        $phones = $guestData['phones'] ?? [];
+
+        if (! is_array($phones) || $phones === []) {
+            return null;
+        }
+
+        $defaultPhone = collect($phones)->firstWhere('is_default', true);
+        $phone = $defaultPhone['number'] ?? $phones[0]['number'] ?? null;
+
+        if (! is_string($phone) || trim($phone) === '') {
+            return null;
+        }
+
+        return preg_replace('/\s+/', '', trim($phone));
     }
 
     /**
