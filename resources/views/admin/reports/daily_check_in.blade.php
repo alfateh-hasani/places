@@ -263,12 +263,7 @@
                 ? ((b.guest.first_name || '') + ' ' + (b.guest.last_name || '')).trim()
                 : '—';
 
-            var sourceDomain = null;
-            if (b.fields && b.fields.length) {
-                var f = b.fields.find(function (x) { return x.code === 'BXSOURCEDOMAIN'; });
-                if (f) { sourceDomain = f.value || null; }
-            }
-            var channel = sourceDomain || b.listing_site || '—';
+            var channel = b.listing_site || '—';
             var status  = b.status || '—';
             var guests  = (b.adults || 0) + ' بالغ' + (b.children > 0 ? ' / ' + b.children + ' أطفال' : '');
             var amount  = b.total_amount ? b.total_amount + ' ' + (b.currency_code || '') : '—';
