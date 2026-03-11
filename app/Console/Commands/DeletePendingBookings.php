@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Booking;
 use Illuminate\Console\Command;
 
 class DeletePendingBookings extends Command
