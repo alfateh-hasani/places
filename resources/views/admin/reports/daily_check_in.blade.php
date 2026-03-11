@@ -4,7 +4,7 @@
 <div class="container">
     <div class="row mb-3">
         <div class="col-md-6">
-            <h2>📋 تقرير الخروج بعد 12 منتصف الليل</h2>
+            <h2>📋 تقرير الدخول اليومي</h2>
         </div>
         <div class="col-md-6 text-right" id="ownerrez-filters" style="display:none;">
             <div class="form-inline justify-content-end">
@@ -20,7 +20,7 @@
             </div>
         </div>
         <div class="col-md-6 text-right" id="local-filters">
-            <form method="GET" action="{{ route('admin.reports.daily-checkout') }}" class="form-inline justify-content-end">
+            <form method="GET" action="{{ route('admin.reports.daily-checkin') }}" class="form-inline justify-content-end">
                 <div class="form-group mr-2">
                     <label for="source" class="mr-2">فلتر المصدر:</label>
                     <select name="source" id="source" class="form-control" onchange="this.form.submit()">
@@ -43,7 +43,7 @@
     </div>
 
     {{-- التابات --}}
-    <ul class="nav nav-tabs mb-3" id="checkoutTabs" role="tablist">
+    <ul class="nav nav-tabs mb-3" id="checkinTabs" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" id="local-tab" data-toggle="tab" href="#local" role="tab">
                 حجوزات النظام
@@ -61,7 +61,7 @@
         </li>
     </ul>
 
-    <div class="tab-content" id="checkoutTabsContent">
+    <div class="tab-content" id="checkinTabsContent">
 
         {{-- تاب النظام --}}
         <div class="tab-pane fade show active" id="local" role="tabpanel">
@@ -78,7 +78,7 @@
                                 <th>المبنى</th>
                                 <th>تاريخ الدخول</th>
                                 <th>تاريخ الخروج</th>
-                                <th>وقت الخروج</th>
+                                <th>وقت الدخول</th>
                                 <th>المصدر</th>
                                 <th>القناة</th>
                                 <th>الموقع (Site)</th>
@@ -94,8 +94,8 @@
                                     <td>{{ $report->check_in?->format('Y-m-d') ?? 'غير محدد' }}</td>
                                     <td>{{ $report->check_out?->format('Y-m-d') ?? 'غير محدد' }}</td>
                                     <td>
-                                        @if($report->check_out_time)
-                                            {{ $report->check_out_time->format('H:i') }}
+                                        @if($report->check_in_time)
+                                            {{ $report->check_in_time->format('H:i') }}
                                         @else
                                             <span class="text-muted">غير محدد</span>
                                         @endif
@@ -171,7 +171,7 @@
                 </div>
             </div>
             <div id="maintenance-empty" class="alert alert-warning text-center" style="display:none;">
-                لا توجد وحدات صيانة تنتهي اليوم في OwnerRez
+                لا توجد وحدات صيانة تبدأ اليوم في OwnerRez
             </div>
         </div>
 
@@ -219,7 +219,7 @@
                 </div>
             </div>
             <div id="ownerrez-empty" class="alert alert-warning text-center" style="display:none;">
-                لا توجد حجوزات خروج اليوم في OwnerRez
+                لا توجد حجوزات دخول اليوم في OwnerRez
             </div>
         </div>
 
@@ -231,9 +231,9 @@
 (function () {
     var loaded           = false;
     var activeXhr        = null;
-    var failedOffset     = 0; // الـ offset الذي فشل، للرجوع إليه عند الضغط على إعادة المحاولة
-    var propertyNameMap  = {}; // property_id → اسم الشقة
-    var baseUrl          = '{{ route('admin.reports.daily-checkout.ownerrez') }}';
+    var failedOffset     = 0;
+    var propertyNameMap  = {};
+    var baseUrl          = '{{ route('admin.reports.daily-checkin.ownerrez') }}';
 
     function selectedBuilding() {
         return $('#ownerrez-building').val() || 'all';
@@ -297,7 +297,6 @@
         return rows;
     }
 
-    // جلب صفحة واحدة بـ offset محدد، وعند الفشل تظهر رسالة + زر إعادة المحاولة
     function fetchPage(offset, bust) {
         var params = { offset: offset, building_id: selectedBuilding() };
         if (bust && offset === 0) { params.bust = 1; }
@@ -315,7 +314,6 @@
                     return;
                 }
 
-                // تخزين خريطة أسماء الشقق إن وُجدت
                 if (data.property_name_map) {
                     $.extend(propertyNameMap, data.property_name_map);
                 }
@@ -334,12 +332,10 @@
                 }
 
                 if (data.has_more && data.next_offset !== null) {
-                    // استمرار جلب الصفحة التالية تلقائياً
                     var count = $('#ownerrez-tbody tr').length;
                     updateLoadingText('جارٍ تحميل المزيد... (' + count + ' سجل حتى الآن)');
                     fetchPage(data.next_offset, false);
                 } else {
-                    // انتهى التحميل
                     $('#ownerrez-loading').hide();
                     if ($('#ownerrez-tbody tr').length === 0) {
                         $('#ownerrez-empty').show();
@@ -392,7 +388,6 @@
         startFetch(true);
     });
 
-    // زر إعادة المحاولة يكمل من الـ offset الذي فشل
     $('#ownerrez-retry-btn').on('click', function () {
         $('#ownerrez-error').hide();
         $('#ownerrez-loading').show();
@@ -422,7 +417,7 @@
     var activeXhr        = null;
     var failedOffset     = 0;
     var propertyNameMap  = {};
-    var baseUrl          = '{{ route('admin.reports.daily-checkout.ownerrez-maintenance') }}';
+    var baseUrl          = '{{ route('admin.reports.daily-checkin.ownerrez-maintenance') }}';
 
     function updateLoadingText(text) {
         $('#maintenance-loading-text').text(text);

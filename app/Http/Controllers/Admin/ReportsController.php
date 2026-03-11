@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\OwnerRez\OwnerRezApiException;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
@@ -358,7 +359,7 @@ class ReportsController extends Controller
         }
 
         try {
-            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $offset, $buildingId) {
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $buildingId) {
                 $apiService = new OwnerRezApiService;
                 $apiService->withoutLogging()->withTimeout(30);
 
@@ -366,11 +367,12 @@ class ReportsController extends Controller
                 if ($buildingId !== 'all') {
                     $mappingQuery->whereHas('apartment', fn ($q) => $q->where('building_id', $buildingId));
                 }
-                $propertyIds = $mappingQuery->pluck('ownerrez_property_id')
+                $propertyIdsArray = $mappingQuery->pluck('ownerrez_property_id')
                     ->filter()
-                    ->implode(',');
+                    ->values()
+                    ->all();
 
-                if (empty($propertyIds)) {
+                if (empty($propertyIdsArray)) {
                     return [
                         'success' => true,
                         'bookings' => [],
@@ -381,20 +383,12 @@ class ReportsController extends Controller
                     ];
                 }
 
-                $response = $apiService->getBookings([
-                    'property_ids' => $propertyIds,
+                $items = $apiService->getBookingsBatched($propertyIdsArray, [
                     'from' => $today,
                     'to' => $today,
                     'include_guest' => 'true',
-                    'include_fields' => 'true',
                     'limit' => 100,
-                    'offset' => $offset,
                 ]);
-
-                $items = $response['items'] ?? [];
-
-                // إذا عادت 100 سجل بالضبط، قد توجد صفحة تالية
-                $hasMore = count($items) >= 100;
 
                 // فلترة: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
                 $bookings = collect($items)
@@ -406,8 +400,8 @@ class ReportsController extends Controller
                 return [
                     'success' => true,
                     'bookings' => $bookings,
-                    'has_more' => $hasMore,
-                    'next_offset' => $hasMore ? $offset + 100 : null,
+                    'has_more' => false,
+                    'next_offset' => null,
                     'date' => $today,
                 ];
             });
@@ -427,7 +421,12 @@ class ReportsController extends Controller
 
             return response()->json($data);
         } catch (\Exception $e) {
-            Log::error('OwnerRez checkout today report failed', ['error' => $e->getMessage()]);
+            $logContext = ['error' => $e->getMessage()];
+            if ($e instanceof OwnerRezApiException) {
+                $logContext['status_code'] = $e->getStatusCode();
+                $logContext['api_response'] = $e->getResponseData();
+            }
+            Log::error('OwnerRez checkout today report failed', $logContext);
 
             return response()->json([
                 'success' => false,
@@ -449,15 +448,16 @@ class ReportsController extends Controller
         }
 
         try {
-            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $offset) {
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today) {
                 $apiService = new OwnerRezApiService;
                 $apiService->withoutLogging()->withTimeout(30);
 
-                $propertyIds = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
+                $propertyIdsArray = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
                     ->filter()
-                    ->implode(',');
+                    ->values()
+                    ->all();
 
-                if (empty($propertyIds)) {
+                if (empty($propertyIdsArray)) {
                     return [
                         'success' => true,
                         'blocks' => [],
@@ -468,16 +468,11 @@ class ReportsController extends Controller
                     ];
                 }
 
-                $response = $apiService->getBookings([
-                    'property_ids' => $propertyIds,
+                $items = $apiService->getBookingsBatched($propertyIdsArray, [
                     'from' => $today,
                     'to' => $today,
                     'limit' => 100,
-                    'offset' => $offset,
                 ]);
-
-                $items = $response['items'] ?? [];
-                $hasMore = count($items) >= 100;
 
                 // فقط الـ blocks التي تنتهي اليوم (الصيانة والحجوزات المغلقة)
                 $blocks = collect($items)
@@ -489,8 +484,8 @@ class ReportsController extends Controller
                 return [
                     'success' => true,
                     'blocks' => $blocks,
-                    'has_more' => $hasMore,
-                    'next_offset' => $hasMore ? $offset + 100 : null,
+                    'has_more' => false,
+                    'next_offset' => null,
                     'date' => $today,
                 ];
             });
@@ -509,7 +504,229 @@ class ReportsController extends Controller
 
             return response()->json($data);
         } catch (\Exception $e) {
-            Log::error('OwnerRez maintenance today report failed', ['error' => $e->getMessage()]);
+            $logContext = ['error' => $e->getMessage()];
+            if ($e instanceof OwnerRezApiException) {
+                $logContext['status_code'] = $e->getStatusCode();
+                $logContext['api_response'] = $e->getResponseData();
+            }
+            Log::error('OwnerRez maintenance today report failed', $logContext);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في جلب بيانات الصيانة من OwnerRez: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function dailyCheckInReport(Request $request): \Illuminate\Contracts\View\View
+    {
+        $source = $request->input('source', 'all');
+        $site = $request->input('site', 'all');
+
+        $query = Booking::whereDate('check_in', Carbon::today())
+            ->with(['apartment.building']);
+
+        if ($source === 'app') {
+            $query->where(function ($q) {
+                $q->where(function ($q1) {
+                    $q1->whereIn('booking_source', ['web', 'android', 'ios'])
+                        ->where('is_airbnb_booking', 0);
+                })->orWhere(function ($q2) {
+                    $q2->whereNull('ownerrez_booking_id')
+                        ->where('is_airbnb_booking', 0);
+                });
+            });
+        } elseif ($source === 'airbnb') {
+            $query->where(function ($q) {
+                $q->where('is_airbnb_booking', 1)
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('ownerrez_booking_id')
+                            ->whereRaw('LOWER(channel_name) = ?', ['airbnb']);
+                    });
+            });
+        }
+
+        if ($site !== 'all') {
+            $query->where('site', $site);
+        }
+
+        $reports = $query->orderBy('check_in_time', 'asc')->paginate(25)->withQueryString();
+
+        $availableSites = Cache::remember('booking_available_sites', now()->addHours(1), function () {
+            return Booking::whereNotNull('site')->distinct()->pluck('site');
+        });
+
+        $availableBuildings = Cache::remember('available_buildings_list', now()->addHours(6), function () {
+            return Building::orderBy('name_ar')->get(['id', 'name_ar']);
+        });
+
+        return view('admin.reports.daily_check_in', compact('reports', 'source', 'site', 'availableSites', 'availableBuildings'));
+    }
+
+    public function ownerRezCheckinToday(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $today = Carbon::today()->toDateString();
+        $bust = $request->boolean('bust');
+        $offset = max(0, (int) $request->input('offset', 0));
+        $buildingId = $request->input('building_id', 'all');
+
+        $cacheKey = "ownerrez_checkin_{$today}_offset_{$offset}_b_{$buildingId}";
+
+        if ($bust && $offset === 0) {
+            Cache::forget($cacheKey);
+        }
+
+        try {
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today, $buildingId) {
+                $apiService = new OwnerRezApiService;
+                $apiService->withoutLogging()->withTimeout(30);
+
+                $mappingQuery = OwnerRezPropertyMapping::query();
+                if ($buildingId !== 'all') {
+                    $mappingQuery->whereHas('apartment', fn ($q) => $q->where('building_id', $buildingId));
+                }
+                $propertyIdsArray = $mappingQuery->pluck('ownerrez_property_id')
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (empty($propertyIdsArray)) {
+                    return [
+                        'success' => true,
+                        'bookings' => [],
+                        'has_more' => false,
+                        'next_offset' => null,
+                        'date' => $today,
+                        'warning' => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
+                    ];
+                }
+
+                $items = $apiService->getBookingsBatched($propertyIdsArray, [
+                    'from' => $today,
+                    'to' => $today,
+                    'include_guest' => 'true',
+                    'limit' => 100,
+                ]);
+
+                // فلترة: فقط الحجوزات التي تاريخ وصولها اليوم (وليست blocks)
+                $bookings = collect($items)
+                    ->filter(fn ($b) => ($b['arrival'] ?? '') === $today &&
+                        ($b['type'] ?? '') !== 'block'
+                    )
+                    ->values();
+
+                return [
+                    'success' => true,
+                    'bookings' => $bookings,
+                    'has_more' => false,
+                    'next_offset' => null,
+                    'date' => $today,
+                ];
+            });
+
+            if (! empty($data['success'])) {
+                $data['property_name_map'] = Cache::remember('ownerrez_property_name_map', now()->addHours(1), function () {
+                    return OwnerRezPropertyMapping::with('apartment')
+                        ->get()
+                        ->mapWithKeys(fn ($m) => [
+                            (string) $m->ownerrez_property_id => $m->apartment?->name_ar,
+                        ])
+                        ->filter()
+                        ->all();
+                });
+            }
+
+            return response()->json($data);
+        } catch (\Exception $e) {
+            $logContext = ['error' => $e->getMessage()];
+            if ($e instanceof OwnerRezApiException) {
+                $logContext['status_code'] = $e->getStatusCode();
+                $logContext['api_response'] = $e->getResponseData();
+            }
+            Log::error('OwnerRez checkin today report failed', $logContext);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في جلب البيانات من OwnerRez: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function ownerRezMaintenanceCheckinToday(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $today = Carbon::today()->toDateString();
+        $bust = $request->boolean('bust');
+        $offset = max(0, (int) $request->input('offset', 0));
+
+        $cacheKey = "ownerrez_maintenance_checkin_{$today}_offset_{$offset}";
+
+        if ($bust && $offset === 0) {
+            Cache::forget($cacheKey);
+        }
+
+        try {
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($today) {
+                $apiService = new OwnerRezApiService;
+                $apiService->withoutLogging()->withTimeout(30);
+
+                $propertyIdsArray = OwnerRezPropertyMapping::pluck('ownerrez_property_id')
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (empty($propertyIdsArray)) {
+                    return [
+                        'success' => true,
+                        'blocks' => [],
+                        'has_more' => false,
+                        'next_offset' => null,
+                        'date' => $today,
+                        'warning' => 'لا توجد عقارات مرتبطة بـ OwnerRez في النظام',
+                    ];
+                }
+
+                $items = $apiService->getBookingsBatched($propertyIdsArray, [
+                    'from' => $today,
+                    'to' => $today,
+                    'limit' => 100,
+                ]);
+
+                // فقط الـ blocks التي تبدأ اليوم (الصيانة والحجوزات المغلقة)
+                $blocks = collect($items)
+                    ->filter(fn ($b) => ($b['arrival'] ?? '') === $today &&
+                        ($b['type'] ?? '') === 'block'
+                    )
+                    ->values();
+
+                return [
+                    'success' => true,
+                    'blocks' => $blocks,
+                    'has_more' => false,
+                    'next_offset' => null,
+                    'date' => $today,
+                ];
+            });
+
+            if (! empty($data['success'])) {
+                $data['property_name_map'] = Cache::remember('ownerrez_property_name_map', now()->addHours(1), function () {
+                    return OwnerRezPropertyMapping::with('apartment')
+                        ->get()
+                        ->mapWithKeys(fn ($m) => [
+                            (string) $m->ownerrez_property_id => $m->apartment?->name_ar,
+                        ])
+                        ->filter()
+                        ->all();
+                });
+            }
+
+            return response()->json($data);
+        } catch (\Exception $e) {
+            $logContext = ['error' => $e->getMessage()];
+            if ($e instanceof OwnerRezApiException) {
+                $logContext['status_code'] = $e->getStatusCode();
+                $logContext['api_response'] = $e->getResponseData();
+            }
+            Log::error('OwnerRez maintenance checkin today report failed', $logContext);
 
             return response()->json([
                 'success' => false,

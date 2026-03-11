@@ -158,6 +158,7 @@
 
 <x-backpack::menu-item title="📊 التقارير" icon="la la-chart-bar" :link="backpack_url('reports')" />
 <x-backpack::menu-item title="⏳   الخروج اليومي" icon="la la-sign-out-alt" :link="backpack_url('reports/daily-checkout')" />
+<x-backpack::menu-item title="🏠   الدخول اليومي" icon="la la-sign-in-alt" :link="backpack_url('reports/daily-checkin')" />
 
 <x-backpack::menu-item title="📝 مراجعات العملاء" icon="la la-star" :link="backpack_url('review')" />
 

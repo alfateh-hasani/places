@@ -104,6 +104,35 @@ class OwnerRezApiService
     }
 
     /**
+     * Get bookings by batching property IDs to avoid URL length limits (max ~100 IDs per request)
+     *
+     * @param  array<int>  $propertyIds
+     */
+    public function getBookingsBatched(array $propertyIds, array $filters = [], int $batchSize = 100): array
+    {
+        $allItems = [];
+
+        foreach (array_chunk($propertyIds, $batchSize) as $batch) {
+            try {
+                $response = $this->getBookings(array_merge(
+                    ['property_ids' => implode(',', $batch)],
+                    $filters
+                ));
+
+                array_push($allItems, ...($response['items'] ?? []));
+            } catch (\Exception $e) {
+                Log::warning('OwnerRez batched request failed for a batch, skipping', [
+                    'error' => $e->getMessage(),
+                    'batch_first_id' => $batch[0] ?? null,
+                    'batch_size' => count($batch),
+                ]);
+            }
+        }
+
+        return $allItems;
+    }
+
+    /**
      * Get all bookings across pages with filters
      */
     public function getAllBookings(array $filters = []): array
@@ -312,7 +341,7 @@ class OwnerRezApiService
             // Handle other errors
             if (! $response->successful()) {
                 throw new OwnerRezApiException(
-                    'OwnerRez API request failed: '.($responseData['message'] ?? 'Unknown error'),
+                    'OwnerRez API request failed: '.($responseData['message'] ?? $responseData['Message'] ?? 'Unknown error'),
                     $endpoint,
                     $responseData ?? [],
                     $statusCode
