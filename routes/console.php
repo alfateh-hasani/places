@@ -20,7 +20,7 @@ Schedule::command('passcode:retry-failed')->cron('*/10 * * * *');
 Schedule::command('booking:check-missing-passcodes')->cron('*/10 * * * *');
 
 Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
-Schedule::command('ownerrez:sync-bookings')->everyFiveMinutes();
+// Schedule::command('ownerrez:sync-bookings')->everyFiveMinutes();
 Schedule::command('ownerrez:warm-cache')->everyFiveMinutes();
 
 // إرسال إشعارات الخروج يومياً في الساعة 10 صباحاً
