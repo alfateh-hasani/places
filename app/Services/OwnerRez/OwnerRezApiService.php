@@ -136,7 +136,17 @@ class OwnerRezApiService
                 $filters
             ));
 
-            return $response['items'] ?? [];
+            $items = $response['items'] ?? [];
+
+            // Follow next_page_url to collect all pages for this batch
+            $nextPageUrl = $response['next_page_url'] ?? null;
+            while (! empty($nextPageUrl)) {
+                $nextResponse = $this->getBookingsPageByUrl($nextPageUrl);
+                array_push($items, ...($nextResponse['items'] ?? []));
+                $nextPageUrl = $nextResponse['next_page_url'] ?? null;
+            }
+
+            return $items;
         } catch (\Exception $e) {
             if (count($batch) === 1) {
                 Log::warning('OwnerRez property ID is invalid or unavailable, skipping', [
