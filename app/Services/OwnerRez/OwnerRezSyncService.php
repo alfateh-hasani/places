@@ -411,11 +411,20 @@ class OwnerRezSyncService
         }
 
         try {
-            // Check if booking is canceled
             $status = $bookingData['status'] ?? null;
+            $isOutboundBooking = $ownerrezBooking->sync_direction === 'outbound';
+
             if ($status === 'canceled') {
+                // Always process cancellations, even for locally-created bookings
                 $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
                 $logger->info('OwnerRez booking canceled via update webhook', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                    'local_booking_id' => $ownerrezBooking->local_booking_id,
+                    'sync_direction' => $ownerrezBooking->sync_direction,
+                ]);
+            } elseif ($isOutboundBooking) {
+                // Skip data updates for bookings created in our system — OwnerRez should not overwrite local data
+                $logger->info('OwnerRez booking update skipped - outbound booking protected from overwrite', [
                     'ownerrez_booking_id' => $ownerrezBookingId,
                     'local_booking_id' => $ownerrezBooking->local_booking_id,
                 ]);
@@ -429,6 +438,7 @@ class OwnerRezSyncService
                 ]);
             }
 
+            // Always update raw_data so we have the latest OwnerRez state for reference
             $ownerrezBooking->update([
                 'raw_data' => $bookingData,
                 'sync_status' => 'synced',
