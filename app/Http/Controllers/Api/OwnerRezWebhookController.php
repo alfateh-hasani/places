@@ -21,6 +21,22 @@ class OwnerRezWebhookController extends Controller
     {
         $this->guardWebhook($request);
 
+        // Deduplicate webhook events using the unique event ID from OwnerRez
+        $webhookEventId = $request->input('id');
+        if ($webhookEventId) {
+            $dedupKey = "ownerrez:webhook:event:{$webhookEventId}";
+            if (Cache::has($dedupKey)) {
+                Log::channel('ownerrez_webhook')->info('OwnerRez duplicate webhook event ignored', [
+                    'webhook_event_id' => $webhookEventId,
+                    'action' => $request->input('action'),
+                    'entity_id' => $request->input('entity_id'),
+                ]);
+
+                return response()->json(['success' => true, 'message' => 'Duplicate webhook event ignored']);
+            }
+            Cache::put($dedupKey, true, now()->addHours(2));
+        }
+
         // Support both old and new webhook formats
         $payload = [
             'event' => $request->input('entity_type') ?? $request->input('type') ?? $request->input('Type'),
@@ -31,6 +47,15 @@ class OwnerRezWebhookController extends Controller
             'received_at' => now()->toIso8601String(),
             'raw' => $request->all(),
         ];
+
+        Log::channel('ownerrez_webhook')->info('OwnerRez webhook received', [
+            'webhook_event_id' => $webhookEventId,
+            'action' => $payload['action'],
+            'entity_id' => $payload['entity_id'],
+            'categories' => $payload['categories'],
+            'is_block' => $request->input('entity.is_block'),
+            'status' => $request->input('entity.status'),
+        ]);
 
         // Store in cache for debugging
         Cache::put($this->cacheKey(), $payload, now()->addSeconds($this->cacheTtl()));

@@ -166,11 +166,20 @@ class OwnerRezSyncService
         $action = $webhookData['action'] ?? null;
         $bookingData = $webhookData['data'] ?? [];
 
+        Log::channel('ownerrez_webhook')->info('OwnerRez webhook processing started', [
+            'action' => $action,
+            'entity_id' => $webhookData['entity_id'] ?? null,
+            'categories' => $webhookData['categories'] ?? [],
+            'is_block' => $bookingData['is_block'] ?? null,
+            'status' => $bookingData['status'] ?? null,
+            'property_id' => $bookingData['property_id'] ?? null,
+        ]);
+
         match ($action) {
             'entity_create' => $this->handleBookingCreated($bookingData),
             'entity_update' => $this->handleBookingUpdated($bookingData),
             'entity_delete' => $this->handleBookingDeleted($bookingData),
-            default => Log::warning('Unknown webhook action', ['action' => $action]),
+            default => Log::channel('ownerrez_webhook')->warning('Unknown webhook action', ['action' => $action]),
         };
 
         // Invalidate cache for this property
@@ -184,7 +193,7 @@ class OwnerRezSyncService
      */
     protected function handleBookingCreated(array $bookingData): void
     {
-        $logger = Log::channel('ownerrez');
+        $logger = Log::channel('ownerrez_webhook');
         $ownerrezBookingId = $bookingData['id'] ?? null;
         $propertyId = $bookingData['property_id'] ?? null;
 
@@ -213,6 +222,24 @@ class OwnerRezSyncService
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'property_id' => $propertyId,
             ]);
+
+            return;
+        }
+
+        // Handle bookings that arrive already canceled
+        if (($bookingData['status'] ?? null) === 'canceled') {
+            $existingOwnerrezBooking = OwnerRezBooking::where('ownerrez_booking_id', $ownerrezBookingId)->first();
+            if ($existingOwnerrezBooking?->localBooking) {
+                $this->cancelLocalBookingFromOwnerRez($existingOwnerrezBooking->localBooking);
+                $logger->info('OwnerRez booking canceled on entity_create', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                    'local_booking_id' => $existingOwnerrezBooking->local_booking_id,
+                ]);
+            } else {
+                $logger->info('OwnerRez booking creation skipped - arrived already canceled and no local record', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                ]);
+            }
 
             return;
         }
@@ -341,6 +368,7 @@ class OwnerRezSyncService
      */
     protected function handleBookingUpdated(array $bookingData): void
     {
+        $logger = Log::channel('ownerrez_webhook');
         $ownerrezBookingId = $bookingData['id'] ?? null;
 
         if (! $ownerrezBookingId) {
@@ -348,8 +376,36 @@ class OwnerRezSyncService
         }
 
         $ownerrezBooking = OwnerRezBooking::where('ownerrez_booking_id', $ownerrezBookingId)->first();
-        if (! $ownerrezBooking || ! $ownerrezBooking->localBooking) {
-            Log::info('OwnerRez booking not found locally', ['ownerrez_booking_id' => $ownerrezBookingId]);
+
+        if (! $ownerrezBooking) {
+            // Block-to-booking transition: booking was skipped as block during entity_create
+            $isBlockToBookingTransition = empty($bookingData['is_block'])
+                && ($bookingData['status'] ?? null) === 'active'
+                && isset($bookingData['guest_id']);
+
+            if ($isBlockToBookingTransition) {
+                $logger->info('OwnerRez block-to-booking transition detected', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                    'property_id' => $bookingData['property_id'] ?? null,
+                    'platform_reservation_number' => $bookingData['platform_reservation_number'] ?? null,
+                ]);
+                $this->handleBookingCreated($bookingData);
+            } else {
+                $logger->info('OwnerRez booking not found locally on update', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                    'is_block' => $bookingData['is_block'] ?? null,
+                    'status' => $bookingData['status'] ?? null,
+                ]);
+            }
+
+            return;
+        }
+
+        if (! $ownerrezBooking->localBooking) {
+            $logger->warning('OwnerRez booking has no local booking linked', [
+                'ownerrez_booking_id' => $ownerrezBookingId,
+                'ownerrez_bookings_row_id' => $ownerrezBooking->id,
+            ]);
 
             return;
         }
@@ -359,15 +415,17 @@ class OwnerRezSyncService
             $status = $bookingData['status'] ?? null;
             if ($status === 'canceled') {
                 $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
-                Log::info('Canceled booking from OwnerRez via update webhook', [
+                $logger->info('OwnerRez booking canceled via update webhook', [
                     'ownerrez_booking_id' => $ownerrezBookingId,
                     'local_booking_id' => $ownerrezBooking->local_booking_id,
                 ]);
             } else {
                 $this->updateLocalBookingFromOwnerRez($ownerrezBooking->localBooking, $bookingData);
-                Log::info('Successfully updated booking from OwnerRez', [
+                $logger->info('OwnerRez booking updated successfully', [
                     'ownerrez_booking_id' => $ownerrezBookingId,
                     'local_booking_id' => $ownerrezBooking->local_booking_id,
+                    'arrival' => $bookingData['arrival'] ?? null,
+                    'departure' => $bookingData['departure'] ?? null,
                 ]);
             }
 
@@ -377,7 +435,7 @@ class OwnerRezSyncService
                 'synced_at' => now(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to update booking from OwnerRez', [
+            $logger->error('OwnerRez booking update failed', [
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'error' => $e->getMessage(),
             ]);
@@ -389,6 +447,7 @@ class OwnerRezSyncService
      */
     protected function handleBookingDeleted(array $bookingData): void
     {
+        $logger = Log::channel('ownerrez_webhook');
         $ownerrezBookingId = $bookingData['id'] ?? null;
 
         if (! $ownerrezBookingId) {
@@ -397,17 +456,21 @@ class OwnerRezSyncService
 
         $ownerrezBooking = OwnerRezBooking::where('ownerrez_booking_id', $ownerrezBookingId)->first();
         if (! $ownerrezBooking || ! $ownerrezBooking->localBooking) {
+            $logger->info('OwnerRez booking not found locally on delete', [
+                'ownerrez_booking_id' => $ownerrezBookingId,
+            ]);
+
             return;
         }
 
         try {
             $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
-            Log::info('Successfully canceled booking from OwnerRez', [
+            $logger->info('OwnerRez booking deleted and canceled locally', [
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'local_booking_id' => $ownerrezBooking->local_booking_id,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to cancel booking from OwnerRez', [
+            $logger->error('OwnerRez booking delete failed', [
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'error' => $e->getMessage(),
             ]);
