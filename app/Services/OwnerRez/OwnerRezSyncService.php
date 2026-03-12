@@ -414,6 +414,17 @@ class OwnerRezSyncService
             $status = $bookingData['status'] ?? null;
             $isOutboundBooking = $ownerrezBooking->sync_direction === 'outbound';
 
+            // Skip updates where data is still a block — can happen due to queue processing order
+            if (! empty($bookingData['is_block'])) {
+                $logger->info('OwnerRez booking update skipped - incoming data is still a block', [
+                    'ownerrez_booking_id' => $ownerrezBookingId,
+                    'local_booking_id' => $ownerrezBooking->local_booking_id,
+                ]);
+                $ownerrezBooking->update(['raw_data' => $bookingData]);
+
+                return;
+            }
+
             if ($status === 'canceled') {
                 // Always process cancellations, even for locally-created bookings
                 $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
