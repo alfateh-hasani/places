@@ -775,7 +775,7 @@ class OwnerRezSyncService
         if ($totalAmount > 0 && $totalPaid >= $totalAmount) {
             $paymentStatus = 'paid';
         } elseif ($totalPaid > 0) {
-            $paymentStatus = 'partial';
+            $paymentStatus = 'paid';
         }
 
         // If no amount info, assume paid for active bookings

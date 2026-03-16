@@ -336,7 +336,7 @@ class OwnerRezSyncServiceTest extends TestCase
      * Real-world flow based on actual webhook samples:
      *   1. entity_create  → is_block: true          → SKIPPED (just an Airbnb hold)
      *   2. entity_update  → is_block: false, active  → booking confirmed, no payment yet (pending)
-     *   3. entity_update  → total_paid: partial      → payment_status = partial
+     *   3. entity_update  → total_paid: partial      → payment_status = paid
      *   4. entity_update  → total_paid: full         → payment_status = paid
      *   5. entity_update  → status: canceled         → booking canceled
      */
@@ -396,7 +396,7 @@ class OwnerRezSyncServiceTest extends TestCase
         $this->assertDatabaseHas('bookings', [
             'id' => $localBooking->id,
             'status' => 'approved',
-            'payment_status' => 'partial',
+            'payment_status' => 'paid',
         ]);
 
         // ── Step 4: Full payment received ──────────────────────────────────────────────
