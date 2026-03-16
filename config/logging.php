@@ -84,6 +84,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'ownerrez_webhook' => [
+            'driver' => 'daily',
+            'tap' => [SanitizeContextTap::class],
+            'path' => storage_path('logs/ownerrez-webhook.log'),
+            'level' => env('LOG_LEVEL_OWNERREZ', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'otp' => [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],

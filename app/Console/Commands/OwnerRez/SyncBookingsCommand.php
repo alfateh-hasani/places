@@ -59,10 +59,11 @@ class SyncBookingsCommand extends Command
     ): void {
         $this->info("--- Syncing: {$mapping->ownerrez_property_name} (mapping_id: {$mapping->id}) ---");
 
-        $from = Carbon::now()->format('Y-m-d');
-        $to = Carbon::now()->addYear()->format('Y-m-d');
+        $yesterday = Carbon::yesterday();
+        $from = $yesterday->copy()->subYear()->format('Y-m-d');
+        $to = $yesterday->format('Y-m-d');
 
-        $this->line("  Date range: {$from} → {$to}");
+        $this->line("  Date range: {$from} -> {$to} (includes yesterday, excludes today)");
 
         try {
             $response = $apiService->getBookings([
@@ -85,12 +86,11 @@ class SyncBookingsCommand extends Command
                 $arrival = $bookingData['arrival'] ?? 'N/A';
                 $departure = $bookingData['departure'] ?? 'N/A';
 
-                $this->line("  ┌ Booking #{$ownerrezBookingId} | guest_id: {$guestId} | {$arrival} → {$departure}");
+                $this->line("  Booking #{$ownerrezBookingId} | guest_id: {$guestId} | {$arrival} -> {$departure}");
 
-                // Check if already exists
                 $existing = OwnerRezBooking::where('ownerrez_booking_id', $ownerrezBookingId)->first();
                 if ($existing) {
-                    $this->warn("  └ SKIPPED: already exists (local_booking_id: {$existing->local_booking_id})");
+                    $this->warn("  SKIPPED: already exists (local_booking_id: {$existing->local_booking_id})");
                     $skippedCount++;
 
                     continue;
@@ -102,10 +102,10 @@ class SyncBookingsCommand extends Command
                         'data' => $bookingData,
                     ]);
                     $syncedCount++;
-                    $this->info("  └ SUCCESS: booking synced");
+                    $this->info('  SUCCESS: booking synced');
                 } catch (\Exception $e) {
                     $failedCount++;
-                    $this->error("  └ FAILED: {$e->getMessage()}");
+                    $this->error("  FAILED: {$e->getMessage()}");
                 }
             }
 
