@@ -140,6 +140,16 @@ class BookingController extends CrudController
             'label' => __('cms.number_of_booking') . ' <i class="la la-bookmark"></i>',
         ]);
 
+        // OwnerRez Booking ID
+        CRUD::addColumn([
+            'name' => 'ownerrez_booking_id',
+            'type' => 'text',
+            'label' => 'معرف OwnerRez <i class="la la-link"></i>',
+            'searchLogic' => function ($query, $column, $searchTerm) {
+                $query->orWhere('ownerrez_booking_id', 'like', '%' . $searchTerm . '%');
+            },
+        ]);
+
         // Booking Source
         CRUD::addColumn([
             'name' => 'booking_source',
