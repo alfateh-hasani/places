@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Jobs\OwnerRez\ProcessWebhookJob;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class OwnerRezWebhookControllerTest extends TestCase
@@ -118,6 +119,7 @@ class OwnerRezWebhookControllerTest extends TestCase
 
     // -------------------------------------------------------------------------
     // Payloads from real OwnerRez webhook samples
+    // Each call generates a unique webhook UUID to avoid deduplication in tests
     // -------------------------------------------------------------------------
 
     /**
@@ -135,7 +137,7 @@ class OwnerRezWebhookControllerTest extends TestCase
                 'check_in' => '16:00',
                 'check_out' => '11:00',
                 'children' => 0,
-                'created_utc' => '2026-03-08T17:54:44Z',
+                'created_utc' => now()->toIso8601String(),
                 'currency_code' => 'SAR',
                 'departure' => '2026-03-16',
                 'id' => 16879744,
@@ -151,7 +153,7 @@ class OwnerRezWebhookControllerTest extends TestCase
             ],
             'entity_id' => 16879744,
             'entity_type' => 'booking',
-            'id' => '17e9b27d-2d93-42ef-835c-1201c28ebe90',
+            'id' => (string) Str::uuid(),
             'user_id' => 347482730,
         ];
     }
@@ -192,11 +194,11 @@ class OwnerRezWebhookControllerTest extends TestCase
                 'total_amount' => 830.00,
                 'total_owed' => 830.00,
                 'type' => 'booking',
-                'updated_utc' => '2026-03-08T17:56:10Z',
+                'updated_utc' => now()->toIso8601String(),
             ],
             'entity_id' => 16879744,
             'entity_type' => 'booking',
-            'id' => '47af00f8-44c9-42ba-ae66-0e4b4cc658eb',
+            'id' => (string) Str::uuid(),
             'user_id' => 347482730,
         ];
     }

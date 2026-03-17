@@ -18,6 +18,16 @@ class ProcessWebhookJob implements ShouldQueue
 
     public int $timeout = 120;
 
+    /**
+     * Exponential backoff: 10s, 30s, 90s
+     *
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30, 90];
+    }
+
     public function __construct(
         public array $webhookData
     ) {}
@@ -36,7 +46,9 @@ class ProcessWebhookJob implements ShouldQueue
         } catch (\Exception $e) {
             Log::error('Failed to process OwnerRez webhook', [
                 'error' => $e->getMessage(),
-                'webhook_data' => $this->webhookData,
+                'event' => $this->webhookData['event'] ?? null,
+                'action' => $this->webhookData['action'] ?? null,
+                'entity_id' => $this->webhookData['entity_id'] ?? null,
             ]);
 
             throw $e;
@@ -47,7 +59,9 @@ class ProcessWebhookJob implements ShouldQueue
     {
         Log::error('OwnerRez webhook job failed after all retries', [
             'error' => $exception->getMessage(),
-            'webhook_data' => $this->webhookData,
+            'event' => $this->webhookData['event'] ?? null,
+            'action' => $this->webhookData['action'] ?? null,
+            'entity_id' => $this->webhookData['entity_id'] ?? null,
         ]);
     }
 }

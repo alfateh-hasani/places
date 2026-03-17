@@ -8,6 +8,7 @@ use App\Services\OwnerRez\OwnerRezSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -21,10 +22,17 @@ class OwnerRezWebhookController extends Controller
     {
         $this->guardWebhook($request);
 
-        // Deduplicate webhook events using the unique event ID from OwnerRez
+        // Validate Content-Type
+        if (! $request->isJson() && ! $request->hasHeader('Content-Type')) {
+            abort(Response::HTTP_UNSUPPORTED_MEDIA_TYPE, 'Content-Type must be application/json.');
+        }
+
+        // Deduplicate webhook events using Cache (fast) + DB (persistent)
         $webhookEventId = $request->input('id');
         if ($webhookEventId) {
             $dedupKey = "ownerrez:webhook:event:{$webhookEventId}";
+
+            // Fast check via cache first
             if (Cache::has($dedupKey)) {
                 Log::channel('ownerrez_webhook')->info('OwnerRez duplicate webhook event ignored', [
                     'webhook_event_id' => $webhookEventId,
@@ -34,7 +42,62 @@ class OwnerRezWebhookController extends Controller
 
                 return response()->json(['success' => true, 'message' => 'Duplicate webhook event ignored']);
             }
-            Cache::put($dedupKey, true, now()->addHours(2));
+
+            // Persistent check via DB (survives cache flush)
+            try {
+                $existsInDb = DB::table('ownerrez_processed_webhooks')
+                    ->where('webhook_event_id', $webhookEventId)
+                    ->exists();
+
+                if ($existsInDb) {
+                    Cache::put($dedupKey, true, now()->addHours(2));
+
+                    Log::channel('ownerrez_webhook')->info('OwnerRez duplicate webhook event ignored (DB)', [
+                        'webhook_event_id' => $webhookEventId,
+                    ]);
+
+                    return response()->json(['success' => true, 'message' => 'Duplicate webhook event ignored']);
+                }
+
+                // Record in both cache and DB
+                Cache::put($dedupKey, true, now()->addHours(2));
+                DB::table('ownerrez_processed_webhooks')->insert([
+                    'webhook_event_id' => $webhookEventId,
+                    'action' => $request->input('action'),
+                    'entity_id' => $request->input('entity_id'),
+                    'processed_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                // DB unavailable - fall back to cache-only dedup
+                Cache::put($dedupKey, true, now()->addHours(2));
+                Log::channel('ownerrez_webhook')->warning('DB dedup check failed, using cache only', [
+                    'webhook_event_id' => $webhookEventId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Deduplicate twin webhooks from OwnerRez (same entity_id + action + categories + timestamp, different UUID)
+        $entityId = $request->input('entity_id');
+        $action = $request->input('action');
+        $categories = $request->input('categories', []);
+        $entityTimestamp = $request->input('entity.updated_utc') ?? $request->input('entity.created_utc') ?? '';
+        if ($entityId && $action) {
+            sort($categories);
+            $contentDedupKey = 'ownerrez:webhook:content:'.md5($entityId.':'.$action.':'.implode(',', $categories).':'.$entityTimestamp);
+            if (Cache::has($contentDedupKey)) {
+                Log::channel('ownerrez_webhook')->info('OwnerRez twin webhook ignored', [
+                    'webhook_event_id' => $webhookEventId ?? null,
+                    'entity_id' => $entityId,
+                    'action' => $action,
+                    'categories' => $categories,
+                ]);
+
+                return response()->json(['success' => true, 'message' => 'Twin webhook ignored']);
+            }
+            Cache::put($contentDedupKey, true, now()->addSeconds(30));
         }
 
         // Support both old and new webhook formats
@@ -72,7 +135,9 @@ class OwnerRezWebhookController extends Controller
             } catch (\Exception $e) {
                 Log::error('Failed to queue OwnerRez webhook', [
                     'error' => $e->getMessage(),
-                    'payload' => $payload,
+                    'event' => $payload['event'] ?? null,
+                    'action' => $payload['action'] ?? null,
+                    'entity_id' => $payload['entity_id'] ?? null,
                 ]);
 
                 // Fallback to synchronous processing
@@ -95,6 +160,11 @@ class OwnerRezWebhookController extends Controller
 
     public function show(Request $request): JsonResponse
     {
+        // Only allow in non-production environments
+        if (app()->isProduction()) {
+            abort(Response::HTTP_FORBIDDEN, 'Debug endpoint not available in production.');
+        }
+
         $this->ensureClientSecretAuthorized($request);
 
         $payload = Cache::get($this->cacheKey());
@@ -132,6 +202,19 @@ class OwnerRezWebhookController extends Controller
             return view('ownerrez.oauth-error', [
                 'error' => 'missing_code',
                 'description' => 'Authorization code is missing',
+            ]);
+        }
+
+        // Validate state parameter to prevent CSRF
+        $expectedState = Cache::pull('ownerrez:oauth:state');
+        if (! $state || ! $expectedState || ! hash_equals($expectedState, $state)) {
+            Log::warning('OwnerRez OAuth state mismatch - possible CSRF attempt', [
+                'ip' => $request->ip(),
+            ]);
+
+            return view('ownerrez.oauth-error', [
+                'error' => 'invalid_state',
+                'description' => 'Invalid or expired OAuth state. Please try again.',
             ]);
         }
 
@@ -190,51 +273,15 @@ class OwnerRezWebhookController extends Controller
 
     protected function storeAccessToken(array $tokenData): void
     {
-        // Store in config file or database
         $accessToken = $tokenData['access_token'];
         $userId = $tokenData['user_id'];
 
-        // For now, store in cache (you can change this to database)
         Cache::forever('ownerrez_access_token', $accessToken);
         Cache::forever('ownerrez_user_id', $userId);
-
-        // Also update .env file (optional)
-        $this->updateEnvFile([
-            'OWNERREZ_ACCESS_TOKEN' => $accessToken,
-            'OWNERREZ_USER_ID' => $userId,
-        ]);
 
         Log::info('Stored OwnerRez access token', [
             'user_id' => $userId,
         ]);
-    }
-
-    protected function updateEnvFile(array $data): void
-    {
-        $envPath = base_path('.env');
-
-        if (! file_exists($envPath)) {
-            return;
-        }
-
-        $envContent = file_get_contents($envPath);
-
-        foreach ($data as $key => $value) {
-            // Check if key exists
-            if (preg_match("/^{$key}=/m", $envContent)) {
-                // Update existing
-                $envContent = preg_replace(
-                    "/^{$key}=.*/m",
-                    "{$key}={$value}",
-                    $envContent
-                );
-            } else {
-                // Add new
-                $envContent .= "\n{$key}={$value}";
-            }
-        }
-
-        file_put_contents($envPath, $envContent);
     }
 
     protected function guardWebhook(Request $request): void
