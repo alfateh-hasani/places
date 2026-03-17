@@ -401,7 +401,7 @@ class BookingController extends CrudController
 
                 // إضافة معلومات إضافية لحجوزات OwnerRez
                 $ownerrezInfo = '';
-                if ($bookingSource === 'ownerrez' && $entry->ownerrez_booking_id) {
+                if ($entry->ownerrez_booking_id) {
                     $ownerrezInfo = '
                         <tr>
                             <th>رقم حجز OwnerRez <i class="la la-link"></i></th>
