@@ -402,27 +402,25 @@ class BookingController extends CrudController
                 // إضافة معلومات إضافية لحجوزات OwnerRez
                 $ownerrezInfo = '';
                 if ($entry->ownerrez_booking_id) {
-                    $ownerrezInfo = '
+                    $ownerrezInfo .= '
                         <tr>
                             <th>رقم حجز OwnerRez <i class="la la-link"></i></th>
                             <td><span class="badge badge-secondary">'.$entry->ownerrez_booking_id.'</span></td>
                         </tr>';
-
-                    if ($entry->channel_name) {
-                        $ownerrezInfo .= '
+                }
+                if ($entry->channel_name) {
+                    $ownerrezInfo .= '
                         <tr>
                             <th>اسم القناة <i class="la la-tag"></i></th>
                             <td><span class="badge badge-warning">'.$entry->channel_name.'</span></td>
                         </tr>';
-                    }
-
-                    if ($entry->external_reference) {
-                        $ownerrezInfo .= '
+                }
+                if ($entry->external_reference) {
+                    $ownerrezInfo .= '
                         <tr>
                             <th>المرجع الخارجي <i class="la la-code"></i></th>
                             <td><span class="badge badge-light">'.$entry->external_reference.'</span></td>
                         </tr>';
-                    }
                 }
 
                 return '
