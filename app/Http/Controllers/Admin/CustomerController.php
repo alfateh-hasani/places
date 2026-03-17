@@ -82,6 +82,7 @@ class CustomerController extends CrudController
             'type' => 'custom_html',
             'label' => __('cms.phone'),
             'value' => fn ($entry) => '<span dir="ltr">'.$entry->phone.'</span>',
+            'searchLogic' => fn ($query, $column, $searchTerm) => $query->orWhere('phone', 'like', '%'.$searchTerm.'%'),
         ]);
 
         CRUD::addColumn([
