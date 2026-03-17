@@ -2,26 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\FaqRequest;
-use App\Models\Apartment;
-use App\Models\City;
-use App\Models\Page;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use Illuminate\Http\Request;
 
 /**
  * Class FeatureController
- * @package App\Http\Controllers\Admin
+ *
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
 class CustomerController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -31,19 +26,18 @@ class CustomerController extends CrudController
     public function setup()
     {
         CRUD::setModel(\App\Models\Customer::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/customer');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/customer');
         $slider = __('cms.customer');
         $sliders = __('cms.customer');
 
         CRUD::setEntityNameStrings($slider, $sliders);
 
-        
-        if (!backpack_user()->can('customer.list')) {
+        if (! backpack_user()->can('customer.list')) {
             abort(403, 'Unauthorized Access - List');
         }
 
         $this->crud->denyAccess(['create', 'update', 'delete']);
-        
+
         // if (backpack_user()->can('customer.create')) {
         //     $this->crud->allowAccess('create');
         // }
@@ -59,6 +53,7 @@ class CustomerController extends CrudController
      * Define what happens when the List operation is loaded.
      *
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
+     *
      * @return void
      */
     protected function setupListOperation()
@@ -69,46 +64,46 @@ class CustomerController extends CrudController
             'type' => 'text',
             'label' => __('cms.first_name'),
         ]);
-    
+
         CRUD::addColumn([
             'name' => 'last_name',
             'type' => 'text',
             'label' => __('cms.last_name'),
         ]);
-    
+
         CRUD::addColumn([
             'name' => 'email',
             'type' => 'email',
             'label' => __('cms.email'),
         ]);
-    
+
         CRUD::addColumn([
             'name' => 'phone',
-            'type' => 'text',
+            'type' => 'custom_html',
             'label' => __('cms.phone'),
+            'value' => fn ($entry) => '<span dir="ltr">'.$entry->phone.'</span>',
         ]);
-    
+
         CRUD::addColumn([
             'name' => 'reviews_count',
             'type' => 'number',
             'label' => __('cms.reviews_count'),
             'wrapper' => [
                 'element' => 'span',
-                'class' => 'badge badge-success p-2',  
+                'class' => 'badge badge-success p-2',
             ],
         ]);
-    
+
         CRUD::addColumn([
             'name' => 'bookings_count',
             'type' => 'number',
             'label' => __('cms.bookings_count'),
             'wrapper' => [
                 'element' => 'span',
-                'class' => 'badge badge-primary p-2', 
+                'class' => 'badge badge-primary p-2',
             ],
-        ]);    
- 
-        
+        ]);
+
         CRUD::addColumn([
             'name' => 'emergency_phone',
             'type' => 'text',
@@ -119,9 +114,6 @@ class CustomerController extends CrudController
             'type' => 'datetime',
             'label' => __('cms.created_at'),
         ]);
-    
-
-         
 
     }
 
@@ -129,17 +121,16 @@ class CustomerController extends CrudController
      * Define what happens when the Create operation is loaded.
      *
      * @see https://backpackforlaravel.com/docs/crud-operation-create
+     *
      * @return void
      */
-    protected function setupCreateOperation()
-    {
-         
-    }
+    protected function setupCreateOperation() {}
 
     /**
      * Define what happens when the Update operation is loaded.
      *
      * @see https://backpackforlaravel.com/docs/crud-operation-update
+     *
      * @return void
      */
     protected function setupUpdateOperation()
@@ -147,7 +138,7 @@ class CustomerController extends CrudController
         $this->setupCreateOperation();
     }
 
-    //showOperation
+    // showOperation
 
     protected function setupShowOperation()
     {
@@ -166,7 +157,4 @@ class CustomerController extends CrudController
             'label' => 'OwnerRez Guest ID',
         ]);
     }
-
-
-  
 }
