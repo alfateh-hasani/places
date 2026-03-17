@@ -8,13 +8,14 @@ use Illuminate\Console\Command;
 class DeletePendingBookings extends Command
 {
     protected $signature = 'delete:pending-bookings';
+
     protected $description = 'Delete pending bookings';
 
-    public function handle()
+    public function handle(): void
     {
-        $pendingBookings = Booking::where('status', 'pending')->where('created_at', '<', now()->subMinutes(20))->get();
-        foreach ($pendingBookings as $booking) {
-            $booking->delete();
-        }
+        Booking::query()
+            ->where('status', 'pending')
+            ->where('created_at', '<', now()->subMinutes(5))
+            ->delete();
     }
 }
