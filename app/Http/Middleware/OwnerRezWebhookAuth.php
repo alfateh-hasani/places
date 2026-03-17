@@ -13,8 +13,8 @@ class OwnerRezWebhookAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $expectedUser = config('services.ownerrez.webhook_user');
-        $expectedPassword = config('services.ownerrez.webhook_password');
+        $expectedUser = (string) config('ownerrez.webhook.user');
+        $expectedPassword = (string) config('ownerrez.webhook.password');
 
         $providedUser = $request->getUser();
         $providedPassword = $request->getPassword();
