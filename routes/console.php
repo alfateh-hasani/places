@@ -32,3 +32,6 @@ Schedule::command('activitylog:clean')->daily();
 
 // تنظيف ملفات اللوج القديمة (أكثر من 60 يوم) يومياً
 Schedule::command('log:clean')->daily();
+
+Schedule::command('delete:pending-bookings')->everyTenMinutes();
+
