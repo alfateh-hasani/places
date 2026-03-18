@@ -28,7 +28,7 @@ class DeletePendingBookingsCommandTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_command_only_deletes_pending_bookings_with_pending_transactions(): void
+    public function test_command_deletes_pending_bookings_with_pending_transactions_or_without_transactions(): void
     {
         Carbon::setTestNow('2026-03-18 12:00:00');
 
@@ -79,7 +79,7 @@ class DeletePendingBookingsCommandTest extends TestCase
 
         $this->assertDatabaseMissing('bookings', ['id' => $bookingToDeleteId]);
         $this->assertDatabaseHas('bookings', ['id' => $bookingWithCompletedTransactionId]);
-        $this->assertDatabaseHas('bookings', ['id' => $bookingWithoutTransactionId]);
+        $this->assertDatabaseMissing('bookings', ['id' => $bookingWithoutTransactionId]);
         $this->assertDatabaseHas('bookings', ['id' => $approvedBookingId]);
     }
 

@@ -16,8 +16,12 @@ class DeletePendingBookings extends Command
         Booking::query()
             ->where('status', 'pending')
             ->where('created_at', '<', now()->subMinutes(5))
-            ->whereHas('transaction', function ($query) {
-                $query->where('status', 'pending');
+            ->where(function ($query) {
+                $query
+                    ->whereDoesntHave('transaction')
+                    ->orWhereHas('transaction', function ($transactionQuery) {
+                        $transactionQuery->where('status', 'pending');
+                    });
             })
             ->delete();
     }
