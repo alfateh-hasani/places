@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
 
 class SyncBookingsCommand extends Command
 {
-    protected $signature = 'ownerrez:sync-bookings {--property-id= : Specific property mapping ID to sync} {--apartment-id= : Specific apartment ID to sync}';
+    protected $signature = 'ownerrez:sync-bookings {--property-id= : Specific property mapping ID to sync} {--apartment-id= : Specific apartment ID to sync} {--before=12 : Number of months to look back from yesterday}';
 
     protected $description = 'Sync bookings from OwnerRez';
 
@@ -59,11 +59,18 @@ class SyncBookingsCommand extends Command
     ): void {
         $this->info("--- Syncing: {$mapping->ownerrez_property_name} (mapping_id: {$mapping->id}) ---");
 
+        $beforeMonths = (int) $this->option('before');
+        if ($beforeMonths < 0) {
+            $this->error('The --before option must be zero or greater.');
+
+            return;
+        }
+
         $yesterday = Carbon::yesterday();
-        $from = $yesterday->copy()->subYear()->format('Y-m-d');
+        $from = $yesterday->copy()->subMonthsNoOverflow($beforeMonths)->format('Y-m-d');
         $to = $yesterday->format('Y-m-d');
 
-        $this->line("  Date range: {$from} -> {$to} (includes yesterday, excludes today)");
+        $this->line("  Date range: {$from} -> {$to} (includes yesterday, looks back {$beforeMonths} month(s), excludes today)");
 
         try {
             $response = $apiService->getBookings([
