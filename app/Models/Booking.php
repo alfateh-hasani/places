@@ -29,6 +29,11 @@ class Booking extends Model
         return $this->belongsTo(Apartment::class);
     }
 
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class);
+    }
+
     protected function casts(): array
     {
         return [
