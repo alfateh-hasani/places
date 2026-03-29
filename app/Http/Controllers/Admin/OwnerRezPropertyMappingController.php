@@ -136,6 +136,17 @@ class OwnerRezPropertyMappingController extends CrudController
 
     public function update()
     {
+        $request = $this->crud->getRequest();
+
+        if (empty($request->input('ownerrez_property_id'))) {
+            $id = $this->crud->getCurrentEntryId();
+            \App\Models\OwnerRezPropertyMapping::findOrFail($id)->delete();
+
+            \Alert::success('تم إزالة ربط OwnerRez بنجاح')->flash();
+
+            return redirect(url($this->crud->route));
+        }
+
         $this->syncOwnerRezPropertyName();
 
         return $this->traitUpdate();

@@ -23,7 +23,7 @@ class OwnerRezPropertyMappingRequest extends FormRequest
 
         return [
             'apartment_id' => 'required|exists:apartments,id|unique:ownerrez_property_mappings,apartment_id,'.$id,
-            'ownerrez_property_id' => 'required|string|max:255|unique:ownerrez_property_mappings,ownerrez_property_id,'.$id,
+            'ownerrez_property_id' => 'nullable|string|max:255|unique:ownerrez_property_mappings,ownerrez_property_id,'.$id,
             'ownerrez_property_name' => 'nullable|string|max:255',
             'sync_enabled' => 'boolean',
             'check_availability_enabled' => 'boolean',
