@@ -19,7 +19,7 @@ Schedule::command('passcode:retry-failed')->cron('*/10 * * * *');
 // Check for bookings that need passcode generation every 30 minutes
 Schedule::command('booking:check-missing-passcodes')->cron('*/10 * * * *');
 
-Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
+// Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
 // Schedule::command('ownerrez:sync-bookings')->everyFiveMinutes();
 Schedule::command('ownerrez:warm-cache')->everyFiveMinutes();
 Schedule::command('ownerrez:warm-daily-report')->everyFifteenMinutes();
