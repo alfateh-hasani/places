@@ -87,7 +87,7 @@ class OwnerRezPropertyMappingController extends CrudController
         CRUD::field('ownerrez_property_id')
             ->type('select2_from_array')
             ->label('العقار في OwnerRez')
-            ->options($this->getOwnerRezPropertyOptions())
+            ->options($this->getOwnerRezPropertyOptions($this->crud->getCurrentEntryId()))
             ->allows_null(true)
             ->hint('اختر العقار من OwnerRez')
             ->wrapper(['class' => 'form-group col-md-6']);
@@ -180,10 +180,20 @@ class OwnerRezPropertyMappingController extends CrudController
         return redirect()->back();
     }
 
-    protected function getOwnerRezPropertyOptions(): array
+    protected function getOwnerRezPropertyOptions(?int $excludeMappingId = null): array
     {
         try {
-            return OwnerRezPropertyController::options();
+            $allOptions = OwnerRezPropertyController::options();
+
+            $usedIds = \App\Models\OwnerRezPropertyMapping::query()
+                ->when($excludeMappingId, fn ($q) => $q->where('id', '!=', $excludeMappingId))
+                ->pluck('ownerrez_property_id')
+                ->map(fn ($id) => (string) $id)
+                ->all();
+
+            return collect($allOptions)
+                ->reject(fn ($label, $id) => in_array((string) $id, $usedIds, true))
+                ->all();
         } catch (\Exception $e) {
             Log::warning('Failed to load OwnerRez properties for dropdown', [
                 'error' => $e->getMessage(),
