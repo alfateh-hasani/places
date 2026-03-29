@@ -104,6 +104,18 @@ class ApartmentController extends CrudController
             'width' => '50px',
         ]);
 
+        CRUD::addColumn([
+            'name' => 'bookings_count',
+            'label' => 'الحجوزات',
+            'type' => 'closure',
+            'function' => function ($entry) {
+                $count = $entry->bookings()->count();
+
+                return '<span class="badge badge-info">'.$count.'</span>';
+            },
+            'escaped' => false,
+        ]);
+
         // عمود حالة ربط OwnerRez
         CRUD::addColumn([
             'name' => 'ownerrez_status',

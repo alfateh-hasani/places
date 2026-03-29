@@ -185,6 +185,10 @@ class OwnerRezPropertyMappingController extends CrudController
         try {
             $allOptions = OwnerRezPropertyController::options();
 
+            $currentPropertyId = $excludeMappingId
+                ? (string) \App\Models\OwnerRezPropertyMapping::find($excludeMappingId)?->ownerrez_property_id
+                : null;
+
             $usedIds = \App\Models\OwnerRezPropertyMapping::query()
                 ->when($excludeMappingId, fn ($q) => $q->where('id', '!=', $excludeMappingId))
                 ->pluck('ownerrez_property_id')
@@ -192,7 +196,7 @@ class OwnerRezPropertyMappingController extends CrudController
                 ->all();
 
             return collect($allOptions)
-                ->reject(fn ($label, $id) => in_array((string) $id, $usedIds, true))
+                ->reject(fn ($label, $id) => in_array((string) $id, $usedIds, true) && (string) $id !== $currentPropertyId)
                 ->all();
         } catch (\Exception $e) {
             Log::warning('Failed to load OwnerRez properties for dropdown', [
