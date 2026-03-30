@@ -339,6 +339,13 @@ class BookingService
             ->get();
 
         foreach ($unpaidBookings as $booking) {
+            $transaction = $booking->transaction;
+
+            // إذا يوجد order_id لا نحذف - DeletePendingBookings يتحقق من Geidea
+            if ($transaction && $transaction->order_id) {
+                continue;
+            }
+
             $booking->delete();
         }
     }
