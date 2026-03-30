@@ -51,16 +51,6 @@ class BookingController extends Controller
 
         $booking->update(['payment_method_code' => $validatedData['payment_method_code']]);
 
-        if ($booking->final_price == 0) {
-
-            $booking->update([
-                'payment_status' => 'paid',
-                'status' => 'approved',
-            ]);
-
-            return $this->bookingComplated($booking);
-        }
-
         try {
 
             $paymentResponse = $this->bookingService->createPaymentV2($booking, $validatedData);
@@ -82,24 +72,34 @@ class BookingController extends Controller
             return redirect()->back()->with('error', __('api.payment_method_not_supported'));
         }
 
+        $booking = $this->booking->where('transaction_id', $transaction_id)->first();
+
+        if (! $booking) {
+            return redirect()->back()->with('error', __('api.booking_not_found'));
+        }
+
+        // الـ webhook من Geidea هو المسؤول عن تأكيد الحجز
+        // هنا فقط نتحقق من الحالة ونعرض النتيجة للعميل
+        if ($booking->status === 'approved' && $booking->payment_status === 'paid') {
+            return $this->bookingComplated($booking);
+        }
+
+        // إذا الـ webhook لم يصل بعد، نتحقق يدوياً من Geidea API
         $processPaymentService = new ProcessPaymentService;
         $data = $request->all();
         $data['transaction_id'] = $transaction_id;
         $handlePayment = $processPaymentService->handleCallBack($paymentMethodCode, $data);
 
-        $booking = $this->booking->where('transaction_id', $transaction_id)->first();
-
         if ($handlePayment['status'] == true) {
-            $result = $this->bookingService->completeBookingAfterPayment($transaction_id);
+            $this->bookingService->completeBookingAfterPayment($transaction_id);
+            $booking->refresh();
 
             return $this->bookingComplated($booking);
         }
 
-        if ($booking) {
-            $booking->update(['status' => 'canceled']);
-        }
-
-        return redirect()->back()->with('error', __('api.payment_failed'));
+        // لا نلغي الحجز هنا - الـ webhook قد يصل لاحقاً ويأكده
+        return redirect()->route('customer.booking.details', [$booking->number_of_booking])
+            ->with('error', __('api.payment_failed'));
     }
 
     private function bookingComplated($booking)

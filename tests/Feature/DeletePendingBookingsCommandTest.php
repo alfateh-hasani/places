@@ -32,6 +32,7 @@ class DeletePendingBookingsCommandTest extends TestCase
     {
         Carbon::setTestNow('2026-03-18 12:00:00');
 
+        // حجز pending مع transaction بدون order_id → يُحذف
         $bookingToDeleteId = $this->createBooking(
             status: 'pending',
             createdAt: '2026-03-18 11:50:00'
@@ -44,23 +45,27 @@ class DeletePendingBookingsCommandTest extends TestCase
             ->where('id', $bookingToDeleteId)
             ->update(['transaction_id' => $pendingTransactionId]);
 
-        $bookingWithCompletedTransactionId = $this->createBooking(
+        // حجز pending مع transaction لديها order_id → لا يُحذف (يتحقق من Geidea)
+        $bookingWithOrderId = $this->createBooking(
             status: 'pending',
             createdAt: '2026-03-18 11:50:00'
         );
-        $completedTransactionId = $this->createTransaction(
-            bookingId: $bookingWithCompletedTransactionId,
-            status: 'completed'
+        $transactionWithOrderId = $this->createTransaction(
+            bookingId: $bookingWithOrderId,
+            status: 'pending',
+            orderId: 'test-order-123'
         );
         DB::table('bookings')
-            ->where('id', $bookingWithCompletedTransactionId)
-            ->update(['transaction_id' => $completedTransactionId]);
+            ->where('id', $bookingWithOrderId)
+            ->update(['transaction_id' => $transactionWithOrderId]);
 
+        // حجز pending بدون transaction → يُحذف
         $bookingWithoutTransactionId = $this->createBooking(
             status: 'pending',
             createdAt: '2026-03-18 11:50:00'
         );
 
+        // حجز approved → لا يُحذف
         $approvedBookingId = $this->createBooking(
             status: 'approved',
             createdAt: '2026-03-18 11:50:00'
@@ -78,7 +83,7 @@ class DeletePendingBookingsCommandTest extends TestCase
         $this->assertSame(0, $exitCode);
 
         $this->assertDatabaseMissing('bookings', ['id' => $bookingToDeleteId]);
-        $this->assertDatabaseHas('bookings', ['id' => $bookingWithCompletedTransactionId]);
+        $this->assertDatabaseHas('bookings', ['id' => $bookingWithOrderId]);
         $this->assertDatabaseMissing('bookings', ['id' => $bookingWithoutTransactionId]);
         $this->assertDatabaseHas('bookings', ['id' => $approvedBookingId]);
     }
@@ -110,16 +115,17 @@ class DeletePendingBookingsCommandTest extends TestCase
         return $bookingId;
     }
 
-    private function createTransaction(int $bookingId, string $status): int
+    private function createTransaction(int $bookingId, string $status, ?string $orderId = null): int
     {
         $transactionId = DB::table('transactions')->insertGetId([
             'booking_id' => $bookingId,
             'transaction_reference' => 'TXN'.str_replace('.', '', uniqid('', true)),
+            'order_id' => $orderId,
             'amount' => 500,
             'currency' => 'SAR',
             'type' => 'deposit',
             'status' => $status,
-            'payment_gateway' => 'tap',
+            'payment_gateway' => 'geidea',
             'platform' => 'web',
             'created_at' => now()->subMinutes(10),
             'updated_at' => now()->subMinutes(10),

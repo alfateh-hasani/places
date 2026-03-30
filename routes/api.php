@@ -90,6 +90,9 @@ Route::controller(BookingController::class)->prefix('payment-methods')->group(fu
     Route::get('failed', 'paymentMethodFailed')->name('paymentMethodFailed');
 });
 
+Route::post('geidea/webhook', [\App\Http\Controllers\Api\GeideaWebhookController::class, 'handle'])
+    ->name('geidea.webhook');
+
 Route::controller(OwnerRezWebhookController::class)->group(function () {
     Route::post('ownerrez', 'handle')->name('ownerrez.webhook')->middleware('throttle:60,1');
     Route::get('ownerrez', 'show')->name('ownerrez.webhook.show')->middleware('throttle:10,1');

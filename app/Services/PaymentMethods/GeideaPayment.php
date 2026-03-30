@@ -54,7 +54,7 @@ class GeideaPayment implements PaymentMethodInterface
     }
 
     /** جلب حالة طلب/مدفوعات من Geidea */
-    private function retrievePayment($orderId)
+    public function verifyPayment($orderId)
     {
         $url = $this->apiBase."/payment-intent/api/v2/direct/orders/{$orderId}";
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
@@ -76,12 +76,16 @@ class GeideaPayment implements PaymentMethodInterface
      |-----------------------------------------------------------------*/
     public function process($transaction)
     {
-        $callbackUrl = route(
+        // returnUrl: يُعيد توجيه المتصفح فقط لعرض النتيجة للعميل
+        $returnUrl = route(
             $transaction->platform === 'api'
                 ? 'paymentMethodCallBack'
                 : 'web-booking.paymentMethodCallBack',
             [$transaction->payment_gateway, $transaction->id]
         );
+
+        // callbackUrl: server-to-server webhook من Geidea - يُأكد الحجز
+        $webhookUrl = route('geidea.webhook');
 
         $timestamp = now()->format('Y/m/d H:i:s');
 
@@ -97,8 +101,8 @@ class GeideaPayment implements PaymentMethodInterface
                 $timestamp
             ),
             'language' => 'en',
-            'callbackUrl' => $callbackUrl,
-            'returnUrl' => $callbackUrl,
+            'callbackUrl' => $webhookUrl,
+            'returnUrl' => $returnUrl,
             'customer' => [
                 'email' => $transaction->customer?->email,
                 'phoneNumber' => $transaction->customer?->phone,
@@ -126,7 +130,7 @@ class GeideaPayment implements PaymentMethodInterface
             $array = [
                 'session_id' => $session['session']['id'],
                 'transaction' => [
-                    'url' => $this->hppBase.'/?' .$session['session']['id'],
+                    'url' => $this->hppBase.'/?'.$session['session']['id'],
                 ],
                 'booking_id' => $transaction->booking_id,
             ];
@@ -150,14 +154,31 @@ class GeideaPayment implements PaymentMethodInterface
             return ['status' => false, 'message' => 'Transaction not found'];
         }
 
-        $isSuccess = ($data['responseCode'] ?? null) === '000';
+        $callbackSuccess = ($data['responseCode'] ?? null) === '000';
+        $orderId = $data['orderId'] ?? null;
+        $isSuccess = false;
+
+        // التحقق من حالة الدفع الفعلية من Geidea API
+        if ($callbackSuccess && $orderId) {
+            $orderData = $this->verifyPayment($orderId);
+
+            if ($orderData && ($orderData['detailedStatus'] ?? null) === 'Paid') {
+                $isSuccess = true;
+            } else {
+                Log::channel('payments')->warning('Geidea payment verification failed', [
+                    'transaction_id' => $transaction->id,
+                    'order_id' => $orderId,
+                    'callback_response_code' => $data['responseCode'] ?? null,
+                    'api_detailed_status' => $orderData['detailedStatus'] ?? null,
+                ]);
+            }
+        }
 
         $transaction->status = $isSuccess ? 'completed' : 'failed';
         $transaction->payment_gateway_response = json_encode($data);
 
-        // حفظ order_id من response في Transaction
-        if (isset($data['orderId'])) {
-            $transaction->order_id = $data['orderId'];
+        if ($orderId) {
+            $transaction->order_id = $orderId;
         }
 
         $transaction->save();
@@ -165,7 +186,7 @@ class GeideaPayment implements PaymentMethodInterface
         return [
             'status' => $isSuccess,
             'transaction_id' => $transaction->id,
-            'order_id' => $data['orderId'] ?? null,
+            'order_id' => $orderId,
             'reference' => $data['reference'] ?? null,
         ];
     }
