@@ -39,7 +39,7 @@ class GeideaPayment implements PaymentMethodInterface
             ->acceptJson()
             ->post($url, $payload);
 
-        Log::channel('payments')->info('Geidea createSession', [
+        Log::channel('geidea')->info('Geidea createSession', [
             'url' => $url,
             'payload' => $payload,
             'status' => $response->status(),
@@ -56,12 +56,12 @@ class GeideaPayment implements PaymentMethodInterface
     /** جلب حالة طلب/مدفوعات من Geidea */
     public function verifyPayment($orderId)
     {
-        $url = $this->apiBase."/payment-intent/api/v2/direct/orders/{$orderId}";
+        $url = $this->apiBase."/pgw/api/v1/direct/order/{$orderId}";
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
             ->acceptJson()
             ->get($url);
 
-        Log::channel('payments')
+        Log::channel('geidea')
             ->info('Geidea retrievePayment', [
                 'orderId' => $orderId,
                 'response' => $response->json(),
@@ -162,10 +162,10 @@ class GeideaPayment implements PaymentMethodInterface
         if ($callbackSuccess && $orderId) {
             $orderData = $this->verifyPayment($orderId);
 
-            if ($orderData && ($orderData['detailedStatus'] ?? null) === 'Paid') {
+            if ($orderData && ($orderData['order']['detailedStatus'] ?? null) === 'Paid') {
                 $isSuccess = true;
             } else {
-                Log::channel('payments')->warning('Geidea payment verification failed', [
+                Log::channel('geidea')->warning('Geidea payment verification failed', [
                     'transaction_id' => $transaction->id,
                     'order_id' => $orderId,
                     'callback_response_code' => $data['responseCode'] ?? null,
@@ -207,7 +207,7 @@ class GeideaPayment implements PaymentMethodInterface
             ->acceptJson()
             ->post($url, $payload);
 
-        Log::channel('payments')->info('Geidea Refund', [
+        Log::channel('geidea')->info('Geidea Refund', [
             'orderId' => $orderId,
             'amount' => $amount,
             'response' => $response->json(),

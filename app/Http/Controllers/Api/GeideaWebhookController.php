@@ -18,12 +18,12 @@ class GeideaWebhookController extends Controller
     {
         $data = $request->all();
 
-        Log::channel('payments')->info('Geidea webhook received', $data);
+        Log::channel('geidea_webhook')->info('Geidea webhook received', $data);
 
         $orderId = $data['orderId'] ?? ($data['order']['orderId'] ?? null);
 
         if (! $orderId) {
-            Log::channel('payments')->warning('Geidea webhook missing orderId', $data);
+            Log::channel('geidea_webhook')->warning('Geidea webhook missing orderId', $data);
 
             return response()->json(['status' => 'ignored', 'reason' => 'missing orderId']);
         }
@@ -41,7 +41,7 @@ class GeideaWebhookController extends Controller
         }
 
         if (! $transaction) {
-            Log::channel('payments')->warning('Geidea webhook: transaction not found', [
+            Log::channel('geidea_webhook')->warning('Geidea webhook: transaction not found', [
                 'order_id' => $orderId,
             ]);
 
@@ -57,11 +57,11 @@ class GeideaWebhookController extends Controller
         $geidea = new GeideaPayment;
         $orderData = $geidea->verifyPayment($orderId);
 
-        if (! $orderData || ($orderData['detailedStatus'] ?? null) !== 'Paid') {
-            Log::channel('payments')->warning('Geidea webhook: payment not confirmed by API', [
+        if (! $orderData || ($orderData['order']['detailedStatus'] ?? null) !== 'Paid') {
+            Log::channel('geidea_webhook')->warning('Geidea webhook: payment not confirmed by API', [
                 'order_id' => $orderId,
                 'transaction_id' => $transaction->id,
-                'api_status' => $orderData['detailedStatus'] ?? null,
+                'api_status' => $orderData['order']['detailedStatus'] ?? null,
             ]);
 
             return response()->json(['status' => 'not_paid']);
@@ -86,7 +86,7 @@ class GeideaWebhookController extends Controller
         $booking->refresh();
         $this->sendConfirmationEmails($booking);
 
-        Log::channel('payments')->info('Geidea webhook: booking confirmed', [
+        Log::channel('geidea_webhook')->info('Geidea webhook: booking confirmed', [
             'order_id' => $orderId,
             'transaction_id' => $transaction->id,
             'booking_id' => $booking->id,
@@ -112,7 +112,7 @@ class GeideaWebhookController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Geidea webhook: failed to send confirmation email', [
+            Log::channel('geidea_webhook')->error('Geidea webhook: failed to send confirmation email', [
                 'booking_id' => $booking->id,
                 'error' => $e->getMessage(),
             ]);
