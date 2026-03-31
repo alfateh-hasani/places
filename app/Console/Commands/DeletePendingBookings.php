@@ -40,7 +40,7 @@ class DeletePendingBookings extends Command
 
                 if (! $orderData) {
                     // فشل الاتصال بـ Geidea → لا نحذف، ننتظر المحاولة التالية
-                    Log::channel('payments')->warning('DeletePendingBookings: Geidea API unreachable, skipping', [
+                    Log::channel('geidea')->warning('DeletePendingBookings: Geidea API unreachable, skipping', [
                         'booking_id' => $booking->id,
                         'order_id' => $transaction->order_id,
                     ]);
@@ -48,7 +48,7 @@ class DeletePendingBookings extends Command
                     continue;
                 }
 
-                $detailedStatus = $orderData['detailedStatus'] ?? null;
+                $detailedStatus = $orderData['order']['detailedStatus'] ?? null;
 
                 if ($detailedStatus === 'Paid') {
                     // مدفوع فعلاً! نأكد الحجز بدل ما نحذفه
@@ -58,7 +58,7 @@ class DeletePendingBookings extends Command
                     $booking->refresh();
                     $this->sendConfirmationEmails($booking);
 
-                    Log::channel('payments')->info('DeletePendingBookings: recovered paid booking', [
+                    Log::channel('geidea')->info('DeletePendingBookings: recovered paid booking', [
                         'booking_id' => $booking->id,
                         'order_id' => $transaction->order_id,
                     ]);
@@ -66,14 +66,14 @@ class DeletePendingBookings extends Command
                     // Geidea أكدت أنه غير مدفوع → حذف
                     $booking->delete();
 
-                    Log::channel('payments')->info('DeletePendingBookings: confirmed unpaid, deleting', [
+                    Log::channel('geidea')->info('DeletePendingBookings: confirmed unpaid, deleting', [
                         'booking_id' => $booking->id,
                         'order_id' => $transaction->order_id,
                         'geidea_status' => $detailedStatus,
                     ]);
                 }
             } catch (\Exception $e) {
-                Log::channel('payments')->error('DeletePendingBookings: Geidea verification failed', [
+                Log::channel('geidea')->error('DeletePendingBookings: Geidea verification failed', [
                     'booking_id' => $booking->id,
                     'order_id' => $transaction->order_id,
                     'error' => $e->getMessage(),
@@ -100,7 +100,7 @@ class DeletePendingBookings extends Command
                 }
             }
         } catch (\Exception $e) {
-            Log::error('DeletePendingBookings: failed to send email', [
+            Log::channel('geidea')->error('DeletePendingBookings: failed to send email', [
                 'booking_id' => $booking->id,
                 'error' => $e->getMessage(),
             ]);

@@ -111,6 +111,24 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'geidea' => [
+            'driver' => 'daily',
+            'tap' => [SanitizeContextTap::class],
+            'path' => storage_path('logs/geidea.log'),
+            'level' => env('LOG_LEVEL_GEIDEA', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'geidea_webhook' => [
+            'driver' => 'daily',
+            'tap' => [SanitizeContextTap::class],
+            'path' => storage_path('logs/geidea-webhook.log'),
+            'level' => env('LOG_LEVEL_GEIDEA', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

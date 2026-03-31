@@ -39,7 +39,7 @@ class GeideaPayment implements PaymentMethodInterface
             ->acceptJson()
             ->post($url, $payload);
 
-        Log::channel('payments')->info('Geidea createSession', [
+        Log::channel('geidea')->info('Geidea createSession', [
             'url' => $url,
             'payload' => $payload,
             'status' => $response->status(),
@@ -56,12 +56,12 @@ class GeideaPayment implements PaymentMethodInterface
     /** جلب حالة طلب/مدفوعات من Geidea */
     public function verifyPayment($orderId)
     {
-        $url = $this->apiBase."/payment-intent/api/v2/direct/orders/{$orderId}";
+        $url = $this->apiBase."/pgw/api/v1/direct/order/{$orderId}";
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
             ->acceptJson()
             ->get($url);
 
-        Log::channel('payments')
+        Log::channel('geidea')
             ->info('Geidea retrievePayment', [
                 'orderId' => $orderId,
                 'response' => $response->json(),
@@ -85,7 +85,7 @@ class GeideaPayment implements PaymentMethodInterface
         );
 
         // callbackUrl: server-to-server webhook من Geidea - يُأكد الحجز
-        $webhookUrl = route('geidea.webhook');
+        $webhookUrl = config('payments.gateways.geidea.webhook_url') ?: route('geidea.webhook');
 
         $timestamp = now()->format('Y/m/d H:i:s');
 
@@ -162,14 +162,14 @@ class GeideaPayment implements PaymentMethodInterface
         if ($callbackSuccess && $orderId) {
             $orderData = $this->verifyPayment($orderId);
 
-            if ($orderData && ($orderData['detailedStatus'] ?? null) === 'Paid') {
+            if ($orderData && ($orderData['order']['detailedStatus'] ?? null) === 'Paid') {
                 $isSuccess = true;
             } else {
-                Log::channel('payments')->warning('Geidea payment verification failed', [
+                Log::channel('geidea')->warning('Geidea payment verification failed', [
                     'transaction_id' => $transaction->id,
                     'order_id' => $orderId,
                     'callback_response_code' => $data['responseCode'] ?? null,
-                    'api_detailed_status' => $orderData['detailedStatus'] ?? null,
+                    'api_detailed_status' => $orderData['order']['detailedStatus'] ?? null,
                 ]);
             }
         }
@@ -196,7 +196,7 @@ class GeideaPayment implements PaymentMethodInterface
      |-----------------------------------------------------------------*/
     public function refund($orderId, $amount)
     {
-        $url = $this->apiBase.'/payment-intent/api/v2/direct/refund';
+        $url = $this->apiBase.'/pgw/api/v1/direct/refund';
 
         $payload = [
             'orderId' => $orderId,
@@ -207,7 +207,7 @@ class GeideaPayment implements PaymentMethodInterface
             ->acceptJson()
             ->post($url, $payload);
 
-        Log::channel('payments')->info('Geidea Refund', [
+        Log::channel('geidea')->info('Geidea Refund', [
             'orderId' => $orderId,
             'amount' => $amount,
             'response' => $response->json(),

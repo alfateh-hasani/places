@@ -19,11 +19,11 @@ return [
 
 
         'geidea' => [
-            'public_key'     =>  env('GEIDEA_PUBLIC_KEY', 'dd87268d-dcd7-4595-8970-7f05659a7511'),
-            'api_password'   =>  env('GEIDEA_API_PASSWORD', 'e7bfead9-14ea-47cc-812a-2291f170c033'),
-
-            'api_base'     =>   'https://api.ksamerchant.geidea.net',
-            'hpp_base'     =>  'https://www.ksamerchant.geidea.net/hpp/checkout',
+            'public_key'   => env('GEIDEA_PUBLIC_KEY'),
+            'api_password' => env('GEIDEA_API_PASSWORD'),
+            'api_base'     => env('GEIDEA_API_BASE', 'https://api.ksamerchant.geidea.net'),
+            'hpp_base'     => env('GEIDEA_HPP_BASE', 'https://www.ksamerchant.geidea.net/hpp/checkout'),
+            'webhook_url'  => env('GEIDEA_WEBHOOK_URL'),
             'value' => 'geidea',
             'icon' => 'tap.jpg',
             'currency' => 'SAR',
