@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Services\BookingService;
 use App\Services\PaymentMethods\GeideaPayment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -28,61 +29,76 @@ class GeideaWebhookController extends Controller
             return response()->json(['status' => 'ignored', 'reason' => 'missing orderId']);
         }
 
-        // البحث عن Transaction بواسطة order_id أو merchant reference
-        $transaction = Transaction::where('order_id', $orderId)->first();
-
-        if (! $transaction) {
-            $merchantRef = $data['merchantReferenceId']
-                ?? ($data['order']['merchantReferenceId'] ?? null);
-
-            if ($merchantRef) {
-                $transaction = Transaction::where('transaction_reference', $merchantRef)->first();
-            }
-        }
-
-        if (! $transaction) {
-            Log::channel('geidea_webhook')->warning('Geidea webhook: transaction not found', [
-                'order_id' => $orderId,
-            ]);
-
-            return response()->json(['status' => 'ignored', 'reason' => 'transaction not found']);
-        }
-
-        // إذا العملية مكتملة مسبقاً، لا نكرر المعالجة
-        if ($transaction->status === 'completed') {
-            return response()->json(['status' => 'already_processed']);
-        }
-
-        // التحقق من Geidea API مباشرة
+        // التحقق من Geidea API قبل فتح الـ DB transaction (عملية شبكة طويلة)
         $geidea = new GeideaPayment;
         $orderData = $geidea->verifyPayment($orderId);
 
         if (! $orderData || ($orderData['order']['detailedStatus'] ?? null) !== 'Paid') {
             Log::channel('geidea_webhook')->warning('Geidea webhook: payment not confirmed by API', [
                 'order_id' => $orderId,
-                'transaction_id' => $transaction->id,
                 'api_status' => $orderData['order']['detailedStatus'] ?? null,
             ]);
 
             return response()->json(['status' => 'not_paid']);
         }
 
-        // تحديث Transaction
-        $transaction->status = 'completed';
-        $transaction->order_id = $orderId;
-        $transaction->payment_gateway_response = json_encode($data);
-        $transaction->save();
+        // الـ critical section: قراءة + تحديث في DB transaction واحدة مع lock
+        $result = DB::transaction(function () use ($orderId, $data) {
+            $transaction = Transaction::where('order_id', $orderId)->lockForUpdate()->first();
 
-        // تأكيد الحجز
+            if (! $transaction) {
+                $merchantRef = $data['merchantReferenceId']
+                    ?? ($data['order']['merchantReferenceId'] ?? null);
+
+                if ($merchantRef) {
+                    $transaction = Transaction::where('transaction_reference', $merchantRef)->lockForUpdate()->first();
+                }
+            }
+
+            if (! $transaction) {
+                return ['status' => 'ignored', 'reason' => 'transaction not found'];
+            }
+
+            if ($transaction->status === 'completed') {
+                return ['status' => 'already_processed'];
+            }
+
+            $transaction->status = 'completed';
+            $transaction->order_id = $orderId;
+            $transaction->payment_gateway_response = json_encode($data);
+            $transaction->save();
+
+            return ['status' => 'proceed', 'transaction' => $transaction];
+        });
+
+        if ($result['status'] !== 'proceed') {
+            if ($result['status'] === 'ignored') {
+                Log::channel('geidea_webhook')->warning('Geidea webhook: transaction not found', [
+                    'order_id' => $orderId,
+                ]);
+            }
+
+            return response()->json(['status' => $result['status'], 'reason' => $result['reason'] ?? null]);
+        }
+
+        $transaction = $result['transaction'];
         $booking = $transaction->booking;
 
-        if (! $booking || $booking->status === 'approved') {
+        if (! $booking) {
+            Log::channel('geidea_webhook')->warning('Geidea webhook: booking not found for transaction', [
+                'order_id' => $orderId,
+                'transaction_id' => $transaction->id,
+            ]);
+
+            return response()->json(['status' => 'ok']);
+        }
+
+        if ($booking->status === 'approved') {
             return response()->json(['status' => 'ok']);
         }
 
         app(BookingService::class)->completeBookingAfterPayment($transaction->id);
 
-        // إرسال الإيميلات
         $booking->refresh();
         $this->sendConfirmationEmails($booking);
 

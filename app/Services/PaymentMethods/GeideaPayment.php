@@ -169,7 +169,7 @@ class GeideaPayment implements PaymentMethodInterface
                     'transaction_id' => $transaction->id,
                     'order_id' => $orderId,
                     'callback_response_code' => $data['responseCode'] ?? null,
-                    'api_detailed_status' => $orderData['detailedStatus'] ?? null,
+                    'api_detailed_status' => $orderData['order']['detailedStatus'] ?? null,
                 ]);
             }
         }
@@ -196,7 +196,7 @@ class GeideaPayment implements PaymentMethodInterface
      |-----------------------------------------------------------------*/
     public function refund($orderId, $amount)
     {
-        $url = $this->apiBase.'/payment-intent/api/v2/direct/refund';
+        $url = $this->apiBase.'/pgw/api/v1/direct/refund';
 
         $payload = [
             'orderId' => $orderId,
