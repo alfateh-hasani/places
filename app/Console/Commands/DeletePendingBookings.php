@@ -7,6 +7,7 @@ use App\Models\Building;
 use App\Services\BookingService;
 use App\Services\PaymentMethods\GeideaPayment;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -21,7 +22,10 @@ class DeletePendingBookings extends Command
         $pendingBookings = Booking::query()
             ->where('status', 'pending')
             ->where('created_at', '<', now()->subMinutes(5))
+            ->with('transaction')
             ->get();
+
+        $geidea = new GeideaPayment;
 
         foreach ($pendingBookings as $booking) {
             $transaction = $booking->transaction;
@@ -35,7 +39,6 @@ class DeletePendingBookings extends Command
 
             // يوجد order_id → نتحقق من Geidea قبل الحذف
             try {
-                $geidea = new GeideaPayment;
                 $orderData = $geidea->verifyPayment($transaction->order_id);
 
                 if (! $orderData) {
@@ -51,8 +54,23 @@ class DeletePendingBookings extends Command
                 $detailedStatus = $orderData['order']['detailedStatus'] ?? null;
 
                 if ($detailedStatus === 'Paid') {
-                    // مدفوع فعلاً! نأكد الحجز بدل ما نحذفه
-                    $transaction->update(['status' => 'completed']);
+                    // مدفوع فعلاً! نأكد الحجز بدل ما نحذفه مع lock لمنع race condition مع الـ webhook
+                    $confirmed = DB::transaction(function () use ($transaction) {
+                        $tx = \App\Models\Transaction::where('id', $transaction->id)->lockForUpdate()->first();
+
+                        if ($tx->status === 'completed') {
+                            return false;
+                        }
+
+                        $tx->update(['status' => 'completed']);
+
+                        return true;
+                    });
+
+                    if (! $confirmed) {
+                        continue;
+                    }
+
                     app(BookingService::class)->completeBookingAfterPayment($transaction->id);
 
                     $booking->refresh();
