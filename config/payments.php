@@ -23,6 +23,7 @@ return [
             'api_password' => env('GEIDEA_API_PASSWORD'),
             'api_base'     => env('GEIDEA_API_BASE', 'https://api.ksamerchant.geidea.net'),
             'hpp_base'     => env('GEIDEA_HPP_BASE', 'https://www.ksamerchant.geidea.net/hpp/checkout'),
+            'webhook_url'  => env('GEIDEA_WEBHOOK_URL'),
             'value' => 'geidea',
             'icon' => 'tap.jpg',
             'currency' => 'SAR',

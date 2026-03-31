@@ -85,7 +85,7 @@ class GeideaPayment implements PaymentMethodInterface
         );
 
         // callbackUrl: server-to-server webhook من Geidea - يُأكد الحجز
-        $webhookUrl = route('geidea.webhook');
+        $webhookUrl = config('payments.gateways.geidea.webhook_url') ?: route('geidea.webhook');
 
         $timestamp = now()->format('Y/m/d H:i:s');
 
