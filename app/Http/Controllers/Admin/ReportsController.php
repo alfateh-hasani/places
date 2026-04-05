@@ -299,6 +299,7 @@ class ReportsController extends Controller
         $site = $request->input('site', 'all');
 
         $query = Booking::whereDate('check_out', Carbon::today())
+            ->whereNotIn('status', ['canceled', 'customer_canceled', 'rejected'])
             ->with(['apartment.building']);
 
         // تطبيق الفلتر حسب المصدر
@@ -524,6 +525,7 @@ class ReportsController extends Controller
         $site = $request->input('site', 'all');
 
         $query = Booking::whereDate('check_in', Carbon::today())
+            ->whereNotIn('status', ['canceled', 'customer_canceled', 'rejected'])
             ->with(['apartment.building']);
 
         if ($source === 'app') {
