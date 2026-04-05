@@ -391,10 +391,11 @@ class ReportsController extends Controller
                     'limit' => 100,
                 ]);
 
-                // فلترة: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks)
+                // فلترة: فقط الحجوزات التي تاريخ مغادرتها اليوم (وليست blocks وليست ملغية)
                 $bookings = collect($items)
                     ->filter(fn ($b) => ($b['departure'] ?? '') === $today &&
-                        ($b['type'] ?? '') !== 'block'
+                        ($b['type'] ?? '') !== 'block' &&
+                        ($b['status'] ?? '') !== 'canceled'
                     )
                     ->values();
 
@@ -610,10 +611,11 @@ class ReportsController extends Controller
                     'limit' => 100,
                 ]);
 
-                // فلترة: فقط الحجوزات التي تاريخ وصولها اليوم (وليست blocks)
+                // فلترة: فقط الحجوزات التي تاريخ وصولها اليوم (وليست blocks وليست ملغية)
                 $bookings = collect($items)
                     ->filter(fn ($b) => ($b['arrival'] ?? '') === $today &&
-                        ($b['type'] ?? '') !== 'block'
+                        ($b['type'] ?? '') !== 'block' &&
+                        ($b['status'] ?? '') !== 'canceled'
                     )
                     ->values();
 
