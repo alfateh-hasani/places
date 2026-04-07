@@ -63,7 +63,7 @@
         <div class="flex items-center">
             
             <p class="font-bold text-sm text-price">
-                {{ $apartment->price }} <span class="currency"> @lang('apartment.currency')</span> /
+                {{ $apartment->priceInfo['total'] ?? $apartment->price }} <span class="currency"> @lang('apartment.currency')</span> /
             </p>
 
             <p class="font-normal text-sm text-reviews ml-1 rtl:mr-1 rtl:ml-0">@lang('apartment.night')</p>

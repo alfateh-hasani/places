@@ -99,11 +99,11 @@ class ApartmentController extends Controller
             }
         }
 
-        // احسب سعر ليلة واحدة
+        // احسب سعر ليلة واحدة بناءً على اليوم الحالي دائماً
         $priceInfo = $this->pricing->calculate(
             $apartment,
-            Carbon::parse($started_day),
-            Carbon::parse($next_started_day)
+            Carbon::today(),
+            Carbon::tomorrow()
         );
 
         // إعداد SEO

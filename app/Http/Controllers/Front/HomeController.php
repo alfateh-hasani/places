@@ -12,7 +12,9 @@ use App\Models\Review;
 use App\Models\SiteFeature;
 use App\Models\Slider;
 use App\Services\HomeApartmentOrderingService;
+use App\Services\Pricing\PricingService;
 use Artesaos\SEOTools\Facades\SEOTools;
+use Carbon\Carbon;
 use Config;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +22,10 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function __construct(private readonly HomeApartmentOrderingService $homeApartmentOrderingService) {}
+    public function __construct(
+        private readonly HomeApartmentOrderingService $homeApartmentOrderingService,
+        private readonly PricingService $pricing,
+    ) {}
 
     public function index(Request $request): View|JsonResponse
     {
@@ -28,6 +33,14 @@ class HomeController extends Controller
         $data = [];
         $data['sliders'] = Slider::orderBy('sort_order', 'asc')->get();
         $data['apartments'] = $this->homeApartmentOrderingService->paginateDiversified();
+
+        $checkIn = Carbon::today();
+        $checkOut = Carbon::tomorrow();
+        $data['apartments']->getCollection()->transform(function (Apartment $apt) use ($checkIn, $checkOut) {
+            $apt->priceInfo = $this->pricing->calculate($apt, $checkIn, $checkOut);
+
+            return $apt;
+        });
 
         $data['cities'] = City::orderBy('sort_order', 'asc')->withCount('apartments')->get();
         $data['buildings'] = City::with('buildings')->orderBy('sort_order', 'asc')->whereHas('buildings')->get();
@@ -150,6 +163,14 @@ class HomeController extends Controller
         $this->generateSeo($seo_top_title, $seo_description, $url);
         $this->data['city'] = $city;
         $this->data['apartments'] = $city->apartments()->where('is_active', true)->orderBy('id', 'desc')->paginate(30);
+
+        $checkIn = Carbon::today();
+        $checkOut = Carbon::tomorrow();
+        $this->data['apartments']->getCollection()->transform(function (Apartment $apt) use ($checkIn, $checkOut) {
+            $apt->priceInfo = $this->pricing->calculate($apt, $checkIn, $checkOut);
+
+            return $apt;
+        });
         $this->data['cities'] = City::orderBy('sort_order', 'asc')->withCount('apartments')->get();
         $this->data['buildings'] = City::with('buildings')->orderBy('sort_order', 'asc')->whereHas('buildings')->get();
 
