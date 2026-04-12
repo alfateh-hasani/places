@@ -243,10 +243,7 @@ class Booking extends Model
             ->logAll();
     }
 
-    /**
-     * التحقق من إمكانية إلغاء الحجز بناءً على سياسة الإلغاء
-     */
-    public function canBeCanceled(): bool
+   public function canBeCanceled(): bool
     {
         // التحقق من أن الحجز في حالة approved و paid
         if ($this->status !== 'approved' || $this->payment_status !== 'paid') {
@@ -257,8 +254,12 @@ class Booking extends Model
         $setting = \DB::table('settings')->where('key', 'cancel_before_hours')->first();
         $cancelBeforeHours = $setting ? (int) $setting->value : 24;
 
+        $checkInTime = $this->check_in_time?->format('H:i:s');
+        if (!$checkInTime) {
+            $checkInTime = '16:00:00';
+        }
         // حساب الفرق بالساعات بين الآن ووقت تسجيل الدخول
-        $checkInDateTime = $this->check_in->setTimeFromTimeString($this->check_in_time->format('H:i:s'));
+        $checkInDateTime = $this->check_in?->setTimeFromTimeString($checkInTime);
         $hoursUntilCheckIn = now()->diffInHours($checkInDateTime, false);
 
         // التحقق من أن الوقت المتبقي أكبر من أو يساوي المطلوب
