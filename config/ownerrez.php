@@ -14,6 +14,9 @@ return [
 
     'api_url' => env('OWNERREZ_API_URL', 'https://api.ownerrez.com'),
 
+    // Base URL of the OwnerRez web app (used to deep-link staff to a booking to cancel it).
+    'app_url' => env('OWNERREZ_APP_URL', 'https://app.ownerrez.com'),
+
     // Basic Auth credentials for API
     'username' => env('OWNERREZ_USERNAME'),
     'password' => env('OWNERREZ_PASSWORD'),

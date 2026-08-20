@@ -55,6 +55,10 @@ Route::group([
     Route::crud('canceled-bookings', CanceledBookingsController::class);
     Route::post('canceled-bookings/{id}/process-refund/{action}', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.process-refund');
 
+    // Refunds tracker (follow the money)
+    Route::crud('refund', 'RefundCrudController');
+    Route::post('refund/{id}/retry', [\App\Http\Controllers\Admin\RefundCrudController::class, 'retry'])->name('admin.refund.retry');
+
     // Daily Occupancy
     Route::get('charts/daily-occupancy', [\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');
 

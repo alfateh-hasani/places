@@ -166,6 +166,15 @@ class OwnerRezSyncService
         $action = $webhookData['action'] ?? null;
         $bookingData = $webhookData['data'] ?? [];
 
+        // `entity_id` is the authoritative OwnerRez booking/block id for EVERY action.
+        // On entity_delete the entity body is empty ({}) and `data` instead carries the
+        // webhook EVENT id in `id` (the wrong value), so we must always trust `entity_id`
+        // to resolve the local booking via the ownerrez_bookings link. For create/update
+        // entity_id equals entity.id, so this override is a no-op there.
+        if (! empty($webhookData['entity_id'])) {
+            $bookingData['id'] = $webhookData['entity_id'];
+        }
+
         Log::channel('ownerrez_webhook')->info('OwnerRez webhook processing started', [
             'action' => $action,
             'entity_id' => $webhookData['entity_id'] ?? null,
@@ -557,9 +566,18 @@ class OwnerRezSyncService
      */
     public function cancelLocalBookingFromOwnerRez(Booking $booking): void
     {
+        // إذا كان الحجز طلب إلغاء من العميل قيد المراجعة، فإن إلغاءه في OwnerRez = قبول الطلب:
+        // نُنهي الإلغاء محلياً (يحرّر الوحدة) ثم نُطلق حدث الاسترداد.
+        $wasCustomerRequest = $booking->status === 'customer_canceled'
+            && $booking->refund_status === 'pending';
+
         $booking->update([
             'status' => 'canceled',
         ]);
+
+        if ($wasCustomerRequest) {
+            event(new \App\Events\CustomerCancellationAccepted($booking));
+        }
     }
 
     /**
