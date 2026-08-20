@@ -566,18 +566,12 @@ class OwnerRezSyncService
      */
     public function cancelLocalBookingFromOwnerRez(Booking $booking): void
     {
-        // إذا كان الحجز طلب إلغاء من العميل قيد المراجعة، فإن إلغاءه في OwnerRez = قبول الطلب:
-        // نُنهي الإلغاء محلياً (يحرّر الوحدة) ثم نُطلق حدث الاسترداد.
-        $wasCustomerRequest = $booking->status === 'customer_canceled'
-            && $booking->refund_status === 'pending';
-
+        // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد أصبح خطوة منفصلة يُنفّذها الموظف يدوياً
+        // من شاشة "الحجوزات الملغاة" بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
+        // refund_status يبقى كما هو (pending لطلبات العملاء) لتظهر خطوة الاسترداد.
         $booking->update([
             'status' => 'canceled',
         ]);
-
-        if ($wasCustomerRequest) {
-            event(new \App\Events\CustomerCancellationAccepted($booking));
-        }
     }
 
     /**

@@ -7,7 +7,6 @@ use App\Models\Booking;
 use App\Services\PaymentMethods\GeideaPayment;
 use Illuminate\Support\Facades\DB;
 use Mockery;
-use RuntimeException;
 use Tests\TestCase;
 
 /**
@@ -86,25 +85,22 @@ class ProcessBookingRefundTest extends TestCase
         $this->assertDatabaseHas('refunds', ['transaction_id' => $booking->transaction_id, 'status' => 'processing']);
     }
 
-    public function test_hard_failure_marks_failed_and_throws(): void
+    public function test_business_decline_marks_failed_with_reason_no_exception(): void
     {
         $booking = $this->makeCanceledBooking('order-fail', 500.0);
 
         $gateway = Mockery::mock(GeideaPayment::class);
         $gateway->shouldReceive('verifyPayment')->andReturn($this->paidOrder('order-fail', 500));
         $gateway->shouldReceive('refund')->once()
-            ->andReturn(['success' => false, 'message' => 'declined', 'error' => ['responseCode' => '999']]);
+            ->andReturn(['success' => false, 'message' => 'declined', 'error' => ['detailedResponseMessage' => 'Partial Refund not enabled', 'responseCode' => '999']]);
         $this->app->instance(GeideaPayment::class, $gateway);
 
-        try {
-            app(ProcessBookingRefund::class)->execute($booking);
-            $this->fail('Expected RuntimeException on hard refund failure.');
-        } catch (RuntimeException $e) {
-            // expected
-        }
+        // A business decline must NOT throw (would 500 the admin); it marks failed and returns.
+        $outcome = app(ProcessBookingRefund::class)->execute($booking);
 
-        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'refund_status' => 'failed']);
-        $this->assertDatabaseHas('refunds', ['transaction_id' => $booking->transaction_id, 'status' => 'failed']);
+        $this->assertSame('failed', $outcome);
+        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'refund_status' => 'failed', 'refund_error' => 'Partial Refund not enabled']);
+        $this->assertDatabaseHas('refunds', ['transaction_id' => $booking->transaction_id, 'status' => 'failed', 'error_message' => 'Partial Refund not enabled']);
     }
 
     private function makeCanceledBooking(string $orderId, float $amount): Booking

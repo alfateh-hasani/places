@@ -58,6 +58,7 @@ class GeideaPayment implements PaymentMethodInterface
     {
         $url = $this->apiBase."/pgw/api/v1/direct/order/{$orderId}";
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
+            ->connectTimeout(15)->timeout(30)
             ->acceptJson()
             ->get($url);
 
@@ -209,6 +210,7 @@ class GeideaPayment implements PaymentMethodInterface
         ];
 
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
+            ->connectTimeout(15)->timeout(30)
             ->acceptJson()
             ->post($url, $payload);
 

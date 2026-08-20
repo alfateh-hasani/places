@@ -17,20 +17,20 @@ return [
         //     'test_mode' => false,
         // ],
 
-
         'geidea' => [
-            'public_key'   => env('GEIDEA_PUBLIC_KEY'),
+            'public_key' => env('GEIDEA_PUBLIC_KEY'),
             'api_password' => env('GEIDEA_API_PASSWORD'),
-            'api_base'     => env('GEIDEA_API_BASE', 'https://api.ksamerchant.geidea.net'),
-            'hpp_base'     => env('GEIDEA_HPP_BASE', 'https://www.ksamerchant.geidea.net/hpp/checkout'),
-            'webhook_url'  => env('GEIDEA_WEBHOOK_URL'),
+            'api_base' => env('GEIDEA_API_BASE', 'https://api.ksamerchant.geidea.net'),
+            'hpp_base' => env('GEIDEA_HPP_BASE', 'https://www.ksamerchant.geidea.net/hpp/checkout'),
+            'webhook_url' => env('GEIDEA_WEBHOOK_URL'),
+            // فعِّل الاسترداد الجزئي بعد تفعيله في حساب جيديا: GEIDEA_PARTIAL_REFUND=true
+            'partial_refund' => env('GEIDEA_PARTIAL_REFUND', false),
             'value' => 'geidea',
             'icon' => 'tap.jpg',
             'currency' => 'SAR',
             'explanation' => 'Pay with Tap',
             'title' => 'الدفع بالبطاقة',
         ],
-
 
     ],
 

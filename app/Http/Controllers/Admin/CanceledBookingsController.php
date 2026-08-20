@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\CustomerCancellationAccepted;
+use App\Models\Booking;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Backpack\CRUD\app\Library\Widget;
+use Illuminate\Http\Request;
 
 class CanceledBookingsController extends CrudController
 {
@@ -26,9 +28,11 @@ class CanceledBookingsController extends CrudController
             abort(403, 'Unauthorized Access');
         }
 
-        // شاشة إجراء: فقط طلبات الإلغاء التي تنتظر قرار الموظف (قبول/رفض).
-        // متابعة الاسترداد (processing / failed / refunded) لها شاشة مستقلة: "المستردات".
-        CRUD::addClause('where', 'status', 'customer_canceled');
+        // شاشة إجراء بخطوتين:
+        // 1) status=customer_canceled  → بحاجة إلى إلغاء (OwnerRez أو محلي)
+        // 2) status=canceled           → أُلغي، وبحاجة إلى استرداد المبلغ
+        // كلاهما بـ refund_status=pending. بعد الاسترداد/الرفض يخرج من القائمة.
+        CRUD::addClause('whereIn', 'status', ['customer_canceled', 'canceled']);
         CRUD::addClause('where', 'refund_status', 'pending');
         CRUD::addClause('orderBy', 'created_at', 'desc');
     }
@@ -130,6 +134,16 @@ class CanceledBookingsController extends CrudController
             'label' => __('cms.check_out'),
         ]);
 
+        // حالة الحجز — تُبيّن الخطوة المطلوبة: customer_canceled = بحاجة إلغاء، canceled = بحاجة استرداد
+        CRUD::addColumn([
+            'name' => 'status',
+            'type' => 'custom_html',
+            'label' => __('cms.booking_status'),
+            'value' => function ($entry) {
+                return $this->getBookingStepBadge($entry->status);
+            },
+        ]);
+
         CRUD::addColumn([
             'name' => 'refund_amount',
             'type' => 'custom_html',
@@ -154,59 +168,137 @@ class CanceledBookingsController extends CrudController
             'label' => __('cms.canceled_at'),
         ]);
 
-        // إضافة أزرار الإجراءات
-        // رابط مباشر لإلغاء الحجز في OwnerRez (للوحدات المربوطة) — الإشعار الوارد يُنهي الإلغاء ويسترد المبلغ تلقائياً
+        // أزرار الإجراءات — خطوتان:
+        // الخطوة 1 (الإلغاء) عندما status=customer_canceled:
+        //   - وحدة مربوطة بـ OwnerRez → رابط الإلغاء في OwnerRez (الويبهوك يُنهي الإلغاء محلياً).
+        //   - وحدة غير مربوطة        → زر إلغاء محلي.
+        //   - رفض الطلب.
+        // الخطوة 2 (الاسترداد) عندما status=canceled: زر استرداد يفتح نافذة تحديد المبلغ (كامل/جزئي).
         CRUD::addButtonFromView('line', 'ownerrez_deeplink', 'ownerrez_deeplink', 'end');
-        CRUD::addButtonFromView('line', 'approve_refund', 'approve_refund', 'end');
+        CRUD::addButtonFromView('line', 'cancel_local', 'cancel_local', 'end');
         CRUD::addButtonFromView('line', 'reject_refund', 'reject_refund', 'end');
+        CRUD::addButtonFromView('line', 'refund_action', 'refund_action', 'end');
+
+        // نافذة تحديد مبلغ الاسترداد (تُضاف مرة واحدة). نافذة مخفية؛ before_content مضمون العرض.
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.refunds.refund_modal',
+        ])->to('before_content');
     }
 
     /**
-     * معالجة طلب الإلغاء/الاسترداد من لوحة الإدارة.
-     * - approve: قبول الإلغاء للوحدات غير المربوطة بـ OwnerRez → إنهاء الإلغاء + استرداد تلقائي.
-     * - reject:  رفض الطلب وإعادة الحجز نشطاً (آمن؛ الوحدة كانت محجوزة طوال المراجعة).
-     * - retry:   إعادة محاولة استرداد فاشل.
+     * الخطوة 1 (وحدة غير مربوطة بـ OwnerRez): إلغاء محلي فقط — يحرّر الوحدة بلا استرداد.
+     * الوحدات المربوطة تُلغى في OwnerRez (الويبهوك يُنهي الإلغاء).
      */
-    public function processRefund($id, $action)
+    public function cancelLocal($id)
+    {
+        $booking = $this->authorizedBooking($id);
+
+        if ($booking->status !== 'customer_canceled' || $booking->refund_status !== 'pending') {
+            \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+            return back();
+        }
+
+        if (! empty($booking->ownerrez_booking_id)) {
+            \Alert::error(__('cms.use_ownerrez_to_cancel'))->flash();
+
+            return back();
+        }
+
+        // إلغاء محلي فقط — تتحرّر الوحدة، ويبقى refund_status=pending للخطوة الثانية (الاسترداد).
+        $booking->update(['status' => 'canceled']);
+
+        \Alert::success(__('cms.booking_canceled_now_refund'))->flash();
+
+        return back();
+    }
+
+    /**
+     * الخطوة 2: استرداد المبلغ بعد الإلغاء — كامل أو جزئي (0 < amount ≤ المبلغ الكامل).
+     */
+    public function processRefund($id, Request $request)
+    {
+        $booking = $this->authorizedBooking($id);
+
+        if ($booking->status !== 'canceled' || $booking->refund_status !== 'pending') {
+            \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+            return back();
+        }
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'gt:0', 'lte:'.(float) $booking->final_price],
+        ], [], ['amount' => __('cms.refund_amount')]);
+
+        // المبلغ المُرسل من النافذة (كامل عند إخفاء الجزئي).
+        $booking->update(['refund_amount' => $validated['amount']]);
+
+        $this->runRefund($booking);
+
+        return back();
+    }
+
+    /**
+     * ينفّذ الاسترداد ويعرض نتيجة واضحة للموظف (بدون 500).
+     */
+    private function runRefund(Booking $booking): void
+    {
+        try {
+            $outcome = app(\App\Actions\Refunds\ProcessBookingRefund::class)->execute($booking->fresh());
+        } catch (\Throwable $e) {
+            \Alert::error(__('cms.refund_failed').': '.$e->getMessage())->flash();
+
+            return;
+        }
+
+        $fresh = $booking->fresh();
+        match ($outcome) {
+            'approved' => \Alert::success(__('cms.refund_done'))->flash(),
+            'processing' => \Alert::warning(__('cms.refund_processing_flash'))->flash(),
+            default => \Alert::error(__('cms.refund_failed').': '.($fresh->refund_error ?: ''))->flash(),
+        };
+    }
+
+    /**
+     * رفض طلب الإلغاء وإعادة الحجز نشطاً — آمن ضد الحجز المزدوج (الوحدة بقيت محجوزة طوال المراجعة).
+     */
+    public function reject($id)
+    {
+        $booking = $this->authorizedBooking($id);
+
+        if ($booking->status !== 'customer_canceled' || $booking->refund_status !== 'pending') {
+            \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+            return back();
+        }
+
+        $booking->update(['refund_status' => 'rejected', 'status' => 'approved']);
+
+        \Alert::success(__('cms.refund_rejected_successfully'))->flash();
+
+        return back();
+    }
+
+    private function authorizedBooking($id): Booking
     {
         if (! backpack_user()->can('booking.changeStatus')) {
             abort(403, 'Unauthorized Access');
         }
 
-        $booking = \App\Models\Booking::findOrFail($id);
+        return Booking::findOrFail($id);
+    }
 
-        if ($action === 'approve') {
-            if ($booking->status !== 'customer_canceled' || $booking->refund_status !== 'pending') {
-                \Alert::error(__('cms.invalid_booking_status'))->flash();
-
-                return back();
-            }
-
-            // إنهاء الإلغاء (يحرّر الوحدة) ثم إطلاق الاسترداد التلقائي عبر المستمع.
-            $booking->status = 'canceled';
-            $booking->save();
-            event(new CustomerCancellationAccepted($booking));
-
-            \Alert::success(__('cms.refund_approved_successfully'))->flash();
-        } elseif ($action === 'reject') {
-            if ($booking->status !== 'customer_canceled' || $booking->refund_status !== 'pending') {
-                \Alert::error(__('cms.invalid_booking_status'))->flash();
-
-                return back();
-            }
-
-            // رفض الطلب وإعادة الحجز نشطاً — آمن ضد الحجز المزدوج لأن الوحدة بقيت محجوزة
-            // طوال فترة المراجعة (انظر BookingService::checkAvailability).
-            $booking->refund_status = 'rejected';
-            $booking->status = 'approved';
-            $booking->save();
-
-            \Alert::success(__('cms.refund_rejected_successfully'))->flash();
-        } else {
-            \Alert::error(__('cms.invalid_action'))->flash();
+    private function getBookingStepBadge(?string $status): string
+    {
+        if ($status === 'customer_canceled') {
+            return "<span class='badge' style='background-color:#fd7e14;color:#fff;padding:.4em .6em;border-radius:6px;'><i class='la la-hourglass-half'></i> ".__('cms.step_needs_cancel').'</span>';
+        }
+        if ($status === 'canceled') {
+            return "<span class='badge' style='background-color:#3498db;color:#fff;padding:.4em .6em;border-radius:6px;'><i class='la la-money-bill-wave'></i> ".__('cms.step_needs_refund').'</span>';
         }
 
-        return back();
+        return "<span class='badge badge-secondary'>{$status}</span>";
     }
 
     /**
