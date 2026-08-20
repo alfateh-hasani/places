@@ -514,6 +514,33 @@ class BookingController extends CrudController
         //     }
         // ]);
 
+        // جدول معلومات الحالة (حالة الحجز + الدفع + الاسترداد)
+        CRUD::addColumn([
+            'name' => 'معلومات &nbsp; الحالة',
+            'type' => 'custom_html',
+            'value' => function ($entry) {
+                $refundRow = $entry->refund_status ? '
+                        <tr>
+                            <th>'.__('cms.refund_status').' <i class="la la-money-bill-wave"></i></th>
+                            <td>'.$this->getRefundStatusBadge($entry->refund_status).
+                            ($entry->refund_amount ? ' <span class="text-muted">('.number_format($entry->refund_amount, 2).' SAR)</span>' : '').'</td>
+                        </tr>' : '';
+
+                return '
+                    <h5><strong>'.__('cms.status_info').'</strong></h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>'.__('cms.status').' <i class="la la-info-circle"></i></th>
+                            <td>'.$this->getStatusBadge($entry->status).'</td>
+                        </tr>
+                        <tr>
+                            <th>'.__('cms.payment_status').' <i class="la la-credit-card"></i></th>
+                            <td>'.e($entry->payment_status).'</td>
+                        </tr>'.$refundRow.'
+                    </table>';
+            },
+        ]);
+
         // جدول لعدد البالغين والأطفال وطريقة الدفع
         CRUD::addColumn([
             'name' => 'معلومات &nbsp;&nbsp;إضافية',
@@ -540,6 +567,37 @@ class BookingController extends CrudController
         ]);
     }
 
+    // دالة مساعدة لتنسيق حالة الاسترداد كـBadge
+    protected function getRefundStatusBadge($refundStatus)
+    {
+        $labels = [
+            'pending' => __('cms.refund_status_pending'),
+            'processing' => __('cms.refund_status_processing'),
+            'approved' => __('cms.refund_status_approved'),
+            'rejected' => __('cms.refund_status_rejected'),
+            'failed' => __('cms.refund_status_failed'),
+        ];
+        $colors = [
+            'pending' => '#f0ad4e',
+            'processing' => '#3498db',
+            'approved' => '#28a745',
+            'rejected' => '#b02a37',
+            'failed' => '#e74c3c',
+        ];
+        $icons = [
+            'pending' => 'la-clock',
+            'processing' => 'la-spinner',
+            'approved' => 'la-check-circle',
+            'rejected' => 'la-times-circle',
+            'failed' => 'la-exclamation-triangle',
+        ];
+        $color = $colors[$refundStatus] ?? '#6c757d';
+        $icon = $icons[$refundStatus] ?? 'la-money-bill-wave';
+        $label = $labels[$refundStatus] ?? ucfirst((string) $refundStatus);
+
+        return "<span class='badge' style='background-color:{$color};color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la {$icon}' style='font-size:1.05rem;vertical-align:-2px;'></i> {$label}</span>";
+    }
+
     // دالة مساعدة لتنسيق الحالة كـBadge
     protected function getStatusBadge($status)
     {
@@ -553,18 +611,28 @@ class BookingController extends CrudController
             'customer_canceled' => __('cms.status_customer_canceled'),
         ];
         $statusColors = [
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'booked' => 'primary',
-            'finished' => 'secondary',
-            'canceled' => 'dark',
-            'customer_canceled' => 'danger',
+            'pending' => '#6c757d',
+            'approved' => '#28a745',
+            'rejected' => '#b02a37',
+            'booked' => '#007bff',
+            'finished' => '#343a40',
+            'canceled' => '#dc3545',
+            'customer_canceled' => '#fd7e14',
         ];
-        $color = $statusColors[$status] ?? 'info';
+        $statusIcons = [
+            'pending' => 'la-clock',
+            'approved' => 'la-check-circle',
+            'rejected' => 'la-times-circle',
+            'booked' => 'la-calendar-check',
+            'finished' => 'la-flag-checkered',
+            'canceled' => 'la-ban',
+            'customer_canceled' => 'la-user-times',
+        ];
+        $color = $statusColors[$status] ?? '#17a2b8';
+        $icon = $statusIcons[$status] ?? 'la-info-circle';
         $label = $statusLabels[$status] ?? ucfirst($status);
 
-        return "<span class='badge badge-{$color}'>{$label}</span>";
+        return "<span class='badge' style='background-color:{$color};color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la {$icon}' style='font-size:1.05rem;vertical-align:-2px;'></i> {$label}</span>";
     }
 
     // دالة مساعدة لتنسيق حالة الدفع كـBadge

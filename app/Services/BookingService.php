@@ -79,7 +79,8 @@ class BookingService
         }
 
         // 1. التحقق من الحجوزات المحلية
-        $activeStatuses = ['pending', 'approved', 'booked'];
+        // ملاحظة: customer_canceled = "طلب إلغاء قيد المراجعة" يبقى حاجزاً للوحدة حتى يُقبل الإلغاء نهائياً (يصبح canceled)
+        $activeStatuses = ['pending', 'approved', 'booked', 'customer_canceled'];
 
         $overlapExists = Booking::where('apartment_id', $apartment->id)
             ->whereIn('status', $activeStatuses)

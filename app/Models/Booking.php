@@ -45,7 +45,13 @@ class Booking extends Model
             'passcode_generated_at' => 'datetime',
             'refund_date' => 'datetime',
             'refund_amount' => 'float',
+            'last_refund_attempt_at' => 'datetime',
         ];
+    }
+
+    public function refunds(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Refund::class);
     }
 
     protected static function boot()
@@ -243,7 +249,7 @@ class Booking extends Model
             ->logAll();
     }
 
-   public function canBeCanceled(): bool
+    public function canBeCanceled(): bool
     {
         // التحقق من أن الحجز في حالة approved و paid
         if ($this->status !== 'approved' || $this->payment_status !== 'paid') {
@@ -255,7 +261,7 @@ class Booking extends Model
         $cancelBeforeHours = $setting ? (int) $setting->value : 24;
 
         $checkInTime = $this->check_in_time?->format('H:i:s');
-        if (!$checkInTime) {
+        if (! $checkInTime) {
             $checkInTime = '16:00:00';
         }
         // حساب الفرق بالساعات بين الآن ووقت تسجيل الدخول

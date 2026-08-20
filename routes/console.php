@@ -35,3 +35,5 @@ Schedule::command('log:clean')->daily();
 
 Schedule::command('delete:pending-bookings')->everyTenMinutes();
 
+// إعادة محاولة/تسوية عمليات الاسترداد العالقة (processing/failed) في جيديا
+Schedule::command('refunds:reconcile')->everyTenMinutes();
