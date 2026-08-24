@@ -3,8 +3,6 @@
 namespace App\Providers;
 
 use App\Events\BookingApproved;
-use App\Events\CustomerCancellationAccepted;
-use App\Listeners\ProcessCustomerRefund;
 use App\Listeners\SyncBookingToOwnerRez;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -18,9 +16,6 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         BookingApproved::class => [
             SyncBookingToOwnerRez::class,
-        ],
-        CustomerCancellationAccepted::class => [
-            ProcessCustomerRefund::class,
         ],
     ];
 

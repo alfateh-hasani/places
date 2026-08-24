@@ -45,7 +45,11 @@ class Refund extends Model
      */
     public function wasIssued(): bool
     {
-        return (bool) data_get($this->response_payload, 'success') === true
-            || in_array($this->status, [self::STATUS_PROCESSING, self::STATUS_REFUNDED], true);
+        // Only trust a real success RESPONSE (or a completed refund). We must NOT treat
+        // STATUS_PROCESSING as "issued" — that status is also set when a refund call times
+        // out (outcome unknown), and such an attempt must remain retryable. The idempotent
+        // getOrder pre-check in ProcessBookingRefund guards against double-refunding.
+        return data_get($this->response_payload, 'success') === true
+            || $this->status === self::STATUS_REFUNDED;
     }
 }

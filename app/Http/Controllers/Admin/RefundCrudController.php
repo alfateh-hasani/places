@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Jobs\ProcessGeideaRefundJob;
 use App\Models\Refund;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
@@ -33,6 +32,9 @@ class RefundCrudController extends CrudController
     protected function setupListOperation()
     {
         $this->addKpiWidgets();
+
+        // نافذة تحديد مبلغ الاسترداد (يفتحها زر "إعادة محاولة" لتغيير المبلغ/اختيار كامل)
+        Widget::add(['type' => 'view', 'view' => 'admin.refunds.refund_modal'])->to('before_content');
 
         CRUD::addColumn([
             'name' => 'booking_number',
@@ -237,9 +239,10 @@ class RefundCrudController extends CrudController
     }
 
     /**
-     * Retry a failed refund by re-dispatching the (idempotent) refund job.
+     * Retry a failed refund with a (possibly changed) amount chosen in the modal.
+     * Idempotent: the getOrder pre-check prevents double-refunding.
      */
-    public function retry($id)
+    public function retry($id, \Illuminate\Http\Request $request)
     {
         if (! backpack_user()->can('refund.retry')) {
             abort(403, 'Unauthorized Access');
@@ -253,8 +256,33 @@ class RefundCrudController extends CrudController
             return back();
         }
 
-        ProcessGeideaRefundJob::dispatch($refund->booking_id);
-        \Alert::success(__('cms.refund_retry_started'))->flash();
+        $booking = \App\Models\Booking::find($refund->booking_id);
+        if (! $booking) {
+            \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+            return back();
+        }
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'gt:0', 'lte:'.(float) $booking->final_price],
+        ], [], ['amount' => __('cms.refund_amount')]);
+
+        // Apply the chosen amount (full when partial is hidden) before retrying.
+        $booking->update(['refund_amount' => $validated['amount']]);
+
+        try {
+            $outcome = app(\App\Actions\Refunds\ProcessBookingRefund::class)->execute($booking);
+        } catch (\Throwable $e) {
+            \Alert::error(__('cms.refund_failed').': '.$e->getMessage())->flash();
+
+            return back();
+        }
+
+        match ($outcome) {
+            'approved' => \Alert::success(__('cms.refund_done'))->flash(),
+            'processing' => \Alert::warning(__('cms.refund_processing_flash'))->flash(),
+            default => \Alert::error(__('cms.refund_failed').': '.($booking->fresh()->refund_error ?: ''))->flash(),
+        };
 
         return back();
     }

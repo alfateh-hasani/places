@@ -54,6 +54,11 @@ class ProcessBookingRefund
             return $this->syncBookingRefunded($booking, $refund);
         }
 
+        // On retry the chosen amount may have changed (e.g. partial → full) — keep the record in sync.
+        if ((float) $refund->amount !== $amount) {
+            $refund->forceFill(['amount' => $amount])->save();
+        }
+
         $lock = Cache::lock('refund:'.$orderId, 30);
         if (! $lock->get()) {
             // Another worker is processing this refund right now.
@@ -79,7 +84,19 @@ class ProcessBookingRefund
             }
 
             // 3) Issue the refund.
-            $result = $this->gateway->refund($orderId, $amount);
+            try {
+                $result = $this->gateway->refund($orderId, $amount);
+            } catch (\Throwable $e) {
+                // Gateway unreachable/timeout — outcome unknown. Mark processing (no 500);
+                // refunds:reconcile will verify via getOrder (idempotent, no double refund).
+                Log::channel('geidea')->warning('Refund gateway call failed (network) — marking processing', [
+                    'booking_id' => $booking->id,
+                    'order_id' => $orderId,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return $this->markProcessing($booking, $refund, null);
+            }
             $refund->forceFill(['response_payload' => $result])->save();
 
             if (($result['success'] ?? false) === true) {
@@ -91,14 +108,16 @@ class ProcessBookingRefund
                     : $this->markProcessing($booking, $refund, $confirm);
             }
 
-            // Hard failure — mark failed and throw so the queue retries with backoff.
+            // Business-level decline (e.g. "Partial Refund not enabled"). NOT retryable —
+            // mark failed and return the reason. No 500, no pointless auto-retry.
             $message = data_get($result, 'error.detailedResponseMessage')
+                ?? data_get($result, 'error.responseMessage')
                 ?? data_get($result, 'message')
                 ?? 'Refund failed';
 
             $this->markFailed($booking, $refund, (string) $message);
 
-            throw new RuntimeException("Geidea refund failed for booking {$booking->id}: {$message}");
+            return 'failed';
         } finally {
             $lock->release();
         }
@@ -154,12 +173,21 @@ class ProcessBookingRefund
         ])->save();
     }
 
-    /** getOrder can fail on a network blip — never let that abort the flow. */
+    /** getOrder can fail on a network blip/timeout — never let that abort the flow. */
     private function safeGetOrder(string $orderId): ?array
     {
-        $order = $this->gateway->verifyPayment($orderId);
+        try {
+            $order = $this->gateway->verifyPayment($orderId);
 
-        return is_array($order) ? $order : null;
+            return is_array($order) ? $order : null;
+        } catch (\Throwable $e) {
+            Log::channel('geidea')->warning('getOrder failed (network) — treating as inconclusive', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

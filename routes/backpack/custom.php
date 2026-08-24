@@ -51,9 +51,11 @@ Route::group([
     // Route for changing payment status
     Route::post('booking/{id}/change-payment-status/{status}', [BookingController::class, 'changePaymentStatus'])->name('admin.booking.change-payment-status');
 
-    // Routes for canceled bookings and refund process
+    // Routes for canceled bookings — two-step flow (cancel, then refund)
     Route::crud('canceled-bookings', CanceledBookingsController::class);
-    Route::post('canceled-bookings/{id}/process-refund/{action}', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.process-refund');
+    Route::post('canceled-bookings/{id}/cancel-local', [CanceledBookingsController::class, 'cancelLocal'])->name('admin.canceled-bookings.cancel-local');
+    Route::post('canceled-bookings/{id}/refund', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.refund');
+    Route::post('canceled-bookings/{id}/reject', [CanceledBookingsController::class, 'reject'])->name('admin.canceled-bookings.reject');
 
     // Refunds tracker (follow the money)
     Route::crud('refund', 'RefundCrudController');
