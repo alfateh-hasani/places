@@ -216,11 +216,14 @@ class OwnerRezApiService
     }
 
     /**
-     * Update a booking
+     * Update a booking.
+     *
+     * OwnerRez Apps API v2 requires PATCH (not PUT) against the BookingEditModel;
+     * arrival/departure are editable fields (unlike status/cancellation, which are read-only).
      */
     public function updateBooking(int $bookingId, array $data): array
     {
-        return $this->makeRequest('PUT', "/v2/bookings/{$bookingId}", $data);
+        return $this->makeRequest('PATCH', "/v2/bookings/{$bookingId}", $data);
     }
 
     /**

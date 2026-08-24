@@ -24,4 +24,18 @@ return [
     'payment_failed' => 'Payment failed',
     'booking_status_canceled' => 'Canceled',
     'transaction_not_exists' => 'Transaction does not exist',
+
+    // Date change (edit booking dates)
+    'booking_not_found' => 'Booking not found',
+    'booking_cannot_be_canceled' => 'This booking cannot be modified',
+    'something_went_wrong' => 'Something went wrong, please try again later',
+    'date_change_same_dates' => 'The new dates match the current dates',
+    'date_change_already_pending' => 'A date-change request is already in progress for this booking',
+    'date_change_applied' => 'Booking dates changed successfully',
+    'date_change_pending_review' => 'Your change request was received — it will be reviewed and the difference refunded shortly',
+    'date_change_awaiting_payment' => 'The new range is available — please pay the difference to complete the change',
+    'date_change_apply_failed' => 'Could not apply the new dates, please contact support',
+    'date_change_not_awaiting_payment' => 'This request is not awaiting payment',
+    'date_change_cannot_cancel' => 'This request cannot be canceled in its current state',
+    'date_change_request_canceled' => 'Date-change request canceled',
 ];

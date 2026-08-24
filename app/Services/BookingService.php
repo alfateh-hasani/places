@@ -28,40 +28,47 @@ class BookingService
         $this->pricingService = $pricingService;
     }
 
-    public function validateCoupon($apartment, $couponCode)
+    public function validateCoupon($apartment, $couponCode): ?Coupon
     {
-        if ($couponCode) {
-            $coupon = Coupon::where('code', $couponCode)->first();
+        if (! $couponCode) {
+            return null;
+        }
 
-            if (! $coupon) {
-                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid')]);
-            }
+        $coupon = Coupon::with('apartments')->where('code', $couponCode)->first();
 
-            $apartmentList = $coupon->apartments ?? collect([]);
-            $buildingList = $coupon->building ?? collect([]);
+        if (! $coupon) {
+            throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid')]);
+        }
 
-            if ($apartmentList->isEmpty() && $buildingList->isEmpty()) {
-                return $coupon;
-            }
+        // ملاحظة: building() علاقة belongsTo (نموذج واحد أو null) وليست مجموعة — نعتمد على building_id مباشرة.
+        $apartmentIds = $coupon->apartments->pluck('id');
+        $hasApartmentScope = $apartmentIds->isNotEmpty();
+        $hasBuildingScope = ! is_null($coupon->building_id);
 
-            if (! $apartment) {
-                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
-            }
-
-            $hasApartment = ! $apartmentList->isEmpty() && $apartmentList->contains($apartment->id);
-            $hasBuilding = ! $buildingList->isEmpty() && $buildingList->contains($apartment->building_id);
-
-            if (! $hasApartment && ! $hasBuilding) {
-                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
-            }
-
+        // كوبون عام بلا نطاق — صالح لكل الوحدات.
+        if (! $hasApartmentScope && ! $hasBuildingScope) {
             return $coupon;
         }
 
-        return null;
+        if (! $apartment) {
+            throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
+        }
+
+        $matchesApartment = $hasApartmentScope && $apartmentIds->contains($apartment->id);
+        $matchesBuilding = $hasBuildingScope && (int) $coupon->building_id === (int) $apartment->building_id;
+
+        if (! $matchesApartment && ! $matchesBuilding) {
+            throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
+        }
+
+        return $coupon;
     }
 
-    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut): string
+    /**
+     * @param  int|null  $excludeBookingId  Ignore this booking when checking overlaps
+     *                                       (used when re-checking a booking's own new date range).
+     */
+    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut, ?int $excludeBookingId = null): string
     {
         try {
             $checkInDate = Carbon::parse($checkIn);
@@ -83,6 +90,7 @@ class BookingService
         $activeStatuses = ['pending', 'approved', 'booked', 'customer_canceled'];
 
         $overlapExists = Booking::where('apartment_id', $apartment->id)
+            ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId))
             ->whereIn('status', $activeStatuses)
             ->where('check_in', '<', $checkOutDate)
             ->where('check_out', '>', $checkInDate)
@@ -94,15 +102,36 @@ class BookingService
             ]);
         }
 
+        // 1b. حجب النوافذ المحجوزة بطلبات تعديل تواريخ مفتوحة (لوحدات أخرى) لتفادي تسابق نافذتين على نفس المدى
+        $requestedOverlap = \App\Models\DateChangeRequest::query()
+            ->whereIn('status', \App\Enums\DateChangeStatus::openValues())
+            ->whereHas('booking', fn ($q) => $q->where('apartment_id', $apartment->id))
+            ->when($excludeBookingId, fn ($q) => $q->where('booking_id', '!=', $excludeBookingId))
+            ->where('new_check_in', '<', $checkOutDate)
+            ->where('new_check_out', '>', $checkInDate)
+            ->exists();
+
+        if ($requestedOverlap) {
+            throw ValidationException::withMessages([
+                'apartment_id' => __('api.already_booked'),
+            ]);
+        }
+
         // 2. التحقق من OwnerRez إذا كان العقار مربوطاً
         $mapping = $apartment->ownerrezMapping;
         if ($mapping && $mapping->check_availability_enabled && config('ownerrez.availability.enabled')) {
             try {
+                // عند إعادة فحص حجز لتعديل تواريخه، نستثني حجزه نفسه في OwnerRez أيضاً
+                $excludeOwnerRezBookingId = $excludeBookingId
+                    ? Booking::where('id', $excludeBookingId)->value('ownerrez_booking_id')
+                    : null;
+
                 $ownerRezService = app(\App\Services\OwnerRez\OwnerRezSyncService::class);
                 $isAvailable = $ownerRezService->checkAvailability(
                     $mapping->ownerrez_property_id,
                     $checkInDate->format('Y-m-d'),
-                    $checkOutDate->format('Y-m-d')
+                    $checkOutDate->format('Y-m-d'),
+                    $excludeOwnerRezBookingId
                 );
 
                 if (! $isAvailable) {
@@ -184,25 +213,23 @@ class BookingService
         $vatAmount = $priceInfo['vat'];
         $totalPriceWithoutVat = $priceInfo['net'];
 
-        $discount = 0;
-        $couponDiscount = 0;
-
-        // تطبيق الكوبون إذا وجد (على السعر بدون ضريبة)
-        if ($coupon) {
-            $couponDiscount = $coupon->type === 'percentage'
-                ? round(($coupon->discount / 100) * $totalPriceWithoutVat, 2)
-                : min($coupon->discount, $totalPriceWithoutVat);
-        }
-
-        $finalPriceWithoutVat = max($totalPriceWithoutVat - $couponDiscount, 0);
-
-        // إعادة حساب الضريبة على السعر النهائي باستخدام نفس معدل الضريبة من PricingService
         $vatRate = Config::get('settings.vat_rate', 15);
-        $finalVat = round($finalPriceWithoutVat * ($vatRate / 100), 2);
-        $finalPriceWithVat = $finalPriceWithoutVat + $finalVat;
 
-        // عند عدم وجود كوبون، يجب أن يكون total_price و final_price متساويين
-        if ($couponDiscount == 0) {
+        if ($coupon && $coupon->type === 'percentage') {
+            // نطبّق نسبة الخصم مباشرة على السعر شامل الضريبة، ثم نستخرج الضريبة —
+            // بدل الخصم على الصافي ثم إعادة إضافة الضريبة (الذي يسبّب انحراف تقريب بمقدار سنت).
+            $finalPriceWithVat = round($totalPriceWithVat * (1 - $coupon->discount / 100), 2);
+            $finalVat = round($finalPriceWithVat * $vatRate / (100 + $vatRate), 2);
+            $finalPriceWithoutVat = round($finalPriceWithVat - $finalVat, 2);
+            $couponDiscount = round($totalPriceWithoutVat - $finalPriceWithoutVat, 2);
+        } elseif ($coupon) {
+            // خصم مبلغ ثابت — يُطبّق على السعر بدون ضريبة
+            $couponDiscount = min($coupon->discount, $totalPriceWithoutVat);
+            $finalPriceWithoutVat = max($totalPriceWithoutVat - $couponDiscount, 0);
+            $finalVat = round($finalPriceWithoutVat * ($vatRate / 100), 2);
+            $finalPriceWithVat = $finalPriceWithoutVat + $finalVat;
+        } else {
+            $couponDiscount = 0;
             $finalPriceWithVat = $totalPriceWithVat;
             $finalVat = $vatAmount;
         }

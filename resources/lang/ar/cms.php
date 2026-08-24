@@ -271,4 +271,23 @@ return [
     'cancel' => 'إلغاء',
     'total_refunded' => 'إجمالي المسترد',
     'refund_retry_started' => 'تم بدء إعادة محاولة الاسترداد',
+
+    // Date-change requests (admin)
+    'date_change_requests' => 'طلبات تعديل التواريخ',
+    'current_dates' => 'التواريخ الحالية',
+    'new_dates' => 'التواريخ الجديدة',
+    'price_difference' => 'فرق السعر',
+    'date_change_status_pending_review' => 'بانتظار المراجعة',
+    'date_change_status_awaiting_payment' => 'بانتظار الدفع',
+    'date_change_status_applied' => 'تم التطبيق',
+    'date_change_done' => 'تم تعديل التواريخ واسترداد الفرق بنجاح.',
+    'date_change_rejected' => 'تم رفض الطلب — يبقى الحجز على تواريخه الأصلية.',
+    'date_change_apply_failed' => 'تعذّر تطبيق التواريخ الجديدة',
+    'date_change_approve_btn' => 'موافقة واسترداد',
+    'date_change_approve_confirm' => 'تطبيق التواريخ الجديدة واسترداد الفرق للعميل؟',
+    'date_change_reject_btn' => 'رفض الطلب',
+    'date_change_reject_confirm' => 'رفض الطلب وإبقاء التواريخ الأصلية؟',
+    'date_change_retry_btn' => 'إعادة محاولة الاسترداد',
+    'date_change_retry_confirm' => 'إعادة محاولة استرداد الفرق؟',
+    'confirm' => 'تأكيد',
 ];

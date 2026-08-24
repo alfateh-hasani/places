@@ -179,6 +179,12 @@ class Booking extends Model
         return $this->hasMany(SmartLockPasscode::class);
     }
 
+    // Date-change requests
+    public function dateChangeRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DateChangeRequest::class);
+    }
+
     // Get active passcode for this booking
     public function getActivePasscode()
     {

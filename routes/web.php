@@ -61,12 +61,22 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
             Route::post('start-booking/{apartment_id}', 'determineBookingStatus')->name('determine');
             Route::get('confirm-booking/{uuid}', 'confirmBooking')->name('confirm-booking');
             Route::post('start-payment/{uuid}', 'startPayment')->name('add');
+            // Graceful fallback: a GET on the POST-only payment route (browser back / direct visit)
+            // → send the user back to the confirm page instead of a 405 Method Not Allowed.
+            Route::get('start-payment/{uuid}', fn ($uuid) => redirect()->route('web-booking.confirm-booking', ['uuid' => $uuid]))->name('add.get');
             Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
             Route::get('login-apartment', 'loginApartment')->name('login');
             Route::post('coupons-verify/{uuid}', 'couponsVerify')->name('coupons.verify');
             Route::post('remove-coupon/{uuid}', [BookingController::class, 'removeCoupon'])->name('coupons.remove');
 
             Route::post('cancel-booking', 'cancelBooking')->name('cancel');
+
+            // Date-change (edit booking dates) — quote, request, and surcharge payment return
+            Route::post('calculate-date-change', 'calculateDateChange')->name('date-change.calculate');
+            Route::post('request-date-change', 'requestDateChange')->name('date-change.request');
+            Route::get('date-change/{request}/callback/{transaction}', 'dateChangeCallback')->name('date-change.callback');
+            Route::post('date-change/{request}/retry-payment', 'retryDateChangePayment')->name('date-change.retry-payment');
+            Route::post('date-change/{request}/cancel', 'cancelDateChangeRequest')->name('date-change.cancel');
 
         });
     });

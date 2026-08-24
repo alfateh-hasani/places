@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Enums\DateChangeStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\Building;
+use App\Models\DateChangeRequest;
 use App\Models\Policy;
 use App\Services\BookingService;
+use App\Services\DateChangeService;
 use App\Services\Pricing\PricingService;
 use App\Services\ProcessPaymentService;
 use App\Traits\generateSeoTrait;
@@ -391,5 +394,199 @@ class BookingController extends Controller
         }
 
         return redirect()->back()->with('success', __('api.booking_canceled_successfully'));
+    }
+
+    /**
+     * Quote a date change for the customer's booking: availability of the new range + price delta.
+     */
+    public function calculateDateChange(Request $request, DateChangeService $dateChangeService)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+            'new_check_in' => 'required|date',
+            'new_check_out' => 'required|date|after:new_check_in',
+        ]);
+
+        $booking = $this->customerBooking($validated['booking_id']);
+        if (! $booking) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $quote = $dateChangeService->quote($booking, $validated['new_check_in'], $validated['new_check_out']);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        }
+
+        return response()->json(['success' => true, 'quote' => $quote]);
+    }
+
+    /**
+     * Submit a date-change request. Routes by price delta:
+     *   even   → applied instantly
+     *   refund → pending staff review
+     *   surcharge → returns a payment redirect (pay-first)
+     */
+    public function requestDateChange(Request $request, DateChangeService $dateChangeService)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+            'new_check_in' => 'required|date',
+            'new_check_out' => 'required|date|after:new_check_in',
+        ]);
+
+        $booking = $this->customerBooking($validated['booking_id']);
+        if (! $booking) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $result = $dateChangeService->request($booking, $validated['new_check_in'], $validated['new_check_out']);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Date change request failed: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => __('api.something_went_wrong')], 500);
+        }
+
+        $messages = [
+            'applied' => __('api.date_change_applied'),
+            'pending_review' => __('api.date_change_pending_review'),
+            'awaiting_payment' => __('api.date_change_awaiting_payment'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'action' => $result['action'],
+            'redirect' => $result['redirect'] ?? null,
+            'message' => $messages[$result['action']] ?? '',
+        ]);
+    }
+
+    /**
+     * Browser return URL after paying a date-change surcharge. Applies the new dates on success.
+     */
+    public function dateChangeCallback(Request $request, DateChangeService $dateChangeService, $requestId, $transactionId)
+    {
+        $customer = auth()->user();
+
+        $dateChangeRequest = DateChangeRequest::with('booking')
+            ->where('id', $requestId)
+            ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
+            ->first();
+
+        if (! $dateChangeRequest) {
+            return redirect()->route('customer.booking')->with('error', __('api.booking_not_found'));
+        }
+
+        $booking = $dateChangeRequest->booking;
+
+        // Idempotent: already applied.
+        if ($dateChangeRequest->status === DateChangeStatus::Applied->value) {
+            return redirect()->route('customer.booking.details', [$booking->number_of_booking, 'showPopup' => '1']);
+        }
+
+        // Confirm the surcharge payment with Geidea (webhook is primary; this is the manual fallback).
+        $processPaymentService = new ProcessPaymentService;
+        $data = $request->all();
+        $data['transaction_id'] = $transactionId;
+        $handlePayment = $processPaymentService->handleCallBack('geidea', $data);
+
+        if (($handlePayment['status'] ?? false) !== true) {
+            return redirect()->route('customer.booking.details', [$booking->number_of_booking])
+                ->with('error', __('api.payment_failed'));
+        }
+
+        try {
+            $dateChangeRequest->update(['gateway_order_id' => $handlePayment['order_id'] ?? $dateChangeRequest->gateway_order_id]);
+            $dateChangeService->applyDates($dateChangeRequest);
+            $dateChangeRequest->update([
+                'status' => DateChangeStatus::Applied->value,
+                'gateway_reference' => $handlePayment['reference'] ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Failed to apply date change after surcharge payment: '.$e->getMessage());
+            $dateChangeRequest->update(['status' => DateChangeStatus::Failed->value, 'error' => $e->getMessage()]);
+
+            return redirect()->route('customer.booking.details', [$booking->number_of_booking])
+                ->with('error', __('api.date_change_apply_failed'));
+        }
+
+        return redirect()->route('customer.booking.details', [$booking->number_of_booking, 'showPopup' => '1'])
+            ->with('success', __('api.date_change_applied'));
+    }
+
+    /**
+     * Re-initiate a stuck/failed surcharge payment for an awaiting-payment request.
+     */
+    public function retryDateChangePayment(Request $request, DateChangeService $dateChangeService, $requestId)
+    {
+        $dcRequest = $this->customerDateChangeRequest($requestId);
+        if (! $dcRequest) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $result = $dateChangeService->retryPayment($dcRequest);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Date change payment retry failed: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => __('api.something_went_wrong')], 500);
+        }
+
+        $messages = [
+            'applied' => __('api.date_change_applied'),
+            'pending_review' => __('api.date_change_pending_review'),
+            'awaiting_payment' => __('api.date_change_awaiting_payment'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'action' => $result['action'],
+            'redirect' => $result['redirect'] ?? null,
+            'message' => $messages[$result['action']] ?? '',
+        ]);
+    }
+
+    /**
+     * Customer withdraws an open date-change request (frees the reserved window).
+     */
+    public function cancelDateChangeRequest(Request $request, DateChangeService $dateChangeService, $requestId)
+    {
+        $dcRequest = $this->customerDateChangeRequest($requestId);
+        if (! $dcRequest) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $dateChangeService->cancelByCustomer($dcRequest);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        }
+
+        return response()->json(['success' => true, 'message' => __('api.date_change_request_canceled')]);
+    }
+
+    private function customerBooking($bookingId): ?Booking
+    {
+        $customer = auth()->user();
+
+        return $this->booking->where([
+            ['id', $bookingId],
+            ['customer_id', $customer->id],
+        ])->first();
+    }
+
+    private function customerDateChangeRequest($requestId): ?DateChangeRequest
+    {
+        $customer = auth()->user();
+
+        return DateChangeRequest::with('booking')
+            ->where('id', $requestId)
+            ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
+            ->first();
     }
 }
