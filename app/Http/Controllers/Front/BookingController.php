@@ -149,7 +149,7 @@ class BookingController extends Controller
         $apartment = $booking->apartment;
 
         // التحقق من صحة الكوبون
-        $coupon = $this->bookingService->validateCoupon($apartment, $request->code);
+        $coupon = $this->bookingService->validateCoupon($apartment, $request->code, $booking->customer_id);
 
         // حساب الأسعار الجديدة مع الضريبة باستخدام نظام التسعير الجديد
         $prices = $this->bookingService->calculatePricesWithDates($apartment, $booking->check_in, $booking->check_out, $coupon);
@@ -213,15 +213,12 @@ class BookingController extends Controller
             'coupon_code' => ['nullable', 'string'],
         ], __('validation.custom'));
 
-        \DB::beginTransaction();
+        // جلب بيانات الشقة المطلوبة
+        $apartment = Apartment::findOrFail($apartment_id);
 
         try {
-
-            // dd($validatedData);
-            // جلب بيانات الشقة المطلوبة
-            $apartment = Apartment::findOrFail($apartment_id);
-
-            // التحقق من توفر الشقة
+            // فحص مبكر (سريع الفشل) — الفحص الحاسم الفعلي يُعاد تحت قفل الشقة داخل reserveApartment()
+            // أدناه، لمنع تسابق طلبين متزامنين يجتازان هذا الفحص معاً قبل أن يُدرج أيّ منهما حجزه.
             $this->bookingService->checkAvailability($apartment, $validatedData['checkin'], $validatedData['checkout']);
 
             // التحقق من عدد الضيوف
@@ -231,82 +228,80 @@ class BookingController extends Controller
             $checkInDate = Carbon::parse($validatedData['checkin']);
             $checkOutDate = Carbon::parse($validatedData['checkout']);
 
-            // حساب عدد الليالي
-            $number_of_nights = $checkInDate->diffInDays($checkOutDate);
+            $booking = $this->bookingService->reserveApartment(
+                $apartment->id,
+                $checkInDate,
+                $checkOutDate,
+                null,
+                function (Apartment $apartment) use ($request, $validatedData, $checkInDate, $checkOutDate) {
+                    // حساب عدد الليالي
+                    $number_of_nights = $checkInDate->diffInDays($checkOutDate);
 
-            // استخدام PricingService للحصول على السعر الصحيح (شامل الضريبة)
-            $priceInfo = $this->pricing->calculate($apartment, $checkInDate, $checkOutDate);
+                    // استخدام PricingService للحصول على السعر الصحيح (شامل الضريبة)
+                    $priceInfo = $this->pricing->calculate($apartment, $checkInDate, $checkOutDate);
 
-            $building = Building::where('id', $apartment->building_id)->first();
+                    $building = Building::where('id', $apartment->building_id)->first();
 
-            // التحقق من الكوبون إذا كان موجودًا
-            $coupon = null;
-            $discount = 0;
+                    // التحقق من الكوبون إذا كان موجودًا
+                    $coupon = null;
+                    $discount = 0;
 
-            // السعر من PricingService شامل الضريبة
-            $totalPriceWithVat = $priceInfo['total'];
+                    // السعر من PricingService شامل الضريبة
+                    $totalPriceWithVat = $priceInfo['total'];
 
-            // استخراج الضريبة من السعر
-            $vatRate = 15;
-            $tax_amount = round($totalPriceWithVat * $vatRate / (100 + $vatRate), 2);
-            $total_price = round($totalPriceWithVat - $tax_amount, 2);
+                    // استخراج الضريبة من السعر
+                    $vatRate = 15;
+                    $tax_amount = round($totalPriceWithVat * $vatRate / (100 + $vatRate), 2);
 
-            // حساب السعر النهائي بعد الخصم (إذا كان هناك كوبون)
-            $finalPriceWithVat = $totalPriceWithVat; // بدون خصم في البداية
-            if ($coupon) {
-                // تطبيق خصم الكوبون
-                $couponDiscount = $coupon->type === 'percentage'
-                    ? round(($coupon->discount / 100) * $totalPriceWithVat, 2)
-                    : min($coupon->discount, $totalPriceWithVat);
-                $finalPriceWithVat = max($totalPriceWithVat - $couponDiscount, 0);
-                $discount = $couponDiscount;
-            }
+                    // حساب السعر النهائي بعد الخصم (إذا كان هناك كوبون)
+                    $finalPriceWithVat = $totalPriceWithVat; // بدون خصم في البداية
+                    if ($coupon) {
+                        // تطبيق خصم الكوبون
+                        $couponDiscount = $coupon->type === 'percentage'
+                            ? round(($coupon->discount / 100) * $totalPriceWithVat, 2)
+                            : min($coupon->discount, $totalPriceWithVat);
+                        $finalPriceWithVat = max($totalPriceWithVat - $couponDiscount, 0);
+                        $discount = $couponDiscount;
+                    }
 
-            // حساب سعر الليلة الواحدة
-            $oneNightPrice = $number_of_nights > 0 ? $totalPriceWithVat / $number_of_nights : 0;
+                    // حساب سعر الليلة الواحدة
+                    $oneNightPrice = $number_of_nights > 0 ? $totalPriceWithVat / $number_of_nights : 0;
 
-            // إنشاء حجز مؤقت بحالة `pending`
-            $booking = Booking::create([
-                'apartment_id' => $apartment->id,
-                'customer_id' => auth()->id(),
-                'customer_full_name' => auth()->user()->full_name,
-                'customer_email' => auth()->user()->email,
-                'check_in' => $checkInDate,
-                'check_out' => $checkOutDate,
-                'number_of_nights' => $number_of_nights,
-                'adults_count' => $validatedData['number_of_adults'],
-                'children_count' => $validatedData['number_of_children'],
-                'status' => 'pending',
-                'total_price' => $totalPriceWithVat,  // السعر الكلي قبل الخصم (شامل الضريبة)
-                'discount' => $discount,
-                'final_price' => $finalPriceWithVat,   // السعر النهائي بعد الخصم (شامل الضريبة)
-                'one_night_price' => $oneNightPrice,       // سعر الليلة الواحدة
-                'tax' => $tax_amount,
-                'payment_status' => 'pending',
-                'coupon_id' => $coupon ? $coupon->id : null,
-                'coupon_code' => $coupon ? $coupon->code : null,
-                'booking_source' => $request->header('User-Agent') ? 'web' : 'android',
-                'payment_method_code' => $request->payment_method ?? null,
-                'check_in_time' => $building->check_in_time,
-                'check_out_time' => $building->check_out_time,
-            ]);
-
-            \DB::commit();
+                    // إنشاء حجز مؤقت بحالة `pending`
+                    return Booking::create([
+                        'apartment_id' => $apartment->id,
+                        'customer_id' => auth()->id(),
+                        'customer_full_name' => auth()->user()->full_name,
+                        'customer_email' => auth()->user()->email,
+                        'check_in' => $checkInDate,
+                        'check_out' => $checkOutDate,
+                        'number_of_nights' => $number_of_nights,
+                        'adults_count' => $validatedData['number_of_adults'],
+                        'children_count' => $validatedData['number_of_children'],
+                        'status' => 'pending',
+                        'total_price' => $totalPriceWithVat,  // السعر الكلي قبل الخصم (شامل الضريبة)
+                        'discount' => $discount,
+                        'final_price' => $finalPriceWithVat,   // السعر النهائي بعد الخصم (شامل الضريبة)
+                        'one_night_price' => $oneNightPrice,       // سعر الليلة الواحدة
+                        'tax' => $tax_amount,
+                        'payment_status' => 'pending',
+                        'coupon_id' => $coupon ? $coupon->id : null,
+                        'coupon_code' => $coupon ? $coupon->code : null,
+                        'booking_source' => $request->header('User-Agent') ? 'web' : 'android',
+                        'payment_method_code' => $request->payment_method ?? null,
+                        'check_in_time' => $building->check_in_time,
+                        'check_out_time' => $building->check_out_time,
+                    ]);
+                }
+            );
 
             // إعادة توجيه العميل إلى صفحة تأكيد الحجز
             return redirect()->route('web-booking.confirm-booking', ['uuid' => $booking->uuid]);
         } catch (ValidationException $e) {
-            // dd($e->getMessage());
-            \DB::rollBack();
-
             return redirect()->route('apartments.show', $apartment->slug)
                 ->withErrors($e->errors())
                 ->withInput();
         } catch (Exception $e) {
-
-            // dd($e->getMessage());
-            \DB::rollBack();
-
             return redirect()->route('apartments.show', $apartment->slug)
                 ->withErrors(['error' => __('api.general_error')])
                 ->withInput();

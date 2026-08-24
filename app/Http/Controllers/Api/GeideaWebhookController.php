@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\DateChangeStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Building;
+use App\Models\DateChangeRequest;
 use App\Models\Transaction;
 use App\Services\BookingService;
+use App\Services\DateChangeService;
 use App\Services\PaymentMethods\GeideaPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -82,6 +85,28 @@ class GeideaWebhookController extends Controller
         }
 
         $transaction = $result['transaction'];
+
+        // Date-change surcharge payment: the underlying booking is already `approved` (it existed
+        // before the date-change request), so it must be routed separately from a primary-booking
+        // confirmation below — otherwise the `booking.status === 'approved'` check short-circuits
+        // and the new dates are never applied even though the surcharge was paid.
+        $dateChangeRequest = DateChangeRequest::where('transaction_id', $transaction->id)->first();
+
+        if ($dateChangeRequest) {
+            try {
+                app(DateChangeService::class)->confirmSurchargePayment($dateChangeRequest);
+            } catch (\Throwable $e) {
+                Log::channel('geidea_webhook')->error('Geidea webhook: failed to apply date-change surcharge', [
+                    'order_id' => $orderId,
+                    'date_change_request_id' => $dateChangeRequest->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $dateChangeRequest->update(['status' => DateChangeStatus::Failed->value, 'error' => $e->getMessage()]);
+            }
+
+            return response()->json(['status' => 'ok']);
+        }
+
         $booking = $transaction->booking;
 
         if (! $booking) {

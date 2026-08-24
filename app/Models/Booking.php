@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DateChangeStatus;
 use App\Events\BookingApproved;
 use App\Jobs\SendBookingConfirmedNotification;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
@@ -185,6 +186,13 @@ class Booking extends Model
         return $this->hasMany(DateChangeRequest::class);
     }
 
+    public function hasOpenDateChangeRequest(): bool
+    {
+        return $this->dateChangeRequests()
+            ->whereIn('status', DateChangeStatus::openValues())
+            ->exists();
+    }
+
     // Get active passcode for this booking
     public function getActivePasscode()
     {
@@ -259,6 +267,12 @@ class Booking extends Model
     {
         // التحقق من أن الحجز في حالة approved و paid
         if ($this->status !== 'approved' || $this->payment_status !== 'paid') {
+            return false;
+        }
+
+        // لا يمكن إلغاء حجز له طلب تعديل تواريخ مفتوح (بانتظار دفع/مراجعة/تطبيق) —
+        // يجب حل الطلب (رفضه/سحبه) أولاً حتى لا يبقى طلب "يتيم" على حجز أُلغي.
+        if ($this->hasOpenDateChangeRequest()) {
             return false;
         }
 
