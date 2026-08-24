@@ -61,6 +61,12 @@ Route::group([
     Route::crud('refund', 'RefundCrudController');
     Route::post('refund/{id}/retry', [\App\Http\Controllers\Admin\RefundCrudController::class, 'retry'])->name('admin.refund.retry');
 
+    // Date-change requests — review the "cheaper" path (apply + refund the difference)
+    Route::crud('date-change-requests', 'DateChangeRequestCrudController');
+    Route::post('date-change-requests/{id}/approve', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'approve'])->name('admin.date-change-requests.approve');
+    Route::post('date-change-requests/{id}/reject', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'reject'])->name('admin.date-change-requests.reject');
+    Route::post('date-change-requests/{id}/retry', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'retry'])->name('admin.date-change-requests.retry');
+
     // Daily Occupancy
     Route::get('charts/daily-occupancy', [\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');
 

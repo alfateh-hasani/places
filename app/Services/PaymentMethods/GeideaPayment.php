@@ -17,6 +17,16 @@ class GeideaPayment implements PaymentMethodInterface
 
     private string $hppBase;         // https://www.ksamerchant.geidea.net/hpp/checkout
 
+    /** Optional override for the browser return URL (used by non-booking flows e.g. date-change surcharge). */
+    private ?string $returnUrlOverride = null;
+
+    public function withReturnUrl(string $url): static
+    {
+        $this->returnUrlOverride = $url;
+
+        return $this;
+    }
+
     public function __construct()
     {
         $this->publicKey = config('payments.gateways.geidea.public_key');
@@ -78,7 +88,7 @@ class GeideaPayment implements PaymentMethodInterface
     public function process($transaction)
     {
         // returnUrl: يُعيد توجيه المتصفح فقط لعرض النتيجة للعميل
-        $returnUrl = route(
+        $returnUrl = $this->returnUrlOverride ?? route(
             $transaction->platform === 'api'
                 ? 'paymentMethodCallBack'
                 : 'web-booking.paymentMethodCallBack',

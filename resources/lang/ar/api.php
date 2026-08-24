@@ -36,4 +36,16 @@ return [
     'apartment_not_available_external' => 'الشقة محجوزة عبر منصة أخرى في هذه التواريخ',
     'ownerrez_sync_failed' => 'فشل في المزامنة مع OwnerRez',
     'ownerrez_service_unavailable' => 'خدمة التحقق من التوفر غير متاحة حالياً، يرجى المحاولة لاحقاً',
+
+    // Date change (edit booking dates)
+    'something_went_wrong' => 'حدث خطأ ما، يرجى المحاولة لاحقاً',
+    'date_change_same_dates' => 'التواريخ الجديدة مطابقة للتواريخ الحالية',
+    'date_change_already_pending' => 'يوجد طلب تعديل تواريخ قيد المعالجة لهذا الحجز',
+    'date_change_applied' => 'تم تعديل تواريخ الحجز بنجاح',
+    'date_change_pending_review' => 'تم استلام طلب التعديل — سيتم مراجعته واسترداد الفرق قريباً',
+    'date_change_awaiting_payment' => 'النطاق متاح — يرجى دفع الفرق لإتمام التعديل',
+    'date_change_apply_failed' => 'تعذّر تطبيق التواريخ الجديدة، يرجى التواصل مع الدعم',
+    'date_change_not_awaiting_payment' => 'هذا الطلب ليس بانتظار الدفع',
+    'date_change_cannot_cancel' => 'لا يمكن إلغاء هذا الطلب في حالته الحالية',
+    'date_change_request_canceled' => 'تم إلغاء طلب تعديل التواريخ',
 ];

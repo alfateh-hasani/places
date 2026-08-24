@@ -136,6 +136,13 @@ class CustomerAccountController extends Controller
         $cancelBeforeHoursSetting = \DB::table('settings')->where('key', 'cancel_before_hours')->first();
         $data['cancel_before_hours'] = $cancelBeforeHoursSetting ? (int)$cancelBeforeHoursSetting->value : 24;
 
+        // طلب تعديل تواريخ ما قبل القبول (بانتظار الدفع/المراجعة) لعرض إكمال الدفع أو الإلغاء.
+        // بعد القبول (processing/applied) يُخفى — تسوية الفرق عملية داخلية لا تخص العميل.
+        $data['date_change_request'] = \App\Models\DateChangeRequest::where('booking_id', $data['booking']->id)
+            ->whereIn('status', \App\Enums\DateChangeStatus::customerVisibleValues())
+            ->latest()
+            ->first();
+
         // Get active passcode for this booking
         $data['active_passcode'] = $data['booking']->getActivePasscode();
 
