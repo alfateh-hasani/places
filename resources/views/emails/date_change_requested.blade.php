@@ -26,8 +26,8 @@
 
     <table>
         <tr><th colspan="2" style="text-align:center;">التغيير المطلوب</th></tr>
-        <tr><td>التواريخ الحالية:</td><td>{{ $request->original_check_in->format('Y-m-d') }} → {{ $request->original_check_out->format('Y-m-d') }}</td></tr>
-        <tr><td>التواريخ الجديدة:</td><td>{{ $request->new_check_in->format('Y-m-d') }} → {{ $request->new_check_out->format('Y-m-d') }}</td></tr>
+        <tr><td>التواريخ الحالية:</td><td><bdo dir="ltr">{{ $request->original_check_out->format('Y-m-d') }} ← {{ $request->original_check_in->format('Y-m-d') }}</bdo></td></tr>
+        <tr><td>التواريخ الجديدة:</td><td><bdo dir="ltr">{{ $request->new_check_out->format('Y-m-d') }} ← {{ $request->new_check_in->format('Y-m-d') }}</bdo></td></tr>
         <tr><td>السعر الحالي:</td><td>{{ number_format((float) $request->original_price, 2) }} SAR</td></tr>
         <tr><td>السعر الجديد:</td><td>{{ number_format((float) $request->new_price, 2) }} SAR</td></tr>
         <tr>

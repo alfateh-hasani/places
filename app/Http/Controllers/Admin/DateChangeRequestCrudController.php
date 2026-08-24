@@ -115,7 +115,7 @@ class DateChangeRequestCrudController extends CrudController
             'label' => __('cms.current_dates'),
             'orderable' => false,
             'searchable' => false,
-            'value' => fn ($entry) => $entry->original_check_in->format('Y-m-d').' → '.$entry->original_check_out->format('Y-m-d'),
+            'value' => fn ($entry) => '<bdo dir="ltr" style="display:inline-block;">'.$entry->original_check_out->format('Y-m-d').' ← '.$entry->original_check_in->format('Y-m-d').'</bdo>',
         ]);
 
         CRUD::addColumn([
@@ -124,7 +124,7 @@ class DateChangeRequestCrudController extends CrudController
             'label' => __('cms.new_dates'),
             'orderable' => false,
             'searchable' => false,
-            'value' => fn ($entry) => '<strong>'.$entry->new_check_in->format('Y-m-d').' → '.$entry->new_check_out->format('Y-m-d').'</strong>',
+            'value' => fn ($entry) => '<bdo dir="ltr" style="display:inline-block;font-weight:bold;">'.$entry->new_check_out->format('Y-m-d').' ← '.$entry->new_check_in->format('Y-m-d').'</bdo>',
         ]);
 
         CRUD::addColumn([
