@@ -113,4 +113,23 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Date-Change Review Emails
+    |--------------------------------------------------------------------------
+    |
+    | Users holding any of these Spatie roles receive the "date change
+    | requested" review email (instead of building supervisors).
+    |
+    | only_user_ids: when non-empty, ONLY these user ids receive the email.
+    | Local safety net, driven by DATE_CHANGE_REVIEW_EMAIL_USER_IDS
+    | (comma-separated) — leave it unset in production.
+    |
+    */
+
+    'date_change_reviewers' => [
+        'roles' => ['خدمة عملاء', 'البرمجة', 'Admin', 'المالية'],
+        'only_user_ids' => array_filter(array_map('intval', explode(',', (string) env('DATE_CHANGE_REVIEW_EMAIL_USER_IDS', '')))),
+    ],
+
 ];
