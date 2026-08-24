@@ -9,6 +9,8 @@ return [
     'favorite_added' => 'Apartment added to favorites successfully',
     'coupon_invalid' => 'Invalid coupon',
     'coupon_invalid_apartment' => 'The coupon is not valid for the selected apartment',
+    'coupon_usage_limit_reached' => 'This coupon has reached its maximum number of uses',
+    'coupon_customer_usage_limit_reached' => 'You have already used this coupon the maximum number of times allowed',
     'already_booked' => 'This apartment is already booked for the selected dates',
     'booking_added' => 'Booking completed successfully',
     'max_adults' => 'You have exceeded the maximum number of adults',

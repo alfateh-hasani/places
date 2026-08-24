@@ -91,7 +91,7 @@ class BookingController extends Controller
             'children_count' => 'required|integer|min:0',
             'coupon_code' => 'nullable|exists:coupons,code',
             'notes' => 'nullable|string',
-            'booking_source' => 'nullable|in:,web', 'android', 'ios',
+            'booking_source' => 'nullable|in:web,android,ios',
             'payment_method_code' => 'required',
         ]);
         try {

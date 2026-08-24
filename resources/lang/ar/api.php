@@ -10,6 +10,8 @@ return [
     'favorite_added' => 'تمت إضافة الشقة المفضلة بنجاح',
     'coupon_invalid' => 'الكوبون غير صالح ',
     'coupon_invalid_apartment' => 'الكوبون غير صالح  للشقة المختارة',
+    'coupon_usage_limit_reached' => 'تم استنفاد الحد الأقصى لاستخدام هذا الكوبون',
+    'coupon_customer_usage_limit_reached' => 'لقد استخدمت هذا الكوبون بالحد الأقصى المسموح به',
     'already_booked' => 'هذه الشقة محجوزة بالفعل خلال التواريخ المحددة',
     'booking_added' => 'تمت عملية الحجز بنجاح',
     'max_adults' => 'لقد تجاوزت الحد الأقصى لعدد البالغين',

@@ -179,6 +179,21 @@ class DateChangeService
     }
 
     /**
+     * Apply a date-change request whose surcharge payment has been confirmed by the gateway.
+     * Idempotent — safe to call from both the Geidea webhook and the browser-return callback,
+     * whichever arrives first; the other becomes a no-op.
+     */
+    public function confirmSurchargePayment(DateChangeRequest $request): void
+    {
+        if ($request->status === DateChangeStatus::Applied->value) {
+            return;
+        }
+
+        $this->applyDates($request);
+        $request->update(['status' => DateChangeStatus::Applied->value]);
+    }
+
+    /**
      * Re-settle a failed/stuck request. Retry-first policy:
      *  - If the dates were never applied (e.g. surcharge PAID but OwnerRez sync failed) → re-attempt
      *    the apply (re-sync). The captured payment is kept; we do NOT refund on a transient failure.

@@ -738,6 +738,10 @@ class OwnerRezSyncService
         // The date PATCH is the critical sync — a failure here must bubble up so callers roll back.
         $this->apiService->updateBooking($booking->ownerrez_booking_id, $ownerrezData);
 
+        // Invalidate this property's cached calendar/availability so freed days become available
+        // immediately (the calendar is Cache::forever; otherwise it stays stale until cache:clear).
+        $this->invalidatePropertyCache($ownerrezData['property_id']);
+
         // The custom field is secondary/best-effort: a failure here must NOT undo a successful
         // date sync (otherwise local rolls back while OwnerRez already holds the new dates).
         try {

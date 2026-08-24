@@ -9,8 +9,10 @@ use App\Models\Coupon;
 use App\Models\Service;
 use App\Models\ServiceBooking;
 use App\Models\Transaction;
+use App\Services\Coupons\CouponUsageGuard;
 use App\Services\Pricing\PricingService;
 use Carbon\Carbon;
+use Closure;
 use Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -22,13 +24,21 @@ class BookingService
 
     protected $pricingService;
 
-    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService)
+    protected $couponUsageGuard;
+
+    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService, CouponUsageGuard $couponUsageGuard)
     {
         $this->paymentService = $paymentService;
         $this->pricingService = $pricingService;
+        $this->couponUsageGuard = $couponUsageGuard;
     }
 
-    public function validateCoupon($apartment, $couponCode): ?Coupon
+    /**
+     * @param  int|null  $customerId  Pass the authenticated customer to also enforce the
+     *                                per-customer usage limit; omit for anonymous price previews
+     *                                (only the store-wide total limit applies there).
+     */
+    public function validateCoupon($apartment, $couponCode, ?int $customerId = null): ?Coupon
     {
         if (! $couponCode) {
             return null;
@@ -39,6 +49,8 @@ class BookingService
         if (! $coupon) {
             throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid')]);
         }
+
+        $this->couponUsageGuard->assertAvailable($coupon, $customerId);
 
         // ملاحظة: building() علاقة belongsTo (نموذج واحد أو null) وليست مجموعة — نعتمد على building_id مباشرة.
         $apartmentIds = $coupon->apartments->pluck('id');
@@ -252,7 +264,7 @@ class BookingService
     {
         $coupon = null;
         if (! empty($validatedData['coupon_code'])) {
-            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code']);
+            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code'], $customer->id);
         }
 
         // استخدام نظام التسعير الجديد
@@ -271,56 +283,81 @@ class BookingService
         return $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
     }
 
+    /**
+     * Serialize booking creation for one apartment: locks the Apartment row for the duration of
+     * the availability check + insert, then runs $create. Without this, two concurrent requests
+     * can both pass checkAvailability() before either commits its insert (a classic
+     * check-then-act race), producing two overlapping bookings for the same apartment/dates.
+     * DateChangeService already applies the same discipline (locking the existing Booking row)
+     * for date-change requests — this extends it to the initial booking-creation path.
+     *
+     * @param  Closure(Apartment):mixed  $create  Runs under the lock, after availability is confirmed.
+     */
+    public function reserveApartment(int $apartmentId, $checkIn, $checkOut, ?int $excludeBookingId, Closure $create): mixed
+    {
+        return DB::transaction(function () use ($apartmentId, $checkIn, $checkOut, $excludeBookingId, $create) {
+            $apartment = Apartment::whereKey($apartmentId)->lockForUpdate()->firstOrFail();
+
+            $this->checkAvailability($apartment, $checkIn, $checkOut, $excludeBookingId);
+
+            return $create($apartment);
+        });
+    }
+
     // createBooking
 
     public function createBooking($transaction_id, $payment_id)
     {
-        DB::beginTransaction();
         $transaction = Transaction::where('id', $transaction_id)->first();
 
         if (! $transaction) {
             throw ValidationException::withMessages(['transaction_id' => __('api.transaction_not_exists')]);
         }
         $data = json_decode($transaction->booking_data);
-        //
-
-        $apartment = Apartment::where('id', $transaction->apartment_id)->first();
-        $building = Building::where('id', $apartment->building_id)->first();
 
         $numberOfNights = $this->calculateNumberOfNights($data->check_in, $data->check_out);
         $oneNightPrice = $numberOfNights > 0 ? $data->total_price / $numberOfNights : 0;
 
-        $booking = Booking::create([
-            'apartment_id' => $transaction->apartment_id,
-            'customer_id' => $transaction->customer_id,
-            'customer_full_name' => $transaction->customer->first_name.' '.$transaction->customer->last_name,
-            'customer_email' => $transaction->customer->email,
-            'number_of_nights' => $numberOfNights,
-            'adults_count' => $data->adults_count,
-            'children_count' => $data->children_count,
-            'total_price' => $data->total_price,
-            'discount' => $data->discount,
-            'final_price' => $data->final_price,
-            'one_night_price' => $oneNightPrice,
-            'booking_source' => $data->booking_source,
-            'coupon_id' => $data->coupon_id ?? null,
-            'coupon_code' => $data->coupon_code ?? null,
-            'status' => 'pending',
-            'payment_id' => $payment_id ?? null,
-            'payment_status' => 'pending',
-            'check_in' => $data->check_in,
-            'check_out' => $data->check_out,
+        return $this->reserveApartment(
+            $transaction->apartment_id,
+            $data->check_in,
+            $data->check_out,
+            null,
+            function (Apartment $apartment) use ($transaction, $data, $payment_id, $numberOfNights, $oneNightPrice) {
+                $building = Building::where('id', $apartment->building_id)->first();
 
-            'check_in_time' => $building->check_in_time,
-            'check_out_time' => $building->check_out_time,
+                $booking = Booking::create([
+                    'apartment_id' => $transaction->apartment_id,
+                    'customer_id' => $transaction->customer_id,
+                    'customer_full_name' => $transaction->customer->first_name.' '.$transaction->customer->last_name,
+                    'customer_email' => $transaction->customer->email,
+                    'number_of_nights' => $numberOfNights,
+                    'adults_count' => $data->adults_count,
+                    'children_count' => $data->children_count,
+                    'total_price' => $data->total_price,
+                    'discount' => $data->discount,
+                    'final_price' => $data->final_price,
+                    'one_night_price' => $oneNightPrice,
+                    'booking_source' => $data->booking_source,
+                    'coupon_id' => $data->coupon_id ?? null,
+                    'coupon_code' => $data->coupon_code ?? null,
+                    'status' => 'pending',
+                    'payment_id' => $payment_id ?? null,
+                    'payment_status' => 'pending',
+                    'check_in' => $data->check_in,
+                    'check_out' => $data->check_out,
 
-            'transaction_id' => $transaction->id,
-            'tax' => $data->vat ?? 0,
-        ]);
-        $transaction->update(['booking_id' => $booking->id]);
-        DB::commit();
+                    'check_in_time' => $building->check_in_time,
+                    'check_out_time' => $building->check_out_time,
 
-        return $booking;
+                    'transaction_id' => $transaction->id,
+                    'tax' => $data->vat ?? 0,
+                ]);
+                $transaction->update(['booking_id' => $booking->id]);
+
+                return $booking;
+            }
+        );
     }
 
     public function getDetermineBooking($apartment, $check_in, $check_out, $coupon = null)

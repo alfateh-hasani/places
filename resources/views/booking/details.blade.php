@@ -233,7 +233,7 @@ span.flatpickr-day.selected{
                     <div class="mt-4 p-4 rounded-lg" style="background-color:#111; border:1px solid #333;">
                         <p class="text-sm mb-2">
                             {{ __('طلب تعديل التواريخ') }}:
-                            <b>{{ $dc->new_check_in->format('Y-m-d') }} → {{ $dc->new_check_out->format('Y-m-d') }}</b>
+                            <bdo dir="ltr" style="display:inline-block; font-weight:bold;">{{ $dc->new_check_out->format('Y-m-d') }} ← {{ $dc->new_check_in->format('Y-m-d') }}</bdo>
                         </p>
                         @if($dc->status === 'awaiting_payment')
                             <p class="text-xs mb-3" style="color:#f0ad4e;">
@@ -704,7 +704,7 @@ $(document).ready(function() {
             Swal.fire({
                 title: "{{ __('booking.date_change_confirmation') }}",
                 html: "<div style='text-align:center;'>" +
-                    q.new_check_in + " → " + q.new_check_out + "<br><br>" +
+                    "<bdo dir='ltr' style='display:inline-block;'>" + q.new_check_out + " ← " + q.new_check_in + "</bdo><br><br>" +
                     "{{ __('السعر الجديد') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " SAR</b><br>" + summary + "</div>",
                 icon: 'question',
                 showDenyButton: true,
