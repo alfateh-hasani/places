@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Enums\DateChangeStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\Building;
+use App\Models\DateChangeRequest;
 use App\Models\Policy;
 use App\Services\BookingService;
+use App\Services\DateChangeService;
 use App\Services\Pricing\PricingService;
 use App\Services\ProcessPaymentService;
 use App\Traits\generateSeoTrait;
@@ -146,7 +149,7 @@ class BookingController extends Controller
         $apartment = $booking->apartment;
 
         // التحقق من صحة الكوبون
-        $coupon = $this->bookingService->validateCoupon($apartment, $request->code);
+        $coupon = $this->bookingService->validateCoupon($apartment, $request->code, $booking->customer_id);
 
         // حساب الأسعار الجديدة مع الضريبة باستخدام نظام التسعير الجديد
         $prices = $this->bookingService->calculatePricesWithDates($apartment, $booking->check_in, $booking->check_out, $coupon);
@@ -210,15 +213,12 @@ class BookingController extends Controller
             'coupon_code' => ['nullable', 'string'],
         ], __('validation.custom'));
 
-        \DB::beginTransaction();
+        // جلب بيانات الشقة المطلوبة
+        $apartment = Apartment::findOrFail($apartment_id);
 
         try {
-
-            // dd($validatedData);
-            // جلب بيانات الشقة المطلوبة
-            $apartment = Apartment::findOrFail($apartment_id);
-
-            // التحقق من توفر الشقة
+            // فحص مبكر (سريع الفشل) — الفحص الحاسم الفعلي يُعاد تحت قفل الشقة داخل reserveApartment()
+            // أدناه، لمنع تسابق طلبين متزامنين يجتازان هذا الفحص معاً قبل أن يُدرج أيّ منهما حجزه.
             $this->bookingService->checkAvailability($apartment, $validatedData['checkin'], $validatedData['checkout']);
 
             // التحقق من عدد الضيوف
@@ -228,82 +228,80 @@ class BookingController extends Controller
             $checkInDate = Carbon::parse($validatedData['checkin']);
             $checkOutDate = Carbon::parse($validatedData['checkout']);
 
-            // حساب عدد الليالي
-            $number_of_nights = $checkInDate->diffInDays($checkOutDate);
+            $booking = $this->bookingService->reserveApartment(
+                $apartment->id,
+                $checkInDate,
+                $checkOutDate,
+                null,
+                function (Apartment $apartment) use ($request, $validatedData, $checkInDate, $checkOutDate) {
+                    // حساب عدد الليالي
+                    $number_of_nights = $checkInDate->diffInDays($checkOutDate);
 
-            // استخدام PricingService للحصول على السعر الصحيح (شامل الضريبة)
-            $priceInfo = $this->pricing->calculate($apartment, $checkInDate, $checkOutDate);
+                    // استخدام PricingService للحصول على السعر الصحيح (شامل الضريبة)
+                    $priceInfo = $this->pricing->calculate($apartment, $checkInDate, $checkOutDate);
 
-            $building = Building::where('id', $apartment->building_id)->first();
+                    $building = Building::where('id', $apartment->building_id)->first();
 
-            // التحقق من الكوبون إذا كان موجودًا
-            $coupon = null;
-            $discount = 0;
+                    // التحقق من الكوبون إذا كان موجودًا
+                    $coupon = null;
+                    $discount = 0;
 
-            // السعر من PricingService شامل الضريبة
-            $totalPriceWithVat = $priceInfo['total'];
+                    // السعر من PricingService شامل الضريبة
+                    $totalPriceWithVat = $priceInfo['total'];
 
-            // استخراج الضريبة من السعر
-            $vatRate = 15;
-            $tax_amount = round($totalPriceWithVat * $vatRate / (100 + $vatRate), 2);
-            $total_price = round($totalPriceWithVat - $tax_amount, 2);
+                    // استخراج الضريبة من السعر
+                    $vatRate = 15;
+                    $tax_amount = round($totalPriceWithVat * $vatRate / (100 + $vatRate), 2);
 
-            // حساب السعر النهائي بعد الخصم (إذا كان هناك كوبون)
-            $finalPriceWithVat = $totalPriceWithVat; // بدون خصم في البداية
-            if ($coupon) {
-                // تطبيق خصم الكوبون
-                $couponDiscount = $coupon->type === 'percentage'
-                    ? round(($coupon->discount / 100) * $totalPriceWithVat, 2)
-                    : min($coupon->discount, $totalPriceWithVat);
-                $finalPriceWithVat = max($totalPriceWithVat - $couponDiscount, 0);
-                $discount = $couponDiscount;
-            }
+                    // حساب السعر النهائي بعد الخصم (إذا كان هناك كوبون)
+                    $finalPriceWithVat = $totalPriceWithVat; // بدون خصم في البداية
+                    if ($coupon) {
+                        // تطبيق خصم الكوبون
+                        $couponDiscount = $coupon->type === 'percentage'
+                            ? round(($coupon->discount / 100) * $totalPriceWithVat, 2)
+                            : min($coupon->discount, $totalPriceWithVat);
+                        $finalPriceWithVat = max($totalPriceWithVat - $couponDiscount, 0);
+                        $discount = $couponDiscount;
+                    }
 
-            // حساب سعر الليلة الواحدة
-            $oneNightPrice = $number_of_nights > 0 ? $totalPriceWithVat / $number_of_nights : 0;
+                    // حساب سعر الليلة الواحدة
+                    $oneNightPrice = $number_of_nights > 0 ? $totalPriceWithVat / $number_of_nights : 0;
 
-            // إنشاء حجز مؤقت بحالة `pending`
-            $booking = Booking::create([
-                'apartment_id' => $apartment->id,
-                'customer_id' => auth()->id(),
-                'customer_full_name' => auth()->user()->full_name,
-                'customer_email' => auth()->user()->email,
-                'check_in' => $checkInDate,
-                'check_out' => $checkOutDate,
-                'number_of_nights' => $number_of_nights,
-                'adults_count' => $validatedData['number_of_adults'],
-                'children_count' => $validatedData['number_of_children'],
-                'status' => 'pending',
-                'total_price' => $totalPriceWithVat,  // السعر الكلي قبل الخصم (شامل الضريبة)
-                'discount' => $discount,
-                'final_price' => $finalPriceWithVat,   // السعر النهائي بعد الخصم (شامل الضريبة)
-                'one_night_price' => $oneNightPrice,       // سعر الليلة الواحدة
-                'tax' => $tax_amount,
-                'payment_status' => 'pending',
-                'coupon_id' => $coupon ? $coupon->id : null,
-                'coupon_code' => $coupon ? $coupon->code : null,
-                'booking_source' => $request->header('User-Agent') ? 'web' : 'android',
-                'payment_method_code' => $request->payment_method ?? null,
-                'check_in_time' => $building->check_in_time,
-                'check_out_time' => $building->check_out_time,
-            ]);
-
-            \DB::commit();
+                    // إنشاء حجز مؤقت بحالة `pending`
+                    return Booking::create([
+                        'apartment_id' => $apartment->id,
+                        'customer_id' => auth()->id(),
+                        'customer_full_name' => auth()->user()->full_name,
+                        'customer_email' => auth()->user()->email,
+                        'check_in' => $checkInDate,
+                        'check_out' => $checkOutDate,
+                        'number_of_nights' => $number_of_nights,
+                        'adults_count' => $validatedData['number_of_adults'],
+                        'children_count' => $validatedData['number_of_children'],
+                        'status' => 'pending',
+                        'total_price' => $totalPriceWithVat,  // السعر الكلي قبل الخصم (شامل الضريبة)
+                        'discount' => $discount,
+                        'final_price' => $finalPriceWithVat,   // السعر النهائي بعد الخصم (شامل الضريبة)
+                        'one_night_price' => $oneNightPrice,       // سعر الليلة الواحدة
+                        'tax' => $tax_amount,
+                        'payment_status' => 'pending',
+                        'coupon_id' => $coupon ? $coupon->id : null,
+                        'coupon_code' => $coupon ? $coupon->code : null,
+                        'booking_source' => $request->header('User-Agent') ? 'web' : 'android',
+                        'payment_method_code' => $request->payment_method ?? null,
+                        'check_in_time' => $building->check_in_time,
+                        'check_out_time' => $building->check_out_time,
+                    ]);
+                }
+            );
 
             // إعادة توجيه العميل إلى صفحة تأكيد الحجز
             return redirect()->route('web-booking.confirm-booking', ['uuid' => $booking->uuid]);
         } catch (ValidationException $e) {
-            // dd($e->getMessage());
-            \DB::rollBack();
-
             return redirect()->route('apartments.show', $apartment->slug)
                 ->withErrors($e->errors())
                 ->withInput();
         } catch (Exception $e) {
-
-            // dd($e->getMessage());
-            \DB::rollBack();
-
             return redirect()->route('apartments.show', $apartment->slug)
                 ->withErrors(['error' => __('api.general_error')])
                 ->withInput();
@@ -391,5 +389,199 @@ class BookingController extends Controller
         }
 
         return redirect()->back()->with('success', __('api.booking_canceled_successfully'));
+    }
+
+    /**
+     * Quote a date change for the customer's booking: availability of the new range + price delta.
+     */
+    public function calculateDateChange(Request $request, DateChangeService $dateChangeService)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+            'new_check_in' => 'required|date',
+            'new_check_out' => 'required|date|after:new_check_in',
+        ]);
+
+        $booking = $this->customerBooking($validated['booking_id']);
+        if (! $booking) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $quote = $dateChangeService->quote($booking, $validated['new_check_in'], $validated['new_check_out']);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        }
+
+        return response()->json(['success' => true, 'quote' => $quote]);
+    }
+
+    /**
+     * Submit a date-change request. Routes by price delta:
+     *   even   → applied instantly
+     *   refund → pending staff review
+     *   surcharge → returns a payment redirect (pay-first)
+     */
+    public function requestDateChange(Request $request, DateChangeService $dateChangeService)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+            'new_check_in' => 'required|date',
+            'new_check_out' => 'required|date|after:new_check_in',
+        ]);
+
+        $booking = $this->customerBooking($validated['booking_id']);
+        if (! $booking) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $result = $dateChangeService->request($booking, $validated['new_check_in'], $validated['new_check_out']);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Date change request failed: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => __('api.something_went_wrong')], 500);
+        }
+
+        $messages = [
+            'applied' => __('api.date_change_applied'),
+            'pending_review' => __('api.date_change_pending_review'),
+            'awaiting_payment' => __('api.date_change_awaiting_payment'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'action' => $result['action'],
+            'redirect' => $result['redirect'] ?? null,
+            'message' => $messages[$result['action']] ?? '',
+        ]);
+    }
+
+    /**
+     * Browser return URL after paying a date-change surcharge. Applies the new dates on success.
+     */
+    public function dateChangeCallback(Request $request, DateChangeService $dateChangeService, $requestId, $transactionId)
+    {
+        $customer = auth()->user();
+
+        $dateChangeRequest = DateChangeRequest::with('booking')
+            ->where('id', $requestId)
+            ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
+            ->first();
+
+        if (! $dateChangeRequest) {
+            return redirect()->route('customer.booking')->with('error', __('api.booking_not_found'));
+        }
+
+        $booking = $dateChangeRequest->booking;
+
+        // Idempotent: already applied.
+        if ($dateChangeRequest->status === DateChangeStatus::Applied->value) {
+            return redirect()->route('customer.booking.details', [$booking->number_of_booking, 'showPopup' => '1']);
+        }
+
+        // Confirm the surcharge payment with Geidea (webhook is primary; this is the manual fallback).
+        $processPaymentService = new ProcessPaymentService;
+        $data = $request->all();
+        $data['transaction_id'] = $transactionId;
+        $handlePayment = $processPaymentService->handleCallBack('geidea', $data);
+
+        if (($handlePayment['status'] ?? false) !== true) {
+            return redirect()->route('customer.booking.details', [$booking->number_of_booking])
+                ->with('error', __('api.payment_failed'));
+        }
+
+        try {
+            $dateChangeRequest->update(['gateway_order_id' => $handlePayment['order_id'] ?? $dateChangeRequest->gateway_order_id]);
+            $dateChangeService->applyDates($dateChangeRequest);
+            $dateChangeRequest->update([
+                'status' => DateChangeStatus::Applied->value,
+                'gateway_reference' => $handlePayment['reference'] ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Failed to apply date change after surcharge payment: '.$e->getMessage());
+            $dateChangeRequest->update(['status' => DateChangeStatus::Failed->value, 'error' => $e->getMessage()]);
+
+            return redirect()->route('customer.booking.details', [$booking->number_of_booking])
+                ->with('error', __('api.date_change_apply_failed'));
+        }
+
+        return redirect()->route('customer.booking.details', [$booking->number_of_booking, 'showPopup' => '1'])
+            ->with('success', __('api.date_change_applied'));
+    }
+
+    /**
+     * Re-initiate a stuck/failed surcharge payment for an awaiting-payment request.
+     */
+    public function retryDateChangePayment(Request $request, DateChangeService $dateChangeService, $requestId)
+    {
+        $dcRequest = $this->customerDateChangeRequest($requestId);
+        if (! $dcRequest) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $result = $dateChangeService->retryPayment($dcRequest);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Date change payment retry failed: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => __('api.something_went_wrong')], 500);
+        }
+
+        $messages = [
+            'applied' => __('api.date_change_applied'),
+            'pending_review' => __('api.date_change_pending_review'),
+            'awaiting_payment' => __('api.date_change_awaiting_payment'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'action' => $result['action'],
+            'redirect' => $result['redirect'] ?? null,
+            'message' => $messages[$result['action']] ?? '',
+        ]);
+    }
+
+    /**
+     * Customer withdraws an open date-change request (frees the reserved window).
+     */
+    public function cancelDateChangeRequest(Request $request, DateChangeService $dateChangeService, $requestId)
+    {
+        $dcRequest = $this->customerDateChangeRequest($requestId);
+        if (! $dcRequest) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $dateChangeService->cancelByCustomer($dcRequest);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        }
+
+        return response()->json(['success' => true, 'message' => __('api.date_change_request_canceled')]);
+    }
+
+    private function customerBooking($bookingId): ?Booking
+    {
+        $customer = auth()->user();
+
+        return $this->booking->where([
+            ['id', $bookingId],
+            ['customer_id', $customer->id],
+        ])->first();
+    }
+
+    private function customerDateChangeRequest($requestId): ?DateChangeRequest
+    {
+        $customer = auth()->user();
+
+        return DateChangeRequest::with('booking')
+            ->where('id', $requestId)
+            ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
+            ->first();
     }
 }

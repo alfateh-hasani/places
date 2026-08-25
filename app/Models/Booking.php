@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DateChangeStatus;
 use App\Events\BookingApproved;
 use App\Jobs\SendBookingConfirmedNotification;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
@@ -45,7 +46,13 @@ class Booking extends Model
             'passcode_generated_at' => 'datetime',
             'refund_date' => 'datetime',
             'refund_amount' => 'float',
+            'last_refund_attempt_at' => 'datetime',
         ];
+    }
+
+    public function refunds(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Refund::class);
     }
 
     protected static function boot()
@@ -173,6 +180,19 @@ class Booking extends Model
         return $this->hasMany(SmartLockPasscode::class);
     }
 
+    // Date-change requests
+    public function dateChangeRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DateChangeRequest::class);
+    }
+
+    public function hasOpenDateChangeRequest(): bool
+    {
+        return $this->dateChangeRequests()
+            ->whereIn('status', DateChangeStatus::openValues())
+            ->exists();
+    }
+
     // Get active passcode for this booking
     public function getActivePasscode()
     {
@@ -243,10 +263,16 @@ class Booking extends Model
             ->logAll();
     }
 
-   public function canBeCanceled(): bool
+    public function canBeCanceled(): bool
     {
         // التحقق من أن الحجز في حالة approved و paid
         if ($this->status !== 'approved' || $this->payment_status !== 'paid') {
+            return false;
+        }
+
+        // لا يمكن إلغاء حجز له طلب تعديل تواريخ مفتوح (بانتظار دفع/مراجعة/تطبيق) —
+        // يجب حل الطلب (رفضه/سحبه) أولاً حتى لا يبقى طلب "يتيم" على حجز أُلغي.
+        if ($this->hasOpenDateChangeRequest()) {
             return false;
         }
 
@@ -255,7 +281,7 @@ class Booking extends Model
         $cancelBeforeHours = $setting ? (int) $setting->value : 24;
 
         $checkInTime = $this->check_in_time?->format('H:i:s');
-        if (!$checkInTime) {
+        if (! $checkInTime) {
             $checkInTime = '16:00:00';
         }
         // حساب الفرق بالساعات بين الآن ووقت تسجيل الدخول

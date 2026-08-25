@@ -9,8 +9,10 @@ use App\Models\Coupon;
 use App\Models\Service;
 use App\Models\ServiceBooking;
 use App\Models\Transaction;
+use App\Services\Coupons\CouponUsageGuard;
 use App\Services\Pricing\PricingService;
 use Carbon\Carbon;
+use Closure;
 use Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -22,46 +24,63 @@ class BookingService
 
     protected $pricingService;
 
-    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService)
+    protected $couponUsageGuard;
+
+    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService, CouponUsageGuard $couponUsageGuard)
     {
         $this->paymentService = $paymentService;
         $this->pricingService = $pricingService;
+        $this->couponUsageGuard = $couponUsageGuard;
     }
 
-    public function validateCoupon($apartment, $couponCode)
+    /**
+     * @param  int|null  $customerId  Pass the authenticated customer to also enforce the
+     *                                per-customer usage limit; omit for anonymous price previews
+     *                                (only the store-wide total limit applies there).
+     */
+    public function validateCoupon($apartment, $couponCode, ?int $customerId = null): ?Coupon
     {
-        if ($couponCode) {
-            $coupon = Coupon::where('code', $couponCode)->first();
+        if (! $couponCode) {
+            return null;
+        }
 
-            if (! $coupon) {
-                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid')]);
-            }
+        $coupon = Coupon::with('apartments')->where('code', $couponCode)->first();
 
-            $apartmentList = $coupon->apartments ?? collect([]);
-            $buildingList = $coupon->building ?? collect([]);
+        if (! $coupon) {
+            throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid')]);
+        }
 
-            if ($apartmentList->isEmpty() && $buildingList->isEmpty()) {
-                return $coupon;
-            }
+        $this->couponUsageGuard->assertAvailable($coupon, $customerId);
 
-            if (! $apartment) {
-                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
-            }
+        // ملاحظة: building() علاقة belongsTo (نموذج واحد أو null) وليست مجموعة — نعتمد على building_id مباشرة.
+        $apartmentIds = $coupon->apartments->pluck('id');
+        $hasApartmentScope = $apartmentIds->isNotEmpty();
+        $hasBuildingScope = ! is_null($coupon->building_id);
 
-            $hasApartment = ! $apartmentList->isEmpty() && $apartmentList->contains($apartment->id);
-            $hasBuilding = ! $buildingList->isEmpty() && $buildingList->contains($apartment->building_id);
-
-            if (! $hasApartment && ! $hasBuilding) {
-                throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
-            }
-
+        // كوبون عام بلا نطاق — صالح لكل الوحدات.
+        if (! $hasApartmentScope && ! $hasBuildingScope) {
             return $coupon;
         }
 
-        return null;
+        if (! $apartment) {
+            throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
+        }
+
+        $matchesApartment = $hasApartmentScope && $apartmentIds->contains($apartment->id);
+        $matchesBuilding = $hasBuildingScope && (int) $coupon->building_id === (int) $apartment->building_id;
+
+        if (! $matchesApartment && ! $matchesBuilding) {
+            throw ValidationException::withMessages(['coupon_code' => __('api.coupon_invalid_apartment')]);
+        }
+
+        return $coupon;
     }
 
-    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut): string
+    /**
+     * @param  int|null  $excludeBookingId  Ignore this booking when checking overlaps
+     *                                       (used when re-checking a booking's own new date range).
+     */
+    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut, ?int $excludeBookingId = null): string
     {
         try {
             $checkInDate = Carbon::parse($checkIn);
@@ -79,9 +98,11 @@ class BookingService
         }
 
         // 1. التحقق من الحجوزات المحلية
-        $activeStatuses = ['pending', 'approved', 'booked'];
+        // ملاحظة: customer_canceled = "طلب إلغاء قيد المراجعة" يبقى حاجزاً للوحدة حتى يُقبل الإلغاء نهائياً (يصبح canceled)
+        $activeStatuses = ['pending', 'approved', 'booked', 'customer_canceled'];
 
         $overlapExists = Booking::where('apartment_id', $apartment->id)
+            ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId))
             ->whereIn('status', $activeStatuses)
             ->where('check_in', '<', $checkOutDate)
             ->where('check_out', '>', $checkInDate)
@@ -93,15 +114,36 @@ class BookingService
             ]);
         }
 
+        // 1b. حجب النوافذ المحجوزة بطلبات تعديل تواريخ مفتوحة (لوحدات أخرى) لتفادي تسابق نافذتين على نفس المدى
+        $requestedOverlap = \App\Models\DateChangeRequest::query()
+            ->whereIn('status', \App\Enums\DateChangeStatus::openValues())
+            ->whereHas('booking', fn ($q) => $q->where('apartment_id', $apartment->id))
+            ->when($excludeBookingId, fn ($q) => $q->where('booking_id', '!=', $excludeBookingId))
+            ->where('new_check_in', '<', $checkOutDate)
+            ->where('new_check_out', '>', $checkInDate)
+            ->exists();
+
+        if ($requestedOverlap) {
+            throw ValidationException::withMessages([
+                'apartment_id' => __('api.already_booked'),
+            ]);
+        }
+
         // 2. التحقق من OwnerRez إذا كان العقار مربوطاً
         $mapping = $apartment->ownerrezMapping;
         if ($mapping && $mapping->check_availability_enabled && config('ownerrez.availability.enabled')) {
             try {
+                // عند إعادة فحص حجز لتعديل تواريخه، نستثني حجزه نفسه في OwnerRez أيضاً
+                $excludeOwnerRezBookingId = $excludeBookingId
+                    ? Booking::where('id', $excludeBookingId)->value('ownerrez_booking_id')
+                    : null;
+
                 $ownerRezService = app(\App\Services\OwnerRez\OwnerRezSyncService::class);
                 $isAvailable = $ownerRezService->checkAvailability(
                     $mapping->ownerrez_property_id,
                     $checkInDate->format('Y-m-d'),
-                    $checkOutDate->format('Y-m-d')
+                    $checkOutDate->format('Y-m-d'),
+                    $excludeOwnerRezBookingId
                 );
 
                 if (! $isAvailable) {
@@ -183,25 +225,23 @@ class BookingService
         $vatAmount = $priceInfo['vat'];
         $totalPriceWithoutVat = $priceInfo['net'];
 
-        $discount = 0;
-        $couponDiscount = 0;
-
-        // تطبيق الكوبون إذا وجد (على السعر بدون ضريبة)
-        if ($coupon) {
-            $couponDiscount = $coupon->type === 'percentage'
-                ? round(($coupon->discount / 100) * $totalPriceWithoutVat, 2)
-                : min($coupon->discount, $totalPriceWithoutVat);
-        }
-
-        $finalPriceWithoutVat = max($totalPriceWithoutVat - $couponDiscount, 0);
-
-        // إعادة حساب الضريبة على السعر النهائي باستخدام نفس معدل الضريبة من PricingService
         $vatRate = Config::get('settings.vat_rate', 15);
-        $finalVat = round($finalPriceWithoutVat * ($vatRate / 100), 2);
-        $finalPriceWithVat = $finalPriceWithoutVat + $finalVat;
 
-        // عند عدم وجود كوبون، يجب أن يكون total_price و final_price متساويين
-        if ($couponDiscount == 0) {
+        if ($coupon && $coupon->type === 'percentage') {
+            // نطبّق نسبة الخصم مباشرة على السعر شامل الضريبة، ثم نستخرج الضريبة —
+            // بدل الخصم على الصافي ثم إعادة إضافة الضريبة (الذي يسبّب انحراف تقريب بمقدار سنت).
+            $finalPriceWithVat = round($totalPriceWithVat * (1 - $coupon->discount / 100), 2);
+            $finalVat = round($finalPriceWithVat * $vatRate / (100 + $vatRate), 2);
+            $finalPriceWithoutVat = round($finalPriceWithVat - $finalVat, 2);
+            $couponDiscount = round($totalPriceWithoutVat - $finalPriceWithoutVat, 2);
+        } elseif ($coupon) {
+            // خصم مبلغ ثابت — يُطبّق على السعر بدون ضريبة
+            $couponDiscount = min($coupon->discount, $totalPriceWithoutVat);
+            $finalPriceWithoutVat = max($totalPriceWithoutVat - $couponDiscount, 0);
+            $finalVat = round($finalPriceWithoutVat * ($vatRate / 100), 2);
+            $finalPriceWithVat = $finalPriceWithoutVat + $finalVat;
+        } else {
+            $couponDiscount = 0;
             $finalPriceWithVat = $totalPriceWithVat;
             $finalVat = $vatAmount;
         }
@@ -224,7 +264,7 @@ class BookingService
     {
         $coupon = null;
         if (! empty($validatedData['coupon_code'])) {
-            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code']);
+            $coupon = $this->validateCoupon($apartment, $validatedData['coupon_code'], $customer->id);
         }
 
         // استخدام نظام التسعير الجديد
@@ -243,56 +283,81 @@ class BookingService
         return $this->paymentService->processPayment($transaction, $validatedData['payment_method_code']);
     }
 
+    /**
+     * Serialize booking creation for one apartment: locks the Apartment row for the duration of
+     * the availability check + insert, then runs $create. Without this, two concurrent requests
+     * can both pass checkAvailability() before either commits its insert (a classic
+     * check-then-act race), producing two overlapping bookings for the same apartment/dates.
+     * DateChangeService already applies the same discipline (locking the existing Booking row)
+     * for date-change requests — this extends it to the initial booking-creation path.
+     *
+     * @param  Closure(Apartment):mixed  $create  Runs under the lock, after availability is confirmed.
+     */
+    public function reserveApartment(int $apartmentId, $checkIn, $checkOut, ?int $excludeBookingId, Closure $create): mixed
+    {
+        return DB::transaction(function () use ($apartmentId, $checkIn, $checkOut, $excludeBookingId, $create) {
+            $apartment = Apartment::whereKey($apartmentId)->lockForUpdate()->firstOrFail();
+
+            $this->checkAvailability($apartment, $checkIn, $checkOut, $excludeBookingId);
+
+            return $create($apartment);
+        });
+    }
+
     // createBooking
 
     public function createBooking($transaction_id, $payment_id)
     {
-        DB::beginTransaction();
         $transaction = Transaction::where('id', $transaction_id)->first();
 
         if (! $transaction) {
             throw ValidationException::withMessages(['transaction_id' => __('api.transaction_not_exists')]);
         }
         $data = json_decode($transaction->booking_data);
-        //
-
-        $apartment = Apartment::where('id', $transaction->apartment_id)->first();
-        $building = Building::where('id', $apartment->building_id)->first();
 
         $numberOfNights = $this->calculateNumberOfNights($data->check_in, $data->check_out);
         $oneNightPrice = $numberOfNights > 0 ? $data->total_price / $numberOfNights : 0;
 
-        $booking = Booking::create([
-            'apartment_id' => $transaction->apartment_id,
-            'customer_id' => $transaction->customer_id,
-            'customer_full_name' => $transaction->customer->first_name.' '.$transaction->customer->last_name,
-            'customer_email' => $transaction->customer->email,
-            'number_of_nights' => $numberOfNights,
-            'adults_count' => $data->adults_count,
-            'children_count' => $data->children_count,
-            'total_price' => $data->total_price,
-            'discount' => $data->discount,
-            'final_price' => $data->final_price,
-            'one_night_price' => $oneNightPrice,
-            'booking_source' => $data->booking_source,
-            'coupon_id' => $data->coupon_id ?? null,
-            'coupon_code' => $data->coupon_code ?? null,
-            'status' => 'pending',
-            'payment_id' => $payment_id ?? null,
-            'payment_status' => 'pending',
-            'check_in' => $data->check_in,
-            'check_out' => $data->check_out,
+        return $this->reserveApartment(
+            $transaction->apartment_id,
+            $data->check_in,
+            $data->check_out,
+            null,
+            function (Apartment $apartment) use ($transaction, $data, $payment_id, $numberOfNights, $oneNightPrice) {
+                $building = Building::where('id', $apartment->building_id)->first();
 
-            'check_in_time' => $building->check_in_time,
-            'check_out_time' => $building->check_out_time,
+                $booking = Booking::create([
+                    'apartment_id' => $transaction->apartment_id,
+                    'customer_id' => $transaction->customer_id,
+                    'customer_full_name' => $transaction->customer->first_name.' '.$transaction->customer->last_name,
+                    'customer_email' => $transaction->customer->email,
+                    'number_of_nights' => $numberOfNights,
+                    'adults_count' => $data->adults_count,
+                    'children_count' => $data->children_count,
+                    'total_price' => $data->total_price,
+                    'discount' => $data->discount,
+                    'final_price' => $data->final_price,
+                    'one_night_price' => $oneNightPrice,
+                    'booking_source' => $data->booking_source,
+                    'coupon_id' => $data->coupon_id ?? null,
+                    'coupon_code' => $data->coupon_code ?? null,
+                    'status' => 'pending',
+                    'payment_id' => $payment_id ?? null,
+                    'payment_status' => 'pending',
+                    'check_in' => $data->check_in,
+                    'check_out' => $data->check_out,
 
-            'transaction_id' => $transaction->id,
-            'tax' => $data->vat ?? 0,
-        ]);
-        $transaction->update(['booking_id' => $booking->id]);
-        DB::commit();
+                    'check_in_time' => $building->check_in_time,
+                    'check_out_time' => $building->check_out_time,
 
-        return $booking;
+                    'transaction_id' => $transaction->id,
+                    'tax' => $data->vat ?? 0,
+                ]);
+                $transaction->update(['booking_id' => $booking->id]);
+
+                return $booking;
+            }
+        );
     }
 
     public function getDetermineBooking($apartment, $check_in, $check_out, $coupon = null)

@@ -51,9 +51,21 @@ Route::group([
     // Route for changing payment status
     Route::post('booking/{id}/change-payment-status/{status}', [BookingController::class, 'changePaymentStatus'])->name('admin.booking.change-payment-status');
 
-    // Routes for canceled bookings and refund process
+    // Routes for canceled bookings — two-step flow (cancel, then refund)
     Route::crud('canceled-bookings', CanceledBookingsController::class);
-    Route::post('canceled-bookings/{id}/process-refund/{action}', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.process-refund');
+    Route::post('canceled-bookings/{id}/cancel-local', [CanceledBookingsController::class, 'cancelLocal'])->name('admin.canceled-bookings.cancel-local');
+    Route::post('canceled-bookings/{id}/refund', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.refund');
+    Route::post('canceled-bookings/{id}/reject', [CanceledBookingsController::class, 'reject'])->name('admin.canceled-bookings.reject');
+
+    // Refunds tracker (follow the money)
+    Route::crud('refund', 'RefundCrudController');
+    Route::post('refund/{id}/retry', [\App\Http\Controllers\Admin\RefundCrudController::class, 'retry'])->name('admin.refund.retry');
+
+    // Date-change requests — review the "cheaper" path (apply + refund the difference)
+    Route::crud('date-change-requests', 'DateChangeRequestCrudController');
+    Route::post('date-change-requests/{id}/approve', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'approve'])->name('admin.date-change-requests.approve');
+    Route::post('date-change-requests/{id}/reject', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'reject'])->name('admin.date-change-requests.reject');
+    Route::post('date-change-requests/{id}/retry', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'retry'])->name('admin.date-change-requests.retry');
 
     // Daily Occupancy
     Route::get('charts/daily-occupancy', [\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');

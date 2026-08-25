@@ -2,6 +2,66 @@
 @push('css')
 <!-- SweetAlert2 CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- Flatpickr — نفس تحميلات صفحة الحجز (base + dark theme) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+
+<style>
+/* نفس ستايل تقويم صفحة الحجز (apartment/show.blade.php) */
+.flatpickr-day {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    margin: 3px;
+}
+.flatpickr-calendar .flatpickr-day.selected,
+.flatpickr-calendar .flatpickr-day.selected:hover,
+.flatpickr-calendar .flatpickr-day.selected:focus,
+span.flatpickr-day.selected{
+    background: #EF552C !important;
+    color: #fff !important;
+    border-color: #EF552C !important;
+}
+/* التقويم يُلحق بـ body داخل المودال (static=false) فيلزم رفعه فوق طبقة SweetAlert2 */
+.flatpickr-calendar.open {
+    z-index: 99999;
+}
+/* نضمن أن الصفحة RTL لا تعكس صفوف رؤوس الأيام/الأرقام فتختل المحاذاة — نفرض LTR على التقويم. */
+.flatpickr-calendar,
+.flatpickr-calendar .flatpickr-weekdays,
+.flatpickr-calendar .flatpickr-weekdaycontainer,
+.flatpickr-calendar .flatpickr-days,
+.flatpickr-calendar .dayContainer {
+    direction: ltr !important;
+}
+/* داخل المودال كانت شبكة الأيام تلتفّ إلى 6 أعمدة بينما الرؤوس 7 → اختلال المحاذاة.
+   نثبّت الصفّين على 7 خلايا × 36px = 252px مع box-sizing:border-box (يشمل الحدود) وبلا هوامش
+   حتى يتّسع 7 أعمدة بالضبط وتتطابق مع الرؤوس. */
+.flatpickr-calendar {
+    width: auto !important;
+}
+.flatpickr-calendar .flatpickr-days,
+.flatpickr-calendar .dayContainer,
+.flatpickr-calendar .flatpickr-weekdays,
+.flatpickr-calendar .flatpickr-weekdaycontainer {
+    width: 252px !important;
+    min-width: 252px !important;
+    max-width: 252px !important;
+}
+.flatpickr-calendar .flatpickr-day {
+    box-sizing: border-box !important;
+    width: 36px !important;
+    max-width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    margin: 0 !important;
+}
+.flatpickr-calendar .flatpickr-weekday {
+    box-sizing: border-box !important;
+    max-width: 36px !important;
+    flex: 1 1 36px !important;
+}
+</style>
 
 <style>
      .cancel-booking-btn[disabled] {
@@ -41,6 +101,23 @@
 .swal2-styled.swal2-cancel {
     background-color: #d33 !important;
     background: #d33 !important;
+}
+/* زر "السابق" (deny) — أزرق أساسي، وفي بداية الصف للدلالة على الرجوع خطوة */
+.swal2-deny,
+.swal2-styled.swal2-deny {
+    background-color: #3085d6 !important;
+    background: #3085d6 !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    border-radius: 4px !important;
+    font-weight: bold !important;
+    order: -1 !important;
+}
+/* زر تأكيد التعديل (دفع/طلب) — أخضر. تخصيص أعلى من .swal2-confirm لتجاوز !important */
+.swal2-popup .swal2-styled.dc-confirm-pay {
+    background-color: #28a745 !important;
+    background: #28a745 !important;
 }
 </style>
 @endpush
@@ -105,6 +182,22 @@
                         </div>
                         @endif
                     </div>
+
+                    <div class="relative group inline-block">
+                        <button {{ $can_cancel ? '' : 'disabled' }}
+                            class="py-3 px-4 inline-block rounded-md bg-[#eaf3ff] text-price ml-2 edit-dates-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
+                            data-booking-id="{{ $booking->id }}"
+                            data-check-in="{{ $booking->check_in->format('Y-m-d') }}"
+                            data-check-out="{{ $booking->check_out->format('Y-m-d') }}">
+                            <span class="inline-block ml-2 text-sm">{{ __('تعديل التواريخ') }}</span>
+                        </button>
+                        @if(!$can_cancel)
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 translate-y-2 px-3 py-2 mb-3
+                        bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            {{ __('booking.date_change_required_hours', ['hours' => $cancel_before_hours ?? 24]) }}
+                        </div>
+                        @endif
+                    </div>
                     @elseif($booking->status === 'customer_canceled')
                     <div class="py-3 px-4 inline-block rounded-md bg-gray-200 text-gray-600 ml-2 cursor-not-allowed">
                         <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ __('api.booking_status_customer_canceled') }}</span>
@@ -133,6 +226,36 @@
                          <svg class="inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="fi_5728913" data-name="Layer 1" viewBox="0 0 512 512" width="20" height="20"><path d="M489.417,279v-1.182c0-62.1-24.349-120.646-68.56-164.857S318.1,44.4,256,44.4,135.354,68.749,91.143,112.96s-68.56,102.758-68.56,164.856V279A27.578,27.578,0,0,0,0,306.081V397.1a27.571,27.571,0,0,0,27.538,27.539H44.556v3.934A39.075,39.075,0,0,0,83.586,467.6H98.705a23.94,23.94,0,0,0,23.912-23.913v-184.2a23.94,23.94,0,0,0-23.912-23.913H83.586a39.074,39.074,0,0,0-39.03,39.03v3.935H38.583v-.727C38.583,157.933,136.116,60.4,256,60.4s217.417,97.533,217.417,217.416v.727h-5.973v-3.935a39.074,39.074,0,0,0-39.03-39.03H413.3a23.94,23.94,0,0,0-23.912,23.913v184.2A23.94,23.94,0,0,0,413.3,467.6h15.119a39.075,39.075,0,0,0,39.03-39.031v-3.934h17.018A27.571,27.571,0,0,0,512,397.1V306.081A27.578,27.578,0,0,0,489.417,279Zm-428.861-4.39a23.056,23.056,0,0,1,23.03-23.03H98.705a7.921,7.921,0,0,1,7.912,7.913v184.2a7.921,7.921,0,0,1-7.912,7.913H83.586a23.056,23.056,0,0,1-23.03-23.031Zm-16,134.027H27.538A11.552,11.552,0,0,1,16,397.1V306.081a11.551,11.551,0,0,1,11.538-11.538H44.556Zm406.888,19.934a23.056,23.056,0,0,1-23.03,23.031H413.3a7.921,7.921,0,0,1-7.912-7.913v-184.2a7.921,7.921,0,0,1,7.912-7.913h15.119a23.056,23.056,0,0,1,23.03,23.03ZM496,397.1a11.552,11.552,0,0,1-11.538,11.539H467.444V294.543h17.018A11.551,11.551,0,0,1,496,306.081Z"></path></svg>
                      </a>
                 </div>
+
+                @if(!empty($date_change_request))
+                    @php($dc = $date_change_request)
+                    <div class="clear-both"></div>
+                    <div class="mt-4 p-4 rounded-lg" style="background-color:#111; border:1px solid #333;">
+                        <p class="text-sm mb-2">
+                            {{ __('طلب تعديل التواريخ') }}:
+                            <bdo dir="ltr" style="display:inline-block; font-weight:bold;">{{ $dc->new_check_out->format('Y-m-d') }} ← {{ $dc->new_check_in->format('Y-m-d') }}</bdo>
+                        </p>
+                        @if($dc->status === 'awaiting_payment')
+                            <p class="text-xs mb-3" style="color:#f0ad4e;">
+                                {{ __('بانتظار دفع الفرق لإتمام التعديل') }}
+                                @if((float) $dc->price_delta > 0)
+                                    (<b style="color:#e74c3c;">+{{ number_format(abs((float) $dc->price_delta), 2) }} SAR</b>)
+                                @endif
+                            </p>
+                            <button class="dc-retry-pay-btn py-2 px-4 rounded-md text-white ml-2" style="background:#3085d6;" data-request-id="{{ $dc->id }}">
+                                {{ __('إكمال الدفع') }}
+                            </button>
+                            <button class="dc-cancel-req-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-request-id="{{ $dc->id }}">
+                                {{ __('إلغاء طلب التعديل') }}
+                            </button>
+                        @elseif($dc->status === 'pending_review')
+                            <p class="text-xs mb-3" style="color:#3498db;">{{ __('طلبك قيد المراجعة — سيتم استرداد الفرق بعد الموافقة') }}</p>
+                            <button class="dc-cancel-req-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-request-id="{{ $dc->id }}">
+                                {{ __('إلغاء طلب التعديل') }}
+                            </button>
+                        @endif
+                    </div>
+                @endif
                 <div class="clear-both"></div>
             </div>
             <div class="grid lg:grid-cols-5 gap-6 max-w-full">
@@ -361,6 +484,8 @@ $('#closeMe').on('click',function(){
 @push('js')
 <!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Flatpickr (same date picker as the booking flow) — default English LTR for guaranteed header/day alignment -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 @include('customer.section.script-form')
 <script>
 
@@ -424,6 +549,306 @@ $(document).ready(function() {
 
                 });
             }
+        });
+    });
+
+    // ===== تعديل تواريخ الحجز =====
+    var dcCsrf = $('meta[name="csrf-token"]').attr("content");
+
+    // نبني قائمة التواريخ المحجوبة بنفس منطق حجز الوحدة، مع استثناء نطاق الحجز الحالي (مسموح للعميل).
+    function dcBuildDisabled(bookings, ownIn, ownOut) {
+        var own = new Set();
+        var c = new Date(ownIn), end = new Date(ownOut);
+        while (c < end) { own.add(c.toISOString().split('T')[0]); c.setDate(c.getDate() + 1); }
+
+        var dates = [];
+        (bookings || []).forEach(function (b) {
+            var cur = new Date(b.check_in), co = new Date(b.check_out);
+            while (cur < co) {
+                var d = cur.toISOString().split('T')[0];
+                if (!own.has(d)) { dates.push(d); }
+                cur.setDate(cur.getDate() + 1);
+            }
+        });
+        return dates;
+    }
+
+    function dcOpenModal(bookingId, curIn, curOut, disabledDates) {
+        Swal.fire({
+            title: "{{ __('تعديل التواريخ') }}",
+            html:
+                // نفس تخطيط حقول التواريخ في صفحة الحجز (apartment/show.blade.php)
+                '<div class="flex flex-wrap -mx-2">' +
+                    '<div class="flex flex-col w-1/2 px-2">' +
+                        '<label for="dc-in" class="mb-1 font-semibold">{{ __('apartment.checkin_date') }}</label>' +
+                        '<input type="date" id="dc-in" class="bg-blackopacity border border-gray-300 rounded-lg h-12 px-3 w-full" value="' + curIn + '">' +
+                    '</div>' +
+                    '<div class="flex flex-col w-1/2 px-2">' +
+                        '<label for="dc-out" class="mb-1 font-semibold">{{ __('apartment.checkout_date') }}</label>' +
+                        '<input type="date" id="dc-out" class="bg-blackopacity border border-gray-300 rounded-lg h-12 px-3 w-full" value="' + curOut + '">' +
+                    '</div>' +
+                '</div>',
+            width: 520,
+            showCancelButton: true,
+            confirmButtonText: "{{ __('booking.next') }}",
+            cancelButtonText: "{{ __('booking.no') }}",
+            focusConfirm: false,
+            didOpen: function () {
+                // نفس إعدادات flatpickr في صفحة الحجز (apartment/js.blade.php → commonOptions)
+                // static=false هنا فقط: داخل مودال SweetAlert لا يمكن تثبيت التقويم بجانب الحقل
+                // (يُقص أسفل الأزرار) — يظهر منسدلًا فوق المودال بنفس الشكل.
+                // position=auto (الافتراضي): يفتح أسفل الحقل وينقلب فوقه فقط عند عدم وجود مساحة.
+                // نعرض التقويم LTR افتراضياً (بلا locale عربي) لضمان تطابق رؤوس الأيام مع أرقامها؛
+                // الـ RTL داخل مودال SweetAlert كان يفكّ المحاذاة. التقويم للاختيار فقط والتواريخ رقمية.
+                var commonOptions = {
+                    dateFormat: "Y-m-d",
+                    minDate: "today",
+                    allowInput: false,
+                    disable: disabledDates,
+                    time_24hr: true,
+                    weekNumbers: false,
+                    static: false,
+                    enableTime: false,
+                    noCalendar: false,
+                    inline: false,
+                };
+                // نُحلّل التاريخ كمنتصف ليل محلي (وليس UTC) وإلا يصبح minDate بعد منتصف الليل المحلي
+                // فيُرفَض تاريخ المغادرة الافتراضي (منتصف الليل المحلي) ويُفرّغ الحقل.
+                var minOut = new Date(curIn + 'T00:00:00'); minOut.setDate(minOut.getDate() + 1);
+
+                window._dcOut = flatpickr("#dc-out", Object.assign({}, commonOptions, { defaultDate: curOut, minDate: minOut }));
+                window._dcIn = flatpickr("#dc-in", Object.assign({}, commonOptions, {
+                    defaultDate: curIn,
+                    onChange: function (selectedDates) {
+                        if (selectedDates.length > 0) {
+                            var checkinDate = selectedDates[0];
+                            var minCheckoutDate = new Date(checkinDate);
+                            minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+
+                            window._dcOut.set('minDate', minCheckoutDate);
+                            if (!window._dcOut.selectedDates.length || window._dcOut.selectedDates[0] <= checkinDate) {
+                                window._dcOut.setDate(minCheckoutDate, true);
+                            }
+                        }
+                    }
+                }));
+
+                // نضمن إبراز التاريخ المختار (خلفية برتقالية) في كلا الحقلين — بعض حالات type=date
+                // لا تُعلّم defaultDate كـ selected، فنفرضه يدوياً.
+                if (curIn) { window._dcIn.setDate(curIn, false); }
+                if (curOut) { window._dcOut.setDate(curOut, false); }
+
+                // المودال fixed بينما التقويم مُحدد بإحداثيات المستند — أعِد تموضعه عند أي تمرير
+                // (صفحة الخلفية أو حاوية المودال) ليبقى ملتصقًا أسفل الحقل.
+                window._dcReposition = function () {
+                    if (window._dcIn && window._dcIn.isOpen) { window._dcIn._positionCalendar(); }
+                    if (window._dcOut && window._dcOut.isOpen) { window._dcOut._positionCalendar(); }
+                };
+                window.addEventListener('scroll', window._dcReposition, true);
+                window.addEventListener('resize', window._dcReposition);
+            },
+            willClose: function () {
+                if (window._dcReposition) {
+                    window.removeEventListener('scroll', window._dcReposition, true);
+                    window.removeEventListener('resize', window._dcReposition);
+                    window._dcReposition = null;
+                }
+                if (window._dcIn) { window._dcIn.destroy(); window._dcIn = null; }
+                if (window._dcOut) { window._dcOut.destroy(); window._dcOut = null; }
+            },
+            preConfirm: function () {
+                var newIn = document.getElementById('dc-in').value;
+                var newOut = document.getElementById('dc-out').value;
+                if (!newIn) {
+                    Swal.showValidationMessage("{{ __('apartment.checkin_required') }}");
+                    return false;
+                }
+                if (!newOut) {
+                    Swal.showValidationMessage("{{ __('apartment.checkout_required') }}");
+                    return false;
+                }
+                if (newOut <= newIn) {
+                    Swal.showValidationMessage("{{ __('apartment.checkout_greater_than') }}");
+                    return false;
+                }
+                Swal.showLoading();
+                return $.ajax({
+                    url: "{{ route('web-booking.date-change.calculate') }}",
+                    type: "POST",
+                    headers: { "X-CSRF-TOKEN": dcCsrf },
+                    data: { booking_id: bookingId, new_check_in: newIn, new_check_out: newOut }
+                }).then(function (res) {
+                    return { quote: res.quote, newIn: newIn, newOut: newOut };
+                }).catch(function (xhr) {
+                    Swal.showValidationMessage((xhr.responseJSON && xhr.responseJSON.message) || "{{ __('booking.error_message') }}");
+                    return false;
+                });
+            }
+        }).then(function (result) {
+            if (!result.isConfirmed) { return; }
+
+            var q = result.value.quote;
+            var delta = parseFloat(q.price_delta);
+            var summary;
+            if (delta > 0.001) {
+                summary = "{{ __('سيتم تحصيل فرق قدره') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('لأجل تأكيد التعديل') }}";
+            } else if (delta < -0.001) {
+                summary = "{{ __('سيتم استرداد فرق قدره') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('بعد مراجعة الإدارة.') }}";
+            } else {
+                summary = "<span style='color:#6c757d;'>{{ __('لا يوجد فرق في السعر — سيتم تطبيق التواريخ مباشرة.') }}</span>";
+            }
+
+            // زر التأكيد: "دفع" عند وجود فرق مستحق (زيادة)، و"طلب" عدا ذلك.
+            var confirmText = delta > 0.001 ? "{{ __('booking.pay') }}" : "{{ __('booking.request') }}";
+
+            Swal.fire({
+                title: "{{ __('booking.date_change_confirmation') }}",
+                html: "<div style='text-align:center;'>" +
+                    "<bdo dir='ltr' style='display:inline-block;'>" + q.new_check_out + " ← " + q.new_check_in + "</bdo><br><br>" +
+                    "{{ __('السعر الجديد') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " SAR</b><br>" + summary + "</div>",
+                icon: 'question',
+                showDenyButton: true,
+                denyButtonText: "{{ __('booking.previous') }}",
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: "{{ __('booking.no') }}",
+                customClass: { confirmButton: 'dc-confirm-pay' }
+            }).then(function (confirm) {
+                // "السابق" → أعِد فتح مُنتقي التواريخ محتفظاً بالتواريخ المُختارة، بنفس القيود.
+                if (confirm.isDenied) {
+                    dcOpenModal(bookingId, result.value.newIn, result.value.newOut, disabledDates);
+                    return;
+                }
+                if (!confirm.isConfirmed) { return; }
+                HoldOn.open();
+                $.ajax({
+                    url: "{{ route('web-booking.date-change.request') }}",
+                    type: "POST",
+                    headers: { "X-CSRF-TOKEN": dcCsrf },
+                    data: { booking_id: bookingId, new_check_in: result.value.newIn, new_check_out: result.value.newOut },
+                    success: function (res) {
+                        HoldOn.close();
+                        if (res.action === 'awaiting_payment' && res.redirect) {
+                            window.location.href = res.redirect;
+                            return;
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: "{{ __('booking.success') }}",
+                            text: res.message,
+                            confirmButtonText: "{{ __('booking.ok') }}"
+                        }).then(function () { window.location.reload(); });
+                    },
+                    error: function (xhr) {
+                        HoldOn.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{ __('booking.error') }}",
+                            text: (xhr.responseJSON && xhr.responseJSON.message) || "{{ __('booking.error_message') }}"
+                        });
+                    }
+                });
+            });
+        });
+    }
+
+    $(".edit-dates-btn").click(function () {
+        if ($(this).is('[disabled]')) { return; }
+        var bookingId = $(this).data("booking-id");
+        var curIn = $(this).data("check-in");
+        var curOut = $(this).data("check-out");
+
+        HoldOn.open();
+        $.getJSON("{{ route('apartments.blocked-dates', $booking->apartment_id) }}")
+            .done(function (resp) {
+                HoldOn.close();
+                dcOpenModal(bookingId, curIn, curOut, dcBuildDisabled(resp.booked_days || [], curIn, curOut));
+            })
+            .fail(function () {
+                HoldOn.close();
+                dcOpenModal(bookingId, curIn, curOut, dcBuildDisabled([], curIn, curOut));
+            });
+    });
+
+    // منع إدخال تاريخ خروج غير صحيح يدويًا — نفس سلوك صفحة الحجز
+    $(document).on('change', '#dc-out', function () {
+        var checkinVal = $('#dc-in').val();
+        var checkoutVal = $(this).val();
+        if (checkinVal && checkoutVal && new Date(checkoutVal) <= new Date(checkinVal)) {
+            alert("{{ __('apartment.checkout_greater_than') }}");
+            $(this).val('');
+        }
+    });
+
+    // إكمال/إعادة دفع فرق تعديل التواريخ
+    $(document).on('click', '.dc-retry-pay-btn', function () {
+        var requestId = $(this).data("request-id");
+        HoldOn.open();
+        $.ajax({
+            url: "{{ url('web-booking/date-change') }}/" + requestId + "/retry-payment",
+            type: "POST",
+            headers: { "X-CSRF-TOKEN": dcCsrf },
+            success: function (res) {
+                if (res.action === 'awaiting_payment' && res.redirect) {
+                    window.location.href = res.redirect;
+                    return;
+                }
+                HoldOn.close();
+                Swal.fire({
+                    icon: 'success',
+                    title: "{{ __('booking.success') }}",
+                    text: res.message,
+                    confirmButtonText: "{{ __('booking.ok') }}"
+                }).then(function () { window.location.reload(); });
+            },
+            error: function (xhr) {
+                HoldOn.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: "{{ __('booking.error') }}",
+                    text: (xhr.responseJSON && xhr.responseJSON.message) || "{{ __('booking.error_message') }}"
+                });
+            }
+        });
+    });
+
+    // إلغاء طلب تعديل التواريخ (يحرّر النافذة المحجوزة)
+    $(document).on('click', '.dc-cancel-req-btn', function () {
+        var requestId = $(this).data("request-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('سيتم إلغاء طلب تعديل التواريخ.') }}",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "{{ __('booking.yes') }}",
+            cancelButtonText: "{{ __('booking.no') }}"
+        }).then(function (result) {
+            if (!result.isConfirmed) { return; }
+            HoldOn.open();
+            $.ajax({
+                url: "{{ url('web-booking/date-change') }}/" + requestId + "/cancel",
+                type: "POST",
+                headers: { "X-CSRF-TOKEN": dcCsrf },
+                success: function (res) {
+                    HoldOn.close();
+                    Swal.fire({
+                        icon: 'success',
+                        title: "{{ __('booking.success') }}",
+                        text: res.message,
+                        confirmButtonText: "{{ __('booking.ok') }}"
+                    }).then(function () { window.location.reload(); });
+                },
+                error: function (xhr) {
+                    HoldOn.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: "{{ __('booking.error') }}",
+                        text: (xhr.responseJSON && xhr.responseJSON.message) || "{{ __('booking.error_message') }}"
+                    });
+                }
+            });
         });
     });
 });

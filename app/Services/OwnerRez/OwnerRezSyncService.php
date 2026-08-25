@@ -25,10 +25,14 @@ class OwnerRezSyncService
     /**
      * Check availability for a property in OwnerRez (active bookings and blocks)
      */
-    public function checkAvailability(int|string $propertyId, string $from, string $to): bool
+    /**
+     * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
+     *                                                      (used when re-checking a booking's own new range).
+     */
+    public function checkAvailability(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null): bool
     {
         try {
-            $bookings = $this->getActiveBookings($propertyId, $from, $to);
+            $bookings = $this->getActiveBookings($propertyId, $from, $to, $excludeOwnerRezBookingId);
 
             return $bookings->isEmpty();
         } catch (OwnerRezApiException $e) {
@@ -115,7 +119,11 @@ class OwnerRezSyncService
      * Fetches all entries without status filter so calendar blocks (is_block=true)
      * are included alongside active bookings.
      */
-    public function getActiveBookings(int|string $propertyId, string $from, string $to): Collection
+    /**
+     * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
+     *                                                      (filtered post-cache so the cache stays shared).
+     */
+    public function getActiveBookings(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null): Collection
     {
         $cacheKey = "ownerrez:availability:v3:{$propertyId}:{$from}:{$to}";
         $cacheTtl = config('ownerrez.availability.cache_ttl', 300);
@@ -134,8 +142,12 @@ class OwnerRezSyncService
             })->values();
         });
 
-        // Filter entries that overlap with requested dates
-        return $bookings->filter(function ($booking) use ($from, $to) {
+        // Filter entries that overlap with requested dates, excluding the booking's own reservation.
+        return $bookings->filter(function ($booking) use ($from, $to, $excludeOwnerRezBookingId) {
+            if ($excludeOwnerRezBookingId !== null && (string) ($booking['id'] ?? '') === (string) $excludeOwnerRezBookingId) {
+                return false;
+            }
+
             return $this->datesOverlap(
                 $from,
                 $to,
@@ -165,6 +177,15 @@ class OwnerRezSyncService
     {
         $action = $webhookData['action'] ?? null;
         $bookingData = $webhookData['data'] ?? [];
+
+        // `entity_id` is the authoritative OwnerRez booking/block id for EVERY action.
+        // On entity_delete the entity body is empty ({}) and `data` instead carries the
+        // webhook EVENT id in `id` (the wrong value), so we must always trust `entity_id`
+        // to resolve the local booking via the ownerrez_bookings link. For create/update
+        // entity_id equals entity.id, so this override is a no-op there.
+        if (! empty($webhookData['entity_id'])) {
+            $bookingData['id'] = $webhookData['entity_id'];
+        }
 
         Log::channel('ownerrez_webhook')->info('OwnerRez webhook processing started', [
             'action' => $action,
@@ -557,6 +578,9 @@ class OwnerRezSyncService
      */
     public function cancelLocalBookingFromOwnerRez(Booking $booking): void
     {
+        // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد أصبح خطوة منفصلة يُنفّذها الموظف يدوياً
+        // من شاشة "الحجوزات الملغاة" بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
+        // refund_status يبقى كما هو (pending لطلبات العملاء) لتظهر خطوة الاسترداد.
         $booking->update([
             'status' => 'canceled',
         ]);
@@ -711,10 +735,23 @@ class OwnerRezSyncService
         }
 
         $ownerrezData = $this->mapLocalToOwnerRez($booking);
+        // The date PATCH is the critical sync — a failure here must bubble up so callers roll back.
         $this->apiService->updateBooking($booking->ownerrez_booking_id, $ownerrezData);
 
-        // Ensure custom field is set
-        $this->ensureBookingCustomField((int) $booking->ownerrez_booking_id);
+        // Invalidate this property's cached calendar/availability so freed days become available
+        // immediately (the calendar is Cache::forever; otherwise it stays stale until cache:clear).
+        $this->invalidatePropertyCache($ownerrezData['property_id']);
+
+        // The custom field is secondary/best-effort: a failure here must NOT undo a successful
+        // date sync (otherwise local rolls back while OwnerRez already holds the new dates).
+        try {
+            $this->ensureBookingCustomField((int) $booking->ownerrez_booking_id);
+        } catch (\Throwable $e) {
+            Log::warning('OwnerRez custom field update failed after date sync (non-fatal)', [
+                'ownerrez_booking_id' => $booking->ownerrez_booking_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

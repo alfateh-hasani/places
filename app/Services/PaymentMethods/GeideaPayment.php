@@ -17,6 +17,16 @@ class GeideaPayment implements PaymentMethodInterface
 
     private string $hppBase;         // https://www.ksamerchant.geidea.net/hpp/checkout
 
+    /** Optional override for the browser return URL (used by non-booking flows e.g. date-change surcharge). */
+    private ?string $returnUrlOverride = null;
+
+    public function withReturnUrl(string $url): static
+    {
+        $this->returnUrlOverride = $url;
+
+        return $this;
+    }
+
     public function __construct()
     {
         $this->publicKey = config('payments.gateways.geidea.public_key');
@@ -58,6 +68,7 @@ class GeideaPayment implements PaymentMethodInterface
     {
         $url = $this->apiBase."/pgw/api/v1/direct/order/{$orderId}";
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
+            ->connectTimeout(15)->timeout(30)
             ->acceptJson()
             ->get($url);
 
@@ -77,7 +88,7 @@ class GeideaPayment implements PaymentMethodInterface
     public function process($transaction)
     {
         // returnUrl: يُعيد توجيه المتصفح فقط لعرض النتيجة للعميل
-        $returnUrl = route(
+        $returnUrl = $this->returnUrlOverride ?? route(
             $transaction->platform === 'api'
                 ? 'paymentMethodCallBack'
                 : 'web-booking.paymentMethodCallBack',
@@ -196,14 +207,20 @@ class GeideaPayment implements PaymentMethodInterface
      |-----------------------------------------------------------------*/
     public function refund($orderId, $amount)
     {
-        $url = $this->apiBase.'/pgw/api/v1/direct/refund';
+        $url = $this->apiBase.'/pgw/api/v2/direct/refund';
+        $timestamp = now()->format('Y/m/d H:i:s');
+        $refundAmount = $this->fmt($amount);
 
+        // ملاحظة: توقيع الاسترداد يختلف ترتيبه عن توقيع إنشاء الجلسة (signature أدناه)
         $payload = [
             'orderId' => $orderId,
-            'amount' => $this->fmt($amount),
+            'refundAmount' => $refundAmount,
+            'timestamp' => $timestamp,
+            'signature' => $this->refundSignature($orderId, $amount, $timestamp),
         ];
 
         $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
+            ->connectTimeout(15)->timeout(30)
             ->acceptJson()
             ->post($url, $payload);
 
@@ -239,6 +256,17 @@ class GeideaPayment implements PaymentMethodInterface
     private function signature(float $amount, string $currency, string $ref, string $ts): string
     {
         $plain = "{$this->publicKey}{$this->fmt($amount)}{$currency}{$ref}{$ts}";
+
+        return base64_encode(hash_hmac('sha256', $plain, $this->apiPassword, true));
+    }
+
+    /**
+     * توقيع الاسترداد — ترتيب الحقول: timestamp + publicKey + refundAmount + orderId
+     * (يختلف عن توقيع إنشاء الجلسة، ولا يتضمن العملة).
+     */
+    private function refundSignature(string $orderId, float $amount, string $ts): string
+    {
+        $plain = $ts.$this->publicKey.$this->fmt($amount).$orderId;
 
         return base64_encode(hash_hmac('sha256', $plain, $this->apiPassword, true));
     }

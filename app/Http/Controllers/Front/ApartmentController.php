@@ -55,7 +55,7 @@ class ApartmentController extends Controller
             'reviews',
             'features',
             'bookings' => function ($query) {
-                $query->where('check_out', '>=', now()->startOfDay())->whereNotIn('status', ['canceled', 'customer_canceled']);
+                $query->where('check_out', '>=', now()->startOfDay())->whereNotIn('status', ['canceled']);
             },
             'policy',
             'ownerrezMapping',
@@ -78,6 +78,9 @@ class ApartmentController extends Controller
             'check_in' => $b->check_in->format('Y-m-d'),
             'check_out' => $b->check_out->format('Y-m-d'),
         ])->toArray();
+
+        // نوافذ طلبات تعديل التواريخ المفتوحة تحجب أيضاً (لتطابق checkAvailability)
+        $booked_days = array_merge($booked_days, $this->pendingDateChangeWindows($apartment));
 
         // طبقة ثانية: قفل تواريخ OwnerRez من الكاش الدائم (stale-while-revalidate)
         $mapping = $apartment->ownerrezMapping;
@@ -238,12 +241,15 @@ class ApartmentController extends Controller
 
         $bookedDays = $apartment->bookings()
             ->where('check_out', '>=', now()->startOfDay())
-            ->whereNotIn('status', ['canceled', 'customer_canceled'])
+            ->whereNotIn('status', ['canceled'])
             ->get()
             ->map(fn ($b) => [
                 'check_in' => $b->check_in->format('Y-m-d'),
                 'check_out' => $b->check_out->format('Y-m-d'),
             ])->toArray();
+
+        // نوافذ طلبات تعديل التواريخ المفتوحة تحجب أيضاً (لتطابق checkAvailability)
+        $bookedDays = array_merge($bookedDays, $this->pendingDateChangeWindows($apartment));
 
         $mapping = $apartment->ownerrezMapping;
         if ($mapping && config('ownerrez.availability.enabled')) {
@@ -259,6 +265,25 @@ class ApartmentController extends Controller
         return response()->json([
             'booked_days' => $bookedDays,
         ]);
+    }
+
+    /**
+     * Open date-change requests hold their requested window (mirrors BookingService::checkAvailability
+     * step 1b) — so the calendar must show them blocked, otherwise a date looks free but booking it fails.
+     *
+     * @return array<int, array{check_in:string, check_out:string}>
+     */
+    private function pendingDateChangeWindows(Apartment $apartment): array
+    {
+        return \App\Models\DateChangeRequest::query()
+            ->whereIn('status', \App\Enums\DateChangeStatus::openValues())
+            ->whereHas('booking', fn ($q) => $q->where('apartment_id', $apartment->id))
+            ->where('new_check_out', '>=', now()->startOfDay())
+            ->get()
+            ->map(fn ($r) => [
+                'check_in' => $r->new_check_in->format('Y-m-d'),
+                'check_out' => $r->new_check_out->format('Y-m-d'),
+            ])->toArray();
     }
 
     /**

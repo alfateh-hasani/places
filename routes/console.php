@@ -35,3 +35,12 @@ Schedule::command('log:clean')->daily();
 
 Schedule::command('delete:pending-bookings')->everyTenMinutes();
 
+// إعادة محاولة/تسوية عمليات الاسترداد العالقة (processing/failed) في جيديا
+Schedule::command('refunds:reconcile')->everyTenMinutes();
+
+// إعادة محاولة/تسوية استرداد فروق تعديل التواريخ العالقة (processing/failed)
+Schedule::command('date-changes:reconcile-refunds')->everyTenMinutes();
+Schedule::command('date-changes:reconcile-awaiting-payment')->everyTenMinutes();
+
+// تحرير طلبات تعديل التواريخ العالقة بانتظار الدفع (يحرّر النافذة المحجوزة)
+Schedule::command('date-changes:expire-unpaid')->everyTenMinutes();

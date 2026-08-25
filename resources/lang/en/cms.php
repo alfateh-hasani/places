@@ -170,4 +170,23 @@ return [
     'ongoing_bookings' => 'Ongoing Bookings',
     'monthly_bookings' => 'Monthly Bookings',
     'date_range' => 'Date Range',
+
+    // Date-change requests (admin)
+    'date_change_requests' => 'Date Change Requests',
+    'current_dates' => 'Current Dates',
+    'new_dates' => 'New Dates',
+    'price_difference' => 'Price Difference',
+    'date_change_status_pending_review' => 'Pending Review',
+    'date_change_status_awaiting_payment' => 'Awaiting Payment',
+    'date_change_status_applied' => 'Applied',
+    'date_change_done' => 'Dates changed and difference refunded successfully.',
+    'date_change_rejected' => 'Request rejected — the booking keeps its original dates.',
+    'date_change_apply_failed' => 'Could not apply the new dates',
+    'date_change_approve_btn' => 'Approve & Refund',
+    'date_change_approve_confirm' => 'Apply the new dates and refund the difference to the customer?',
+    'date_change_reject_btn' => 'Reject',
+    'date_change_reject_confirm' => 'Reject the request and keep the original dates?',
+    'date_change_retry_btn' => 'Retry Refund',
+    'date_change_retry_confirm' => 'Retry refunding the difference?',
+    'confirm' => 'Confirm',
 ];
