@@ -36,7 +36,11 @@ class BookingRaceAndGuardsTest extends TestCase
     {
         parent::setUp();
 
-        $this->apartmentId = (int) Apartment::query()->value('id');
+        // Deliberately NOT OwnerRez-linked: reserveApartment() now does a live (uncached) OwnerRez
+        // call for mapped apartments, which would make this suite depend on real network/config
+        // state. Fall back to any apartment only if none are unmapped in this environment.
+        $this->apartmentId = (int) (Apartment::whereDoesntHave('ownerrezMapping')->value('id')
+            ?? Apartment::query()->value('id'));
     }
 
     protected function tearDown(): void

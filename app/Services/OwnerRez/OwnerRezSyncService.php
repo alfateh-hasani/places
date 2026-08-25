@@ -28,11 +28,16 @@ class OwnerRezSyncService
     /**
      * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
      *                                                      (used when re-checking a booking's own new range).
+     * @param  bool  $liveCheck  Skip the 5-minute cache and query OwnerRez fresh (single attempt,
+     *                           no retry — fails fast rather than extending how long the apartment
+     *                           lock is held). Reserved for the authoritative check at the moment a
+     *                           booking is actually committed (BookingService::reserveApartment).
+     *                           Browsing/quote checks should leave this false and use the cache.
      */
-    public function checkAvailability(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null): bool
+    public function checkAvailability(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null, bool $liveCheck = false): bool
     {
         try {
-            $bookings = $this->getActiveBookings($propertyId, $from, $to, $excludeOwnerRezBookingId);
+            $bookings = $this->getActiveBookings($propertyId, $from, $to, $excludeOwnerRezBookingId, $liveCheck);
 
             return $bookings->isEmpty();
         } catch (OwnerRezApiException $e) {
@@ -122,13 +127,19 @@ class OwnerRezSyncService
     /**
      * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
      *                                                      (filtered post-cache so the cache stays shared).
+     * @param  bool  $liveCheck  Bypass the cache and fetch fresh from OwnerRez, then refresh the
+     *                           cache with the result so other/subsequent cached readers benefit
+     *                           too. No retry on failure — this runs while the apartment row lock
+     *                           is held, so a slow/failing OwnerRez must fail fast rather than
+     *                           stack extra timeouts onto the lock (and onto anyone else waiting
+     *                           on the same apartment).
      */
-    public function getActiveBookings(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null): Collection
+    public function getActiveBookings(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null, bool $liveCheck = false): Collection
     {
         $cacheKey = "ownerrez:availability:v3:{$propertyId}:{$from}:{$to}";
         $cacheTtl = config('ownerrez.availability.cache_ttl', 300);
 
-        $bookings = Cache::remember($cacheKey, $cacheTtl, function () use ($propertyId, $from, $to) {
+        $fetch = function () use ($propertyId, $from, $to) {
             $response = $this->apiService->getBookings([
                 'property_ids' => $propertyId,
                 'from' => $from,
@@ -140,7 +151,14 @@ class OwnerRezSyncService
             return collect($response['items'] ?? [])->filter(function ($item) {
                 return ! empty($item['is_block']) || strtolower($item['status'] ?? '') === 'active';
             })->values();
-        });
+        };
+
+        if ($liveCheck) {
+            $bookings = $fetch();
+            Cache::put($cacheKey, $bookings->toArray(), $cacheTtl);
+        } else {
+            $bookings = Cache::remember($cacheKey, $cacheTtl, $fetch);
+        }
 
         // Filter entries that overlap with requested dates, excluding the booking's own reservation.
         return $bookings->filter(function ($booking) use ($from, $to, $excludeOwnerRezBookingId) {

@@ -12,6 +12,8 @@ return [
     'coupon_usage_limit_reached' => 'This coupon has reached its maximum number of uses',
     'coupon_customer_usage_limit_reached' => 'You have already used this coupon the maximum number of times allowed',
     'already_booked' => 'This apartment is already booked for the selected dates',
+    'apartment_not_available_external' => 'This apartment is booked on another platform for these dates',
+    'ownerrez_service_unavailable' => "We couldn't check availability right now — please try again in a moment.",
     'booking_added' => 'Booking completed successfully',
     'max_adults' => 'You have exceeded the maximum number of adults',
     'max_children' => 'You have exceeded the maximum number of children',
