@@ -43,7 +43,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
         Route::post('/register', [\App\Http\Controllers\Front\Auth\LoginController::class, 'registerUser'])->name('login.register');
     });
 
-    Route::middleware('auth:customer')->group(function () {
+    Route::middleware(['auth:customer', 'customer.not_blocked'])->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Front\Auth\LoginController::class, 'logout'])->name('customer.logout');
         Route::controller(CustomerAccountController::class)->name('customer.')->prefix('customer')->group(function () {
             Route::get('account', 'profile')->name('account');

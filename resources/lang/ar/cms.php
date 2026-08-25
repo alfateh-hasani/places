@@ -272,6 +272,22 @@ return [
     'total_refunded' => 'إجمالي المسترد',
     'refund_retry_started' => 'تم بدء إعادة محاولة الاسترداد',
 
+    // Customer blocking
+    'block_customer' => 'حظر',
+    'unblock_customer' => 'رفع الحظر',
+    'block_reason' => 'سبب الحظر',
+    'block_reason_hint' => 'يظهر هذا السبب في سجل التدقيق ولن يُعرض للعميل مباشرة.',
+    'confirm_block' => 'تأكيد الحظر',
+    'unblock_confirm' => 'رفع الحظر عن هذا العميل؟ سيتمكن من تسجيل الدخول مرة أخرى.',
+    'customer_blocked_successfully' => 'تم حظر العميل بنجاح.',
+    'customer_unblocked_successfully' => 'تم رفع الحظر عن العميل بنجاح.',
+    'block_reason_required' => 'سبب الحظر مطلوب.',
+    'customer_status' => 'حالة الحساب',
+    'status_blocked' => 'محظور',
+    'status_active' => 'نشط',
+    'blocked_at' => 'تاريخ الحظر',
+    'blocked_by' => 'حظره',
+
     // Date-change requests (admin)
     'date_change_requests' => 'طلبات تعديل التواريخ',
     'current_dates' => 'التواريخ الحالية',

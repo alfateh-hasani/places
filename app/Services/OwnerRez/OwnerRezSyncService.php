@@ -10,11 +10,15 @@ use App\Models\BookingChannelConflict;
 use App\Models\Customer;
 use App\Models\OwnerRezBooking;
 use App\Models\OwnerRezPropertyMapping;
+use App\Models\User;
+use App\Mail\BlockedCustomerBookingSynced;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class OwnerRezSyncService
 {
@@ -569,7 +573,62 @@ class OwnerRezSyncService
             );
         }
 
-        return Booking::create($localData);
+        $booking = Booking::create($localData);
+
+        $this->alertIfCustomerBlocked($booking);
+
+        return $booking;
+    }
+
+    /**
+     * عميل محظور عندنا قد يحجز عبر قناة خارجية (Airbnb/Booking.com) لا نتحكم بها — الحجز يُزامَن دائماً
+     * بلا استثناء (OwnerRez يبقى مصدر الحقيقة لتوفر الوحدة)، وهذه مجرد رسالة مراجعة بشرية، بلا أي إجراء آلي.
+     */
+    private function alertIfCustomerBlocked(Booking $booking): void
+    {
+        $customer = $booking->customer;
+
+        if (! $customer || ! $customer->isBlocked()) {
+            return;
+        }
+
+        Log::warning('Inbound OwnerRez booking synced for a blocked customer', [
+            'booking_id' => $booking->id,
+            'customer_id' => $customer->id,
+            'booking_source' => $booking->booking_source,
+        ]);
+
+        try {
+            $recipients = User::query()
+                ->whereHas('roles', fn ($q) => $q->whereIn('name', Config::array('mail.blocked_customer_booking_alert.roles')))
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->orderBy('id')
+                ->get(['id', 'email']);
+
+            $onlyIds = Config::array('mail.blocked_customer_booking_alert.only_user_ids');
+            if (! empty($onlyIds)) {
+                $recipients = $recipients->whereIn('id', $onlyIds);
+            }
+
+            if ($recipients->isEmpty()) {
+                Log::warning('No blocked-customer-booking reviewers resolved — alert email skipped', [
+                    'booking_id' => $booking->id,
+                    'roles' => Config::array('mail.blocked_customer_booking_alert.roles'),
+                ]);
+
+                return;
+            }
+
+            foreach ($recipients as $recipient) {
+                Mail::to($recipient->email)->send(new BlockedCustomerBookingSynced($booking, $customer));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify reviewers of inbound booking for blocked customer', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

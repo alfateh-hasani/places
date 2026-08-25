@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ApiLocaleKeyMiddleware;
 use App\Http\Middleware\ApiSecretKeyMiddleware;
+use App\Http\Middleware\EnsureCustomerNotBlocked;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'localeCookieRedirect' => \Mcamara\LaravelLocalization\Middleware\LocaleCookieRedirect::class,
             'localeViewPath' => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationViewPath::class,
             'appSecret' => ApiSecretKeyMiddleware::class,
+            'customer.not_blocked' => EnsureCustomerNotBlocked::class,
             'ownerrez.webhook' => \App\Http\Middleware\OwnerRezWebhookAuth::class,
             'GoogleReCaptchaV3' => TimeHunter\LaravelGoogleReCaptchaV3\Facades\GoogleReCaptchaV3::class,
 

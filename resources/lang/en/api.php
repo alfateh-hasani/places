@@ -42,4 +42,5 @@ return [
     'date_change_not_awaiting_payment' => 'This request is not awaiting payment',
     'date_change_cannot_cancel' => 'This request cannot be canceled in its current state',
     'date_change_request_canceled' => 'Date-change request canceled',
+    'account_blocked' => 'Your account has been blocked. Please contact support.',
 ];

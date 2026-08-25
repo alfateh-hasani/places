@@ -189,4 +189,20 @@ return [
     'date_change_retry_btn' => 'Retry Refund',
     'date_change_retry_confirm' => 'Retry refunding the difference?',
     'confirm' => 'Confirm',
+
+    // Customer blocking
+    'block_customer' => 'Block',
+    'unblock_customer' => 'Unblock',
+    'block_reason' => 'Block reason',
+    'block_reason_hint' => 'Shown in the audit log only, not to the customer directly.',
+    'confirm_block' => 'Confirm block',
+    'unblock_confirm' => 'Unblock this customer? They will be able to log in again.',
+    'customer_blocked_successfully' => 'Customer blocked successfully.',
+    'customer_unblocked_successfully' => 'Customer unblocked successfully.',
+    'block_reason_required' => 'Block reason is required.',
+    'customer_status' => 'Account status',
+    'status_blocked' => 'Blocked',
+    'status_active' => 'Active',
+    'blocked_at' => 'Blocked at',
+    'blocked_by' => 'Blocked by',
 ];

@@ -30,7 +30,27 @@ class Customer extends Authenticatable implements HasMedia
         'fcm_token',
         'id_number',
         'ownerrez_guest_id',
+        'blocked_at',
+        'block_reason',
+        'blocked_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'blocked_at' => 'datetime',
+        ];
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this->blocked_at !== null;
+    }
+
+    public function blockedByUser(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'blocked_by');
+    }
 
     public function reviews(): HasMany
     {
