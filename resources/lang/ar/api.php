@@ -37,7 +37,7 @@ return [
     // OwnerRez Integration
     'apartment_not_available_external' => 'الشقة محجوزة عبر منصة أخرى في هذه التواريخ',
     'ownerrez_sync_failed' => 'فشل في المزامنة مع OwnerRez',
-    'ownerrez_service_unavailable' => 'خدمة التحقق من التوفر غير متاحة حالياً، يرجى المحاولة لاحقاً',
+    'ownerrez_service_unavailable' => 'تعذّر التحقق من توفر الوحدة حالياً، يرجى المحاولة مرة أخرى بعد قليل',
 
     // Date change (edit booking dates)
     'something_went_wrong' => 'حدث خطأ ما، يرجى المحاولة لاحقاً',

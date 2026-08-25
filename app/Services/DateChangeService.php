@@ -142,7 +142,8 @@ class DateChangeService
             $newOut = $request->new_check_out->toDateString();
 
             // Final availability re-check (excluding self) — guards against a race during review.
-            $this->bookingService->checkAvailability($booking->apartment, $newIn, $newOut, $booking->id);
+            // Live OwnerRez check (bypasses the 5-minute cache): this is the commit point.
+            $this->bookingService->checkAvailability($booking->apartment, $newIn, $newOut, $booking->id, liveCheck: true);
 
             $nights = Carbon::parse($newIn)->diffInDays(Carbon::parse($newOut));
             $newFinal = round((float) $request->new_price, 2);

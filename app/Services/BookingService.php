@@ -79,8 +79,13 @@ class BookingService
     /**
      * @param  int|null  $excludeBookingId  Ignore this booking when checking overlaps
      *                                       (used when re-checking a booking's own new date range).
+     * @param  bool  $liveCheck  Bypass OwnerRez's 5-minute availability cache and query it fresh
+     *                           (single attempt, fails fast). Only the authoritative check at the
+     *                           moment a booking is committed should set this — see
+     *                           BookingService::reserveApartment(). Leave false for browsing/quote
+     *                           calls; they keep using the cache.
      */
-    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut, ?int $excludeBookingId = null): string
+    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut, ?int $excludeBookingId = null, bool $liveCheck = false): string
     {
         try {
             $checkInDate = Carbon::parse($checkIn);
@@ -143,7 +148,8 @@ class BookingService
                     $mapping->ownerrez_property_id,
                     $checkInDate->format('Y-m-d'),
                     $checkOutDate->format('Y-m-d'),
-                    $excludeOwnerRezBookingId
+                    $excludeOwnerRezBookingId,
+                    $liveCheck
                 );
 
                 if (! $isAvailable) {
@@ -298,7 +304,9 @@ class BookingService
         return DB::transaction(function () use ($apartmentId, $checkIn, $checkOut, $excludeBookingId, $create) {
             $apartment = Apartment::whereKey($apartmentId)->lockForUpdate()->firstOrFail();
 
-            $this->checkAvailability($apartment, $checkIn, $checkOut, $excludeBookingId);
+            // Live (uncached) check: this is the actual commit point, scoped to one
+            // apartment/date-range, so a fresh OwnerRez query stays fast.
+            $this->checkAvailability($apartment, $checkIn, $checkOut, $excludeBookingId, liveCheck: true);
 
             return $create($apartment);
         });
