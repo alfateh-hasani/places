@@ -45,6 +45,8 @@ Route::group([
 
     Route::crud('transaction', 'TransactionController');
     Route::crud('customer', 'CustomerController');
+    Route::post('customer/{id}/block', [\App\Http\Controllers\Admin\CustomerController::class, 'block'])->name('admin.customer.block');
+    Route::post('customer/{id}/unblock', [\App\Http\Controllers\Admin\CustomerController::class, 'unblock'])->name('admin.customer.unblock');
     Route::crud('service', 'ServiceController');
 
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');

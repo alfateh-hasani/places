@@ -103,4 +103,5 @@ return [
     'explore_our_buildings_map' => 'Explore all our building locations on the map',
     'view_details' => 'View Details',
     'search_buildings' => 'Search buildings...',
+    'account_blocked' => 'Your account has been blocked. Please contact support.',
 ];

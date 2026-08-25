@@ -111,6 +111,7 @@ return [
     'summary_reservastion' => 'ملخص الحجز',
     'apartments_list'=>'الوحدات السكنية',
     'logged_in_successfully'=>"تم تسجيل الدخول بنجاح!",
+    'account_blocked' => 'تم إيقاف حسابك. يرجى التواصل مع الدعم.',
     'created_in_successfully'=>'Account created and logged in successfully',
     'coupon_discount'=>'كوبون الخصم',
     'contact' =>'تواصل معنا',

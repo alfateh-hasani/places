@@ -93,6 +93,15 @@ class LoginController extends Controller
 
         $customer = Customer::where('phone', $request->phone)->first();
 
+        if ($customer && $customer->isBlocked()) {
+            $otpLog->warning('[Web] Login blocked - customer is blocked', ['phone' => $request->phone, 'customer_id' => $customer->id]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => trans('site.account_blocked'),
+            ], 400);
+        }
+
         if ($customer) {
             Auth::guard('customer')->login($customer);
 

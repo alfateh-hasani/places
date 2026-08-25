@@ -33,6 +33,7 @@ return [
     'booking_canceled_successfully' => 'تم إلغاء الحجز بنجاح وسيتم استرداد المبلغ خلال الأيام القادمة',
     'services_added' => 'تمت إضافة الخدمات بنجاح',
     'payment_creation_failed' => 'فشل في إنشاء عملية الدفع',
+    'account_blocked' => 'تم إيقاف حسابك. يرجى التواصل مع الدعم.',
 
     // OwnerRez Integration
     'apartment_not_available_external' => 'الشقة محجوزة عبر منصة أخرى في هذه التواريخ',

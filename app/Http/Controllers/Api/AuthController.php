@@ -96,6 +96,12 @@ class AuthController extends Controller
 
             $customer = Customer::where('phone', $request->phone)->first();
 
+            if ($customer && $customer->isBlocked()) {
+                $otpLog->warning('[API] Login blocked - customer is blocked', ['phone' => $request->phone, 'customer_id' => $customer->id]);
+
+                return $this->errorResponse([], trans('api.account_blocked'));
+            }
+
             if ($customer) {
                 $customer->fcm_token = $request->fcm_token;
                 $customer->save();
