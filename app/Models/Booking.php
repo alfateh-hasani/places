@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\DateChangeStatus;
 use App\Events\BookingApproved;
+use App\Events\BookingCancelled;
 use App\Jobs\SendBookingConfirmedNotification;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -76,8 +77,13 @@ class Booking extends Model
             if ($booking->isDirty('status') && $booking->status === 'approved') {
                 SendBookingConfirmedNotification::dispatch($booking);
 
-                // إطلاق event للمزامنة مع OwnerRez
+                // إطلاق event للمزامنة مع OwnerRez ولتوفير كود الدخول
                 event(new BookingApproved($booking));
+            }
+
+            // إطلاق event لإلغاء كود الدخول عند إلغاء الحجز (من العميل أو الإدارة أو OwnerRez)
+            if ($booking->isDirty('status') && in_array($booking->status, ['canceled', 'customer_canceled'], true)) {
+                event(new BookingCancelled($booking, $booking->getOriginal('status')));
             }
         });
 

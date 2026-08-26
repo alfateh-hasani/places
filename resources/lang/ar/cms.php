@@ -306,4 +306,6 @@ return [
     'date_change_retry_btn' => 'إعادة محاولة الاسترداد',
     'date_change_retry_confirm' => 'إعادة محاولة استرداد الفرق؟',
     'confirm' => 'تأكيد',
+    'passcode' => 'كود الدخول',
+    'copy_passcode' => 'نسخ الكود',
 ];

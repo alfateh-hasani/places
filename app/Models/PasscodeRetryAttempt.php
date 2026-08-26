@@ -14,6 +14,7 @@ class PasscodeRetryAttempt extends Model
         'booking_id',
         'apartment_id',
         'customer_id',
+        'operation',
         'attempt_count',
         'max_attempts',
         'last_attempt_at',
@@ -55,7 +56,7 @@ class PasscodeRetryAttempt extends Model
     {
         return $query->where('status', 'pending')
                     ->where('next_attempt_at', '<=', now())
-                    ->where('attempt_count', '<', 'max_attempts');
+                    ->whereColumn('attempt_count', '<', 'max_attempts');
     }
 
     public function scopeMaxAttemptsReached($query)
@@ -99,7 +100,9 @@ class PasscodeRetryAttempt extends Model
         ];
 
         $status = $this->attempt_count >= $this->max_attempts ? 'max_attempts_reached' : 'pending';
-        $nextAttemptAt = $this->attempt_count < $this->max_attempts ? now()->addMinutes(20) : null;
+        $nextAttemptAt = $this->attempt_count < $this->max_attempts
+            ? now()->addMinutes(config('locks.retry_backoff_minutes', 20))
+            : null;
 
         $this->update([
             'status' => $status,
@@ -110,17 +113,17 @@ class PasscodeRetryAttempt extends Model
     }
 
     // إنشاء أو تحديث محاولة
-    public static function createOrUpdateForBooking($booking, $error = null)
+    public static function createOrUpdateForBooking($booking, $error = null, string $operation = 'provision')
     {
         $attempt = self::firstOrCreate(
-            ['booking_id' => $booking->id],
+            ['booking_id' => $booking->id, 'operation' => $operation],
             [
                 'apartment_id' => $booking->apartment_id,
                 'customer_id' => $booking->customer_id,
                 'attempt_count' => 0,
-                'max_attempts' => 5,
+                'max_attempts' => config('locks.max_retry_attempts', 5),
                 'status' => 'pending',
-                'next_attempt_at' => now()->addMinutes(20),
+                'next_attempt_at' => now()->addMinutes(config('locks.retry_backoff_minutes', 20)),
             ]
         );
 
@@ -132,8 +135,11 @@ class PasscodeRetryAttempt extends Model
     }
 
     // الحصول على المحاولات الجاهزة لإعادة المحاولة
-    public static function getReadyForRetry()
+    public static function getReadyForRetry(?string $operation = null)
     {
-        return self::readyForRetry()->with(['booking', 'apartment', 'customer'])->get();
+        return self::readyForRetry()
+            ->when($operation, fn ($query) => $query->where('operation', $operation))
+            ->with(['booking', 'apartment', 'customer'])
+            ->get();
     }
 } 

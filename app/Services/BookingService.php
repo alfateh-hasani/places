@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Models\ServiceBooking;
 use App\Models\Transaction;
 use App\Services\Coupons\CouponUsageGuard;
+use App\Services\Locks\LockAccessService;
 use App\Services\Pricing\PricingService;
 use Carbon\Carbon;
 use Closure;
@@ -26,11 +27,14 @@ class BookingService
 
     protected $couponUsageGuard;
 
-    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService, CouponUsageGuard $couponUsageGuard)
+    protected $lockAccessService;
+
+    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService, CouponUsageGuard $couponUsageGuard, LockAccessService $lockAccessService)
     {
         $this->paymentService = $paymentService;
         $this->pricingService = $pricingService;
         $this->couponUsageGuard = $couponUsageGuard;
+        $this->lockAccessService = $lockAccessService;
     }
 
     /**
@@ -455,7 +459,7 @@ class BookingService
         DB::beginTransaction();
 
         try {
-            $this->addPasscodeToSmartLock($booking);
+            $this->lockAccessService->provisionForBooking($booking);
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -467,89 +471,6 @@ class BookingService
             'message' => '',
         ];
 
-    }
-
-    public function addPasscodeToSmartLock($booking)
-    {
-        try {
-            $lockData = $this->getLockData($booking->apartment_id);
-
-            $startDate = $booking->check_in->format('Y-m-d').' '.$booking->check_in_time?->format('H:i:s');
-            $endDate = $booking->check_out->format('Y-m-d').' '.$booking->check_out_time?->format('H:i:s');
-
-            $keyboardPwd = $this->generateRandomPasscode();
-            $keyboardPwdName = $booking->id;
-
-            // استدعاء خدمة Sciener
-            $scienerLockService = new ScienerLockService($lockData['ttlock_username'], $lockData['ttlock_password']);
-            $response = $scienerLockService->addCustomPasscode($lockData['lock_id'], $keyboardPwd, $startDate, $endDate, $keyboardPwdName);
-
-            if (! $response) {
-                // تسجيل الفشل في نظام إعادة المحاولة
-                \App\Models\PasscodeRetryAttempt::createOrUpdateForBooking($booking, 'Failed to add passcode via Sciener API');
-                $booking->markPasscodeAsFailed('Failed to add passcode via Sciener API');
-                $booking->markPasscodeAsRetryScheduled();
-                throw new \Exception(__('api.passcode_add_failed'));
-            }
-
-            // تخزين رمز المرور في قاعدة البيانات
-            \App\Models\SmartLockPasscode::create([
-                'smart_lock_id' => $lockData['lock_id'],
-                'passcode_id' => $response['keyboardPwdId'],
-                'apartment_id' => $booking->apartment_id,
-                'customer_id' => $booking->customer_id,
-                'booking_id' => $booking->id,
-                'nickname' => $booking->id,
-                'keyboard_pwd' => $keyboardPwd,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]);
-
-            // إزالة أي محاولة إعادة سابقة إذا نجحت العملية
-            \App\Models\PasscodeRetryAttempt::where('booking_id', $booking->id)->delete();
-            $booking->markPasscodeAsGenerated();
-
-        } catch (\Exception $e) {
-            // تسجيل الفشل في نظام إعادة المحاولة
-            \App\Models\PasscodeRetryAttempt::createOrUpdateForBooking($booking, $e->getMessage());
-            $booking->markPasscodeAsFailed($e->getMessage());
-            $booking->markPasscodeAsRetryScheduled();
-            throw $e;
-        }
-    }
-
-    private function getLockData($apartmentId)
-    {
-
-        $apartment = Apartment::where('id', $apartmentId)->first();
-
-        if (! $apartment || ! $apartment->smart_lock_id) {
-            throw new \Exception("Smart lock ID not found for apartment ID {$apartmentId}");
-        }
-
-        $lock = \App\Models\SmartLock::where('id', $apartment->smart_lock_id)->first();
-
-        if (! $lock) {
-            throw new \Exception("Smart lock not found for ID {$apartment->smart_lock_id}");
-        }
-
-        $building = Building::where('id', $lock->building_id)->first();
-
-        if (! $building) {
-            throw new \Exception("Building not found for ID {$lock->building_id}");
-        }
-
-        return [
-            'lock_id' => $lock->lock_id,
-            'building_id' => $building->id,
-            'ttlock_username' => $building->ttlock_username,
-            'ttlock_password' => $building->ttlock_password,
-        ];
-    }
-
-    private function generateRandomPasscode($length = 6)
-    {
-        return substr(str_shuffle('0123456789'), 0, $length);
     }
 
     // bookingServices

@@ -10,6 +10,7 @@ use App\Models\Coupon;
 use App\Models\DateChangeRequest;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\Locks\LockAccessService;
 use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\PaymentMethods\GeideaPayment;
 use Carbon\Carbon;
@@ -35,6 +36,7 @@ class DateChangeService
 {
     public function __construct(
         private readonly BookingService $bookingService,
+        private readonly LockAccessService $lockAccessService,
     ) {}
 
     /**
@@ -381,24 +383,7 @@ class DateChangeService
         }
 
         try {
-            foreach ($booking->smartLockPasscodes as $passcode) {
-                try {
-                    $sciener = new ScienerLockService(
-                        $booking->apartment->building->ttlock_username,
-                        $booking->apartment->building->ttlock_password,
-                    );
-                    $sciener->deletePasscode($passcode->smart_lock_id, $passcode->passcode_id);
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to delete old passcode during date change', [
-                        'booking_id' => $booking->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-                $passcode->delete();
-            }
-
-            $booking->markPasscodeAsPending();
-            $this->bookingService->addPasscodeToSmartLock($booking->fresh());
+            $this->lockAccessService->rescheduleForBooking($booking);
         } catch (\Throwable $e) {
             // Never fail the date change on a lock hiccup — the scheduled retry command will recover it.
             Log::error('Passcode regeneration failed during date change', [

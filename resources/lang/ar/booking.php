@@ -70,4 +70,6 @@ return [
     'customer_services_text2' => 'اطلب الآن خدمات العملاء',
     'no_passcode'=>'لم يتم التعيين بعد',
     'passcode'=>'رمز دخول الغرفة',
+    'copy_code' => 'نسخ الكود',
+    'code_copied' => 'تم نسخ الكود',
 ];

@@ -47,6 +47,12 @@
         <span class="text-[{{ $statusColor }}]">{{ __('api.booking_status_' . $item->status) }}</span>
                 <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_date')}} :
             <span class="text-black">{{$item->check_in?->format('Y-m-d')}}</span></p></a>
+        @if($item->status === 'approved' && ($activePasscode = $item->getActivePasscode()))
+            <p class="text-sm sm:text-base text-reviews py-2">{{__('booking.passcode')}} :
+                <span class="text-black tracking-wider">{{ $activePasscode->keyboard_pwd }}</span>
+                @include('customer.section.copy-passcode-button', ['code' => $activePasscode->keyboard_pwd])
+            </p>
+        @endif
     </div>
     {{-- <a class="options-button cursor-pointer z-50 absolute ltr:right-4 rtl:left-4 top-4">
         <svg width="20" height="20" version="1.1" id="fi_512142" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 426.667 426.667" style="enable-background:new 0 0 426.667 426.667;" xml:space="preserve">

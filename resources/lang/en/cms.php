@@ -205,4 +205,6 @@ return [
     'status_active' => 'Active',
     'blocked_at' => 'Blocked at',
     'blocked_by' => 'Blocked by',
+    'passcode' => 'Passcode',
+    'copy_passcode' => 'Copy passcode',
 ];
