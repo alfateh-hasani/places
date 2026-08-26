@@ -43,4 +43,5 @@ return [
     'date_change_cannot_cancel' => 'This request cannot be canceled in its current state',
     'date_change_request_canceled' => 'Date-change request canceled',
     'account_blocked' => 'Your account has been blocked. Please contact support.',
+    'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
 ];

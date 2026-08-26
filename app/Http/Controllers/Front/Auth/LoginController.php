@@ -14,7 +14,9 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
-{  
+{
+    use \App\Traits\ThrottlesOtpRequests;
+
     private function validatePhoneStartsWith5($phone)
     {
         return preg_match('/^5\d{8}$/', $phone); // Validates phone starts with '5'
@@ -35,6 +37,18 @@ class LoginController extends Controller
 
             $customerExists = Customer::where('phone', $request->phone)->exists();
 
+            $retryAfter = $this->otpRetryAfter($request->phone);
+            if ($retryAfter > 0) {
+                $otpLog->warning('[Web] OTP request throttled', ['phone' => $request->phone, 'retry_after' => $retryAfter]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => __('site.otp_cooldown', ['seconds' => $this->otpRetryAfterForHumans($retryAfter)]),
+                    'phone' => $request->phone,
+                    'has_account' => $customerExists,
+                    'retry_after' => $retryAfter,
+                ], 429);
+            }
+
             $otpLog->info('[Web] Sending OTP', ['phone' => $request->phone, 'has_account' => $customerExists]);
 
             $otp = Otp::identifier('otp_' . $request->phone)
@@ -43,12 +57,14 @@ class LoginController extends Controller
                 );
 
             if ($otp['status'] === Otp::OTP_SENT) {
+                $this->registerOtpSent($request->phone);
                 $otpLog->info('[Web] OTP sent successfully', ['phone' => $request->phone]);
                 return response()->json([
                     'status' => 'success',
                     'message' => __('auth.otp_sent'),
                     'phone' => $request->phone,
                     'has_account' => $customerExists,
+                    'retry_after' => $this->otpCooldownSeconds(),
                 ], 200);
             }
 
@@ -57,6 +73,57 @@ class LoginController extends Controller
         } catch (ValidationException $e) {
             $otpLog->warning('[Web] OTP request validation failed', ['phone' => $request->phone ?? null, 'error' => $e->getMessage()]);
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function resendOtp(Request $request)
+    {
+        $otpLog = Log::channel('otp');
+
+        try {
+            $request->merge([
+                'phone' => convertArabicNumbers($request->phone),
+            ]);
+
+            $request->validate([
+                'phone' => ['required', 'phone'],
+            ]);
+
+            $retryAfter = $this->otpRetryAfter($request->phone);
+            if ($retryAfter > 0) {
+                $otpLog->warning('[Web] OTP resend throttled', ['phone' => $request->phone, 'retry_after' => $retryAfter]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => __('site.otp_cooldown', ['seconds' => $this->otpRetryAfterForHumans($retryAfter)]),
+                    'retry_after' => $retryAfter,
+                ], 429);
+            }
+
+            $otpLog->info('[Web] Resending OTP', ['phone' => $request->phone]);
+
+            $otp = Otp::identifier('otp_' . $request->phone)
+                ->send(new CustomerRegistrationOtp($request->phone),
+                    Notification::route('sms', $request->phone)
+                );
+
+            if ($otp['status'] === Otp::OTP_SENT) {
+                $this->registerOtpSent($request->phone);
+                $otpLog->info('[Web] OTP resent successfully', ['phone' => $request->phone]);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => __('site.otp_resent'),
+                    'retry_after' => $this->otpCooldownSeconds(),
+                ], 200);
+            }
+
+            $otpLog->error('[Web] OTP resend failed', ['phone' => $request->phone, 'status' => $otp['status']]);
+            return response()->json(['status' => 'error', 'message' => __('site.resend_failed')], 422);
+        } catch (ValidationException $e) {
+            $otpLog->warning('[Web] OTP resend validation failed', ['phone' => $request->phone ?? null, 'error' => $e->getMessage()]);
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $th) {
+            $otpLog->error('[Web] OTP resend exception', ['phone' => $request->phone ?? null, 'error' => $th->getMessage()]);
+            return response()->json(['status' => 'error', 'message' => __('site.resend_failed')], 500);
         }
     }
 

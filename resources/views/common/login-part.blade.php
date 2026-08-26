@@ -75,7 +75,7 @@
               <div class="border-t border-border py-8 -mx-5 px-5 mt-4">
                 <div class="flex justify-between items-center">
                     <p id="resend-timer" class="text-sm text-reviews">
-                        60 : @lang('site.resend')
+                        2:00 : @lang('site.resend')
                     </p>
                     <div class="flex space-x-4 rtl:space-x-reverse">
                         <button type="button" id="resend-button" 
@@ -342,7 +342,7 @@ $('#popup-7 form').validate({
 });
 
 // Switch to OTP Popup
-function switchToOtpPopup() {
+function switchToOtpPopup(seconds) {
     $.fancybox.close('#popup-5');
     $.fancybox.open({
         src: '#popup-6',
@@ -354,26 +354,42 @@ function switchToOtpPopup() {
             $('#code-1').focus();
         }
     });
-    startCountdown();
+    startCountdown(seconds);
 }
 
 // OTP Countdown
 let resendCount = 5;
-let otpTimeout = 60;
+let otpTimeout = 120;
 let otpInterval;
 
-function startCountdown() {
-    let timeLeft = otpTimeout;
+// Format remaining seconds as a m:ss clock (e.g. 120 -> "2:00", 59 -> "0:59").
+function formatCountdown(totalSeconds) {
+    let minutes = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function startCountdown(seconds) {
+    clearInterval(otpInterval);
+
+    let timeLeft = parseInt(seconds, 10);
+    if (isNaN(timeLeft) || timeLeft <= 0) {
+        timeLeft = otpTimeout;
+    }
+
+    $('#resend-button').prop('disabled', true);
+    $('#resend-timer').text(`${formatCountdown(timeLeft)} : @lang('site.resend')`);
+
     otpInterval = setInterval(() => {
         timeLeft--;
-        $('#resend-timer').text(`${timeLeft} : @lang('site.resend')`);
+        $('#resend-timer').text(`${formatCountdown(timeLeft)} : @lang('site.resend')`);
 
         if (timeLeft <= 0) {
             clearInterval(otpInterval);
             $('#resend-button').prop('disabled', resendCount <= 0);
             $('#resend-timer').text(
-                resendCount > 0 
-                    ? '@lang("site.resend_available")' 
+                resendCount > 0
+                    ? '@lang("site.resend_available")'
                     : '@lang("site.resend_limit_reached")'
             );
         }
@@ -411,10 +427,20 @@ $('#login-form').validate({
             success: function(response) {
                 HoldOn.close();
                 $('#phone-number').text(response.phone);
-                switchToOtpPopup();
+                switchToOtpPopup(response.retry_after);
                 if (!response.has_account) $('#otp-form').data('registerRequired', true);
             },
             error: function(xhr) {
+                HoldOn.close();
+                if (xhr.status === 429 && xhr.responseJSON) {
+                    // A code was already sent recently: move to the OTP step and
+                    // resume the server-driven cooldown instead of resending.
+                    $('#phone-number').text(xhr.responseJSON.phone);
+                    switchToOtpPopup(xhr.responseJSON.retry_after);
+                    if (!xhr.responseJSON.has_account) $('#otp-form').data('registerRequired', true);
+                    showMessage('#otp-result', 'warning', xhr.responseJSON.message);
+                    return;
+                }
                 handleAjaxError(xhr, '#login-result');
             }
         });
@@ -497,25 +523,36 @@ $('.otp-input').on('paste', function (e) {
 
 // OTP Resend Button Handler
 $('#resend-button').on('click', function() {
-    if (resendCount > 0) {
-        resendCount--;
-        startCountdown();
-        $(this).prop('disabled', true);
-
-        $.ajax({
-            url: "{{ route('login.resend_otp') }}",
-            type: "POST",
-            data: { phone: $('#phone-number').text() },
-            success: function() {
-                showMessage('#otp-result', 'success', '@lang("site.otp_sent")');
-            },
-            error: function() {
-                showMessage('#otp-result', 'danger', '@lang("site.resend_failed")');
-            }
-        });
-    } else {
+    if (resendCount <= 0) {
         showMessage('#otp-result', 'warning', '@lang("site.resend_limit_reached_message")');
+        return;
     }
+
+    $(this).prop('disabled', true);
+
+    $.ajax({
+        url: "{{ route('login.resend_otp') }}",
+        type: "POST",
+        data: { phone: $('#phone-number').text(), _token: "{{ csrf_token() }}" },
+        success: function(response) {
+            resendCount--; // only a successful send counts against the attempt limit
+            startCountdown(response.retry_after);
+            showMessage('#otp-result', 'success', response.message || '@lang("site.otp_sent")');
+        },
+        error: function(xhr) {
+            if (xhr.status === 429 && xhr.responseJSON) {
+                // Still within the server cooldown window: honor its timer (no attempt consumed).
+                startCountdown(xhr.responseJSON.retry_after);
+                showMessage('#otp-result', 'warning', xhr.responseJSON.message);
+                return;
+            }
+            // Genuine failure: keep the button usable so the user can retry, don't start a
+            // timer, and surface the real reason from the server when available.
+            $('#resend-button').prop('disabled', false);
+            let message = (xhr.responseJSON && xhr.responseJSON.message) || '@lang("site.resend_failed")';
+            showMessage('#otp-result', 'danger', message);
+        }
+    });
 });
 
 
