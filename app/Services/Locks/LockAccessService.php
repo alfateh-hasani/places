@@ -2,6 +2,7 @@
 
 namespace App\Services\Locks;
 
+use App\Exceptions\Locks\LockOperationException;
 use App\Models\Booking;
 use App\Models\PasscodeRetryAttempt;
 use App\Models\SmartLockPasscode;
@@ -81,9 +82,11 @@ class LockAccessService
             } catch (Throwable $e) {
                 Log::error('Smart lock passcode provisioning failed', [
                     'booking_id' => $booking->id,
+                    'vendor_error_code' => $e instanceof LockOperationException ? $e->vendorErrorCode : null,
+                    'retryable' => $e instanceof LockOperationException ? $e->retryable : true,
                     'error' => $e->getMessage(),
                 ]);
-                PasscodeRetryAttempt::createOrUpdateForBooking($booking, $e->getMessage(), 'provision');
+                $this->recordFailedAttempt($booking, $e, 'provision');
                 $booking->markPasscodeAsFailed($e->getMessage());
                 $booking->markPasscodeAsRetryScheduled();
                 throw $e;
@@ -129,9 +132,11 @@ class LockAccessService
                         'booking_id' => $booking->id,
                         'passcode_id' => $passcode->id,
                         'reason' => $reason,
+                        'vendor_error_code' => $e instanceof LockOperationException ? $e->vendorErrorCode : null,
+                        'retryable' => $e instanceof LockOperationException ? $e->retryable : true,
                         'error' => $e->getMessage(),
                     ]);
-                    PasscodeRetryAttempt::createOrUpdateForBooking($booking, $e->getMessage(), 'revoke');
+                    $this->recordFailedAttempt($booking, $e, 'revoke');
                     throw $e;
                 }
             }
@@ -160,6 +165,23 @@ class LockAccessService
         $booking->markPasscodeAsPending();
 
         $this->provisionForBooking($booking->fresh());
+    }
+
+    /**
+     * Record a retry-attempt row for a failure. When the failure is a
+     * non-retryable vendor error (e.g. wrong Sciener credentials), skip
+     * straight to max_attempts_reached instead of scheduling a next attempt —
+     * a permanently-broken credential fails identically every time, so
+     * retrying it every 10 minutes for days only wastes a cycle and hides
+     * a problem that needs a human to fix the stored credentials.
+     */
+    private function recordFailedAttempt(Booking $booking, Throwable $e, string $operation): void
+    {
+        $attempt = PasscodeRetryAttempt::createOrUpdateForBooking($booking, $e->getMessage(), $operation);
+
+        if ($e instanceof LockOperationException && ! $e->retryable) {
+            $attempt->update(['status' => 'max_attempts_reached', 'next_attempt_at' => null]);
+        }
     }
 
     private function generatePasscode(int $length = 6): string

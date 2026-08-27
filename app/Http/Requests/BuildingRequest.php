@@ -24,6 +24,10 @@ class BuildingRequest extends FormRequest
      */
     public function rules()
     {
+        // كلمة مرور TTLOCK تُترك فارغة عند التعديل للإبقاء على القيمة الحالية
+        // (انظر BuildingController::update()) — لذا مطلوبة عند الإنشاء فقط.
+        $isUpdate = $this->route('id') !== null;
+
         return [
             'name_ar' => 'required|min:3|max:100',
             'name_en' => 'required|min:3|max:100',
@@ -34,7 +38,7 @@ class BuildingRequest extends FormRequest
             'longitude' => 'required',
             'supervisor_id' => 'required',
             'ttlock_username' => 'required',
-            'ttlock_password' => 'required',
+            'ttlock_password' => $isUpdate ? 'nullable' : 'required',
             'link' => 'required',
             'sort_order' => 'required',
         ];

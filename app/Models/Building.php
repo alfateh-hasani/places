@@ -2,21 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Traits\HasTranslations;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\Image\Enums\Fit;
+
 class Building extends Model implements HasMedia
 {
-    use CrudTrait, InteractsWithMedia, HasTranslations, LogsActivity;
+    use CrudTrait, HasTranslations, InteractsWithMedia, LogsActivity;
 
     protected $connection = 'mysql';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -39,7 +41,7 @@ class Building extends Model implements HasMedia
         'ttlock_username',
         'ttlock_password',
         'sort_order',
-        
+
     ];
 
     /**
@@ -52,6 +54,16 @@ class Building extends Model implements HasMedia
         'city_id' => 'integer',
         'check_in_time' => 'datetime',
         'check_out_time' => 'datetime',
+        'ttlock_password' => 'encrypted',
+    ];
+
+    /**
+     * Never serialize the TTLock account password into an array/JSON response.
+     * Direct attribute access ($building->ttlock_password, used by
+     * LockCredentialResolver) is unaffected — this only governs toArray()/toJson().
+     */
+    protected $hidden = [
+        'ttlock_password',
     ];
 
     public function city(): BelongsTo
@@ -62,34 +74,31 @@ class Building extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('image')
-        ->singleFile();
+            ->singleFile();
     }
 
-
-    public function registerMediaConversions(Media $media = null): void {
+    public function registerMediaConversions(?Media $media = null): void
+    {
         $this->addMediaConversion('grid')
-            ->fit(  Fit::Crop, 1000, desiredHeight: 1000 )
+            ->fit(Fit::Crop, 1000, desiredHeight: 1000)
 
             ->quality(75)
             ->format('webp')                         // Convert to WebP format
             ->nonQueued();                           // Process synchronously (optional)
 
-
     }
-
 
     public function getImageGridAttribute()
     {
-        return $this->getFirstMediaUrl('image' , 'grid');
+        return $this->getFirstMediaUrl('image', 'grid');
     }
-
 
     public function getImageAttribute()
     {
-        return $this->getFirstMediaUrl('image'  );
+        return $this->getFirstMediaUrl('image');
     }
 
-    //hasMany apartments
+    // hasMany apartments
     public function apartments()
     {
         return $this->hasMany(Apartment::class);
@@ -103,7 +112,7 @@ class Building extends Model implements HasMedia
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logExcept(['ttlock_password']);
     }
-
 }
