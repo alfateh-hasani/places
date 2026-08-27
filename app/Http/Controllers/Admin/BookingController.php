@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Services\ScienerLockService;
+use App\Services\Locks\LockAccessService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use Illuminate\Support\Facades\DB;
+use Backpack\CRUD\app\Library\Widget;
 
 /**
  * Class ApartmentController
@@ -43,9 +43,12 @@ class BookingController extends CrudController
         if (backpack_user()->can('booking.update')) {
             $this->crud->allowAccess('update');
         }
-        if (backpack_user()->can('booking.delete')) {
-            $this->crud->allowAccess('delete');
-        }
+        // معطّل مؤقتاً لكل المستخدمين (بمن فيهم من يملك صلاحية booking.delete):
+        // حذف الحجز نهائياً لا يُلغي كود الدخول على القفل الذكي ولا يحذف سجل Transaction المرتبط،
+        // ما يترك كوداً فعّالاً على القفل الحقيقي بلا حجز يدل عليه. أعد التفعيل فقط بعد معالجة ذلك.
+        // if (backpack_user()->can('booking.delete')) {
+        //     $this->crud->allowAccess('delete');
+        // }
         if (backpack_user()->hasRole('supervisor')) {
             $this->crud->query->whereHas('apartment', function ($query) {
                 $query->whereHas('building', function ($query) {
@@ -67,6 +70,11 @@ class BookingController extends CrudController
         $this->crud->enableExportButtons();
         // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
         $this->crud->query->where('is_airbnb_booking', '!=', 1);
+
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.copy_passcode_script',
+        ])->to('after_content');
 
         $this->addBuildingFilter();
         $this->addStatusFilter();
@@ -265,6 +273,27 @@ class BookingController extends CrudController
             'name' => 'payment_method_code',
             'type' => 'enum',
             'label' => __('cms.payment_method_code').' <i class="la la-wallet"></i>',
+        ]);
+
+        // Passcode + copy button
+        CRUD::addColumn([
+            'name' => 'passcode',
+            'type' => 'custom_html',
+            'label' => __('cms.passcode').' <i class="la la-key"></i>',
+            'value' => function ($entry) {
+                $active = $entry->getActivePasscode();
+
+                if (! $active) {
+                    return '<span class="text-muted">—</span>';
+                }
+
+                $code = e($active->keyboard_pwd);
+
+                return "<span class='badge badge-info' style='font-size:.85rem;letter-spacing:1px;'>{$code}</span> "
+                    ."<button type='button' class='btn btn-link btn-sm p-0 ms-1' style='vertical-align:baseline;' "
+                    ."onclick=\"copyPasscodeToClipboard('{$code}', this)\" title='".__('cms.copy_passcode')."'>"
+                    .'<i class="la la-copy"></i></button>';
+            },
         ]);
 
         CRUD::addFilter(
@@ -658,37 +687,11 @@ class BookingController extends CrudController
     {
         $booking = \App\Models\Booking::find($id);
         if ($booking) {
+            // تغيير الحالة إلى canceled/customer_canceled يُطلق تلقائياً حدث BookingCancelled
+            // (Booking::boot()) الذي يُلغي كود الدخول عبر RevokeSmartLockAccess — لا حاجة لأي منطق هنا.
             $booking->status = $status;
             $booking->save();
 
-            $booking = \App\Models\Booking::find($id);
-            if (($status == 'canceled' || $status == 'customer_canceled') && $booking->passcode_status == 'generated') {
-
-                $bookingActivePasscode = $booking->smartLockPasscodes()->first();
-
-                \Log::info($bookingActivePasscode);
-                if ($bookingActivePasscode) {
-
-                    DB::beginTransaction();
-                    try {
-                        $lock_id = $bookingActivePasscode->smart_lock_id;
-                        $passcode_id = $bookingActivePasscode->passcode_id;
-                        $bookingActivePasscode->delete();
-
-                        $scienerService = new ScienerLockService(
-                            $booking?->apartment?->building?->ttlock_username,
-                            $booking?->apartment?->building?->ttlock_password
-                        );
-                        $scienerService->deletePasscode($lock_id, $passcode_id);
-                        DB::commit();
-                    } catch (\Throwable $th) {
-                        \Log::error($th);
-                        \Alert::error(__('cms.failed_to_delete_passcode'))->flash();
-                        DB::rollBack();
-                    }
-
-                }
-            }
             \Alert::success(__('cms.status_changed_successfully'))->flash();
         } else {
             \Alert::error(__('cms.booking_not_found'))->flash();
@@ -785,12 +788,9 @@ class BookingController extends CrudController
      */
     public function editCheckInTime($id)
     {
-        $booking = \App\Models\Booking::with(['apartment', 'customer'])->findOrFail($id);
+        $this->authorizeLockManagement();
 
-        // التحقق من الصلاحيات
-        if (! backpack_user()->can('booking.changeStatus')) {
-            abort(403, 'Unauthorized Access');
-        }
+        $booking = \App\Models\Booking::with(['apartment', 'customer'])->findOrFail($id);
 
         return view('admin.booking.edit-check-in-time', compact('booking'));
     }
@@ -800,14 +800,11 @@ class BookingController extends CrudController
      */
     public function updateCheckInTime($id)
     {
+        $this->authorizeLockManagement();
+
         $request = request();
 
         $booking = \App\Models\Booking::findOrFail($id);
-
-        // التحقق من الصلاحيات
-        if (! backpack_user()->can('booking.changeStatus')) {
-            abort(403, 'Unauthorized Access');
-        }
 
         // التحقق من صحة البيانات
         $request->validate([
@@ -831,30 +828,14 @@ class BookingController extends CrudController
             'check_in_time' => $parsedDateTime,
         ]);
 
-        // إنشاء passcode جديد للغرفة
-        $this->generateNewPasscode($booking);
+        // إعادة إنشاء كود الدخول (إلغاء القديم + توليد جديد) عبر الخدمة المركزية
+        try {
+            app(LockAccessService::class)->rescheduleForBooking($booking);
+        } catch (\Throwable $e) {
+            \Log::error("Failed to reschedule passcode for booking {$booking->id}: ".$e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'تم تحديث وقت الدخول وإنشاء رمز جديد للغرفة بنجاح');
-    }
-
-    /**
-     * إنشاء passcode جديد للغرفة
-     */
-    private function generateNewPasscode($booking)
-    {
-        try {
-            // حذف الـ passcodes القديمة
-            $booking->smartLockPasscodes()->delete();
-
-            // استخدام BookingService لإنشاء passcode جديد
-            $bookingService = app(\App\Services\BookingService::class);
-            $bookingService->addPasscodeToSmartLock($booking);
-
-            \Log::info("New passcode generated for booking {$booking->id} using BookingService");
-
-        } catch (\Exception $e) {
-            \Log::error("Failed to generate new passcode for booking {$booking->id}: ".$e->getMessage());
-        }
     }
 
     /**
@@ -862,26 +843,28 @@ class BookingController extends CrudController
      */
     public function regeneratePasscode($id)
     {
+        $this->authorizeLockManagement();
+
         $booking = \App\Models\Booking::findOrFail($id);
 
-        // التحقق من الصلاحيات
-        if (! backpack_user()->can('booking.changeStatus')) {
-            abort(403, 'Unauthorized Access');
-        }
-
         try {
-            // إعادة تعيين حالة الباس كود
-            $booking->markPasscodeAsPending();
-
-            // إنشاء باس كود جديد
-            $this->generateNewPasscode($booking);
+            app(LockAccessService::class)->rescheduleForBooking($booking);
 
             return redirect()->back()->with('success', 'تم إعادة إنشاء الباس كود بنجاح');
-
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error("Failed to regenerate passcode for booking {$booking->id}: ".$e->getMessage());
 
             return redirect()->back()->with('error', 'فشل في إعادة إنشاء الباس كود: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * صلاحية موحّدة لكل عمليات إدارة قفل الحجز (وقت الدخول، إعادة إنشاء الكود).
+     */
+    private function authorizeLockManagement(): void
+    {
+        if (! backpack_user()->can('booking.changeStatus')) {
+            abort(403, 'Unauthorized Access');
         }
     }
 }

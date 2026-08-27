@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Cache;
 
 class AuthController extends Controller
 {
+    use \App\Traits\ThrottlesOtpRequests;
+
     public function requestOtp(Request $request)
     {
         $otpLog = Log::channel('otp');
@@ -37,6 +39,12 @@ class AuthController extends Controller
         }
         $customer = Customer::where('phone', $request->phone)->exists();
 
+        $retryAfter = $this->otpRetryAfter($request->phone);
+        if ($retryAfter > 0) {
+            $otpLog->warning('[API] OTP request throttled', ['phone' => $request->phone, 'retry_after' => $retryAfter]);
+            return $this->errorResponse([], trans('api.otp_cooldown', ['seconds' => $this->otpRetryAfterForHumans($retryAfter)]));
+        }
+
         try {
             $otpLog->info('[API] Sending OTP', ['phone' => $request->phone, 'has_account' => $customer]);
 
@@ -47,6 +55,7 @@ class AuthController extends Controller
             );
 
             if($otp['status'] == Otp::OTP_SENT){
+                $this->registerOtpSent($request->phone);
                 $otpLog->info('[API] OTP sent successfully', ['phone' => $request->phone]);
                 $data = [
                     'has_account' => (bool)$customer

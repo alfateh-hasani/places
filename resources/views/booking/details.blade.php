@@ -348,6 +348,9 @@ span.flatpickr-day.selected{
                         <p class="absolute font-semibold text-black">{{__('booking.passcode')}}</p>
                         <p class="float-right rtl:float-left tracking-wider py-1">
                             {{ $active_passcode?->keyboard_pwd ?? __('booking.no_passcode') }}
+                            @if($active_passcode)
+                                @include('customer.section.copy-passcode-button', ['code' => $active_passcode->keyboard_pwd])
+                            @endif
                         </p>
                         <div class="clear-both"></div>
                     </div>

@@ -48,6 +48,7 @@ return [
     'resend_available' => 'You can resend now.',
     'resend_limit_reached' => 'Resend limit reached',
     'resend_limit_reached_message' => 'You have reached the maximum resend attempts. Please try again after an hour.',
+    'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
     'sign_up' => 'Sign Up',
     'welcome_to_dyafa' => 'Welcome to the Most Popular Places',
     'last_name' => 'Last Name',

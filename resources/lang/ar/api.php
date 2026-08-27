@@ -51,4 +51,5 @@ return [
     'date_change_not_awaiting_payment' => 'هذا الطلب ليس بانتظار الدفع',
     'date_change_cannot_cancel' => 'لا يمكن إلغاء هذا الطلب في حالته الحالية',
     'date_change_request_canceled' => 'تم إلغاء طلب تعديل التواريخ',
+    'otp_cooldown' => 'يرجى الانتظار :seconds قبل طلب رمز جديد.',
 ];

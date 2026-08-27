@@ -40,4 +40,15 @@ return [
     |
     */
     'notification' => \App\Notifications\OtpNotification::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | OTP request cooldown
+    |--------------------------------------------------------------------------
+    |
+    | Number of seconds a phone number must wait between two OTP requests.
+    | This is enforced server-side to prevent SMS spamming / abuse.
+    |
+    */
+    'request_cooldown' => env('OTP_REQUEST_COOLDOWN', 90),
 ];

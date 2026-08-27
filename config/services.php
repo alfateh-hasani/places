@@ -46,10 +46,10 @@ return [
     ],
 
     'sciener' => [
-        'client_id' => '2c959287a856409ca8b572090a4ba040',
-        'client_secret' => 'dfa43b3b37160a8ef3042121c66a0dd4',
-        'username' => 'abdoshahen2013@gmail.com',
-        'password' => 'AZay2025',
+        'client_id' => env('SCIENER_CLIENT_ID', '2c959287a856409ca8b572090a4ba040'),
+        'client_secret' => env('SCIENER_CLIENT_SECRET', 'dfa43b3b37160a8ef3042121c66a0dd4'),
+        'username' => env('SCIENER_USERNAME', 'abdoshahen2013@gmail.com'),
+        'password' => env('SCIENER_PASSWORD', 'AZay2025'),
     ],
 
     'guesty' => [

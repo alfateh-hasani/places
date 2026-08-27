@@ -62,4 +62,8 @@ return [
     'customer_services_title' => 'Customer Services',
     'customer_services_text1' => 'Do you need room cleaning service or any other service?',
     'customer_services_text2' => 'Request customer services now',
+    'no_passcode' => 'Not set yet',
+    'passcode' => 'Door passcode',
+    'copy_code' => 'Copy code',
+    'code_copied' => 'Code copied',
 ];

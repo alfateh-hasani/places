@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CanceledBookingsController;
-use App\Http\Controllers\Admin\LockController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -122,6 +121,3 @@ Route::group([
     Route::get('ownerrez/oauth/authorize', 'OwnerRezOAuthController@authorize')->name('admin.ownerrez.oauth.authorize');
     Route::delete('ownerrez/oauth/disconnect', 'OwnerRezOAuthController@disconnect')->name('admin.ownerrez.oauth.disconnect');
 });
-
-// Route::post('admin/lock/{id}/unlock', [LockController::class, 'unlock'])->name('lock.unlock');
-// Route::post('admin/lock/{id}/add-passcode', [LockController::class, 'addPasscode'])->name('lock.add_passcode');

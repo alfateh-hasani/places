@@ -13,10 +13,10 @@ Schedule::call(function () {
     app(BookingService::class)->deleteUnpaidBookings();
 })->everyTenMinutes();
 
-// Retry failed passcode generation attempts every 20 minutes
+// إعادة محاولة عمليات كود الدخول الفاشلة (توليد أو إلغاء) كل 10 دقائق
 Schedule::command('passcode:retry-failed')->cron('*/10 * * * *');
 
-// Check for bookings that need passcode generation every 30 minutes
+// كشف الحجوزات المعتمدة بدون كود دخول كل 10 دقائق
 Schedule::command('booking:check-missing-passcodes')->cron('*/10 * * * *');
 
 // Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
