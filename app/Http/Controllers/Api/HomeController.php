@@ -161,9 +161,11 @@ class HomeController extends Controller
     {
         $id = $request->id;
 
-        $apartments = Apartment::where('id', $id)->orWhere('slug', $id)
+        $apartments = Apartment::where('is_active', 1)
+            ->where(function ($query) use ($id) {
+                $query->where('id', $id)->orWhere('slug', $id);
+            })
             ->with(['building', 'reviews', 'labels', 'bookings', 'ownerrezMapping'])
-            ->where('is_active', 1)
             ->first();
 
         if (! $apartments) {

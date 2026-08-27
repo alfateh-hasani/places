@@ -149,7 +149,7 @@ class ApartmentController extends Controller
             'num_beds' => $request->beds,
         ], fn ($v) => ! is_null($v) && $v !== '');
 
-        $query = $this->apartment::query();
+        $query = $this->apartment::query()->where('is_active', true);
 
         foreach ($filters as $key => $val) {
             if ($key === 'city_id') {
@@ -183,7 +183,6 @@ class ApartmentController extends Controller
                 break;
             }
 
-            $query->where('is_active', true);
             $handler = FilterFactory::make($key);
             $query = $handler->apply($query, $val);
         }
