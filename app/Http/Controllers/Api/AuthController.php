@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\CustomerSource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
@@ -174,7 +175,7 @@ class AuthController extends Controller
             'token' => 'required',
             'first_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
             'last_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
-            'email' => 'required|email|unique:customers|max:255',
+            'email' => Customer::emailValidationRules(),
             'fcm_token'=>'nullable'
         ]);
 
@@ -191,6 +192,7 @@ class AuthController extends Controller
                 'email' => strtolower(trim($validatedData['email'])),
                 'phone' => $phone,
                 'fcm_token' => $request->fcm_token,
+                'source' => CustomerSource::Local,
             ]);
 
             $data['customer'] = new CustomerResource($customer);

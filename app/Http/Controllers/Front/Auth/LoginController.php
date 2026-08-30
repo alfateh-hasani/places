@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Front\Auth;
 
+use App\Enums\CustomerSource;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Otp\CustomerRegistrationOtp;
@@ -197,7 +198,7 @@ class LoginController extends Controller
             'token' => 'required',
             'first_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
             'last_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
-            'email' => 'required|email|unique:customers|max:255',
+            'email' => Customer::emailValidationRules(),
         ]);
 
         $phone = Cache::pull('verified_phone_' . $request->token);
@@ -214,6 +215,7 @@ class LoginController extends Controller
             'last_name' => trim($validatedData['last_name']),
             'email' => strtolower(trim($validatedData['email'])),
             'phone' => $phone,
+            'source' => CustomerSource::Local,
         ]);
 
         Auth::guard('customer')->login($customer); // Use the customer guard for login

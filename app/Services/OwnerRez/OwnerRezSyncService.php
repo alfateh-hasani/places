@@ -2,6 +2,7 @@
 
 namespace App\Services\OwnerRez;
 
+use App\Enums\CustomerSource;
 use App\Exceptions\OwnerRez\BookingConflictException;
 use App\Exceptions\OwnerRez\OwnerRezApiException;
 use App\Models\Apartment;
@@ -163,6 +164,10 @@ class OwnerRezSyncService
         } else {
             $bookings = Cache::remember($cacheKey, $cacheTtl, $fetch);
         }
+
+        // The liveCheck branch caches an array (->toArray()), so a subsequent non-liveCheck
+        // read of the same key returns a plain array. Normalize to a Collection before filtering.
+        $bookings = collect($bookings);
 
         // Filter entries that overlap with requested dates, excluding the booking's own reservation.
         return $bookings->filter(function ($booking) use ($from, $to, $excludeOwnerRezBookingId) {
@@ -1056,6 +1061,7 @@ class OwnerRezSyncService
                 'phone' => $phone,
                 'ownerrez_guest_id' => $guestId,
                 'account_verified' => false,
+                'source' => CustomerSource::OwnerRez,
             ]);
 
             $logger->info('Created new customer from OwnerRez guest', [

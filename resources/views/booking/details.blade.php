@@ -576,7 +576,30 @@ $(document).ready(function() {
         return dates;
     }
 
-    function dcOpenModal(bookingId, curIn, curOut, disabledDates) {
+    // قائمة تعطيل تاريخ المغادرة — تطابق منطق صفحة الحجز (apartment/js.blade.php):
+    // نفس الليالي المشغولة لكن نسمح بيوم وصول أي حجز كتاريخ مغادرة (يوم التسليم/الاستلام).
+    function dcBuildCheckoutDisabled(bookings, ownIn, ownOut) {
+        var checkInDays = new Set((bookings || []).map(function (b) {
+            return new Date(b.check_in).toISOString().split('T')[0];
+        }));
+        return dcBuildDisabled(bookings, ownIn, ownOut).filter(function (d) {
+            return !checkInDays.has(d);
+        });
+    }
+
+    // أول ليلة مشغولة بعد تاريخ الوصول المختار — حدّ أقصى لتاريخ المغادرة حتى لا يقفز فوق حجز قائم
+    // (مثال: وصول 27 وليلة 28 محجوزة ⇒ المغادرة القصوى 28، فلا يُختار 29/30 التي تتجاوز الليلة المشغولة).
+    function dcFirstOccupiedNightAfter(checkinDate, occupied) {
+        var checkinTime = checkinDate.getTime();
+        var result = null;
+        (occupied || []).forEach(function (s) {
+            var d = new Date(s + 'T00:00:00');
+            if (d.getTime() > checkinTime && (result === null || d < result)) { result = d; }
+        });
+        return result;
+    }
+
+    function dcOpenModal(bookingId, curIn, curOut, disabledDates, checkoutDisabledDates) {
         Swal.fire({
             title: "{{ __('تعديل التواريخ') }}",
             html:
@@ -603,11 +626,16 @@ $(document).ready(function() {
                 // position=auto (الافتراضي): يفتح أسفل الحقل وينقلب فوقه فقط عند عدم وجود مساحة.
                 // نعرض التقويم LTR افتراضياً (بلا locale عربي) لضمان تطابق رؤوس الأيام مع أرقامها؛
                 // الـ RTL داخل مودال SweetAlert كان يفكّ المحاذاة. التقويم للاختيار فقط والتواريخ رقمية.
+                // ضمان أن قائمة التعطيل مصفوفة دائماً — تمرير undefined إلى flatpickr يُعطّل
+                // التهيئة ويُرجِع الحقل إلى مُنتقي المتصفح الأصلي (كل التواريخ متاحة).
+                var checkinDisable = Array.isArray(disabledDates) ? disabledDates : [];
+                var checkoutDisable = Array.isArray(checkoutDisabledDates) ? checkoutDisabledDates : checkinDisable;
+
                 var commonOptions = {
                     dateFormat: "Y-m-d",
                     minDate: "today",
                     allowInput: false,
-                    disable: disabledDates,
+                    disable: checkinDisable,
                     time_24hr: true,
                     weekNumbers: false,
                     static: false,
@@ -619,7 +647,7 @@ $(document).ready(function() {
                 // فيُرفَض تاريخ المغادرة الافتراضي (منتصف الليل المحلي) ويُفرّغ الحقل.
                 var minOut = new Date(curIn + 'T00:00:00'); minOut.setDate(minOut.getDate() + 1);
 
-                window._dcOut = flatpickr("#dc-out", Object.assign({}, commonOptions, { defaultDate: curOut, minDate: minOut }));
+                window._dcOut = flatpickr("#dc-out", Object.assign({}, commonOptions, { disable: checkoutDisable, defaultDate: curOut, minDate: minOut }));
                 window._dcIn = flatpickr("#dc-in", Object.assign({}, commonOptions, {
                     defaultDate: curIn,
                     onChange: function (selectedDates) {
@@ -629,12 +657,20 @@ $(document).ready(function() {
                             minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
 
                             window._dcOut.set('minDate', minCheckoutDate);
-                            if (!window._dcOut.selectedDates.length || window._dcOut.selectedDates[0] <= checkinDate) {
+
+                            var maxCheckout = dcFirstOccupiedNightAfter(checkinDate, checkinDisable);
+                            window._dcOut.set('maxDate', maxCheckout || null);
+
+                            var curCo = window._dcOut.selectedDates[0];
+                            if (!curCo || curCo <= checkinDate || (maxCheckout && curCo > maxCheckout)) {
                                 window._dcOut.setDate(minCheckoutDate, true);
                             }
                         }
                     }
                 }));
+
+                // الحد الأقصى الابتدائي لتاريخ المغادرة بناءً على تاريخ الوصول الحالي للحجز.
+                window._dcOut.set('maxDate', dcFirstOccupiedNightAfter(new Date(curIn + 'T00:00:00'), checkinDisable) || null);
 
                 // نضمن إبراز التاريخ المختار (خلفية برتقالية) في كلا الحقلين — بعض حالات type=date
                 // لا تُعلّم defaultDate كـ selected، فنفرضه يدوياً.
@@ -719,7 +755,7 @@ $(document).ready(function() {
             }).then(function (confirm) {
                 // "السابق" → أعِد فتح مُنتقي التواريخ محتفظاً بالتواريخ المُختارة، بنفس القيود.
                 if (confirm.isDenied) {
-                    dcOpenModal(bookingId, result.value.newIn, result.value.newOut, disabledDates);
+                    dcOpenModal(bookingId, result.value.newIn, result.value.newOut, disabledDates, checkoutDisabledDates);
                     return;
                 }
                 if (!confirm.isConfirmed) { return; }
@@ -760,16 +796,31 @@ $(document).ready(function() {
         var bookingId = $(this).data("booking-id");
         var curIn = $(this).data("check-in");
         var curOut = $(this).data("check-out");
+        var blockedUrl = "{{ route('apartments.blocked-dates', $booking->apartment_id) }}";
 
+        function dcOpenWith(bookedDays) {
+            HoldOn.close();
+            dcOpenModal(bookingId, curIn, curOut,
+                dcBuildDisabled(bookedDays, curIn, curOut),
+                dcBuildCheckoutDisabled(bookedDays, curIn, curOut));
+        }
+
+        // فتح المودال بقائمة فارغة عند فشل الطلب يُظهر كل التواريخ متاحة (بما فيها المحجوزة)
+        // ويسمح باختيار تاريخ سيُرفض لاحقاً — لذا نعيد المحاولة مرة، وإن فشلت نُظهر خطأ بدل تقويم مضلِّل.
         HoldOn.open();
-        $.getJSON("{{ route('apartments.blocked-dates', $booking->apartment_id) }}")
-            .done(function (resp) {
-                HoldOn.close();
-                dcOpenModal(bookingId, curIn, curOut, dcBuildDisabled(resp.booked_days || [], curIn, curOut));
-            })
+        $.getJSON(blockedUrl)
+            .done(function (resp) { dcOpenWith(resp.booked_days || []); })
             .fail(function () {
-                HoldOn.close();
-                dcOpenModal(bookingId, curIn, curOut, dcBuildDisabled([], curIn, curOut));
+                $.getJSON(blockedUrl)
+                    .done(function (resp) { dcOpenWith(resp.booked_days || []); })
+                    .fail(function () {
+                        HoldOn.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{ __('booking.error') }}",
+                            text: "{{ __('booking.error_message') }}"
+                        });
+                    });
             });
     });
 

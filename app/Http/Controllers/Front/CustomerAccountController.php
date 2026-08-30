@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Models\Apartment;
 use App\Models\Booking;
+use App\Models\Customer;
 use App\Models\Review;
 use App\Traits\generateSeoTrait;
 use Auth;
@@ -33,7 +34,7 @@ class CustomerAccountController extends Controller
         $request->validate([
             'first_name' => 'required',
             'last_name' => 'required',
-            'email' => 'required|email|unique:customers,email,' . $customer->id,
+            'email' => Customer::emailValidationRules($customer->id),
             'id_number' => 'required|unique:customers,id_number,' . $customer->id,
 
         ]);
