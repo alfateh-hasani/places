@@ -147,6 +147,12 @@ class OwnerRezSyncServiceTest extends TestCase
             'sync_status' => 'synced',
             'sync_direction' => 'inbound',
         ]);
+
+        // findOrCreateCustomerFromOwnerRez() had no existing customer to match, so it must
+        // have created a brand-new one — tagged with source=ownerrez, not the app/web default.
+        $customer = Customer::where('ownerrez_guest_id', $this->ownerrezGuestId)->first();
+        $this->assertNotNull($customer);
+        $this->assertSame(\App\Enums\CustomerSource::OwnerRez, $customer->source);
     }
 
     public function test_entity_create_is_skipped_when_booking_already_exists(): void

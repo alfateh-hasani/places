@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerSource;
 use App\Jobs\SendWelcomeNotification;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,6 +31,7 @@ class Customer extends Authenticatable implements HasMedia
         'fcm_token',
         'id_number',
         'ownerrez_guest_id',
+        'source',
         'blocked_at',
         'block_reason',
         'blocked_by',
@@ -39,6 +41,7 @@ class Customer extends Authenticatable implements HasMedia
     {
         return [
             'blocked_at' => 'datetime',
+            'source' => CustomerSource::class,
         ];
     }
 

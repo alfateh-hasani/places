@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Front\Auth;
 
+use App\Enums\CustomerSource;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Otp\CustomerRegistrationOtp;
@@ -214,6 +215,7 @@ class LoginController extends Controller
             'last_name' => trim($validatedData['last_name']),
             'email' => strtolower(trim($validatedData['email'])),
             'phone' => $phone,
+            'source' => CustomerSource::Local,
         ]);
 
         Auth::guard('customer')->login($customer); // Use the customer guard for login

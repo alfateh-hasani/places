@@ -2,6 +2,7 @@
 
 namespace App\Services\OwnerRez;
 
+use App\Enums\CustomerSource;
 use App\Exceptions\OwnerRez\BookingConflictException;
 use App\Exceptions\OwnerRez\OwnerRezApiException;
 use App\Models\Apartment;
@@ -1056,6 +1057,7 @@ class OwnerRezSyncService
                 'phone' => $phone,
                 'ownerrez_guest_id' => $guestId,
                 'account_verified' => false,
+                'source' => CustomerSource::OwnerRez,
             ]);
 
             $logger->info('Created new customer from OwnerRez guest', [

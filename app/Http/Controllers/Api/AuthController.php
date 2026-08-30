@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\CustomerSource;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
@@ -191,6 +192,7 @@ class AuthController extends Controller
                 'email' => strtolower(trim($validatedData['email'])),
                 'phone' => $phone,
                 'fcm_token' => $request->fcm_token,
+                'source' => CustomerSource::Local,
             ]);
 
             $data['customer'] = new CustomerResource($customer);
