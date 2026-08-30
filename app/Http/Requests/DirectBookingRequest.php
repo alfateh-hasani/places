@@ -29,7 +29,7 @@ class DirectBookingRequest extends FormRequest
             'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
             'new_customer.first_name' => ['nullable', 'string', 'max:255'],
             'new_customer.last_name' => ['nullable', 'string', 'max:255'],
-            'new_customer.phone' => ['nullable', 'string', 'max:30', 'unique:customers,phone'],
+            'new_customer.phone' => ['nullable', 'string', 'max:30', 'phone:SA,mobile', 'unique:customers,phone'],
             'new_customer.email' => ['nullable', 'email:filter', 'regex:'.Customer::GATEWAY_EMAIL_REGEX, 'max:255'],
 
             'final_price' => ['nullable', 'numeric', 'min:0'],
@@ -85,6 +85,7 @@ class DirectBookingRequest extends FormRequest
             'number_of_adults.required' => 'يرجى تحديد عدد البالغين.',
             'number_of_adults.min' => 'يجب أن يكون هناك بالغ واحد على الأقل.',
             'number_of_children.required' => 'يرجى تحديد عدد الأطفال.',
+            'new_customer.phone.phone' => 'رقم جوال سعودي غير صحيح — يجب أن يبدأ بـ 5 ويتكوّن من 9 أرقام بعد رمز الدولة (+966).',
             'new_customer.phone.unique' => 'رقم الجوال مستخدم مسبقاً — يرجى اختيار العميل من قائمة "عميل موجود".',
             'new_customer.email.email' => 'صيغة البريد الإلكتروني غير صحيحة.',
             'new_customer.email.regex' => 'صيغة البريد الإلكتروني غير صحيحة (يجب أن يحتوي على نطاق صحيح).',
