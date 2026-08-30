@@ -98,6 +98,12 @@ Route::group([
     Route::crud('service-booking', 'ServiceBookingCrudController');
     Route::crud('review', 'ReviewCrudController');
 
+    // حجز مباشر من لوحة التحكم (تحويل بنكي)
+    Route::get('direct-booking', [\App\Http\Controllers\Admin\DirectBookingController::class, 'create'])->name('admin.direct-booking.create');
+    Route::get('direct-booking/customers', [\App\Http\Controllers\Admin\DirectBookingController::class, 'customerSearch'])->name('admin.direct-booking.customers');
+    Route::post('direct-booking/price-preview', [\App\Http\Controllers\Admin\DirectBookingController::class, 'pricePreview'])->name('admin.direct-booking.price-preview');
+    Route::post('direct-booking', [\App\Http\Controllers\Admin\DirectBookingController::class, 'store'])->name('admin.direct-booking.store');
+
     // تقويم الحجوزات
     Route::get('apartment/{id}/calendar', [\App\Http\Controllers\Admin\CalenderController::class, 'showCalendar']);
     Route::get('apartment/{id}/bookings', [\App\Http\Controllers\Admin\CalenderController::class, 'getApartmentBookings']);

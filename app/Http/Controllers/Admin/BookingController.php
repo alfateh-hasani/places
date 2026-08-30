@@ -71,6 +71,11 @@ class BookingController extends CrudController
         // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
         $this->crud->query->where('is_airbnb_booking', '!=', 1);
 
+        // زر "حجز مباشر" أعلى الجدول (تحويل بنكي) — يظهر لمن يملك الصلاحية فقط
+        if (backpack_user()->can('direct-booking.create')) {
+            CRUD::addButtonFromView('top', 'direct_booking', 'direct_booking', 'end');
+        }
+
         Widget::add([
             'type' => 'view',
             'view' => 'admin.booking.copy_passcode_script',
@@ -172,6 +177,7 @@ class BookingController extends CrudController
                     'airbnb' => '<i class="la la-home"></i>',
                     'booking_com' => '<i class="la la-bed"></i>',
                     'guesty' => '<i class="la la-building"></i>',
+                    'dashboard' => '<i class="la la-plus-circle"></i>',
                     'other' => '<i class="la la-question-circle"></i>',
                 ];
 
@@ -183,6 +189,7 @@ class BookingController extends CrudController
                     'airbnb' => 'Airbnb',
                     'booking_com' => 'Booking',
                     'guesty' => 'Guesty',
+                    'dashboard' => 'حجز مباشر',
                     'other' => 'أخرى',
                 ];
 
@@ -194,6 +201,7 @@ class BookingController extends CrudController
                     'airbnb' => 'danger',
                     'booking_com' => 'primary',
                     'guesty' => 'warning',
+                    'dashboard' => 'success',
                     'other' => 'secondary',
                 ];
 
@@ -271,8 +279,20 @@ class BookingController extends CrudController
         // Payment Method
         CRUD::addColumn([
             'name' => 'payment_method_code',
-            'type' => 'enum',
+            'type' => 'custom_html',
             'label' => __('cms.payment_method_code').' <i class="la la-wallet"></i>',
+            'value' => function ($entry) {
+                $labels = [
+                    'tap' => 'Tap',
+                    'tabby' => 'Tabby',
+                    'geidea' => 'جيديا',
+                    'airbnb' => 'Airbnb',
+                    'bank_transfer' => 'تحويل بنكي',
+                ];
+                $code = $entry->payment_method_code;
+
+                return $code ? ($labels[$code] ?? $code) : '<span class="text-muted">—</span>';
+            },
         ]);
 
         // Passcode + copy button
@@ -281,18 +301,30 @@ class BookingController extends CrudController
             'type' => 'custom_html',
             'label' => __('cms.passcode').' <i class="la la-key"></i>',
             'value' => function ($entry) {
+                // The code is revealed only during the stay (check-in → check-out).
                 $active = $entry->getActivePasscode();
 
-                if (! $active) {
-                    return '<span class="text-muted">—</span>';
+                if ($active) {
+                    $code = e($active->keyboard_pwd);
+
+                    return "<span class='badge badge-info' style='font-size:.85rem;letter-spacing:1px;'>{$code}</span> "
+                        ."<button type='button' class='btn btn-link btn-sm p-0 ms-1' style='vertical-align:baseline;' "
+                        ."onclick=\"copyPasscodeToClipboard('{$code}', this)\" title='".__('cms.copy_passcode')."'>"
+                        .'<i class="la la-copy"></i></button>';
                 }
 
-                $code = e($active->keyboard_pwd);
+                // Code generated but the stay hasn't started yet — keep it hidden, but reassure
+                // staff it's ready and will appear automatically at check-in.
+                $upcoming = $entry->smartLockPasscodes()
+                    ->where('start_date', '>', now())
+                    ->exists();
 
-                return "<span class='badge badge-info' style='font-size:.85rem;letter-spacing:1px;'>{$code}</span> "
-                    ."<button type='button' class='btn btn-link btn-sm p-0 ms-1' style='vertical-align:baseline;' "
-                    ."onclick=\"copyPasscodeToClipboard('{$code}', this)\" title='".__('cms.copy_passcode')."'>"
-                    .'<i class="la la-copy"></i></button>';
+                if ($upcoming) {
+                    return "<span class='badge badge-success' title='".e(__('cms.passcode_ready_tooltip'))."' "
+                        ."style='cursor:help;'><i class='la la-lock'></i> ".__('cms.passcode_ready').'</span>';
+                }
+
+                return '<span class="text-muted">—</span>';
             },
         ]);
 
@@ -410,6 +442,7 @@ class BookingController extends CrudController
                     'airbnb' => '<i class="la la-home text-danger"></i>',
                     'booking_com' => '<i class="la la-bed text-primary"></i>',
                     'guesty' => '<i class="la la-building text-warning"></i>',
+                    'dashboard' => '<i class="la la-plus-circle text-success"></i>',
                     'other' => '<i class="la la-question-circle text-secondary"></i>',
                 ];
 
@@ -421,6 +454,7 @@ class BookingController extends CrudController
                     'airbnb' => 'Airbnb',
                     'booking_com' => 'Booking.com',
                     'guesty' => 'Guesty',
+                    'dashboard' => 'حجز مباشر (لوحة التحكم)',
                     'other' => 'أخرى',
                 ];
 
@@ -589,9 +623,45 @@ class BookingController extends CrudController
                         </tr>
                         <tr>
                             <th>'.__('cms.payment_method_code').' <i class="la la-wallet"></i></th>
-                            <td>'.$entry->payment_method_code.'</td>
+                            <td>'.($entry->payment_method_code === 'bank_transfer' ? 'تحويل بنكي' : ($entry->payment_method_code ?: '—')).'</td>
                         </tr>
                     </table>';
+            },
+        ]);
+
+        // بيانات التحويل البنكي (للحجوزات المباشرة من لوحة التحكم)
+        CRUD::addColumn([
+            'name' => 'بيانات&nbsp;التحويل',
+            'type' => 'custom_html',
+            'value' => function ($entry) {
+                $tx = $entry->transaction;
+                $receiptUrl = $tx ? $tx->getFirstMediaUrl('receipt') : '';
+                $transferNumber = $tx->transfer_number ?? null;
+
+                // Only render for manual/bank-transfer bookings that actually carry transfer data.
+                $isBankTransfer = ($entry->payment_method_code === 'bank_transfer')
+                    || ($tx && $tx->payment_gateway === 'bank_transfer');
+                if (! $isBankTransfer && ! $transferNumber && ! $receiptUrl) {
+                    return '';
+                }
+
+                $numberRow = '
+                    <tr>
+                        <th>'.__('cms.transfer_number').' <i class="la la-hashtag"></i></th>
+                        <td dir="ltr">'.($transferNumber ? e($transferNumber) : '<span class="text-muted">—</span>').'</td>
+                    </tr>';
+
+                $receiptRow = '
+                    <tr>
+                        <th>'.__('cms.transfer_receipt').' <i class="la la-image"></i></th>
+                        <td>'.($receiptUrl
+                            ? '<a href="'.e($receiptUrl).'" target="_blank" rel="noopener"><img src="'.e($receiptUrl).'" alt="receipt" style="max-height:120px;max-width:100%;border:1px solid #eee;border-radius:6px;"></a>'
+                            : '<span class="text-muted">—</span>').'</td>
+                    </tr>';
+
+                return '
+                    <h5><strong>'.__('cms.bank_transfer_details').'</strong></h5>
+                    <table class="table table-bordered">'.$numberRow.$receiptRow.'</table>';
             },
         ]);
     }
@@ -777,6 +847,7 @@ class BookingController extends CrudController
             'airbnb' => 'Airbnb',
             'booking_com' => 'Booking.com',
             'guesty' => 'Guesty',
+            'dashboard' => 'حجز مباشر (لوحة التحكم)',
             'other' => 'أخرى',
         ], function ($value) {
             CRUD::addClause('where', 'booking_source', $value);

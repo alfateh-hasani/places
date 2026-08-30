@@ -689,11 +689,23 @@ class OwnerRezSyncService
 
         }
 
-        // Create booking in OwnerRez
+        // Create booking in OwnerRez. This POST is the last fallible external call:
+        // OwnerRez cannot delete a booking once created, so anything after it must be
+        // best-effort — otherwise a later failure would roll back the local record and
+        // orphan an OwnerRez booking we can never remove.
         $response = $this->apiService->createBooking($ownerrezData);
 
-        // Set custom field to identify this booking as from our platform
-        $this->ensureBookingCustomField($response['id']);
+        // Set custom field to identify this booking as from our platform (best-effort:
+        // a custom-field failure must not undo the successful booking creation above).
+        try {
+            $this->ensureBookingCustomField($response['id']);
+        } catch (\Throwable $e) {
+            Log::warning('OwnerRez custom field stamp failed after booking create', [
+                'ownerrez_booking_id' => $response['id'] ?? null,
+                'local_booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Update local booking with OwnerRez ID and site
         $booking->update([

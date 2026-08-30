@@ -44,4 +44,6 @@ return [
     'date_change_request_canceled' => 'Date-change request canceled',
     'account_blocked' => 'Your account has been blocked. Please contact support.',
     'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
+    'booking_created_successfully' => 'Booking created successfully',
+    'ownerrez_sync_failed_retry' => 'OwnerRez sync failed and the booking was not saved. Please try again.',
 ];
