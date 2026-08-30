@@ -81,4 +81,48 @@ class CustomerSourceTest extends TestCase
         $this->customerIds[] = $customer->id;
         $this->assertSame(CustomerSource::Local, $customer->source);
     }
+
+    /**
+     * Root cause of the Geidea "Invalid email address" failure: a domain-without-TLD
+     * address like `test@d` passes Laravel's default `email` rule but is rejected by
+     * the payment gateway (FILTER_VALIDATE_EMAIL). Registration must reject it up front
+     * so no unpayable account is ever created.
+     */
+    public function test_api_register_rejects_malformed_email_without_tld(): void
+    {
+        $phone = '+966500000022';
+        $token = 'test-api-bad-email-'.uniqid();
+        Cache::put('verified_api_phone_'.$token, $phone, now()->addMinutes(10));
+
+        $response = $this->withHeader('x-secret-key', config('app.api_secret_key'))
+            ->postJson('/api/customer/register', [
+                'token' => $token,
+                'first_name' => 'Test',
+                'last_name' => 'Source',
+                'email' => 'test@d',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('email');
+        $this->assertNull(Customer::where('phone', $phone)->first());
+    }
+
+    public function test_web_register_rejects_malformed_email_without_tld(): void
+    {
+        $phone = '+966500000023';
+        $token = 'test-web-bad-email-'.uniqid();
+        Cache::put('verified_phone_'.$token, $phone, now()->addMinutes(10));
+
+        $response = $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+            ->postJson('/register', [
+                'token' => $token,
+                'first_name' => 'Test',
+                'last_name' => 'Source',
+                'email' => 'test@d',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('email');
+        $this->assertNull(Customer::where('phone', $phone)->first());
+    }
 }

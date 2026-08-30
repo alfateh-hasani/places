@@ -33,7 +33,7 @@ class CustomerAccountController extends Controller
         $request->validate([
             'first_name' => 'required',
             'last_name' => 'required',
-            'email' => 'required|email|unique:customers,email,' . $customer->id,
+            'email' => 'required|email:filter|unique:customers,email,' . $customer->id,
             'id_number' => 'required|unique:customers,id_number,' . $customer->id,
 
         ]);
