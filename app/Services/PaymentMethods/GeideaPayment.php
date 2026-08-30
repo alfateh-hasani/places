@@ -115,7 +115,12 @@ class GeideaPayment implements PaymentMethodInterface
             'callbackUrl' => $webhookUrl,
             'returnUrl' => $returnUrl,
             'customer' => [
-                'email' => $transaction->customer?->email,
+                // Geidea rejects the whole session with "Invalid email address"
+                // (responseCode 110) for a malformed email but accepts an empty one,
+                // so fall back to '' for any address the gateway would refuse.
+                'email' => \App\Models\Customer::isGatewayValidEmail($transaction->customer?->email)
+                    ? $transaction->customer->email
+                    : '',
                 'phoneNumber' => $transaction->customer?->phone,
                 'phonecountrycode' => '+966',
                 'firstName' => $transaction->customer?->first_name,

@@ -175,7 +175,7 @@ class AuthController extends Controller
             'token' => 'required',
             'first_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
             'last_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
-            'email' => 'required|email:filter|unique:customers|max:255',
+            'email' => Customer::emailValidationRules(),
             'fcm_token'=>'nullable'
         ]);
 

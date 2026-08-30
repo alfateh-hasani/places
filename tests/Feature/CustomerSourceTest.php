@@ -6,6 +6,7 @@ use App\Enums\CustomerSource;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -83,12 +84,14 @@ class CustomerSourceTest extends TestCase
     }
 
     /**
-     * Root cause of the Geidea "Invalid email address" failure: a domain-without-TLD
-     * address like `test@d` passes Laravel's default `email` rule but is rejected by
-     * the payment gateway (FILTER_VALIDATE_EMAIL). Registration must reject it up front
-     * so no unpayable account is ever created.
+     * Registration must reject any email the payment gateway would refuse, so no
+     * unpayable account is ever created. Geidea rejects both a domain-without-TLD
+     * (`test@d`) and a single-char TLD (`test@k.c`) with "Invalid email address"
+     * (responseCode 110) — and `test@k.c` even passes PHP's FILTER_VALIDATE_EMAIL,
+     * so `email:filter` alone is not enough (see Customer::GATEWAY_EMAIL_REGEX).
      */
-    public function test_api_register_rejects_malformed_email_without_tld(): void
+    #[DataProvider('gatewayInvalidEmails')]
+    public function test_api_register_rejects_gateway_invalid_email(string $email): void
     {
         $phone = '+966500000022';
         $token = 'test-api-bad-email-'.uniqid();
@@ -99,7 +102,7 @@ class CustomerSourceTest extends TestCase
                 'token' => $token,
                 'first_name' => 'Test',
                 'last_name' => 'Source',
-                'email' => 'test@d',
+                'email' => $email,
             ]);
 
         $response->assertStatus(422);
@@ -107,7 +110,8 @@ class CustomerSourceTest extends TestCase
         $this->assertNull(Customer::where('phone', $phone)->first());
     }
 
-    public function test_web_register_rejects_malformed_email_without_tld(): void
+    #[DataProvider('gatewayInvalidEmails')]
+    public function test_web_register_rejects_gateway_invalid_email(string $email): void
     {
         $phone = '+966500000023';
         $token = 'test-web-bad-email-'.uniqid();
@@ -118,11 +122,22 @@ class CustomerSourceTest extends TestCase
                 'token' => $token,
                 'first_name' => 'Test',
                 'last_name' => 'Source',
-                'email' => 'test@d',
+                'email' => $email,
             ]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors('email');
         $this->assertNull(Customer::where('phone', $phone)->first());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function gatewayInvalidEmails(): array
+    {
+        return [
+            'no TLD' => ['test@d'],
+            'single-char TLD' => ['test@k.c'],
+        ];
     }
 }

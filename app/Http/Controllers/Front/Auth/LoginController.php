@@ -198,7 +198,7 @@ class LoginController extends Controller
             'token' => 'required',
             'first_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
             'last_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
-            'email' => 'required|email:filter|unique:customers|max:255',
+            'email' => Customer::emailValidationRules(),
         ]);
 
         $phone = Cache::pull('verified_phone_' . $request->token);

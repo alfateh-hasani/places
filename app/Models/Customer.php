@@ -8,6 +8,7 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Validation\Rule;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -37,12 +38,52 @@ class Customer extends Authenticatable implements HasMedia
         'blocked_by',
     ];
 
+    /**
+     * A gateway-payable email: standard structure plus a real TLD of 2+ letters.
+     *
+     * FILTER_VALIDATE_EMAIL (Laravel's `email:filter`) accepts single-letter TLDs
+     * like `test@k.c` and TLD-less domains like `test@d`, but the Geidea payment
+     * gateway rejects both with "Invalid email address" (responseCode 110). This
+     * pattern is the single source of truth for what the gateway will accept, used
+     * both to validate at registration and to sanitize the gateway payload.
+     */
+    public const GATEWAY_EMAIL_REGEX = '/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/';
+
     protected function casts(): array
     {
         return [
             'blocked_at' => 'datetime',
             'source' => CustomerSource::class,
         ];
+    }
+
+    /**
+     * Validation rules for a customer email that the payment gateway will accept.
+     *
+     * @return array<int, mixed>
+     */
+    public static function emailValidationRules(?int $ignoreId = null): array
+    {
+        $unique = Rule::unique('customers', 'email');
+
+        if ($ignoreId !== null) {
+            $unique->ignore($ignoreId);
+        }
+
+        return [
+            'required',
+            'email:filter',
+            'max:255',
+            'regex:'.self::GATEWAY_EMAIL_REGEX,
+            $unique,
+        ];
+    }
+
+    public static function isGatewayValidEmail(?string $email): bool
+    {
+        return is_string($email)
+            && filter_var($email, FILTER_VALIDATE_EMAIL) !== false
+            && preg_match(self::GATEWAY_EMAIL_REGEX, $email) === 1;
     }
 
     public function isBlocked(): bool
