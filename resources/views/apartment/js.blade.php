@@ -186,7 +186,30 @@ $(document).ready(function() {
         return dates;
     }
 
-    const disabledDates = buildDisabledDates(bookedDays);
+    let disabledDates = buildDisabledDates(bookedDays);
+
+    // تواريخ المغادرة: نمنع الليالي المشغولة فقط، لكن نسمح بيوم وصول أي حجز كتاريخ مغادرة
+    // (يوم "التسليم والاستلام" — يبقى معطّلاً كتاريخ وصول، ومتاحاً كتاريخ مغادرة للضيف السابق).
+    function buildCheckoutDisabledDates(bookings) {
+        const checkInDays = new Set(bookings.map(b => new Date(b.check_in).toISOString().split('T')[0]));
+        return buildDisabledDates(bookings).filter(d => !checkInDays.has(d));
+    }
+
+    const checkoutDisabledDates = buildCheckoutDisabledDates(bookedDays);
+
+    // أول ليلة مشغولة بعد تاريخ الوصول المختار — تُستخدم كحد أقصى لتاريخ المغادرة حتى لا يقفز
+    // العميل فوق حجز قائم (مثال: وصول 27 وليلة 28 محجوزة ⇒ المغادرة القصوى 28، فلا يُختار 29/30).
+    function firstOccupiedNightAfter(checkinDate) {
+        const checkinTime = checkinDate.getTime();
+        let result = null;
+        (disabledDates || []).forEach(function (s) {
+            const d = new Date(s + 'T00:00:00');
+            if (d.getTime() > checkinTime && (result === null || d < result)) {
+                result = d;
+            }
+        });
+        return result;
+    }
 
     const commonOptions = {
         dateFormat: "Y-m-d",
@@ -212,7 +235,11 @@ $(document).ready(function() {
 
                 checkoutPicker.set('minDate', minCheckoutDate);
 
-                if (!checkoutPicker.selectedDates.length || checkoutPicker.selectedDates[0] <= checkinDate) {
+                const maxCheckout = firstOccupiedNightAfter(checkinDate);
+                checkoutPicker.set('maxDate', maxCheckout || null);
+
+                const curCheckout = checkoutPicker.selectedDates[0];
+                if (!curCheckout || curCheckout <= checkinDate || (maxCheckout && curCheckout > maxCheckout)) {
                     checkoutPicker.setDate(minCheckoutDate, true);
                 }
 
@@ -223,6 +250,7 @@ $(document).ready(function() {
 
     var checkoutPicker = flatpickr("#checkout", {
         ...commonOptions,
+        disable: checkoutDisabledDates,
         onChange: function(selectedDates, dateStr, instance) {
             calculateNightsAndCost();
         }
@@ -232,9 +260,12 @@ $(document).ready(function() {
     function refreshCalendarBlockedDates() {
         $.getJSON("{{ route('apartments.blocked-dates', $apartment_id) }}", function(response) {
             if (response.booked_days) {
-                const newDisabled = buildDisabledDates(response.booked_days);
-                checkinPicker.set('disable', newDisabled);
-                checkoutPicker.set('disable', newDisabled);
+                disabledDates = buildDisabledDates(response.booked_days);
+                checkinPicker.set('disable', disabledDates);
+                checkoutPicker.set('disable', buildCheckoutDisabledDates(response.booked_days));
+
+                const ci = checkinPicker.selectedDates[0];
+                checkoutPicker.set('maxDate', ci ? (firstOccupiedNightAfter(ci) || null) : null);
             }
         });
     }

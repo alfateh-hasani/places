@@ -442,6 +442,45 @@ class OwnerRezSyncServiceTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // getActiveBookings / checkAvailability caching
+    // -------------------------------------------------------------------------
+
+    /**
+     * Regression: the liveCheck branch caches bookings as a plain array (->toArray()).
+     * A subsequent non-liveCheck read of the same key previously called ->filter() on that
+     * array and threw "Call to a member function filter() on array". The result must be
+     * normalized to a Collection so both reads and checkAvailability keep working.
+     */
+    public function test_get_active_bookings_handles_array_cached_by_live_check(): void
+    {
+        $this->mockApiService(); // The API must NOT be hit — the cache is pre-populated.
+
+        $from = '2026-09-29';
+        $to = '2026-09-30';
+        $cacheKey = "ownerrez:availability:v3:{$this->ownerrezPropertyId}:{$from}:{$to}";
+
+        // Exactly what the liveCheck branch stores: a plain array, not a Collection.
+        \Illuminate\Support\Facades\Cache::put($cacheKey, [
+            [
+                'id' => $this->ownerrezBookingId,
+                'arrival' => '2026-09-29',
+                'departure' => '2026-09-30',
+                'status' => 'active',
+                'is_block' => false,
+            ],
+        ], 300);
+
+        $bookings = $this->syncService->getActiveBookings($this->ownerrezPropertyId, $from, $to);
+
+        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $bookings);
+        $this->assertCount(1, $bookings);
+
+        // Full path that previously crashed: checkAvailability() -> getActiveBookings().
+        $available = $this->syncService->checkAvailability($this->ownerrezPropertyId, $from, $to);
+        $this->assertFalse($available, 'An overlapping cached booking must mark the range unavailable.');
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
