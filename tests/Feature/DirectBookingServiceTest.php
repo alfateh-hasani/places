@@ -169,6 +169,37 @@ class DirectBookingServiceTest extends TestCase
         $this->assertSame('+966500000099', $customer->phone);
     }
 
+    public function test_new_customer_without_email_syncs_guest_to_ownerrez(): void
+    {
+        config(['ownerrez.sync.sync_guest_data' => true]);
+
+        $apartment = $this->createApartment();
+        $this->createMapping($apartment->id);
+
+        $mock = $this->mock(OwnerRezApiService::class);
+        // Email is null → we must NOT search by email; we create the guest directly.
+        $mock->shouldNotReceive('searchGuests');
+        $mock->shouldReceive('createGuest')->once()->andReturn(['id' => 77001]);
+        $mock->shouldReceive('createBooking')->once()->andReturn(['id' => 55509999]);
+        $mock->shouldReceive('getBooking')->andReturn(['fields' => [['code' => 'BXSOURCEDOMAIN', 'value' => 'places']]]);
+
+        $booking = app(DirectBookingService::class)->createManualBooking(
+            $this->payload($apartment->id, [
+                'new_customer' => [
+                    'first_name' => 'NoEmail',
+                    'last_name' => 'Guest',
+                    'phone' => '+966500000077',
+                    // no email
+                ],
+            ])
+        );
+        $this->bookingIds[] = $booking->id;
+        $this->customerIds[] = $booking->customer_id;
+
+        $this->assertNull($booking->customer->email);
+        $this->assertSame('55509999', (string) $booking->ownerrez_booking_id);
+    }
+
     public function test_admin_price_override_is_respected(): void
     {
         $apartment = $this->createApartment();

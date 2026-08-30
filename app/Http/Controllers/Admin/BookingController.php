@@ -400,6 +400,12 @@ class BookingController extends CrudController
     {
         CRUD::set('show.setFromDb', false); // تعطيل التوليد التلقائي من قاعدة البيانات
 
+        // نفس دالة نسخ الكود المستخدمة في الجدول
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.copy_passcode_script',
+        ])->to('after_content');
+
         // جدول معلومات العميل والشقة
         CRUD::addColumn([
             'name' => 'معلومات&nbsp; العميل',
@@ -423,6 +429,45 @@ class BookingController extends CrudController
                         <tr>
                             <th>'.__('cms.apartment').' <i class="la la-building"></i></th>
                             <td>'.optional($entry->apartment)->name_ar.'</td>
+                        </tr>
+                    </table>';
+            },
+        ]);
+
+        // كود الدخول + زر النسخ (نفس سلوك الجدول)
+        CRUD::addColumn([
+            'name' => 'كود&nbsp;الدخول',
+            'type' => 'custom_html',
+            'value' => function ($entry) {
+                // Mirror the list column: reveal the code only during the stay; before it
+                // starts, show only the "ready — appears at check-in" badge.
+                $active = $entry->getActivePasscode();
+
+                if ($active) {
+                    $code = e($active->keyboard_pwd);
+                    $cell = "<span class='badge badge-info' style='font-size:.95rem;letter-spacing:1px;'>{$code}</span> "
+                        ."<button type='button' class='btn btn-link btn-sm p-0 ms-1' style='vertical-align:baseline;' "
+                        ."onclick=\"copyPasscodeToClipboard('{$code}', this)\" title='".__('cms.copy_passcode')."'>"
+                        .'<i class="la la-copy"></i></button>';
+                } else {
+                    $upcoming = $entry->smartLockPasscodes()
+                        ->where('start_date', '>', now())
+                        ->exists();
+
+                    if (! $upcoming) {
+                        return '';
+                    }
+
+                    $cell = "<span class='badge badge-success' title='".e(__('cms.passcode_ready_tooltip'))."' "
+                        ."style='cursor:help;'><i class='la la-lock'></i> ".__('cms.passcode_ready').'</span>';
+                }
+
+                return '
+                    <h5><strong>'.__('cms.passcode').'</strong></h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>'.__('cms.passcode').' <i class="la la-key"></i></th>
+                            <td>'.$cell.'</td>
                         </tr>
                     </table>';
             },

@@ -4,8 +4,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/css/intlTelInput.min.css">
     <style>
         .dbk-hidden { display: none !important; }
+        .iti { width: 100%; }
         .flatpickr-calendar.inline { box-shadow: none; margin: 0 auto; }
         .flatpickr-day.flatpickr-disabled { text-decoration: line-through; background: #f8d7da33; }
         .dbk-legend span { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; margin-inline-end: 4px; }
@@ -104,7 +106,7 @@
                                 <div class="row">
                                     <div class="col-6 mb-2"><input type="text" name="new_customer[first_name]" class="form-control" placeholder="الاسم الأول"></div>
                                     <div class="col-6 mb-2"><input type="text" name="new_customer[last_name]" class="form-control" placeholder="الاسم الأخير"></div>
-                                    <div class="col-6 mb-2"><input type="text" name="new_customer[phone]" class="form-control" placeholder="رقم الجوال"></div>
+                                    <div class="col-6 mb-2"><input type="tel" id="new_customer_phone" name="new_customer[phone]" class="form-control" placeholder="رقم الجوال"></div>
                                     <div class="col-6 mb-2"><input type="email" name="new_customer[email]" class="form-control" placeholder="البريد (اختياري)"></div>
                                 </div>
                             </div>
@@ -144,6 +146,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/js/intlTelInput.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const CSRF = '{{ csrf_token() }}';
@@ -163,8 +166,9 @@
             function clearAlert() { alertBox.className = 'alert dbk-hidden'; alertBox.textContent = ''; }
 
             // ---------- Searchable selects ----------
-            $('#building_id').select2({ placeholder: 'كل المباني', allowClear: true, dir: 'rtl' });
-            $('#apartment_id').select2({ placeholder: 'اختر الوحدة', dir: 'rtl' });
+            // minimumResultsForSearch:0 keeps the search box visible even with few options.
+            $('#building_id').select2({ placeholder: 'كل المباني', allowClear: true, dir: 'rtl', minimumResultsForSearch: 0 });
+            $('#apartment_id').select2({ placeholder: 'اختر الوحدة', dir: 'rtl', minimumResultsForSearch: 0 });
             $('#customer_id').select2({
                 placeholder: 'ابحث بالاسم أو الجوال أو البريد...',
                 dir: 'rtl',
@@ -176,6 +180,15 @@
                     data: (params) => ({ q: params.term || '' }),
                     processResults: (data) => ({ results: data }),
                 },
+            });
+
+            // Focus the search field as soon as any select2 opens, so you can type immediately
+            // without clicking into the search box first.
+            $(document).on('select2:open', function () {
+                setTimeout(function () {
+                    const search = document.querySelector('.select2-container--open .select2-search__field');
+                    if (search) { search.focus(); }
+                }, 0);
             });
 
             function renderApartments() {
@@ -205,6 +218,15 @@
                     $id('existingCustomerBox').classList.toggle('dbk-hidden', isNew);
                     if (isNew) { $('#customer_id').val(null).trigger('change'); }
                 });
+            });
+
+            // ---------- New-customer phone: country code (default Saudi +966) ----------
+            const phoneEl = $id('new_customer_phone');
+            const phoneIti = window.intlTelInput(phoneEl, {
+                initialCountry: 'sa',
+                separateDialCode: true,
+                preferredCountries: ['sa', 'ye', 'ae', 'eg'],
+                utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/js/utils.js',
             });
 
             // ---------- Flatpickr availability calendars ----------
@@ -327,6 +349,9 @@
                     ['new_customer[first_name]', 'new_customer[last_name]', 'new_customer[phone]', 'new_customer[email]'].forEach(n => formData.delete(n));
                 } else {
                     formData.delete('customer_id');
+                    // Send the full international number (e.g. +9665…) instead of the national part.
+                    const fullPhone = phoneIti.getNumber();
+                    if (fullPhone) { formData.set('new_customer[phone]', fullPhone); }
                 }
                 formData.delete('customer_mode');
 

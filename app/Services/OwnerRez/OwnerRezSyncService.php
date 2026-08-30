@@ -746,9 +746,9 @@ class OwnerRezSyncService
             return (int) $customer->ownerrez_guest_id;
         }
 
-        // Search for existing guest in OwnerRez by email
-
-        $existingGuest = $this->searchOwnerRezGuest($customer->email);
+        // Search for an existing guest by email — only when the customer actually has one
+        // (email is optional for manual/dashboard bookings).
+        $existingGuest = $customer->email ? $this->searchOwnerRezGuest($customer->email) : null;
 
         if ($existingGuest) {
             Log::info('Found existing guest in OwnerRez', [
@@ -762,17 +762,11 @@ class OwnerRezSyncService
             return $existingGuest['id'];
         }
 
-        // Create new guest in OwnerRez
+        // Create new guest in OwnerRez. Only include an email address when present, so a
+        // customer without an email doesn't send a null address to OwnerRez.
         $guestData = [
             'first_name' => $customer->first_name ?? '',
             'last_name' => $customer->last_name ?? '',
-            'email_addresses' => [
-                [
-                    'address' => $customer->email,
-                    'is_default' => true,
-                    'type' => 'home',
-                ],
-            ],
             'phones' => $customer->phone ? [
                 [
                     'number' => $customer->phone,
@@ -781,6 +775,16 @@ class OwnerRezSyncService
                 ],
             ] : [],
         ];
+
+        if ($customer->email) {
+            $guestData['email_addresses'] = [
+                [
+                    'address' => $customer->email,
+                    'is_default' => true,
+                    'type' => 'home',
+                ],
+            ];
+        }
 
         $response = $this->apiService->createGuest($guestData);
         $guestId = $response['id'];
