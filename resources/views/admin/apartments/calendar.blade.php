@@ -211,7 +211,8 @@
                     // ===== المرحلة الثانية: حجوزات OwnerRez (بعدين) =====
                     fetch(`/admin/apartment/${apartmentId}/ownerrez-bookings`)
                         .then(r => r.json())
-                        .then(ownerRezEvents => {
+                        .then(res => {
+                            const ownerRezEvents = (res && res.events) ? res.events : [];
                             if (!ownerRezEvents.length) { return; }
 
                             // إضافة الأحداث إلى التقويم

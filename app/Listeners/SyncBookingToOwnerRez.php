@@ -19,8 +19,10 @@ class SyncBookingToOwnerRez
             return;
         }
 
-        // Check if booking is from external source (don't sync back)
-        if (in_array($booking->booking_source, ['ownerrez', 'airbnb', 'booking_com', 'guesty'])) {
+        // Check if booking is from external source (don't sync back). 'dashboard' bookings
+        // are pushed synchronously by DirectBookingService (so failures can roll back the
+        // local booking), so they must not be re-pushed here.
+        if (in_array($booking->booking_source, ['ownerrez', 'airbnb', 'booking_com', 'guesty', 'dashboard'])) {
             Log::info('Skipping sync - booking from external source', [
                 'booking_id' => $booking->id,
                 'source' => $booking->booking_source,

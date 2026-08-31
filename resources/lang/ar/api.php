@@ -52,4 +52,6 @@ return [
     'date_change_cannot_cancel' => 'لا يمكن إلغاء هذا الطلب في حالته الحالية',
     'date_change_request_canceled' => 'تم إلغاء طلب تعديل التواريخ',
     'otp_cooldown' => 'يرجى الانتظار :seconds قبل طلب رمز جديد.',
+    'booking_created_successfully' => 'تم إنشاء الحجز بنجاح',
+    'ownerrez_sync_failed_retry' => 'فشلت المزامنة مع OwnerRez ولم يتم حفظ الحجز. يرجى المحاولة مرة أخرى.',
 ];

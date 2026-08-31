@@ -689,11 +689,23 @@ class OwnerRezSyncService
 
         }
 
-        // Create booking in OwnerRez
+        // Create booking in OwnerRez. This POST is the last fallible external call:
+        // OwnerRez cannot delete a booking once created, so anything after it must be
+        // best-effort — otherwise a later failure would roll back the local record and
+        // orphan an OwnerRez booking we can never remove.
         $response = $this->apiService->createBooking($ownerrezData);
 
-        // Set custom field to identify this booking as from our platform
-        $this->ensureBookingCustomField($response['id']);
+        // Set custom field to identify this booking as from our platform (best-effort:
+        // a custom-field failure must not undo the successful booking creation above).
+        try {
+            $this->ensureBookingCustomField($response['id']);
+        } catch (\Throwable $e) {
+            Log::warning('OwnerRez custom field stamp failed after booking create', [
+                'ownerrez_booking_id' => $response['id'] ?? null,
+                'local_booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Update local booking with OwnerRez ID and site
         $booking->update([
@@ -734,9 +746,9 @@ class OwnerRezSyncService
             return (int) $customer->ownerrez_guest_id;
         }
 
-        // Search for existing guest in OwnerRez by email
-
-        $existingGuest = $this->searchOwnerRezGuest($customer->email);
+        // Search for an existing guest by email — only when the customer actually has one
+        // (email is optional for manual/dashboard bookings).
+        $existingGuest = $customer->email ? $this->searchOwnerRezGuest($customer->email) : null;
 
         if ($existingGuest) {
             Log::info('Found existing guest in OwnerRez', [
@@ -750,17 +762,11 @@ class OwnerRezSyncService
             return $existingGuest['id'];
         }
 
-        // Create new guest in OwnerRez
+        // Create new guest in OwnerRez. Only include an email address when present, so a
+        // customer without an email doesn't send a null address to OwnerRez.
         $guestData = [
             'first_name' => $customer->first_name ?? '',
             'last_name' => $customer->last_name ?? '',
-            'email_addresses' => [
-                [
-                    'address' => $customer->email,
-                    'is_default' => true,
-                    'type' => 'home',
-                ],
-            ],
             'phones' => $customer->phone ? [
                 [
                     'number' => $customer->phone,
@@ -769,6 +775,16 @@ class OwnerRezSyncService
                 ],
             ] : [],
         ];
+
+        if ($customer->email) {
+            $guestData['email_addresses'] = [
+                [
+                    'address' => $customer->email,
+                    'is_default' => true,
+                    'type' => 'home',
+                ],
+            ];
+        }
 
         $response = $this->apiService->createGuest($guestData);
         $guestId = $response['id'];

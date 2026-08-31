@@ -145,6 +145,7 @@ return [
     'phone' => 'الهاتف',
     'price_per_night' => 'السعر لليلة',
     'booking_management' => 'إدارة الحجوزات',
+    'direct_booking' => 'حجز مباشر',
     'airbnb_booking_management' => 'إدارة حجوزات Airbnb',
     'check_in_time' => 'وقت الدخول',
     'transactions' => 'المعاملات',
@@ -308,4 +309,9 @@ return [
     'confirm' => 'تأكيد',
     'passcode' => 'كود الدخول',
     'copy_passcode' => 'نسخ الكود',
+    'passcode_ready' => 'جاهز — يظهر عند الوصول',
+    'passcode_ready_tooltip' => 'تم توليد كود الدخول بنجاح وسيظهر تلقائياً عند بدء الحجز.',
+    'bank_transfer_details' => 'بيانات التحويل البنكي',
+    'transfer_number' => 'رقم التحويل',
+    'transfer_receipt' => 'إيصال التحويل',
 ];

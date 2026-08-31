@@ -143,6 +143,7 @@ return [
     'phone' => 'Phone',
     'price_per_night' => 'Price per Night',
     'booking_management' => 'Booking Management',
+    'direct_booking' => 'Direct Booking',
     'airbnb_booking_management' => 'Airbnb Booking Management',
     'transactions' => 'Transactions',
     'transaction' => 'Transaction',
@@ -207,4 +208,9 @@ return [
     'blocked_by' => 'Blocked by',
     'passcode' => 'Passcode',
     'copy_passcode' => 'Copy passcode',
+    'passcode_ready' => 'Ready — shown at check-in',
+    'passcode_ready_tooltip' => 'The access code was generated successfully and will appear automatically when the stay begins.',
+    'bank_transfer_details' => 'Bank transfer details',
+    'transfer_number' => 'Transfer number',
+    'transfer_receipt' => 'Transfer receipt',
 ];
