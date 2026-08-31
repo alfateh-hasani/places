@@ -12,6 +12,15 @@ Route::group([
     ),
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () {
+    // Browser Web Push subscription for the logged-in staff/admin user.
+    Route::post('push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])->name('admin.push.subscribe');
+    Route::delete('push/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'unsubscribe'])->name('admin.push.unsubscribe');
+
+    // Staff notification bell (in-app web_notifications).
+    Route::get('web-notifications', [\App\Http\Controllers\Admin\WebNotificationController::class, 'index'])->name('admin.web-notifications.index');
+    Route::post('web-notifications/read-all', [\App\Http\Controllers\Admin\WebNotificationController::class, 'markAllAsRead'])->name('admin.web-notifications.read-all');
+    Route::post('web-notifications/{id}/read', [\App\Http\Controllers\Admin\WebNotificationController::class, 'markAsRead'])->name('admin.web-notifications.read');
+
     Route::crud('smart-lock', 'LockSmartController');
     Route::get('get-smart-locks', 'LockSmartController@getSmartLocks');
     Route::crud('city', 'CityController');

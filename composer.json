@@ -21,6 +21,7 @@
         "backpack/translation-manager": "^1.0",
         "consoletvs/charts": "^6.7",
         "kreait/laravel-firebase": "^5.9",
+        "laravel-notification-channels/webpush": "^10.5",
         "laravel/framework": "^11.9",
         "laravel/nightwatch": "^1.22",
         "laravel/sanctum": "^4.0",

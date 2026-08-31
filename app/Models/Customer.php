@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Enums\CustomerSource;
 use App\Jobs\SendWelcomeNotification;
+use App\Models\Concerns\HasWebNotifications;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Validation\Rule;
 use Laravel\Sanctum\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
@@ -17,7 +19,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Customer extends Authenticatable implements HasMedia
 {
-    use CrudTrait, HasApiTokens, InteractsWithMedia, LogsActivity, Notifiable;
+    use CrudTrait, HasApiTokens, HasPushSubscriptions, HasWebNotifications, InteractsWithMedia, LogsActivity, Notifiable;
 
     protected $connection = 'mysql';
 

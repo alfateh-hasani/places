@@ -18,3 +18,5 @@
   </script>
 
   @stack('js')
+
+  @include('partials.web-push')

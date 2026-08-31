@@ -45,6 +45,10 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
 
     Route::middleware(['auth:customer', 'customer.not_blocked'])->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Front\Auth\LoginController::class, 'logout'])->name('customer.logout');
+
+        // Browser Web Push subscription for the logged-in web customer.
+        Route::post('/push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])->name('customer.push.subscribe');
+        Route::delete('/push/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'unsubscribe'])->name('customer.push.unsubscribe');
         Route::controller(CustomerAccountController::class)->name('customer.')->prefix('customer')->group(function () {
             Route::get('account', 'profile')->name('account');
             Route::post('account-update', 'update')->name('update');
