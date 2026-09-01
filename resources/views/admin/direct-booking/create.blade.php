@@ -8,6 +8,21 @@
     <style>
         .dbk-hidden { display: none !important; }
         .iti { width: 100%; }
+        /* Self-contained toggle switch — RTL-safe (no Bootstrap form-switch float/margins) */
+        .dbk-switch { cursor: pointer; gap: .5rem; white-space: nowrap; }
+        .dbk-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .dbk-switch .dbk-track {
+            position: relative; display: inline-block; width: 2.25em; height: 1.25em;
+            background: #cbd3da; border-radius: 1em; transition: background .2s; flex-shrink: 0;
+        }
+        .dbk-switch .dbk-track::before {
+            content: ''; position: absolute; top: .15em; left: .15em;
+            width: .95em; height: .95em; background: #fff; border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .2s;
+        }
+        .dbk-switch input:checked + .dbk-track { background: #28a745; }
+        .dbk-switch input:checked + .dbk-track::before { transform: translateX(1em); }
+        .dbk-switch input:focus-visible + .dbk-track { box-shadow: 0 0 0 .2rem rgba(40,167,69,.35); }
         .flatpickr-calendar.inline { box-shadow: none; margin: 0 auto; }
         .flatpickr-day.flatpickr-disabled { text-decoration: line-through; background: #f8d7da33; }
         .dbk-legend span { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; margin-inline-end: 4px; }
@@ -118,8 +133,15 @@
                                 <div>السعر المقترح: <strong id="pi_total">-</strong> ر.س (ضريبة تقديرية: <strong id="pi_vat">-</strong>)</div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">السعر النهائي (قابل للتعديل)</label>
-                                <input type="number" step="0.01" min="0" name="final_price" id="final_price" class="form-control" placeholder="سيُحسب تلقائياً — يمكنك تعديله">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0" for="final_price">السعر النهائي</label>
+                                    <label class="dbk-switch d-inline-flex align-items-center mb-0 small">
+                                        <input type="checkbox" id="custom_price_toggle">
+                                        <span class="dbk-track"></span>
+                                        <span>سعر مخصص</span>
+                                    </label>
+                                </div>
+                                <input type="number" step="0.01" min="0" name="final_price" id="final_price" class="form-control" placeholder="سيُحسب تلقائياً" readonly>
                             </div>
 
                             <div class="mb-3">
@@ -312,8 +334,20 @@
             $('#apartment_id').on('change', onApartmentChange);
 
             // ---------- Price preview ----------
-            let userEditedPrice = false;
-            $id('final_price').addEventListener('input', () => { userEditedPrice = true; });
+            // The price stays auto (read-only) unless "سعر مخصص" is checked. Auto value keeps
+            // refreshing with the dates; a custom value is left untouched.
+            let customPrice = false;
+            let lastSuggested = null;
+            $id('custom_price_toggle').addEventListener('change', function () {
+                customPrice = this.checked;
+                const field = $id('final_price');
+                field.readOnly = !customPrice;
+                if (customPrice) {
+                    field.focus();
+                } else if (lastSuggested !== null) {
+                    field.value = lastSuggested; // restore the auto-calculated price
+                }
+            });
             function maybePreviewPrice() {
                 const apartment_id = $id('apartment_id').value;
                 const check_in = $id('check_in').value;
@@ -331,7 +365,8 @@
                         $id('pi_nights').textContent = res.nights;
                         $id('pi_total').textContent = res.total_price;
                         $id('pi_vat').textContent = res.vat;
-                        if (!userEditedPrice) { $id('final_price').value = res.suggested_final_price; }
+                        lastSuggested = res.suggested_final_price;
+                        if (!customPrice) { $id('final_price').value = res.suggested_final_price; }
                     })
                     .catch(() => {});
             }

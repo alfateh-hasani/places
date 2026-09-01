@@ -6,6 +6,7 @@ use App\Enums\DateChangeStatus;
 use App\Events\BookingApproved;
 use App\Events\BookingCancelled;
 use App\Jobs\SendBookingConfirmedNotification;
+use App\Jobs\SendNewBookingStaffNotification;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -77,6 +78,10 @@ class Booking extends Model
             if ($booking->isDirty('status') && $booking->status === 'approved') {
                 SendBookingConfirmedNotification::dispatch($booking);
 
+                // Notify staff — the booking is now confirmed (payment complete),
+                // not on the earlier pending/pre-payment step.
+                self::notifyStaffOfConfirmedBooking($booking);
+
                 // إطلاق event للمزامنة مع OwnerRez ولتوفير كود الدخول
                 event(new BookingApproved($booking));
             }
@@ -90,9 +95,26 @@ class Booking extends Model
         // إطلاق event للمزامنة مع OwnerRez عند إنشاء حجز بحالة approved مباشرة
         static::created(function ($booking) {
             if ($booking->status === 'approved' && $booking->payment_status === 'paid') {
+                // A booking created already-paid (e.g. direct dashboard booking) is
+                // confirmed immediately — notify staff here, not on a pending step.
+                self::notifyStaffOfConfirmedBooking($booking);
+
                 event(new BookingApproved($booking));
             }
         });
+    }
+
+    /**
+     * Notify staff of a newly confirmed (paid) customer/direct booking. Imported
+     * OwnerRez/Airbnb reservations are skipped to avoid noise from bulk syncs.
+     */
+    private static function notifyStaffOfConfirmedBooking(self $booking): void
+    {
+        $isImported = $booking->is_airbnb_booking || $booking->booking_source === 'ownerrez';
+
+        if (! $isImported) {
+            SendNewBookingStaffNotification::dispatch($booking);
+        }
     }
 
     // coupon

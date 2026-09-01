@@ -60,9 +60,11 @@ class DirectBookingController extends Controller
             ->limit(20)
             ->get(['id', 'first_name', 'last_name', 'phone', 'email']);
 
+        // Wrap the phone in a Unicode LTR isolate (U+2066 … U+2069) so the leading "+"
+        // renders on the left even next to an Arabic (RTL) name.
         return response()->json($customers->map(fn (Customer $c) => [
             'id' => $c->id,
-            'text' => trim($c->first_name.' '.$c->last_name).' — '.$c->phone,
+            'text' => trim($c->first_name.' '.$c->last_name).' — '."\u{2066}".$c->phone."\u{2069}",
         ]));
     }
 
