@@ -33,6 +33,7 @@ class SmartLock extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logOnlyDirty();
     }
 }

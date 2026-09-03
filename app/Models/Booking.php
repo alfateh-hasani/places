@@ -288,7 +288,8 @@ class Booking extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logOnlyDirty();
     }
 
     public function canBeCanceled(): bool

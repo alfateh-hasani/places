@@ -51,6 +51,8 @@ class SmartLockPasscode extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logExcept(['keyboard_pwd'])
+            ->logOnlyDirty();
     }
 }

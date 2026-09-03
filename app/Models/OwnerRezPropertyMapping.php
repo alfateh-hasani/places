@@ -61,7 +61,8 @@ class OwnerRezPropertyMapping extends Model
     {
         // log all changes
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logOnlyDirty();
 
     }
 }

@@ -113,6 +113,7 @@ class Building extends Model implements HasMedia
     {
         return LogOptions::defaults()
             ->logAll()
-            ->logExcept(['ttlock_password']);
+            ->logExcept(['ttlock_password'])
+            ->logOnlyDirty();
     }
 }

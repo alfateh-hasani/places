@@ -5,10 +5,14 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Refund extends Model
 {
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
 
     public const STATUS_PENDING = 'pending';
 
@@ -51,5 +55,12 @@ class Refund extends Model
         // getOrder pre-check in ProcessBookingRefund guards against double-refunding.
         return data_get($this->response_payload, 'success') === true
             || $this->status === self::STATUS_REFUNDED;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
     }
 }

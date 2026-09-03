@@ -4,12 +4,16 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Transaction extends Model implements HasMedia
 {
-    use CrudTrait, InteractsWithMedia;
+    use CrudTrait, InteractsWithMedia, LogsActivity;
+
+    protected $connection = 'mysql';
 
     protected $guarded = [];
 
@@ -40,5 +44,10 @@ class Transaction extends Model implements HasMedia
         return $this->belongsTo(Booking::class);
     }
 
-
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
+    }
 }
