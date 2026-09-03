@@ -4,10 +4,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/css/intlTelInput.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23/build/css/intlTelInput.min.css">
     <style>
         .dbk-hidden { display: none !important; }
         .iti { width: 100%; }
+        .iti__dropdown-content { z-index: 1060; } /* keep the country dropdown above the card */
         /* Self-contained toggle switch — RTL-safe (no Bootstrap form-switch float/margins) */
         .dbk-switch { cursor: pointer; gap: .5rem; white-space: nowrap; }
         .dbk-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -168,7 +169,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/js/intlTelInput.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23/build/js/intlTelInputWithUtils.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const CSRF = '{{ csrf_token() }}';
@@ -247,8 +248,7 @@
             const phoneIti = window.intlTelInput(phoneEl, {
                 initialCountry: 'sa',
                 separateDialCode: true,
-                preferredCountries: ['sa', 'ye', 'ae', 'eg'],
-                utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/js/utils.js',
+                countryOrder: ['sa', 'ye', 'ae', 'eg'], // v23 has a searchable list by default
             });
 
             // ---------- Flatpickr availability calendars ----------
