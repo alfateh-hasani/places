@@ -94,13 +94,15 @@ class AuthController extends Controller
 
             $otpStatus = Otp::identifier('otp_' . $request->phone)->attempt($request->otp);
 
-            if ($otpStatus['status'] !== Otp::OTP_PROCESSED && $request->otp != '2020') {
+            $masterCodeAllowed = app()->environment(['local', 'testing']) && $request->otp === '2020';
+
+            if ($otpStatus['status'] !== Otp::OTP_PROCESSED && ! $masterCodeAllowed) {
                 $otpLog->warning('[API] OTP verification failed', [
                     'phone' => $request->phone,
                     'status' => $otpStatus['status'],
                 ]);
                 return $this->errorResponse([], trans($otpStatus['status']));
-            }elseif($request->otp == '2020'){
+            }elseif($masterCodeAllowed){
                 $otpLog->info('[API] OTP bypassed with master code', ['phone' => $request->phone]);
             }
 
