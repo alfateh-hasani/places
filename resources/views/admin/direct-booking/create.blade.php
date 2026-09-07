@@ -183,6 +183,7 @@
             };
             const $id = (x) => document.getElementById(x);
             const aptName = (a) => (LOCALE === 'ar' ? a.name_ar : a.name_en) || a.name_ar || a.name_en;
+            let currentApartmentId = null; // declared early: onApartmentChange() runs during init
 
             const alertBox = $id('dbkAlert');
             function showAlert(type, msg) { alertBox.className = 'alert alert-' + type; alertBox.textContent = msg; alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
@@ -230,7 +231,9 @@
                 $('#apartment_id').val('').trigger('change.select2');
                 onApartmentChange();
             }
-            $('#building_id').on('change', renderApartments);
+            // Defer so select2 finishes closing the building dropdown before we rebuild the
+            // units <select> (doing that DOM/focus work synchronously leaves the dropdown open).
+            $('#building_id').on('change', function () { setTimeout(renderApartments, 0); });
             renderApartments();
 
             // ---------- Customer mode toggle ----------
@@ -326,9 +329,13 @@
                 const id = sel.value;
                 if (opt && opt.dataset.adults) { $id('number_of_adults').max = opt.dataset.adults; }
                 if (opt && opt.dataset.children) { $id('number_of_children').max = opt.dataset.children; }
-                if (!id) { $id('calHint').classList.remove('dbk-hidden'); $id('calWrap').classList.add('dbk-hidden'); return; }
+                if (!id) { $id('calHint').classList.remove('dbk-hidden'); $id('calWrap').classList.add('dbk-hidden'); currentApartmentId = null; return; }
                 $id('calHint').classList.add('dbk-hidden');
                 $id('calWrap').classList.remove('dbk-hidden');
+                // Only reload availability (which clears the pickers) when the apartment truly
+                // changed — otherwise a spurious change event would wipe already-selected dates.
+                if (id === currentApartmentId) { return; }
+                currentApartmentId = id;
                 loadAvailability(id);
             }
             $('#apartment_id').on('change', onApartmentChange);
