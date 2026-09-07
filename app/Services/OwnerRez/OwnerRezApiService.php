@@ -426,6 +426,9 @@ class OwnerRezApiService
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
+            // OwnerRez's WAF returns 403 to requests with no User-Agent, so set one
+            // explicitly (the Guzzle-based makeRequest() sends its own default UA).
+            CURLOPT_USERAGENT => 'PlacesApp/1.0 (+https://dyafa.sa)',
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',
