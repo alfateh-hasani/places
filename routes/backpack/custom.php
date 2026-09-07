@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\BookingCancellationController;
 use App\Http\Controllers\Admin\BookingController;
-use App\Http\Controllers\Admin\CanceledBookingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -63,11 +63,11 @@ Route::group([
     // Route for changing payment status
     Route::post('booking/{id}/change-payment-status/{status}', [BookingController::class, 'changePaymentStatus'])->name('admin.booking.change-payment-status');
 
-    // Routes for canceled bookings — two-step flow (cancel, then refund)
-    Route::crud('canceled-bookings', CanceledBookingsController::class);
-    Route::post('canceled-bookings/{id}/cancel-local', [CanceledBookingsController::class, 'cancelLocal'])->name('admin.canceled-bookings.cancel-local');
-    Route::post('canceled-bookings/{id}/refund', [CanceledBookingsController::class, 'processRefund'])->name('admin.canceled-bookings.refund');
-    Route::post('canceled-bookings/{id}/reject', [CanceledBookingsController::class, 'reject'])->name('admin.canceled-bookings.reject');
+    // Booking cancellation → refund actions (surfaced on the booking itself via the
+    // "Manage cancellation" modal — no separate page). Two-step: finalize, then refund.
+    Route::post('booking/{id}/cancel-local', [BookingCancellationController::class, 'cancelLocal'])->name('admin.booking.cancel-local');
+    Route::post('booking/{id}/refund', [BookingCancellationController::class, 'refund'])->name('admin.booking.refund');
+    Route::post('booking/{id}/reject-cancellation', [BookingCancellationController::class, 'reject'])->name('admin.booking.reject-cancellation');
 
     // Refunds tracker (follow the money)
     Route::crud('refund', 'RefundCrudController');

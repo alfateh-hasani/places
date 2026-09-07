@@ -27,6 +27,9 @@ return [
     'booking_status_booked' => 'Booked',
     'payment_failed' => 'Payment failed',
     'booking_status_canceled' => 'Canceled',
+    'booking_status_customer_canceled' => 'Cancelled by customer',
+    'booking_status_cancellation_by_staff' => 'Cancellation in progress by management',
+    'booking_status_finished' => 'Finished',
     'transaction_not_exists' => 'Transaction does not exist',
 
     // Date change (edit booking dates)

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\BookingStatus;
+use App\Enums\CancelSource;
+use App\Services\Bookings\BookingCancellationService;
 use App\Services\Locks\LockAccessService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
@@ -68,6 +71,11 @@ class BookingController extends CrudController
     protected function setupListOperation()
     {
         $this->crud->enableExportButtons();
+
+        // لا نحفظ حالة الجدول (الفلاتر/البحث/الصفحة) بين الزيارات، حتى لا تُفتح صفحة
+        // الحجوزات على فلتر "الإلغاءات بحاجة إجراء" تلقائياً — يبقى تطبيقه يدوياً بالضغط عليه.
+        $this->crud->setOperationSetting('persistentTable', false);
+
         // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
         $this->crud->query->where('is_airbnb_booking', '!=', 1);
 
@@ -81,13 +89,32 @@ class BookingController extends CrudController
             'view' => 'admin.booking.copy_passcode_script',
         ])->to('after_content');
 
+        // يمنع اقتصاص قائمة "تغيير الحالة" بجعلها position:fixed عند الفتح (دون لمس overflow الجدول)
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.fix_status_dropdown_clip',
+        ])->to('after_content');
+
+        // تمييز فلتر "الإلغاءات بحاجة إجراء" بلون واضح (بدل الأبيض) في شريط الفلاتر
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.cancellation_filter_style',
+        ])->to('after_content');
+
         $this->addBuildingFilter();
         $this->addStatusFilter();
         $this->addPaymentStatusFilter();
         $this->addBookingSourceFilter();
+        $this->addCancellationActionFilter();
 
         if (backpack_user()->can('booking.changeStatus')) {
             CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
+
+            // زر "إدارة الإلغاء" — يظهر فقط للحجوزات التي تحتاج إجراء إلغاء/استرداد،
+            // ويفتح نافذة موجّهة (إلغاء عبر OwnerRez / إلغاء محلي / رفض / استرداد).
+            CRUD::addButtonFromView('line', 'manage_cancellation', 'manage_cancellation', 'end');
+
+            $this->addCancellationWidgets();
         }
         // if (backpack_user()->can('booking.changePaymentStatus')) {
         //     CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
@@ -112,7 +139,7 @@ class BookingController extends CrudController
             'label' => __('cms.status').' <i class="la la-info-circle"></i>',
             'type' => 'custom_html',
             'value' => function ($entry) {
-                return $this->getStatusBadge($entry->status);
+                return $this->getStatusBadge($entry->status, $entry);
             },
         ]);
 
@@ -313,6 +340,13 @@ class BookingController extends CrudController
                         .'<i class="la la-copy"></i></button>';
                 }
 
+                // Passcode generation failed (e.g. smart-lock vendor rejected the request) —
+                // surface it clearly with a one-click regenerate. A failed provision ends up
+                // as 'retry_scheduled' (an auto-retry is queued), so treat both as "failed".
+                if (in_array($entry->passcode_status, ['failed', 'retry_scheduled'], true)) {
+                    return $this->passcodeFailedCell($entry);
+                }
+
                 // Code generated but the stay hasn't started yet — keep it hidden, but reassure
                 // staff it's ready and will appear automatically at check-in.
                 $upcoming = $entry->smartLockPasscodes()
@@ -406,6 +440,20 @@ class BookingController extends CrudController
             'view' => 'admin.booking.copy_passcode_script',
         ])->to('after_content');
 
+        // زر "إدارة الإلغاء" + النوافذ في صفحة التفاصيل (لمن يملك صلاحية تغيير الحالة)
+        if (backpack_user()->can('booking.changeStatus')) {
+            $currentBooking = $this->crud->getCurrentEntry();
+            if ($currentBooking) {
+                Widget::add([
+                    'type' => 'view',
+                    'view' => 'admin.booking.cancellation_show_action',
+                    'booking' => $currentBooking,
+                    'ownerrezCanceled' => $this->ownerrezBookingIsCanceled($currentBooking),
+                ])->to('before_content');
+            }
+            $this->addCancellationWidgets();
+        }
+
         // جدول معلومات العميل والشقة
         CRUD::addColumn([
             'name' => 'معلومات&nbsp; العميل',
@@ -449,6 +497,8 @@ class BookingController extends CrudController
                         ."<button type='button' class='btn btn-link btn-sm p-0 ms-1' style='vertical-align:baseline;' "
                         ."onclick=\"copyPasscodeToClipboard('{$code}', this)\" title='".__('cms.copy_passcode')."'>"
                         .'<i class="la la-copy"></i></button>';
+                } elseif (in_array($entry->passcode_status, ['failed', 'retry_scheduled'], true)) {
+                    $cell = $this->passcodeFailedCell($entry, true);
                 } else {
                     $upcoming = $entry->smartLockPasscodes()
                         ->where('start_date', '>', now())
@@ -639,7 +689,7 @@ class BookingController extends CrudController
                     <table class="table table-bordered">
                         <tr>
                             <th>'.__('cms.status').' <i class="la la-info-circle"></i></th>
-                            <td>'.$this->getStatusBadge($entry->status).'</td>
+                            <td>'.$this->getStatusBadge($entry->status, $entry).'</td>
                         </tr>
                         <tr>
                             <th>'.__('cms.payment_status').' <i class="la la-credit-card"></i></th>
@@ -680,7 +730,7 @@ class BookingController extends CrudController
             'type' => 'custom_html',
             'value' => function ($entry) {
                 $tx = $entry->transaction;
-                $receiptUrl = $tx ? $tx->getFirstMediaUrl('receipt') : '';
+                $receiptUrl = $tx ? $tx->receiptUrl() : '';
                 $transferNumber = $tx->transfer_number ?? null;
 
                 // Only render for manual/bank-transfer bookings that actually carry transfer data.
@@ -709,6 +759,82 @@ class BookingController extends CrudController
                     <table class="table table-bordered">'.$numberRow.$receiptRow.'</table>';
             },
         ]);
+    }
+
+    /**
+     * "Passcode generation failed" cell + a one-click regenerate button (shown only to
+     * users allowed to manage the lock). The regenerate route already catches failures
+     * and flashes an error, so a still-broken lock won't 500 either.
+     */
+    private function passcodeFailedCell($entry, bool $detailed = false): string
+    {
+        $error = trim((string) ($entry->passcode_error ?? ''));
+
+        $attempt = \App\Models\PasscodeRetryAttempt::where('booking_id', $entry->getKey())
+            ->where('operation', 'provision')
+            ->latest('id')
+            ->first();
+
+        $maxReached = $attempt && $attempt->status === 'max_attempts_reached';
+
+        // One-click regenerate (only for users allowed to manage the lock). The route
+        // catches failures and flashes a detailed error, so a still-broken lock won't 500.
+        $regen = '';
+        if (backpack_user()->can('booking.changeStatus')) {
+            $url = url(config('backpack.base.route_prefix').'/booking/'.$entry->getKey().'/regenerate-passcode');
+            $regen = "<form method='POST' action='{$url}' style='display:inline;' "
+                ."onsubmit=\"return confirm('".e(__('cms.regenerate_passcode_confirm'))."')\">".csrf_field()
+                ."<button type='submit' class='btn btn-xs btn-warning' title='".e(__('cms.regenerate_passcode'))."'>"
+                ."<i class='la la-redo'></i> ".__('cms.regenerate_passcode').'</button></form>';
+        }
+
+        // Compact cell for the list: badge (full reason in tooltip) + short retry line + button.
+        if (! $detailed) {
+            $tooltip = $error !== '' ? $error : __('cms.passcode_failed');
+            $badge = "<span class='badge' title='".e($tooltip)."' "
+                ."style='background-color:#e74c3c;color:#fff;padding:.35em .55em;border-radius:6px;cursor:help;'>"
+                ."<i class='la la-exclamation-triangle'></i> ".__('cms.passcode_failed').'</span>';
+
+            $note = '';
+            if ($maxReached) {
+                $note = "<div style='font-size:.72rem;color:#c0392b;margin-top:2px;'>".__('cms.passcode_permanent_error').'</div>';
+            } elseif ($attempt && $attempt->next_attempt_at) {
+                $note = "<div style='font-size:.72rem;color:#7f8c8d;margin-top:2px;'>"
+                    .__('cms.passcode_attempts').': '.((int) $attempt->attempt_count).'/'.((int) $attempt->max_attempts)
+                    .' — '.__('cms.passcode_next_retry').' '.e($attempt->next_attempt_at->format('Y-m-d H:i')).'</div>';
+            }
+
+            return "<div>{$badge} {$regen}{$note}</div>";
+        }
+
+        // Detailed cell for the show page: full reason + attempt breakdown + button.
+        $badge = "<span class='badge' style='background-color:#e74c3c;color:#fff;padding:.35em .55em;border-radius:6px;'>"
+            ."<i class='la la-exclamation-triangle'></i> ".__('cms.passcode_failed').'</span>';
+
+        $rows = '';
+        if ($error !== '') {
+            $rows .= "<tr><th style='width:190px;'>".__('cms.passcode_error_label').'</th>'
+                ."<td style='color:#c0392b;'>".e($error).'</td></tr>';
+        }
+        if ($attempt) {
+            $rows .= '<tr><th>'.__('cms.passcode_attempts').'</th><td>'
+                .((int) $attempt->attempt_count).'/'.((int) $attempt->max_attempts).' — '.e($attempt->status).'</td></tr>';
+
+            if ($maxReached) {
+                $rows .= '<tr><th>'.__('cms.status')."</th><td style='color:#c0392b;'>".__('cms.passcode_permanent_error').'</td></tr>';
+            } elseif ($attempt->next_attempt_at) {
+                $rows .= '<tr><th>'.__('cms.passcode_next_retry').'</th><td>'.e($attempt->next_attempt_at->format('Y-m-d H:i')).'</td></tr>';
+            }
+            if ($attempt->last_attempt_at) {
+                $rows .= '<tr><th>'.__('cms.passcode_last_attempt').'</th><td>'.e($attempt->last_attempt_at->format('Y-m-d H:i')).'</td></tr>';
+            }
+        }
+
+        $detail = $rows !== ''
+            ? "<table class='table table-bordered' style='margin-top:8px;font-size:.85rem;'>{$rows}</table>"
+            : '';
+
+        return "<div>{$badge} {$regen}{$detail}</div>";
     }
 
     // دالة مساعدة لتنسيق حالة الاسترداد كـBadge
@@ -742,41 +868,29 @@ class BookingController extends CrudController
         return "<span class='badge' style='background-color:{$color};color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la {$icon}' style='font-size:1.05rem;vertical-align:-2px;'></i> {$label}</span>";
     }
 
-    // دالة مساعدة لتنسيق الحالة كـBadge
-    protected function getStatusBadge($status)
+    // دالة مساعدة لتنسيق الحالة كـBadge — تعتمد على BookingStatus (مصدر واحد للحقيقة).
+    // عند تمرير الحجز، تُظهر حالة "طلب الإلغاء" وصفاً حسب المصدر (عميل/إدارة).
+    protected function getStatusBadge($status, $booking = null)
     {
-        $statusLabels = [
-            'pending' => __('cms.status_pending'),
-            'approved' => __('cms.status_approved'),
-            'rejected' => __('cms.status_rejected'),
-            'booked' => __('cms.status_booked'),
-            'finished' => __('cms.status_finished'),
-            'canceled' => __('cms.status_canceled'),
-            'customer_canceled' => __('cms.status_customer_canceled'),
-        ];
-        $statusColors = [
-            'pending' => '#6c757d',
-            'approved' => '#28a745',
-            'rejected' => '#b02a37',
-            'booked' => '#007bff',
-            'finished' => '#343a40',
-            'canceled' => '#dc3545',
-            'customer_canceled' => '#fd7e14',
-        ];
-        $statusIcons = [
-            'pending' => 'la-clock',
-            'approved' => 'la-check-circle',
-            'rejected' => 'la-times-circle',
-            'booked' => 'la-calendar-check',
-            'finished' => 'la-flag-checkered',
-            'canceled' => 'la-ban',
-            'customer_canceled' => 'la-user-times',
-        ];
-        $color = $statusColors[$status] ?? '#17a2b8';
-        $icon = $statusIcons[$status] ?? 'la-info-circle';
-        $label = $statusLabels[$status] ?? ucfirst($status);
+        $enum = BookingStatus::tryFrom((string) $status);
 
-        return "<span class='badge' style='background-color:{$color};color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la {$icon}' style='font-size:1.05rem;vertical-align:-2px;'></i> {$label}</span>";
+        if (! $enum) {
+            return "<span class='badge' style='background-color:#17a2b8;color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la la-info-circle' style='font-size:1.05rem;vertical-align:-2px;'></i> ".e(ucfirst((string) $status)).'</span>';
+        }
+
+        $label = ($enum === BookingStatus::CancellationRequested && $booking)
+            ? $this->cancellationRequestLabel($booking)
+            : null;
+
+        return $enum->badge($label);
+    }
+
+    /** Source-aware label for the cancellation-request state (customer vs. staff). */
+    private function cancellationRequestLabel($booking): string
+    {
+        return $booking->cancellationStartedByStaff()
+            ? __('cms.status_cancellation_requested_staff')
+            : __('cms.status_cancellation_requested_customer');
     }
 
     // دالة مساعدة لتنسيق حالة الدفع كـBadge
@@ -801,16 +915,40 @@ class BookingController extends CrudController
     public function changeStatus($id, $status)
     {
         $booking = \App\Models\Booking::find($id);
-        if ($booking) {
-            // تغيير الحالة إلى canceled/customer_canceled يُطلق تلقائياً حدث BookingCancelled
-            // (Booking::boot()) الذي يُلغي كود الدخول عبر RevokeSmartLockAccess — لا حاجة لأي منطق هنا.
-            $booking->status = $status;
-            $booking->save();
-
-            \Alert::success(__('cms.status_changed_successfully'))->flash();
-        } else {
+        if (! $booking) {
             \Alert::error(__('cms.booking_not_found'))->flash();
+
+            return back();
         }
+
+        // الإلغاء لا يُطبَّق مباشرةً: يمر عبر خدمة الإلغاء الموجّهة. الوحدات المربوطة بـ
+        // OwnerRez تبدأ كـ"طلب إلغاء" (تبقى الوحدة محجوزة) ويُنهيها الإلغاء في OwnerRez
+        // (عبر الويبهوك) أو "الإلغاء القسري" محلياً؛ غير المربوطة تُلغى محلياً فوراً.
+        if ($status === BookingStatus::Canceled->value) {
+            $outcome = app(BookingCancellationService::class)->startStaffCancellation($booking);
+
+            match ($outcome) {
+                'requested_ownerrez' => \Alert::warning(__('cms.cancel_started_ownerrez'))->flash(),
+                'canceled_local' => \Alert::success(__('cms.status_changed_successfully'))->flash(),
+                default => \Alert::info(__('cms.booking_already_canceled'))->flash(),
+            };
+
+            return back();
+        }
+
+        // "طلب إلغاء العميل" لم يعد خياراً يدوياً — يُطلب فقط من العميل أو عبر إجراء الإلغاء.
+        if ($status === BookingStatus::CancellationRequested->value) {
+            \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+            return back();
+        }
+
+        // بقية الحالات: تغيير مباشر. الانتقال إلى approved يُطلق BookingApproved (توليد الكود)،
+        // كما أن أي انتقال إلى canceled يُطلق BookingCancelled (إلغاء الكود) عبر Booking::boot().
+        $booking->status = $status;
+        $booking->save();
+
+        \Alert::success(__('cms.status_changed_successfully'))->flash();
 
         return back();
     }
@@ -827,6 +965,45 @@ class BookingController extends CrudController
         }
 
         return back();
+    }
+
+    /**
+     * Mount the shared cancellation + refund modals (populated per-row via data-*),
+     * used by the "Manage cancellation" / refund buttons on both list and show.
+     */
+    private function addCancellationWidgets(): void
+    {
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.cancellation_modals',
+        ])->to('before_content');
+    }
+
+    /**
+     * Live-check OwnerRez: is this booking's reservation actually cancelled (or deleted)
+     * there? Gates the local "force cancel" fallback so staff can only free the unit
+     * locally once OwnerRez itself no longer holds it (i.e. the webhook was missed).
+     * Only calls the API for a mapped booking still awaiting cancellation; any error,
+     * unmapped or non-pending booking returns false (hide the action).
+     */
+    private function ownerrezBookingIsCanceled(\App\Models\Booking $booking): bool
+    {
+        if (! $booking->isLinkedToOwnerRez() || ! $booking->isCancellationRequested()) {
+            return false;
+        }
+
+        try {
+            $data = app(\App\Services\OwnerRez\OwnerRezApiService::class)
+                ->getBooking((int) $booking->ownerrez_booking_id);
+        } catch (\App\Exceptions\OwnerRez\OwnerRezApiException $e) {
+            // Deleted in OwnerRez (404) counts as cancelled; other errors → cannot confirm.
+            return $e->getStatusCode() === 404;
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return strtolower((string) ($data['status'] ?? '')) === 'canceled'
+            || ! empty($data['canceled_utc']);
     }
 
     protected function addBuildingFilter()
@@ -850,15 +1027,7 @@ class BookingController extends CrudController
             'name' => 'status',
             'type' => 'dropdown',
             'label' => __('cms.status'),
-        ], [
-            'pending' => __('cms.status_pending'),
-            'approved' => __('cms.status_approved'),
-            'rejected' => __('cms.status_rejected'),
-            'booked' => __('cms.status_booked'),
-            'finished' => __('cms.status_finished'),
-            'canceled' => __('cms.status_canceled'),
-            'customer_canceled' => __('cms.status_customer_canceled'),
-        ], function ($value) {
+        ], BookingStatus::options(), function ($value) {
             CRUD::addClause('where', 'status', $value);
         });
     }
@@ -875,6 +1044,23 @@ class BookingController extends CrudController
             'failed' => __('cms.payment_status_failed'),
         ], function ($value) {
             CRUD::addClause('where', 'payment_status', $value);
+        });
+    }
+
+    /**
+     * On-demand filter (available in the booking list's filters bar, not applied by
+     * default and not linked from the sidebar): cancellations that still need staff
+     * action — a request awaiting finalization, or a finalized cancel awaiting refund.
+     */
+    protected function addCancellationActionFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'cancellation_action',
+            'type' => 'simple',
+            'label' => __('cms.cancellations_needing_action'),
+        ], false, function () {
+            CRUD::addClause('whereIn', 'status', BookingStatus::cancellationWorkflow());
+            CRUD::addClause('where', 'refund_status', 'pending');
         });
     }
 
@@ -966,11 +1152,22 @@ class BookingController extends CrudController
         try {
             app(LockAccessService::class)->rescheduleForBooking($booking);
 
-            return redirect()->back()->with('success', 'تم إعادة إنشاء الباس كود بنجاح');
+            return redirect()->back()->with('success', __('cms.regenerate_passcode_success'));
         } catch (\Throwable $e) {
             \Log::error("Failed to regenerate passcode for booking {$booking->id}: ".$e->getMessage());
 
-            return redirect()->back()->with('error', 'فشل في إعادة إنشاء الباس كود: '.$e->getMessage());
+            $d = \App\Services\Locks\LockErrorPresenter::describe($e);
+
+            $message = __('cms.regenerate_passcode_failed').': '.$d['summary'];
+            if ($d['vendor_code'] !== null) {
+                $message .= ' — '.__('cms.passcode_vendor_code').' '.$d['vendor_code'];
+                if ($d['vendor_desc']) {
+                    $message .= ' ('.$d['vendor_desc'].')';
+                }
+            }
+            $message .= '. '.($d['retryable'] ? __('cms.passcode_will_retry') : __('cms.passcode_permanent_error'));
+
+            return redirect()->back()->with('error', $message);
         }
     }
 

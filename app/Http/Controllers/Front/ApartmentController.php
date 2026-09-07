@@ -55,7 +55,7 @@ class ApartmentController extends Controller
             'reviews',
             'features',
             'bookings' => function ($query) {
-                $query->where('check_out', '>=', now()->startOfDay())->whereNotIn('status', ['canceled']);
+                $query->where('check_out', '>=', now()->startOfDay())->whereNotIn('status', [\App\Enums\BookingStatus::Canceled->value]);
             },
             'policy',
             'ownerrezMapping',
@@ -240,7 +240,7 @@ class ApartmentController extends Controller
 
         $bookedDays = $apartment->bookings()
             ->where('check_out', '>=', now()->startOfDay())
-            ->whereNotIn('status', ['canceled'])
+            ->whereNotIn('status', [\App\Enums\BookingStatus::Canceled->value])
             ->get()
             ->map(fn ($b) => [
                 'check_in' => $b->check_in->format('Y-m-d'),

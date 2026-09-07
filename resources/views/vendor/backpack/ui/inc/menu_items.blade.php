@@ -84,11 +84,6 @@
     <x-backpack::menu-item title="{{__('cms.booking_management')}}" icon="la la-calendar-check" :link="backpack_url('booking')" />
 @endcan
 
-{{-- Canceled Bookings (Customer Cancellations) --}}
-@can('booking.list')
-    <x-backpack::menu-item title="{{__('cms.canceled_bookings')}}" icon="la la-times-circle" :link="backpack_url('canceled-bookings')" />
-@endcan
-
 {{-- Refunds tracker --}}
 @can('refund.list')
     <x-backpack::menu-item title="{{__('cms.refunds')}}" icon="la la-money-bill-wave" :link="backpack_url('refund')" />

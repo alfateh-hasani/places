@@ -36,12 +36,14 @@ class ProvisionSmartLockAccess implements ShouldQueue
         try {
             $this->locks->provisionForBooking($booking);
         } catch (Throwable $e) {
+            // A smart-lock/vendor failure must NOT crash the booking status change that
+            // triggered provisioning (rejected-cancellation reactivation, OwnerRez import,
+            // approval). The failure is already recorded (passcode_status=failed) and is
+            // recoverable via the "regenerate passcode" action / retry command.
             Log::error('ProvisionSmartLockAccess listener failed', [
                 'booking_id' => $booking->id,
                 'error' => $e->getMessage(),
             ]);
-
-            throw $e;
         }
     }
 }

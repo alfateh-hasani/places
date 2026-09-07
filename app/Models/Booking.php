@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\BookingStatus;
+use App\Enums\CancelSource;
 use App\Enums\DateChangeStatus;
 use App\Events\BookingApproved;
 use App\Events\BookingCancelled;
@@ -73,9 +75,20 @@ class Booking extends Model
             }
         });
 
+        // تسجيل مصدر الإلغاء تلقائياً: أي انتقال إلى "طلب إلغاء" بلا مصدر محدَّد يُعتبر
+        // من العميل (مسارات التطبيق/الموقع). المسار الإداري يعيّن 'staff' صراحةً قبل الحفظ،
+        // فلا يُستبدل. هكذا لا نحتاج تعديل أي متحكم API لضبط المصدر.
+        static::updating(function ($booking) {
+            if ($booking->isDirty('status')
+                && $booking->status === BookingStatus::CancellationRequested->value
+                && empty($booking->cancel_source)) {
+                $booking->cancel_source = CancelSource::Customer->value;
+            }
+        });
+
         // إرسال إشعار تأكيد الحجز عند تغيير الحالة إلى approved
         static::updated(function ($booking) {
-            if ($booking->isDirty('status') && $booking->status === 'approved') {
+            if ($booking->isDirty('status') && $booking->status === BookingStatus::Approved->value) {
                 SendBookingConfirmedNotification::dispatch($booking);
 
                 // Notify staff — the booking is now confirmed (payment complete),
@@ -87,14 +100,14 @@ class Booking extends Model
             }
 
             // إطلاق event لإلغاء كود الدخول عند إلغاء الحجز (من العميل أو الإدارة أو OwnerRez)
-            if ($booking->isDirty('status') && in_array($booking->status, ['canceled', 'customer_canceled'], true)) {
+            if ($booking->isDirty('status') && in_array($booking->status, [BookingStatus::Canceled->value, BookingStatus::CancellationRequested->value], true)) {
                 event(new BookingCancelled($booking, $booking->getOriginal('status')));
             }
         });
 
         // إطلاق event للمزامنة مع OwnerRez عند إنشاء حجز بحالة approved مباشرة
         static::created(function ($booking) {
-            if ($booking->status === 'approved' && $booking->payment_status === 'paid') {
+            if ($booking->status === BookingStatus::Approved->value && $booking->payment_status === 'paid') {
                 // A booking created already-paid (e.g. direct dashboard booking) is
                 // confirmed immediately — notify staff here, not on a pending step.
                 self::notifyStaffOfConfirmedBooking($booking);
@@ -132,18 +145,19 @@ class Booking extends Model
 
     public function getChangeStatusButton()
     {
-        $statuses = [
-            'pending' => __('cms.status_pending'),
-            'approved' => __('cms.status_approved'),
-            'canceled' => __('cms.status_canceled'),
-            'customer_canceled' => __('cms.status_customer_canceled'),
-            'rejected' => __('cms.status_rejected'),
-            'finished' => __('cms.status_finished'),
-            'booked' => __('cms.status_booked'),
-        ];
+        // "طلب إلغاء" (CancellationRequested) عمداً غير مُتاح كخيار يدوي: الإلغاء يبدأ
+        // عبر إجراء الإلغاء الموجّه (زر "إدارة الإلغاء") فقط، حتى لا يستطيع الموظف
+        // تعيين حالة "طلب إلغاء العميل" يدوياً ثم رفض طلبه بنفسه.
+        $statuses = [];
+        foreach (BookingStatus::cases() as $case) {
+            if ($case === BookingStatus::CancellationRequested) {
+                continue;
+            }
+            $statuses[$case->value] = $case->label();
+        }
 
         $button = '<div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown" data-display="static" aria-haspopup="true" aria-expanded="false">
                             '.__('cms.change_status').'
                         </button>
                         <div class="dropdown-menu">';
@@ -269,7 +283,7 @@ class Booking extends Model
     // Check if passcode needs to be generated
     public function needsPasscodeGeneration()
     {
-        return $this->status === 'approved' &&
+        return $this->status === BookingStatus::Approved->value &&
                $this->passcode_status !== 'generated' &&
                $this->smartLockPasscodes()->count() === 0;
     }
@@ -292,10 +306,46 @@ class Booking extends Model
             ->logOnlyDirty();
     }
 
+    /** The booking's status as a typed enum (null if the stored value is unknown). */
+    public function statusEnum(): ?BookingStatus
+    {
+        return BookingStatus::tryFrom((string) $this->status);
+    }
+
+    /** A cancellation has been requested (by customer or staff) and is under review. */
+    public function isCancellationRequested(): bool
+    {
+        return $this->status === BookingStatus::CancellationRequested->value;
+    }
+
+    /** The cancellation is finalized and the unit is freed locally. */
+    public function isCanceled(): bool
+    {
+        return $this->status === BookingStatus::Canceled->value;
+    }
+
+    /** This booking exists in OwnerRez, so it can only be cancelled there (via the UI). */
+    public function isLinkedToOwnerRez(): bool
+    {
+        return ! empty($this->ownerrez_booking_id);
+    }
+
+    /** Whether a staff member (not the customer) started the cancellation. */
+    public function cancellationStartedByStaff(): bool
+    {
+        return $this->cancel_source === CancelSource::Staff->value;
+    }
+
+    /** The cancellation source as a typed enum, if recorded. */
+    public function cancelSourceEnum(): ?CancelSource
+    {
+        return $this->cancel_source ? CancelSource::tryFrom((string) $this->cancel_source) : null;
+    }
+
     public function canBeCanceled(): bool
     {
         // التحقق من أن الحجز في حالة approved و paid
-        if ($this->status !== 'approved' || $this->payment_status !== 'paid') {
+        if ($this->status !== BookingStatus::Approved->value || $this->payment_status !== 'paid') {
             return false;
         }
 

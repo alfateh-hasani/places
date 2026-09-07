@@ -108,7 +108,7 @@ class BookingService
 
         // 1. التحقق من الحجوزات المحلية
         // ملاحظة: customer_canceled = "طلب إلغاء قيد المراجعة" يبقى حاجزاً للوحدة حتى يُقبل الإلغاء نهائياً (يصبح canceled)
-        $activeStatuses = ['pending', 'approved', 'booked', 'customer_canceled'];
+        $activeStatuses = \App\Enums\BookingStatus::occupying();
 
         $overlapExists = Booking::where('apartment_id', $apartment->id)
             ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId))
@@ -351,6 +351,7 @@ class BookingService
                     'final_price' => $data->final_price,
                     'one_night_price' => $oneNightPrice,
                     'booking_source' => $data->booking_source,
+                    'payment_method_code' => $data->payment_method_code ?? null,
                     'coupon_id' => $data->coupon_id ?? null,
                     'coupon_code' => $data->coupon_code ?? null,
                     'status' => 'pending',

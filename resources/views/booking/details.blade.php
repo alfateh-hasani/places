@@ -200,7 +200,7 @@ span.flatpickr-day.selected{
                     </div>
                     @elseif($booking->status === 'customer_canceled')
                     <div class="py-3 px-4 inline-block rounded-md bg-gray-200 text-gray-600 ml-2 cursor-not-allowed">
-                        <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ __('api.booking_status_customer_canceled') }}</span>
+                        <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}</span>
                     </div>
                     @endif
                     
@@ -269,7 +269,7 @@ span.flatpickr-day.selected{
                             <p class="text-gri float-left rtl:float-right">{{__('booking.status')}} :</p>
                             <p class="float-right rtl:float-left {{ $booking->status === 'customer_canceled' ? 'text-red-600' : ($booking->status === 'approved' ? 'text-[#10C13F]' : 'text-gray-600') }}">
                                 @if($booking->status === 'customer_canceled')
-                                    {{__('api.booking_status_customer_canceled')}}
+                                    {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}
                                     @if($booking->refund_status === 'pending')
                                         <span class="block text-xs mt-1 text-orange-600">({{__('cms.refund_status_pending')}})</span>
                                     @elseif($booking->refund_status === 'approved')
