@@ -63,7 +63,9 @@ class ProcessPaymentService
             'discount' => $price['discount'],
             'final_price' => $price['final_price'],
             'vat' => $price['vat'] ?? 0,
-            'booking_source' => \Request()->header('BookingSource') ?? 'web',
+            // Prefer the request-body `booking_source` (web/android/ios) that the API/web
+            // controller validated; fall back to the legacy BookingSource header, then 'web'.
+            'booking_source' => $data['booking_source'] ?? \Request()->header('BookingSource') ?? 'web',
         ];
         return Transaction::create([
             'customer_id' => $customer->id,
