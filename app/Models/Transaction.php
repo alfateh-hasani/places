@@ -27,6 +27,25 @@ class Transaction extends Model implements HasMedia
         $this->addMediaCollection('receipt')->singleFile();
     }
 
+    /**
+     * Signed, expiring URL for the (private) bank-transfer receipt.
+     * Falls back to a plain URL on non-S3 disks (e.g. local dev).
+     */
+    public function receiptUrl(int $minutes = 15): ?string
+    {
+        $media = $this->getFirstMedia('receipt');
+
+        if (! $media) {
+            return null;
+        }
+
+        $driver = config("filesystems.disks.{$media->disk}.driver");
+
+        return $driver === 's3'
+            ? $media->getTemporaryUrl(now()->addMinutes($minutes))
+            : $media->getUrl();
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
