@@ -44,13 +44,20 @@ class BookingController extends CrudController
             $this->crud->allowAccess('create');
         }
         if (backpack_user()->can('booking.update')) {
-            $this->crud->allowAccess('update');
+            // حجوزات Airbnb المستوردة سجلات وهمية تُحذف وتُعاد تلقائياً مع كل مزامنة —
+            // تبقى بلا زر تعديل حتى لمن يملك الصلاحية، ويُعرض لها زر "عرض" فقط.
+            $this->crud->set('update.access', function ($entry) {
+                return ! $entry || ! $entry->is_airbnb_booking;
+            });
         }
         // معطّل مؤقتاً لكل المستخدمين (بمن فيهم من يملك صلاحية booking.delete):
         // حذف الحجز نهائياً لا يُلغي كود الدخول على القفل الذكي ولا يحذف سجل Transaction المرتبط،
         // ما يترك كوداً فعّالاً على القفل الحقيقي بلا حجز يدل عليه. أعد التفعيل فقط بعد معالجة ذلك.
+        // كما لا يظهر أبداً لحجوزات Airbnb المستوردة حتى لو أُعيد تفعيله لاحقاً.
         // if (backpack_user()->can('booking.delete')) {
-        //     $this->crud->allowAccess('delete');
+        //     $this->crud->set('delete.access', function ($entry) {
+        //         return ! $entry || ! $entry->is_airbnb_booking;
+        //     });
         // }
         if (backpack_user()->hasRole('supervisor')) {
             $this->crud->query->whereHas('apartment', function ($query) {
@@ -76,8 +83,11 @@ class BookingController extends CrudController
         // الحجوزات على فلتر "الإلغاءات بحاجة إجراء" تلقائياً — يبقى تطبيقه يدوياً بالضغط عليه.
         $this->crud->setOperationSetting('persistentTable', false);
 
-        // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
-        $this->crud->query->where('is_airbnb_booking', '!=', 1);
+        // إخفاء حجوزات Airbnb افتراضياً (بما في ذلك البحث)؛ تظهر فقط عند تفعيل
+        // فلتر "حجوزات Airbnb" أدناه — راجع addAirbnbFilter().
+        if (! request()->boolean('show_airbnb')) {
+            $this->crud->query->where('is_airbnb_booking', '!=', 1);
+        }
 
         // زر "حجز مباشر" أعلى الجدول (تحويل بنكي) — يظهر لمن يملك الصلاحية فقط
         if (backpack_user()->can('direct-booking.create')) {
@@ -106,6 +116,7 @@ class BookingController extends CrudController
         $this->addPaymentStatusFilter();
         $this->addBookingSourceFilter();
         $this->addCancellationActionFilter();
+        $this->addAirbnbFilter();
 
         if (backpack_user()->can('booking.changeStatus')) {
             CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
@@ -1061,6 +1072,22 @@ class BookingController extends CrudController
         ], false, function () {
             CRUD::addClause('whereIn', 'status', BookingStatus::cancellationWorkflow());
             CRUD::addClause('where', 'refund_status', 'pending');
+        });
+    }
+
+    /**
+     * On-demand filter: swaps the default "hide Airbnb bookings" query for
+     * "show Airbnb bookings only" — the base exclusion in setupListOperation()
+     * checks the same 'show_airbnb' request flag this filter toggles.
+     */
+    protected function addAirbnbFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'show_airbnb',
+            'type' => 'simple',
+            'label' => 'حجوزات Airbnb فقط',
+        ], false, function () {
+            CRUD::addClause('where', 'is_airbnb_booking', 1);
         });
     }
 

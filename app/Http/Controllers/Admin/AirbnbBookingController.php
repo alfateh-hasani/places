@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\BookingStatus;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
@@ -255,13 +256,16 @@ class AirbnbBookingController extends CrudController
             'name' => 'معلومات الشقة',
             'type' => 'custom_html',
             'value' => function($entry) {
+                $apartmentName = $entry->apartment->name_ar ?? 'غير محدد';
+                $buildingName = $entry->apartment?->building->name_ar ?? 'غير محدد';
+
                 return '<div class="card">
                     <div class="card-header">
                         <h4><i class="la la-home"></i> معلومات الشقة</h4>
                     </div>
                     <div class="card-body">
-                        <p><strong>اسم الشقة:</strong> ' . $entry->apartment->name_ar . '</p>
-                        <p><strong>المبنى:</strong> ' . $entry->apartment->building->name_ar . '</p>
+                        <p><strong>اسم الشقة:</strong> ' . $apartmentName . '</p>
+                        <p><strong>المبنى:</strong> ' . $buildingName . '</p>
                         <p><strong>تاريخ الوصول:</strong> ' . $entry->check_in . '</p>
                         <p><strong>تاريخ المغادرة:</strong> ' . $entry->check_out . '</p>
                         <p><strong>عدد الليالي:</strong> ' . $entry->number_of_nights . '</p>
@@ -298,12 +302,7 @@ class AirbnbBookingController extends CrudController
             'name' => 'status',
             'type' => 'dropdown',
             'label' => __('cms.status'),
-        ], [
-            'pending' => __('cms.pending'),
-            'approved' => __('cms.approved'),
-            'cancelled' => __('cms.cancelled'),
-            'booked' => __('cms.booked'),
-        ], function($value) {
+        ], BookingStatus::options(), function($value) {
             $this->crud->addClause('where', 'status', $value);
         });
     }
@@ -318,9 +317,9 @@ class AirbnbBookingController extends CrudController
             'type' => 'dropdown',
             'label' => __('cms.payment_status'),
         ], [
-            'pending' => __('cms.pending'),
-            'paid' => __('cms.paid'),
-            'failed' => __('cms.failed'),
+            'pending' => __('cms.payment_status_pending'),
+            'paid' => __('cms.payment_status_paid'),
+            'failed' => __('cms.payment_status_failed'),
         ], function($value) {
             $this->crud->addClause('where', 'payment_status', $value);
         });
