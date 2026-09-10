@@ -8,8 +8,6 @@ namespace App\Enums;
  *   Pending               → created, awaiting payment
  *   Approved              → paid & confirmed (the active/live state)
  *   Booked                → imported/synced reservation holding the unit
- *   Finished              → stay completed
- *   Rejected              → not accepted
  *   Canceled              → cancellation finalized; the unit is FREED
  *   CancellationRequested → a cancellation is requested and under review; the unit
  *                           stays HELD until it's finalized. Raised either by the
@@ -24,9 +22,7 @@ enum BookingStatus: string
 {
     case Pending = 'pending';
     case Approved = 'approved';
-    case Rejected = 'rejected';
     case Booked = 'booked';
-    case Finished = 'finished';
     case Canceled = 'canceled';
     case CancellationRequested = 'customer_canceled';
 
@@ -39,9 +35,7 @@ enum BookingStatus: string
         return match ($this) {
             self::Pending => __('cms.status_pending'),
             self::Approved => __('cms.status_approved'),
-            self::Rejected => __('cms.status_rejected'),
             self::Booked => __('cms.status_booked'),
-            self::Finished => __('cms.status_finished'),
             self::Canceled => __('cms.status_canceled'),
             self::CancellationRequested => __('cms.status_customer_canceled'),
         };
@@ -55,9 +49,7 @@ enum BookingStatus: string
         return match ($this) {
             self::Pending => '#6c757d',
             self::Approved => '#28a745',
-            self::Rejected => '#b02a37',
             self::Booked => '#007bff',
-            self::Finished => '#343a40',
             self::Canceled => '#dc3545',
             self::CancellationRequested => '#fd7e14',
         };
@@ -71,9 +63,7 @@ enum BookingStatus: string
         return match ($this) {
             self::Pending => 'la-clock',
             self::Approved => 'la-check-circle',
-            self::Rejected => 'la-times-circle',
             self::Booked => 'la-calendar-check',
-            self::Finished => 'la-flag-checkered',
             self::Canceled => 'la-ban',
             self::CancellationRequested => 'la-user-times',
         };
@@ -149,5 +139,35 @@ enum BookingStatus: string
     public function is(self $other): bool
     {
         return $this === $other;
+    }
+
+    /**
+     * Terminal states — a booking here must not be re-activated by a manual status
+     * change (Canceled frees the unit; re-activating would risk a double-booking with
+     * no availability re-check). Booked is import-only.
+     */
+    public function isLeaf(): bool
+    {
+        return in_array($this, [self::Canceled, self::Booked], true);
+    }
+
+    /**
+     * Allowed manual dashboard actions for the current status — the single source of
+     * truth for both the row dropdown and the changeStatus() guard.
+     *
+     *   Pending  → confirm (Geidea-first, else bank transfer)
+     *   Approved → cancel (guided cancel→refund)
+     *   others   → none (CancellationRequested uses the "Manage cancellation" modal;
+     *              leaf states get nothing)
+     *
+     * @return array<int, string>  subset of: confirm, cancel
+     */
+    public function manualActions(): array
+    {
+        return match ($this) {
+            self::Pending => ['confirm'],
+            self::Approved => ['cancel'],
+            default => [],
+        };
     }
 }

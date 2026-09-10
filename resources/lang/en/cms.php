@@ -133,9 +133,7 @@ return [
     'status_pending' => 'Pending',
     'status_approved' => 'Approved',
     'status_canceled' => 'Canceled',
-    'status_rejected' => 'Rejected',
     'status_booked' => 'Booked',
-    'status_finished' => 'Finished',
     'status_customer_canceled' => 'Cancellation requested',
 
     // Cancellation management + refund flow
@@ -265,5 +263,18 @@ return [
     'regenerate_passcode_failed' => 'Failed to regenerate the access code',
     'bank_transfer_details' => 'Bank transfer details',
     'transfer_number' => 'Transfer number',
+    'receipt_image' => 'Receipt image',
+    'optional' => 'optional',
+    'confirm_booking' => 'Confirm booking',
+    'confirm_booking_title' => 'Confirm booking',
+    'confirm_booking_note' => 'Geidea payment is verified first; if unpaid, it is recorded as a bank transfer. Transfer number and receipt are optional.',
+    'confirm_and_mark_paid' => 'Confirm & mark paid',
+    'booking_confirmed_geidea' => 'Booking confirmed — the Geidea payment was verified successfully.',
+    'booking_confirmed_bank_transfer' => 'Booking confirmed as a bank transfer and marked paid.',
+    'booking_confirm_failed' => 'Failed to confirm the booking',
+    'cancel_booking_confirm' => 'Cancel this booking? It goes through the cancellation/refund flow.',
+    'cancel_booking_title' => 'Cancel booking',
+    'confirm_cancel_btn' => 'Confirm cancellation',
+    'back' => 'Back',
     'transfer_receipt' => 'Transfer receipt',
 ];

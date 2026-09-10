@@ -60,6 +60,8 @@ Route::group([
     Route::crud('service', 'ServiceController');
 
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');
+    // Confirm a pending booking (Geidea-first, else bank transfer) + reject a pending booking.
+    Route::post('booking/{id}/confirm', [BookingController::class, 'confirmBooking'])->name('admin.booking.confirm');
     // Route for changing payment status
     Route::post('booking/{id}/change-payment-status/{status}', [BookingController::class, 'changePaymentStatus'])->name('admin.booking.change-payment-status');
 

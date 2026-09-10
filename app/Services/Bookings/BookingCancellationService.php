@@ -101,12 +101,18 @@ class BookingCancellationService
     /**
      * Reject a cancellation request and reinstate the booking. Safe against double
      * booking: the unit stayed held for the whole review, so nothing else took it.
+     *
+     * cancel_source is cleared: the booking is active again, so a FUTURE cancellation
+     * must be re-attributed. Leaving the previous source would make a later
+     * customer-initiated request still show as staff-initiated (the model hook only
+     * fills 'customer' when cancel_source is empty).
      */
     public function reject(Booking $booking): void
     {
         $booking->update([
             'status' => BookingStatus::Approved->value,
             'refund_status' => 'rejected',
+            'cancel_source' => null,
         ]);
     }
 

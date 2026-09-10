@@ -89,13 +89,15 @@ class Booking extends Model
         // إرسال إشعار تأكيد الحجز عند تغيير الحالة إلى approved
         static::updated(function ($booking) {
             if ($booking->isDirty('status') && $booking->status === BookingStatus::Approved->value) {
-                SendBookingConfirmedNotification::dispatch($booking);
+                // إشعارات "تم التأكيد" تُرسل فقط عند التأكيد الأول (من قيد الانتظار)،
+                // لا عند إعادة التفعيل بعد رفض طلب الإلغاء — حتى لا يصل العميل إشعار مكرر.
+                if ($booking->getOriginal('status') === BookingStatus::Pending->value) {
+                    SendBookingConfirmedNotification::dispatch($booking);
+                    self::notifyStaffOfConfirmedBooking($booking);
+                }
 
-                // Notify staff — the booking is now confirmed (payment complete),
-                // not on the earlier pending/pre-payment step.
-                self::notifyStaffOfConfirmedBooking($booking);
-
-                // إطلاق event للمزامنة مع OwnerRez ولتوفير كود الدخول
+                // BookingApproved يُطلق دائماً: إعادة توليد كود الدخول (يُلغى عند طلب الإلغاء)
+                // ومزامنة OwnerRez (تتخطّى تلقائياً إن كان الحجز مربوطاً مسبقاً).
                 event(new BookingApproved($booking));
             }
 
@@ -151,34 +153,42 @@ class Booking extends Model
             return '';
         }
 
-        // "طلب إلغاء" (CancellationRequested) عمداً غير مُتاح كخيار يدوي: الإلغاء يبدأ
-        // عبر إجراء الإلغاء الموجّه (زر "إدارة الإلغاء") فقط، حتى لا يستطيع الموظف
-        // تعيين حالة "طلب إلغاء العميل" يدوياً ثم رفض طلبه بنفسه.
-        $statuses = [];
-        foreach (BookingStatus::cases() as $case) {
-            if ($case === BookingStatus::CancellationRequested) {
-                continue;
-            }
-            $statuses[$case->value] = $case->label();
+        // الإجراءات اليدوية المسموحة تعتمد على الحالة الحالية (مصدر واحد للحقيقة في
+        // BookingStatus::manualActions): قيد الانتظار → تأكيد/رفض، مؤكد → إلغاء/إنهاء.
+        // الحالات النهائية و"طلب الإلغاء" (يُدار عبر زر إدارة الإلغاء) لا تُظهر قائمة.
+        $current = $this->statusEnum();
+        $actions = $current ? $current->manualActions() : [];
+
+        if (empty($actions)) {
+            return '';
         }
 
-        $button = '<div class="btn-group">
+        $base = url("admin/booking/{$this->id}");
+        $number = e($this->number_of_booking);
+        $items = '';
+
+        foreach ($actions as $action) {
+            $items .= match ($action) {
+                // «تأكيد» يفتح نافذة: تحقّق Geidea أولاً وإلا اعتماد كتحويل بنكي.
+                'confirm' => '<button type="button" class="dropdown-item js-confirm-btn" '
+                    .'data-confirm-url="'.$base.'/confirm" data-number="'.$number.'">'
+                    .'<i class="la la-check-circle"></i> '.__('cms.confirm_booking').'</button>',
+
+                // «إلغاء» — يفتح نافذة تأكيد ثم يمر بمسار الإلغاء/الاسترداد الموجّه (خدمة الإلغاء).
+                'cancel' => '<button type="button" class="dropdown-item js-cancel-btn" '
+                    .'data-cancel-url="'.$base.'/change-status/'.BookingStatus::Canceled->value.'" data-number="'.$number.'">'
+                    .'<i class="la la-ban"></i> '.__('cms.status_canceled').'</button>',
+
+                default => '',
+            };
+        }
+
+        return '<div class="btn-group">
                         <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown" data-display="static" aria-haspopup="true" aria-expanded="false">
                             '.__('cms.change_status').'
                         </button>
-                        <div class="dropdown-menu">';
-
-        foreach ($statuses as $status => $label) {
-            $url = url("admin/booking/{$this->id}/change-status/{$status}");
-            $button .= '<form method="POST" action="'.$url.'" style="display:inline;">
-                            '.csrf_field().'
-                            <button class="dropdown-item" type="submit">'.$label.'</button>
-                        </form>';
-        }
-
-        $button .= '</div></div>';
-
-        return $button;
+                        <div class="dropdown-menu">'.$items.'</div>
+                    </div>';
     }
 
     public function getChangePaymentStatusButton()

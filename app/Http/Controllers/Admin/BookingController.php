@@ -126,6 +126,18 @@ class BookingController extends CrudController
             CRUD::addButtonFromView('line', 'manage_cancellation', 'manage_cancellation', 'end');
 
             $this->addCancellationWidgets();
+
+            // نافذة "تأكيد الحجز" (تحقّق Geidea أولاً وإلا تحويل بنكي)
+            Widget::add([
+                'type' => 'view',
+                'view' => 'admin.booking.confirm_modal',
+            ])->to('before_content');
+
+            // نافذة تأكيد "الإلغاء" (بدل confirm() الأصلية)
+            Widget::add([
+                'type' => 'view',
+                'view' => 'admin.booking.cancel_modal',
+            ])->to('before_content');
         }
         // if (backpack_user()->can('booking.changePaymentStatus')) {
         //     CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
@@ -947,22 +959,58 @@ class BookingController extends CrudController
             return back();
         }
 
-        // "طلب إلغاء العميل" لم يعد خياراً يدوياً — يُطلب فقط من العميل أو عبر إجراء الإلغاء.
-        if ($status === BookingStatus::CancellationRequested->value) {
+        // لم يعد هناك أي تغيير حالة مباشر مسموح عبر هذا المسار: «تأكيد» عبر confirmBooking،
+        // و«طلب إلغاء» عبر نافذة إدارة الإلغاء. بقية الحالات («قيد الانتظار»/«محجوز»/
+        // «منتهي»/«مرفوض») غير متاحة كإجراء يدوي.
+        \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+        return back();
+    }
+
+    /**
+     * Confirm a PENDING booking: verify Geidea first (auto-confirm a real online payment
+     * whose webhook was missed); otherwise record it as a bank transfer (حوالة) with an
+     * optional transfer number + receipt image, mark it paid + approved, and run the side
+     * effects (lock code, OwnerRez sync, notifications).
+     */
+    public function confirmBooking($id, \Illuminate\Http\Request $request)
+    {
+        $this->authorizeLockManagement();
+
+        $booking = \App\Models\Booking::findOrFail($id);
+
+        if ($booking->status !== BookingStatus::Pending->value) {
             \Alert::error(__('cms.invalid_booking_status'))->flash();
 
             return back();
         }
 
-        // بقية الحالات: تغيير مباشر. الانتقال إلى approved يُطلق BookingApproved (توليد الكود)،
-        // كما أن أي انتقال إلى canceled يُطلق BookingCancelled (إلغاء الكود) عبر Booking::boot().
-        $booking->status = $status;
-        $booking->save();
+        $validated = $request->validate([
+            'transfer_number' => ['nullable', 'string', 'max:255'],
+            'receipt' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [], [
+            'transfer_number' => __('cms.transfer_number'),
+            'receipt' => __('cms.receipt_image'),
+        ]);
 
-        \Alert::success(__('cms.status_changed_successfully'))->flash();
+        try {
+            $mode = app(\App\Services\DirectBookingService::class)->confirmExistingBooking(
+                $booking,
+                $validated['transfer_number'] ?? null,
+                $request->file('receipt'),
+            );
+
+            \Alert::success($mode === 'geidea'
+                ? __('cms.booking_confirmed_geidea')
+                : __('cms.booking_confirmed_bank_transfer'))->flash();
+        } catch (\Throwable $e) {
+            \Log::error("Failed to confirm booking {$booking->id}: ".$e->getMessage());
+            \Alert::error(__('cms.booking_confirm_failed').': '.$e->getMessage())->flash();
+        }
 
         return back();
     }
+
 
     public function changePaymentStatus($id, $status)
     {

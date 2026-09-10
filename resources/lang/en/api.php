@@ -34,6 +34,8 @@ return [
 
     // Date change (edit booking dates)
     'booking_not_found' => 'Booking not found',
+    'cancellation_withdrawn' => 'Your cancellation request has been withdrawn and the booking is active again.',
+    'cannot_withdraw_cancellation' => 'This request cannot be withdrawn; it is not a cancellation you requested, or it is already being processed.',
     'booking_cannot_be_canceled' => 'This booking cannot be modified',
     'something_went_wrong' => 'Something went wrong, please try again later',
     'date_change_same_dates' => 'The new dates match the current dates',
