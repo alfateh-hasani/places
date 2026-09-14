@@ -32,7 +32,7 @@ class BuildingRequest extends FormRequest
             'name_ar' => 'required|min:3|max:100',
             'name_en' => 'required|min:3|max:100',
             'city_id' => 'required|exists:cities,id',
-            'slug' => 'required|min:3|max:100',
+            'slug' => 'required|min:3|max:100|unique:buildings,slug,'.$this->id,
             'map' => 'required',
             'latitude' => 'required',
             'longitude' => 'required',

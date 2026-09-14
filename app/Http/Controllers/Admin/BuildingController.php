@@ -8,6 +8,7 @@ use App\Services\Locks\Contracts\LockProviderInterface;
 use App\Services\Locks\LockCredentials;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 
 /**
  * Class BuildingController
@@ -20,7 +21,9 @@ class BuildingController extends CrudController
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation {
+        update as traitUpdate;
+    }
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -122,9 +125,16 @@ class BuildingController extends CrudController
     {
         CRUD::setValidation(BuildingRequest::class);
         // add image
+        //
+        // Building::getImageAttribute() (used site-wide for the public-facing photo URL) shares
+        // the 'image' name with this field, so Backpack's default value lookup ($entry->image)
+        // resolves through that accessor and hands the cropper field an already-absolute S3 URL.
+        // The field template then prefixes its own disk base URL onto it, doubling the domain.
+        // Supplying the relative media path explicitly bypasses the accessor and avoids that.
         CRUD::field('image')
             ->label('الصورة')
             ->type('image')
+            ->value($this->currentImageFieldValue())
             ->withMedia([
                 'collection' => 'image', // will pick the collection definition from your model
             ]);
@@ -176,18 +186,38 @@ class BuildingController extends CrudController
         ]);
 
         if ($this->crud->getCurrentEntry()) {
+            // NOTE: must NOT nest a <form> here — this custom_html renders inside Backpack's
+            // main edit <form>, and a nested form makes the browser close the outer form early,
+            // orphaning every field (and the Save button) that follows. Instead, submit a
+            // detached form built in JS on click, so the TTLOCK test stays a real POST.
             $this->crud->addField([
                 'name' => 'test_sciener_connection',
                 'type' => 'custom_html',
                 'value' => '
                     <div class="form-group col-md-12">
-                        <form method="POST" action="'.route('admin.building.test-sciener-connection', $this->crud->getCurrentEntry()->id).'">
-                            '.csrf_field().'
-                            <button type="submit" class="btn btn-sm btn-outline-info">
-                                <i class="la la-plug"></i> اختبار الاتصال بحساب TTLOCK
-                            </button>
-                        </form>
-                    </div>',
+                        <button type="button" class="btn btn-sm btn-outline-info"
+                                data-test-sciener
+                                data-action="'.route('admin.building.test-sciener-connection', $this->crud->getCurrentEntry()->id).'"
+                                data-token="'.csrf_token().'">
+                            <i class="la la-plug"></i> اختبار الاتصال بحساب TTLOCK
+                        </button>
+                    </div>
+                    <script>
+                        document.querySelectorAll("[data-test-sciener]").forEach(function (btn) {
+                            btn.addEventListener("click", function () {
+                                var form = document.createElement("form");
+                                form.method = "POST";
+                                form.action = btn.dataset.action;
+                                var token = document.createElement("input");
+                                token.type = "hidden";
+                                token.name = "_token";
+                                token.value = btn.dataset.token;
+                                form.appendChild(token);
+                                document.body.appendChild(form);
+                                form.submit();
+                            });
+                        });
+                    </script>',
             ]);
         }
 
@@ -262,10 +292,14 @@ class BuildingController extends CrudController
         ]);
 
         // add check_in_time check_out_time
+        // `check_*_time` is cast to `datetime` on the model, which stringifies as "Y-m-d H:i:s" —
+        // an <input type="time"> silently rejects that and leaves itself empty, which then fails
+        // native `required` validation with no visible error. Format it to "H:i" explicitly.
         $this->crud->addField([
             'name' => 'check_in_time',
             'type' => 'time',
             'label' => __('cms.check_in_time'),
+            'value' => $this->crud->getCurrentEntry()?->check_in_time?->format('H:i'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -278,6 +312,7 @@ class BuildingController extends CrudController
             'name' => 'check_out_time',
             'type' => 'time',
             'label' => __('cms.check_out_time'),
+            'value' => $this->crud->getCurrentEntry()?->check_out_time?->format('H:i'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -311,6 +346,39 @@ class BuildingController extends CrudController
         ]);
 
         $this->crud->addField([
+            'name' => 'seo_title_ar',
+            'type' => 'text',
+            'label' => __('cms.seo_title_ar'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'seo_title_en',
+            'type' => 'text',
+            'label' => __('cms.seo_title_en'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'seo_description_ar',
+            'type' => 'text',
+            'label' => __('cms.seo_description_ar'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+        $this->crud->addField([
+            'name' => 'seo_description_en',
+            'type' => 'text',
+            'label' => __('cms.seo_description_en'),
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
+        $this->crud->addField([
             'name' => 'link',
             'type' => 'text',
             'label' => 'رابط خرائط جوجل',
@@ -336,6 +404,22 @@ class BuildingController extends CrudController
             ],
         ]);
 
+    }
+
+    /**
+     * The 'image' field's relative media path (e.g. `public/buildings/13/images/2467/file.jpg`),
+     * computed the same way the media library's own uploader does it. See the comment above the
+     * 'image' field definition for why this needs to be supplied explicitly.
+     */
+    private function currentImageFieldValue(): ?string
+    {
+        $media = $this->crud->getCurrentEntry()?->getFirstMedia('image');
+
+        if (! $media) {
+            return null;
+        }
+
+        return PathGeneratorFactory::create($media)->getPath($media).$media->file_name;
     }
 
     /**
@@ -392,7 +476,9 @@ class BuildingController extends CrudController
             $this->crud->getRequest()->request->remove('ttlock_password');
         }
 
-        return parent::update();
+        // `update()` is provided by the UpdateOperation trait (aliased to traitUpdate above),
+        // not by the parent CrudController — so parent::update() would not resolve.
+        return $this->traitUpdate();
     }
 
     /**

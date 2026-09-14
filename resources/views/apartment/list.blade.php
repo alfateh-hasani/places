@@ -183,7 +183,7 @@
 $('.grid-container .grid-items').infiniteScroll({
         path: '#list-links a[aria-label="pagination.next"]',
         append: '.apartment-card',
-        history: false,
+        history: 'push',
         //prefill: true,
     }).on('append.infiniteScroll', function (event, response, path, items) {
         // Find the newly added items that contain sliders

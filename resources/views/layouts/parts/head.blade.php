@@ -1,6 +1,10 @@
     <meta charset="utf-8" />
     <meta name="author" content="MADAR SOLUTIONS" />
       {!! SEO::generate() !!}
+    @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
+    <link rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" />
+    @endforeach
+    <link rel="alternate" hreflang="x-default" href="{{ LaravelLocalization::getLocalizedURL(config('app.locale'), null, [], true) }}" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta   name="viewport"  content="width=device-width, initial-scale=1, shrink-to-fit=no"   />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
