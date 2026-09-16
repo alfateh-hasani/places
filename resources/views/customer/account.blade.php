@@ -6,6 +6,23 @@
     .bg-white {
         background-color: #0f0c0c !important;
     }
+
+    #customerForm input {
+        color-scheme: light;
+        background-color: #ffffff;
+        color: #111827;
+        padding-inline: 0.75rem;
+    }
+
+    #customerForm input::placeholder {
+        color: #6b7280;
+    }
+
+    #customerForm input:disabled,
+    #customerForm input[readonly] {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
 </style>
 @endpush
 @section('content')
