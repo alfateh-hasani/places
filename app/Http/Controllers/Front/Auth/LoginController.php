@@ -32,9 +32,11 @@ class LoginController extends Controller
                 'phone' =>  convertArabicNumbers($request->phone),
             ]);
 
-            $validatedData = $request->validate([
-                'phone' => ['required', 'phone' ],
-            ]);
+            $validatedData = $request->validate(
+                ['phone' => ['required', 'phone']],
+                __('site.login_validation'),
+                __('site.login_attributes')
+            );
 
             $customerExists = Customer::where('phone', $request->phone)->exists();
 
@@ -86,9 +88,11 @@ class LoginController extends Controller
                 'phone' => convertArabicNumbers($request->phone),
             ]);
 
-            $request->validate([
-                'phone' => ['required', 'phone'],
-            ]);
+            $request->validate(
+                ['phone' => ['required', 'phone']],
+                __('site.login_validation'),
+                __('site.login_attributes')
+            );
 
             $retryAfter = $this->otpRetryAfter($request->phone);
             if ($retryAfter > 0) {
@@ -137,10 +141,14 @@ class LoginController extends Controller
             'otp'   =>  convertArabicNumbers($request->otp),
         ]);
 
-        $validatedData = $request->validate([
-            'phone' => 'required|phone',
-            'otp'   => 'required|digits:4',
-        ]);
+        $validatedData = $request->validate(
+            [
+                'phone' => 'required|phone',
+                'otp'   => 'required|digits:4',
+            ],
+            __('site.login_validation'),
+            __('site.login_attributes')
+        );
 
         $otpLog->info('[Web] Verifying OTP', ['phone' => $request->phone]);
 
@@ -196,12 +204,16 @@ class LoginController extends Controller
 
     public function registerUser(Request $request)
     {
-        $validatedData = $request->validate([
-            'token' => 'required',
-            'first_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
-            'last_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
-            'email' => Customer::emailValidationRules(),
-        ]);
+        $validatedData = $request->validate(
+            [
+                'token' => 'required',
+                'first_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
+                'last_name' => ['required', 'string', 'regex:/^[\p{Arabic}a-zA-Z\s]+$/u', 'max:255'],
+                'email' => Customer::emailValidationRules(),
+            ],
+            __('site.login_validation'),
+            __('site.login_attributes')
+        );
 
         $phone = Cache::pull('verified_phone_' . $request->token);
 
