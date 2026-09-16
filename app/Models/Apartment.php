@@ -56,7 +56,8 @@ class Apartment extends Model implements HasMedia
     {
         // log all changes
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logOnlyDirty();
 
     }
 

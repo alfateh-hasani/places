@@ -74,6 +74,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
             Route::post('remove-coupon/{uuid}', [BookingController::class, 'removeCoupon'])->name('coupons.remove');
 
             Route::post('cancel-booking', 'cancelBooking')->name('cancel');
+            Route::post('withdraw-cancellation', 'withdrawCancellation')->name('withdraw-cancellation');
 
             // Date-change (edit booking dates) — quote, request, and surcharge payment return
             Route::post('calculate-date-change', 'calculateDateChange')->name('date-change.calculate');

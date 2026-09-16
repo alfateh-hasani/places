@@ -5,10 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class PasscodeRetryAttempt extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected $connection = 'mysql';
 
     protected $fillable = [
         'booking_id',
@@ -141,5 +145,12 @@ class PasscodeRetryAttempt extends Model
             ->when($operation, fn ($query) => $query->where('operation', $operation))
             ->with(['booking', 'apartment', 'customer'])
             ->get();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
     }
 } 

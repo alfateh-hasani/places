@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -11,6 +13,9 @@ class SliderApp extends Model implements HasMedia
 {
     use InteractsWithMedia;
     use CrudTrait;
+    use LogsActivity;
+
+    protected $connection = 'mysql';
     protected $fillable = [
         'name_ar',
         'name_en',
@@ -35,6 +40,11 @@ class SliderApp extends Model implements HasMedia
         return $this->getFirstMediaUrl('image_en');
     }
 
-
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
+    }
 
 }

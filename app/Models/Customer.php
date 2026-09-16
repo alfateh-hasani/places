@@ -147,7 +147,9 @@ class Customer extends Authenticatable implements HasMedia
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logExcept(['fcm_token', 'id_number', 'remember_token'])
+            ->logOnlyDirty();
     }
 
     protected static function boot()

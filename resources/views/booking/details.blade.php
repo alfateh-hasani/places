@@ -199,9 +199,18 @@ span.flatpickr-day.selected{
                         @endif
                     </div>
                     @elseif($booking->status === 'customer_canceled')
+                    @if(! $booking->cancellationStartedByStaff() && $booking->refund_status === 'pending')
+                    {{-- The customer opened this cancellation request themselves and the refund
+                         isn't processed yet: let them withdraw it and reinstate the booking. --}}
+                    <button class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 withdraw-cancel-btn"
+                        data-booking-id="{{ $booking->id }}">
+                        <span class="inline-block ml-2 text-sm">{{ __('booking.withdraw_cancellation') }}</span>
+                    </button>
+                    @else
                     <div class="py-3 px-4 inline-block rounded-md bg-gray-200 text-gray-600 ml-2 cursor-not-allowed">
-                        <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ __('api.booking_status_customer_canceled') }}</span>
+                        <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}</span>
                     </div>
+                    @endif
                     @endif
                     
 
@@ -269,7 +278,7 @@ span.flatpickr-day.selected{
                             <p class="text-gri float-left rtl:float-right">{{__('booking.status')}} :</p>
                             <p class="float-right rtl:float-left {{ $booking->status === 'customer_canceled' ? 'text-red-600' : ($booking->status === 'approved' ? 'text-[#10C13F]' : 'text-gray-600') }}">
                                 @if($booking->status === 'customer_canceled')
-                                    {{__('api.booking_status_customer_canceled')}}
+                                    {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}
                                     @if($booking->refund_status === 'pending')
                                         <span class="block text-xs mt-1 text-orange-600">({{__('cms.refund_status_pending')}})</span>
                                     @elseif($booking->refund_status === 'approved')
@@ -513,7 +522,12 @@ $(document).ready(function() {
             buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                HoldOn.open();
+                Swal.fire({
+                    title: "{{ __('booking.processing') }}",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: function () { Swal.showLoading(); }
+                });
                 $.ajax({
                     url: "{{ route('web-booking.cancel') }}",
                     type: "POST",
@@ -524,7 +538,6 @@ $(document).ready(function() {
                         booking_id: bookingId
                     },
                     success: function(response) {
-                        HoldOn.close();
                         Swal.fire({
                             icon: 'success',
                             title: "{{__('booking.success')}}",
@@ -537,19 +550,74 @@ $(document).ready(function() {
                         });
                     },
                     error: function(xhr) {
-                    HoldOn.close();
-                    let errorMessage = "{{ __('booking.error_message') }}"; 
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message; 
+                        let errorMessage = "{{ __('booking.error_message') }}";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{ __('booking.error') }}",
+                            text: errorMessage,
+                        });
                     }
-                    Swal.fire({
-                        icon: 'error',
-                        title: "{{ __('booking.error') }}",
-                        text: errorMessage,
-                        button: true,
-                    });
-                }
+                });
+            }
+        });
+    });
 
+    // ===== التراجع عن طلب الإلغاء (يُعيد تفعيل الحجز) =====
+    $(".withdraw-cancel-btn").click(function() {
+        var bookingId = $(this).data("booking-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('booking.withdraw_cancellation_confirmation') }}",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '{{ __("booking.yes") }}',
+            cancelButtonText: '{{ __("booking.no") }}',
+            buttonsStyling: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: "{{ __('booking.processing') }}",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: function () { Swal.showLoading(); }
+                });
+                $.ajax({
+                    url: "{{ route('web-booking.withdraw-cancellation') }}",
+                    type: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                    },
+                    data: {
+                        booking_id: bookingId
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: "{{__('booking.success')}}",
+                            text: "{{__('api.cancellation_withdrawn')}}",
+                            confirmButtonText: "{{__('booking.ok')}}",
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.reload();
+                            }
+                        });
+                    },
+                    error: function(xhr) {
+                        let errorMessage = "{{ __('booking.error_message') }}";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{ __('booking.error') }}",
+                            text: errorMessage,
+                        });
+                    }
                 });
             }
         });

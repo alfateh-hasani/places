@@ -6,10 +6,14 @@ use App\Enums\DateChangeStatus;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class DateChangeRequest extends Model
 {
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
 
     protected $table = 'booking_date_change_requests';
 
@@ -61,5 +65,12 @@ class DateChangeRequest extends Model
     public function refundableAmount(): float
     {
         return abs((float) $this->price_delta);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
     }
 }

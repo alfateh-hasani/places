@@ -92,7 +92,9 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logExcept(['password', 'remember_token'])
+            ->logOnlyDirty();
     }
 
 }

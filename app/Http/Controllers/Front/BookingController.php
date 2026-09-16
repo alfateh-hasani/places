@@ -392,6 +392,34 @@ class BookingController extends Controller
     }
 
     /**
+     * Withdraw a cancellation request the customer themselves opened, reinstating the
+     * booking. Allowed only for a CUSTOMER-initiated request whose refund hasn't been
+     * processed yet — a staff-initiated cancellation can't be undone by the customer.
+     * Reuses the same reinstate path as the staff "reject" action.
+     */
+    public function withdrawCancellation(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+
+        $booking = $this->customerBooking($request->booking_id);
+        if (! $booking) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        if (! $booking->isCancellationRequested()
+            || $booking->cancellationStartedByStaff()
+            || $booking->refund_status !== 'pending') {
+            return response()->json(['success' => false, 'message' => __('api.cannot_withdraw_cancellation')], 422);
+        }
+
+        app(\App\Services\Bookings\BookingCancellationService::class)->reject($booking);
+
+        return response()->json(['success' => true, 'message' => __('api.cancellation_withdrawn')]);
+    }
+
+    /**
      * Quote a date change for the customer's booking: availability of the new range + price delta.
      */
     public function calculateDateChange(Request $request, DateChangeService $dateChangeService)

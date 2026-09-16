@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BookingStatus;
 use App\Enums\CustomerSource;
 use App\Models\Apartment;
 use App\Models\Booking;
@@ -9,10 +10,12 @@ use App\Models\Building;
 use App\Models\Customer;
 use App\Models\Transaction;
 use App\Services\OwnerRez\OwnerRezSyncService;
+use App\Services\PaymentMethods\GeideaPayment;
 use App\Services\Pricing\PricingService;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 /**
  * Creates a manual "direct booking" from the admin dashboard, settled by bank transfer
@@ -108,6 +111,76 @@ class DirectBookingService
         $this->attachReceipt($booking, $data['receipt'] ?? null);
 
         return $booking->refresh();
+    }
+
+    /**
+     * Confirm an EXISTING pending booking (from the dashboard "Confirm" action).
+     *
+     * Geidea-first: if the booking's online payment actually succeeded (a missed
+     * webhook), confirm that real payment via the normal path. Otherwise treat it as
+     * a bank transfer (حوالة): record an optional transfer number + receipt, mark it
+     * paid, and — for a mapped unit — push to OwnerRez synchronously first so a failure
+     * aborts before we mark it paid (no local-approved / OwnerRez-missing drift).
+     *
+     * @return 'geidea'|'bank_transfer'
+     */
+    public function confirmExistingBooking(Booking $booking, ?string $transferNumber, ?UploadedFile $receipt): string
+    {
+        if ($booking->status !== BookingStatus::Pending->value) {
+            throw new RuntimeException("Booking {$booking->id} is not pending; cannot confirm.");
+        }
+
+        // 1) Geidea-first — did the online payment actually go through (missed webhook)?
+        $transaction = $booking->transaction;
+        if ($transaction && $transaction->order_id) {
+            $orderData = (new GeideaPayment)->verifyPayment($transaction->order_id);
+
+            if (($orderData['order']['detailedStatus'] ?? null) === 'Paid') {
+                if ($transaction->status !== 'completed') {
+                    $transaction->update([
+                        'status' => 'completed',
+                        'payment_gateway_response' => json_encode($orderData),
+                    ]);
+                }
+                // Sets status=approved + payment_status=paid, provisions the lock, and
+                // fires the model hook (customer/staff notifications + OwnerRez sync).
+                $this->bookingService->completeBookingAfterPayment($transaction->id);
+
+                return 'geidea';
+            }
+        }
+
+        // 2) Bank transfer. For a mapped unit push to OwnerRez synchronously first so a
+        // failure aborts before we mark paid (mirrors createManualBooking).
+        $mapping = $booking->apartment?->ownerrezMapping;
+        if ($mapping && $mapping->sync_enabled && ! $booking->ownerrez_booking_id) {
+            $this->ownerRezSyncService->sendBookingToOwnerRez($booking);
+            $booking->refresh();
+        }
+
+        $this->createBankTransferTransaction($booking, $booking->customer, [
+            'transfer_number' => $transferNumber,
+        ]);
+        $booking->update(['payment_method_code' => 'bank_transfer']);
+
+        // Flip to approved+paid — fires BookingApproved (lock provisioning + notifications).
+        // Smart-lock provisioning is NON-FATAL: the booking is already valid; a lock failure
+        // is marked failed/retry and surfaced by the regenerate button.
+        try {
+            $booking->update([
+                'status' => BookingStatus::Approved->value,
+                'payment_status' => 'paid',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Confirm-existing-booking smart-lock provisioning failed (booking kept)', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $this->attachReceipt($booking->refresh(), $receipt);
+
+        return 'bank_transfer';
     }
 
     private function resolveCustomer(array $data): Customer

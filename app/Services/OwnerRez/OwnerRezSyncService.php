@@ -660,12 +660,33 @@ class OwnerRezSyncService
      */
     public function cancelLocalBookingFromOwnerRez(Booking $booking): void
     {
-        // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد أصبح خطوة منفصلة يُنفّذها الموظف يدوياً
-        // من شاشة "الحجوزات الملغاة" بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
+        // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد خطوة منفصلة يُنفّذها الموظف من زر
+        // "إدارة الإلغاء" على الحجز بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
         // refund_status يبقى كما هو (pending لطلبات العملاء) لتظهر خطوة الاسترداد.
+        if ($booking->status === \App\Enums\BookingStatus::Canceled->value) {
+            return;
+        }
+
         $booking->update([
-            'status' => 'canceled',
+            'status' => \App\Enums\BookingStatus::Canceled->value,
         ]);
+
+        // حرّرت الوحدة — امسح كاش التقويم وأعد تسخينه ليظهر التوفّر مباشرةً.
+        $this->invalidateCacheForBooking($booking);
+    }
+
+    /**
+     * Invalidate + re-warm the OwnerRez calendar cache for a booking's mapped property,
+     * so freed dates show correctly right after a cancellation (webhook / force / local).
+     * No-op for unmapped units (their web calendar reads local bookings live).
+     */
+    public function invalidateCacheForBooking(Booking $booking): void
+    {
+        $propertyId = $booking->apartment?->ownerrezMapping?->ownerrez_property_id;
+
+        if ($propertyId) {
+            $this->invalidatePropertyCache($propertyId);
+        }
     }
 
     /**

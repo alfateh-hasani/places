@@ -87,7 +87,7 @@ class LockAccessService
                     'error' => $e->getMessage(),
                 ]);
                 $this->recordFailedAttempt($booking, $e, 'provision');
-                $booking->markPasscodeAsFailed($e->getMessage());
+                $booking->markPasscodeAsFailed(LockErrorPresenter::storedMessage($e));
                 $booking->markPasscodeAsRetryScheduled();
                 throw $e;
             }

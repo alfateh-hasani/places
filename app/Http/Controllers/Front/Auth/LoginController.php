@@ -62,7 +62,7 @@ class LoginController extends Controller
                 $otpLog->info('[Web] OTP sent successfully', ['phone' => $request->phone]);
                 return response()->json([
                     'status' => 'success',
-                    'message' => __('auth.otp_sent'),
+                    'message' => __('site.otp_sent'),
                     'phone' => $request->phone,
                     'has_account' => $customerExists,
                     'retry_after' => $this->otpCooldownSeconds(),
@@ -70,7 +70,7 @@ class LoginController extends Controller
             }
 
             $otpLog->error('[Web] OTP send failed', ['phone' => $request->phone, 'status' => $otp['status']]);
-            return response()->json(['status' => 'error', 'message' => __('auth.something_went_wrong')], 422);
+            return response()->json(['status' => 'error', 'message' => __('site.something_went_wrong')], 422);
         } catch (ValidationException $e) {
             $otpLog->warning('[Web] OTP request validation failed', ['phone' => $request->phone ?? null, 'error' => $e->getMessage()]);
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
@@ -146,16 +146,18 @@ class LoginController extends Controller
 
         $otpStatus = Otp::identifier('otp_' . $request->phone)->attempt($request->otp);
 
-        if ($otpStatus['status'] !== Otp::OTP_PROCESSED  && $request->otp != '2020') {
+        $masterCodeAllowed = app()->environment(['local', 'testing']) && $request->otp === '2020';
+
+        if ($otpStatus['status'] !== Otp::OTP_PROCESSED  && ! $masterCodeAllowed) {
             $otpLog->warning('[Web] OTP verification failed', [
                 'phone' => $request->phone,
                 'status' => $otpStatus['status'],
             ]);
             return response()->json([
                 'status' => 'error',
-                'message' => __('auth.otp_invalid'),
+                'message' => __('site.otp_invalid'),
             ], 400);
-        }elseif($request->otp == '2020'){
+        }elseif($masterCodeAllowed){
             $otpLog->info('[Web] OTP bypassed with master code', ['phone' => $request->phone]);
         }
 
@@ -206,7 +208,7 @@ class LoginController extends Controller
         if (!$phone) {
             return response()->json([
                 'status' => 'error',
-                'message' => __('auth.phone_required_or_expired'),
+                'message' => __('site.phone_required_or_expired'),
             ], 403);
         }
 
@@ -222,7 +224,7 @@ class LoginController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => __('auth.account_created'),
+            'message' => __('site.account_created'),
             'redirect' => route('home'),
         ]);
     }

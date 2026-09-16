@@ -12,8 +12,8 @@ class SmsProvider
         $otpLog = Log::channel('otp');
         $otpLog->info('[SMS] Sending via Taqnyat', ['phone' => $phoneNumber, 'body_length' => strlen($otp)]);
 
-        $token = '20cb5a2c8e08f04c5f67791bac035ef5';
-        $sender = 'Ad.Dyafa';
+        $token = (string) config('services.taqnyat.token');
+        $sender = (string) config('services.taqnyat.sender');
         $payload = [
             'recipients' => [$phoneNumber],
             'body'       => $otp,

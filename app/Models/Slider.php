@@ -51,6 +51,7 @@ class Slider extends Model implements HasMedia
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logOnlyDirty();
     }
 }

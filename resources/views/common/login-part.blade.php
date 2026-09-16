@@ -263,17 +263,11 @@ function handleAjaxError(xhr,   container) {
 const phoneInput = document.querySelector("#phoneNumber");
 const iti = window.intlTelInput(phoneInput, {
       //  utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-    initialCountry: "auto",
+    initialCountry: "sa",
     separateDialCode: true,
     formatOnDisplay: true,
     nationalMode: false,
     autoFormat: true,
-    geoIpLookup: function(callback) {
-        fetch("https://ipapi.co/json")
-        .then(res => res.json())
-        .then(data => callback(data.country_code))
-        .catch(() => callback("sa")); // السعودية كدولة افتراضية في حالة الفشل
-    },
     preferredCountries: ["sa", "ae", "kw", "bh", "om", "qa"],
     dropdownContainer: document.getElementById('countriesDropdown'),
 });

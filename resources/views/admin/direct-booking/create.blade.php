@@ -4,10 +4,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/css/intlTelInput.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23/build/css/intlTelInput.min.css">
     <style>
         .dbk-hidden { display: none !important; }
         .iti { width: 100%; }
+        .iti__dropdown-content { z-index: 1060; } /* keep the country dropdown above the card */
         /* Self-contained toggle switch — RTL-safe (no Bootstrap form-switch float/margins) */
         .dbk-switch { cursor: pointer; gap: .5rem; white-space: nowrap; }
         .dbk-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -168,7 +169,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/js/intlTelInput.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23/build/js/intlTelInputWithUtils.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const CSRF = '{{ csrf_token() }}';
@@ -182,6 +183,7 @@
             };
             const $id = (x) => document.getElementById(x);
             const aptName = (a) => (LOCALE === 'ar' ? a.name_ar : a.name_en) || a.name_ar || a.name_en;
+            let currentApartmentId = null; // declared early: onApartmentChange() runs during init
 
             const alertBox = $id('dbkAlert');
             function showAlert(type, msg) { alertBox.className = 'alert alert-' + type; alertBox.textContent = msg; alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
@@ -229,7 +231,9 @@
                 $('#apartment_id').val('').trigger('change.select2');
                 onApartmentChange();
             }
-            $('#building_id').on('change', renderApartments);
+            // Defer so select2 finishes closing the building dropdown before we rebuild the
+            // units <select> (doing that DOM/focus work synchronously leaves the dropdown open).
+            $('#building_id').on('change', function () { setTimeout(renderApartments, 0); });
             renderApartments();
 
             // ---------- Customer mode toggle ----------
@@ -247,8 +251,7 @@
             const phoneIti = window.intlTelInput(phoneEl, {
                 initialCountry: 'sa',
                 separateDialCode: true,
-                preferredCountries: ['sa', 'ye', 'ae', 'eg'],
-                utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.19/build/js/utils.js',
+                countryOrder: ['sa', 'ye', 'ae', 'eg'], // v23 has a searchable list by default
             });
 
             // ---------- Flatpickr availability calendars ----------
@@ -326,9 +329,13 @@
                 const id = sel.value;
                 if (opt && opt.dataset.adults) { $id('number_of_adults').max = opt.dataset.adults; }
                 if (opt && opt.dataset.children) { $id('number_of_children').max = opt.dataset.children; }
-                if (!id) { $id('calHint').classList.remove('dbk-hidden'); $id('calWrap').classList.add('dbk-hidden'); return; }
+                if (!id) { $id('calHint').classList.remove('dbk-hidden'); $id('calWrap').classList.add('dbk-hidden'); currentApartmentId = null; return; }
                 $id('calHint').classList.add('dbk-hidden');
                 $id('calWrap').classList.remove('dbk-hidden');
+                // Only reload availability (which clears the pickers) when the apartment truly
+                // changed — otherwise a spurious change event would wipe already-selected dates.
+                if (id === currentApartmentId) { return; }
+                currentApartmentId = id;
                 loadAvailability(id);
             }
             $('#apartment_id').on('change', onApartmentChange);
