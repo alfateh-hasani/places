@@ -147,6 +147,11 @@ class BookingController extends CrudController
         if (backpack_user()->can('booking.changeStatus')) {
             CRUD::addButtonFromView('line', 'edit_check_in_time', 'edit_check_in_time', 'end');
         }
+
+        // زر "نقل الوحدة" — بلا صلاحية خاصة: متاح لكل من يستطيع عرض الحجوزات. يظهر فقط
+        // للحجوزات المؤهلة (مؤكدة/مدفوعة/قبل الموعد بلا طلب مفتوح) عبر Booking::canBeTransferred().
+        CRUD::addButtonFromView('line', 'transfer_unit', 'transfer_unit', 'end');
+
         // Customer column
         CRUD::addColumn([
             'name' => 'customer_id',
@@ -462,6 +467,25 @@ class BookingController extends CrudController
             'type' => 'view',
             'view' => 'admin.booking.copy_passcode_script',
         ])->to('after_content');
+
+        // لوحة "نقل الوحدة" في صفحة التفاصيل: حالة الطلب، إلغاء طلب معلّق، رابط إلغاء حجز
+        // OwnerRez القديم يدوياً، وزر استرداد فرق الوحدة الأرخص. تظهر لكل من يعرض الحجوزات.
+        $transferBooking = $this->crud->getCurrentEntry();
+        if ($transferBooking) {
+            $transfers = $transferBooking->unitTransfers()
+                ->with(['fromApartment', 'toApartment', 'initiatedBy'])
+                ->latest()
+                ->get();
+            if ($transfers->isNotEmpty()) {
+                Widget::add([
+                    'type' => 'view',
+                    'view' => 'admin.booking.unit_transfer_panel',
+                    'booking' => $transferBooking,
+                    'transfer' => $transfers->first(),
+                    'transfers' => $transfers,
+                ])->to('before_content');
+            }
+        }
 
         // زر "إدارة الإلغاء" + النوافذ في صفحة التفاصيل (لمن يملك صلاحية تغيير الحالة)
         if (backpack_user()->can('booking.changeStatus')) {

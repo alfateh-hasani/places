@@ -75,4 +75,14 @@ return [
     'passcode'=>'رمز دخول الغرفة',
     'copy_code' => 'نسخ الكود',
     'code_copied' => 'تم نسخ الكود',
+
+    // نقل الوحدة (تأكيد العميل)
+    'unit_transfer_offer' => 'يجري نقل حجزك إلى وحدة أخرى',
+    'unit_transfer_refund_note' => 'الوحدة الجديدة أرخص (:new_price ريال) — سيُستردّ لك :amount ريال بعد التأكيد.',
+    'unit_transfer_no_extra_charge' => 'بلا رسوم إضافية — تحتفظ بنفس السعر الذي دفعته.',
+    'unit_transfer_confirm' => 'تأكيد النقل',
+    'unit_transfer_decline' => 'رفض',
+    'unit_transfer_confirm_text' => 'سيُنقل حجزك إلى الوحدة الجديدة وتُحرَّر الوحدة القديمة.',
+    'unit_transfer_decline_text' => 'سيُلغى النقل ويبقى حجزك على الوحدة الحالية.',
+    'unit_transfer_processing' => 'جارٍ المعالجة… يرجى الانتظار',
 ];

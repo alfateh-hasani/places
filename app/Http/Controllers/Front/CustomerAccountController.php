@@ -144,6 +144,13 @@ class CustomerAccountController extends Controller
             ->latest()
             ->first();
 
+        // طلب نقل وحدة بانتظار تأكيد العميل (بدأه الموظف) — لعرض رسالة + زر التأكيد/الرفض.
+        $data['unit_transfer'] = \App\Models\BookingUnitTransfer::with(['fromApartment', 'toApartment'])
+            ->where('booking_id', $data['booking']->id)
+            ->whereIn('status', \App\Enums\UnitTransferStatus::openValues())
+            ->latest()
+            ->first();
+
         // Get active passcode for this booking
         $data['active_passcode'] = $data['booking']->getActivePasscode();
 

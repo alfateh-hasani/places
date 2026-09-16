@@ -69,4 +69,14 @@ return [
     'passcode' => 'Door passcode',
     'copy_code' => 'Copy code',
     'code_copied' => 'Code copied',
+
+    // Unit transfer (customer confirmation)
+    'unit_transfer_offer' => 'Your booking is being moved to another unit',
+    'unit_transfer_refund_note' => 'The new unit is cheaper (:new_price SAR) — :amount SAR will be refunded to you after you confirm.',
+    'unit_transfer_no_extra_charge' => 'No extra charge — you keep the price you already paid.',
+    'unit_transfer_confirm' => 'Confirm move',
+    'unit_transfer_decline' => 'Decline',
+    'unit_transfer_confirm_text' => 'Your booking will be moved to the new unit and the old one released.',
+    'unit_transfer_decline_text' => 'The move will be cancelled and your booking stays on the current unit.',
+    'unit_transfer_processing' => 'Processing… please wait',
 ];

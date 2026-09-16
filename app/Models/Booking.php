@@ -251,6 +251,67 @@ class Booking extends Model
             ->exists();
     }
 
+    // Unit-transfer requests (move the booking to another apartment)
+    public function unitTransfers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BookingUnitTransfer::class);
+    }
+
+    /** The open (awaiting customer confirmation) transfer, if any. */
+    public function openUnitTransfer(): ?BookingUnitTransfer
+    {
+        return $this->unitTransfers()
+            ->whereIn('status', \App\Enums\UnitTransferStatus::openValues())
+            ->latest()
+            ->first();
+    }
+
+    public function hasOpenUnitTransfer(): bool
+    {
+        return $this->unitTransfers()
+            ->whereIn('status', \App\Enums\UnitTransferStatus::openValues())
+            ->exists();
+    }
+
+    /** Hours before check-in during which a unit transfer is still allowed (settings-driven). */
+    public function transferBeforeHours(): int
+    {
+        $setting = \DB::table('settings')->where('key', 'transfer_before_hours')->first();
+
+        return $setting ? (int) $setting->value : 24;
+    }
+
+    /** True while check-in is still far enough in the future to allow a transfer. */
+    public function isWithinTransferWindow(): bool
+    {
+        $checkInTime = $this->check_in_time?->format('H:i:s') ?: '16:00:00';
+        $checkInDateTime = $this->check_in?->setTimeFromTimeString($checkInTime);
+
+        if (! $checkInDateTime) {
+            return false;
+        }
+
+        return now()->diffInHours($checkInDateTime, false) >= $this->transferBeforeHours();
+    }
+
+    /**
+     * Whether staff may move this booking to another unit right now: it must be a confirmed,
+     * paid, future booking (beyond the transfer cut-off), with no open date-change or transfer
+     * request. Drives both the dashboard button and the service guard.
+     */
+    public function canBeTransferred(): bool
+    {
+        if ($this->status !== BookingStatus::Approved->value || $this->payment_status !== 'paid') {
+            return false;
+        }
+
+        if ($this->hasOpenDateChangeRequest() || $this->hasOpenUnitTransfer()) {
+            return false;
+        }
+
+        return $this->isWithinTransferWindow();
+    }
+
     // Get active passcode for this booking
     public function getActivePasscode()
     {

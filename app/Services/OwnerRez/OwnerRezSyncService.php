@@ -475,7 +475,7 @@ class OwnerRezSyncService
 
             if ($status === 'canceled') {
                 // Always process cancellations, even for locally-created bookings
-                $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
+                $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking, $ownerrezBooking->ownerrez_booking_id);
                 $logger->info('OwnerRez booking canceled via update webhook', [
                     'ownerrez_booking_id' => $ownerrezBookingId,
                     'local_booking_id' => $ownerrezBooking->local_booking_id,
@@ -533,7 +533,7 @@ class OwnerRezSyncService
         }
 
         try {
-            $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
+            $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking, $ownerrezBooking->ownerrez_booking_id);
             $logger->info('OwnerRez booking deleted and canceled locally', [
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'local_booking_id' => $ownerrezBooking->local_booking_id,
@@ -658,8 +658,24 @@ class OwnerRezSyncService
     /**
      * Cancel local booking from OwnerRez
      */
-    public function cancelLocalBookingFromOwnerRez(Booking $booking): void
+    public function cancelLocalBookingFromOwnerRez(Booking $booking, ?string $sourceOwnerRezBookingId = null): void
     {
+        // حارس أمان لنقل الوحدة: إذا وصل الإلغاء من حجز OwnerRez لم يعُد هو المرتبط بهذا
+        // الحجز المحلي (نُقل الحجز لوحدة جديدة وأُنشئ له حجز OwnerRez جديد)، نتجاهله —
+        // إلغاء الوحدة القديمة يجب ألا يُلغي الحجز النشط المنقول. (الآلية الأساسية هي فكّ
+        // ربط السجل القديم عبر releaseSupersededOwnerRezBooking؛ هذا خط دفاع ثانٍ.)
+        if ($sourceOwnerRezBookingId !== null
+            && ! empty($booking->ownerrez_booking_id)
+            && (string) $booking->ownerrez_booking_id !== (string) $sourceOwnerRezBookingId) {
+            Log::channel('ownerrez_webhook')->info('Ignoring OwnerRez cancel for a superseded (transferred) booking', [
+                'local_booking_id' => $booking->id,
+                'incoming_ownerrez_booking_id' => $sourceOwnerRezBookingId,
+                'current_ownerrez_booking_id' => $booking->ownerrez_booking_id,
+            ]);
+
+            return;
+        }
+
         // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد خطوة منفصلة يُنفّذها الموظف من زر
         // "إدارة الإلغاء" على الحجز بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
         // refund_status يبقى كما هو (pending لطلبات العملاء) لتظهر خطوة الاسترداد.
@@ -673,6 +689,29 @@ class OwnerRezSyncService
 
         // حرّرت الوحدة — امسح كاش التقويم وأعد تسخينه ليظهر التوفّر مباشرةً.
         $this->invalidateCacheForBooking($booking);
+    }
+
+    /**
+     * Detach a superseded OwnerRez booking row from its local booking (used when a booking is
+     * transferred to another unit and re-created under a new OwnerRez booking). Nulling
+     * `local_booking_id` means a later inbound webhook that cancels the OLD OwnerRez booking
+     * finds no linked local booking and safely no-ops — so cancelling the old unit by hand can
+     * never cancel the active, moved booking.
+     */
+    public function releaseSupersededOwnerRezBooking(string $ownerrezBookingId): void
+    {
+        $row = OwnerRezBooking::where('ownerrez_booking_id', $ownerrezBookingId)->first();
+
+        if (! $row) {
+            return;
+        }
+
+        $row->update(['local_booking_id' => null]);
+
+        Log::channel('ownerrez_webhook')->info('Detached superseded OwnerRez booking after unit transfer', [
+            'ownerrez_booking_id' => $ownerrezBookingId,
+            'ownerrez_bookings_row_id' => $row->id,
+        ]);
     }
 
     /**

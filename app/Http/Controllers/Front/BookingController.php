@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\Building;
+use App\Models\BookingUnitTransfer;
 use App\Models\DateChangeRequest;
 use App\Models\Policy;
 use App\Services\BookingService;
+use App\Services\BookingUnitTransfer\BookingUnitTransferService;
 use App\Services\DateChangeService;
 use App\Services\Pricing\PricingService;
 use App\Services\ProcessPaymentService;
@@ -591,6 +593,60 @@ class BookingController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => __('api.date_change_request_canceled')]);
+    }
+
+    /**
+     * Customer confirms a staff-initiated unit transfer → the move is applied: the old unit is
+     * freed and the booking is re-created on the new unit (with a new OwnerRez booking).
+     */
+    public function confirmUnitTransfer(Request $request, BookingUnitTransferService $service, $transferId)
+    {
+        $transfer = $this->customerUnitTransfer($transferId);
+        if (! $transfer) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $service->confirmByCustomer($transfer);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Unit transfer confirmation failed: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => __('api.something_went_wrong')], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => __('api.unit_transfer_confirmed')]);
+    }
+
+    /**
+     * Customer declines a pending unit transfer → the request is withdrawn and the held
+     * destination unit is released. The booking stays on its original unit.
+     */
+    public function declineUnitTransfer(Request $request, BookingUnitTransferService $service, $transferId)
+    {
+        $transfer = $this->customerUnitTransfer($transferId);
+        if (! $transfer) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $service->cancel($transfer);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        }
+
+        return response()->json(['success' => true, 'message' => __('api.unit_transfer_declined')]);
+    }
+
+    private function customerUnitTransfer($transferId): ?BookingUnitTransfer
+    {
+        $customer = auth()->user();
+
+        return BookingUnitTransfer::with('booking')
+            ->where('id', $transferId)
+            ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
+            ->first();
     }
 
     private function customerBooking($bookingId): ?Booking
