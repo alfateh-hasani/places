@@ -45,6 +45,10 @@ class ApartmentController extends Controller
             return $apt;
         });
 
+        $seo_title = __('site.apartments_list').' | '.Config::get('settings.seo_title_'.app()->getLocale());
+        $seo_description = Config::get('settings.seo_description_'.app()->getLocale());
+        $this->generateSeo($seo_title, $seo_description, route('apartments.index'));
+
         return view('apartment.index', compact('apartments'));
     }
 
@@ -62,7 +66,14 @@ class ApartmentController extends Controller
         ])
             ->where('is_active', true)
             ->where('slug', $slug)
-            ->firstOrFail();
+            ->first();
+
+        if (! $apartment) {
+            if ($redirect = $this->redirectFromOldSlug(Apartment::class, $slug, 'apartments.show')) {
+                return $redirect;
+            }
+            abort(404);
+        }
 
         // تحديد أول فترة للحجز
         $lastBookedDate = $apartment->bookings->sortBy('check_out')->first()?->check_out;
@@ -113,7 +124,8 @@ class ApartmentController extends Controller
         $seo_title = $apartment->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
         $seo_description = $apartment->ml('seo_description');
         $url = route('apartments.show', $apartment->slug);
-        $this->generateSeo($seo_title, $seo_description, $url);
+        $this->generateSeo($seo_title, $seo_description, $url, $apartment->image_view);
+        $this->generateJsonLd($apartment, $url, $priceInfo);
 
         return view('apartment.show', [
             'apartment' => $apartment,
@@ -222,13 +234,89 @@ class ApartmentController extends Controller
         ];
     }
 
-    private function generateSeo($seo_title, $seo_description, $url)
+    private function generateSeo($seo_title, $seo_description, $url, $image = null)
     {
         SEOTools::setTitle($seo_title);
         SEOTools::setDescription($seo_description);
         SEOTools::opengraph()->setUrl($url);
         SEOTools::setCanonical($url);
-        SEOTools::opengraph()->addProperty('type', 'articles');
+        SEOTools::opengraph()->addProperty('type', 'website');
+
+        if (! empty($image)) {
+            SEOTools::opengraph()->addImage($image);
+            SEOTools::twitter()->addImage($image);
+        }
+    }
+
+    /**
+     * A listing whose slug was renamed 404s under its old URL unless we forward it here —
+     * this is what keeps that old link's ranking/shares alive instead of losing them overnight.
+     */
+    private function redirectFromOldSlug(string $type, string $oldSlug, string $routeName): ?\Illuminate\Http\RedirectResponse
+    {
+        $current = \App\Models\SlugRedirect::where('redirectable_type', $type)
+            ->where('old_slug', $oldSlug)
+            ->first()
+            ?->redirectable;
+
+        if (! $current) {
+            return null;
+        }
+
+        return redirect()->route($routeName, $current->slug, 301);
+    }
+
+    /**
+     * Rich-result markup (schema.org) so unit listings are eligible for price/availability cards in search results.
+     */
+    private function generateJsonLd(Apartment $apartment, string $url, array $priceInfo): void
+    {
+        SEOTools::jsonLd()->setType('Product')
+            ->setTitle($apartment->ml('name'))
+            ->setDescription(strip_tags((string) $apartment->ml('description')))
+            ->setUrl($url);
+
+        if (! empty($apartment->image_view)) {
+            SEOTools::jsonLd()->addImage($apartment->image_view);
+        }
+
+        SEOTools::jsonLd()->addValue('offers', [
+            '@type' => 'Offer',
+            'priceCurrency' => 'SAR',
+            'price' => (string) ($priceInfo['one_night_price'] ?? $apartment->price),
+            'availability' => 'https://schema.org/InStock',
+            'url' => $url,
+        ]);
+
+        if ($apartment->building) {
+            SEOTools::jsonLd()->addValue('address', [
+                '@type' => 'PostalAddress',
+                'streetAddress' => $apartment->building->ml('address'),
+                'addressCountry' => 'SA',
+            ]);
+        }
+    }
+
+    /**
+     * Rich-result markup (schema.org) for a building's landing page.
+     */
+    private function generateBuildingJsonLd(Building $building, string $url, int $unitCount): void
+    {
+        SEOTools::jsonLd()->setType('ApartmentComplex')
+            ->setTitle($building->ml('name'))
+            ->setDescription((string) $building->ml('address'))
+            ->setUrl($url);
+
+        if (! empty($building->image)) {
+            SEOTools::jsonLd()->addImage($building->image);
+        }
+
+        SEOTools::jsonLd()->addValue('numberOfAccommodationUnits', $unitCount);
+        SEOTools::jsonLd()->addValue('address', [
+            '@type' => 'PostalAddress',
+            'streetAddress' => $building->ml('address'),
+            'addressCountry' => 'SA',
+        ]);
     }
 
     /**
@@ -317,7 +405,15 @@ class ApartmentController extends Controller
 
     public function getApartmentBuliding($slug)
     {
-        $building = Building::where('slug', $slug)->firstOrFail();
+        $building = Building::where('slug', $slug)->first();
+
+        if (! $building) {
+            if ($redirect = $this->redirectFromOldSlug(Building::class, $slug, 'building.show')) {
+                return $redirect;
+            }
+            abort(404);
+        }
+
         $apartments = Apartment::where('building_id', $building->id)->where('is_active', true)->paginate(12);
 
         $checkIn = Carbon::today();
@@ -337,8 +433,9 @@ class ApartmentController extends Controller
 
         $seo_title = $building->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
         $seo_description = $building->ml('seo_description');
-        $url = route('buliding.show', $building->slug);
-        $this->generateSeo($seo_title, $seo_description, $url);
+        $url = route('building.show', $building->slug);
+        $this->generateSeo($seo_title, $seo_description, $url, $building->image);
+        $this->generateBuildingJsonLd($building, $url, $apartments->total());
 
         return view('building.show', $data);
     }

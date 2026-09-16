@@ -6,10 +6,14 @@ use App\Http\Controllers\Front\BookingController;
 use App\Http\Controllers\Front\CustomerAccountController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\PageController;
-use App\Http\Controllers\Front\TestController;
+use App\Http\Controllers\Front\RobotsController;
+use App\Http\Controllers\Front\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/apartments/{apartment}/unit.ics', [ApartmentsICSController::class, 'generateICS'])->name('apartments.ics');
+Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('robots.txt', [RobotsController::class, 'index'])->name('robots');
+
 Route::get('test-mail', function () {
     $booking = \App\Models\Booking::find(4);
     // ReservationDetails
@@ -33,7 +37,10 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
     Route::post('/apartments/{apartmentId}/calculate-price', [ApartmentController::class, 'calculatePrice'])->name('apartments.calculate-price');
     Route::get('/apartments/{id}/blocked-dates', [ApartmentController::class, 'blockedDates'])->name('apartments.blocked-dates');
-    Route::get('buliding/{slug}', [ApartmentController::class, 'getApartmentBuliding'])->name('buliding.show');
+    Route::get('building/{slug}', [ApartmentController::class, 'getApartmentBuliding'])->name('building.show');
+    // Old, misspelled URL — kept as a permanent redirect so previously indexed/shared links keep working.
+    // TODO:: remove this after month today is 14/septemper 9 / 2026
+    Route::get('buliding/{slug}', fn($slug) => redirect()->route('building.show', ['slug' => $slug], 301));
     // search
 
     Route::middleware('guest:customer')->group(function () {

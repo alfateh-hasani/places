@@ -130,7 +130,7 @@ class HomeController extends Controller
         $seo_title = $blog->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
         $seo_description = $blog->ml('seo_description');
         $url = route('blog', $blog->slug);
-        $this->generateSeo($seo_title, $seo_description, $url);
+        $this->generateSeo($seo_title, $seo_description, $url, $blog->image);
 
         $this->data['blog'] = $blog;
         $this->data['blogs'] = Blog::where('id', '!=', $blog->id)->orderBy('id', 'desc')->take(3)->get();
@@ -139,14 +139,18 @@ class HomeController extends Controller
         return view('pages.single_blog', $this->data);
     }
 
-    private function generateSeo($seo_title, $seo_description, $url)
+    private function generateSeo($seo_title, $seo_description, $url, $image = null)
     {
         SEOTools::setTitle($seo_title);
         SEOTools::setDescription($seo_description);
         SEOTools::opengraph()->setUrl($url);
         SEOTools::setCanonical($url);
-        SEOTools::opengraph()->addProperty('type', 'articles');
+        SEOTools::opengraph()->addProperty('type', 'website');
 
+        if (! empty($image)) {
+            SEOTools::opengraph()->addImage($image);
+            SEOTools::twitter()->addImage($image);
+        }
     }
 
     // apartments-by-city

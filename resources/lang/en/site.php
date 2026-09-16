@@ -109,4 +109,33 @@ return [
     'view_details' => 'View Details',
     'search_buildings' => 'Search buildings...',
     'account_blocked' => 'Your account has been blocked. Please contact support.',
+
+    'login_validation' => [
+        'phone.required' => 'Please enter your mobile number.',
+        'phone.phone' => 'Please enter a valid mobile number.',
+        'otp.required' => 'Please enter the verification code.',
+        'otp.digits' => 'The verification code must be 4 digits.',
+        'token.required' => 'Your verification session has expired, please try again.',
+        'first_name.required' => 'Please enter your first name.',
+        'first_name.string' => 'Please enter a valid first name.',
+        'first_name.regex' => 'The first name may only contain Arabic or English letters.',
+        'first_name.max' => 'The first name is too long.',
+        'last_name.required' => 'Please enter your last name.',
+        'last_name.string' => 'Please enter a valid last name.',
+        'last_name.regex' => 'The last name may only contain Arabic or English letters.',
+        'last_name.max' => 'The last name is too long.',
+        'email.required' => 'Please enter your email address.',
+        'email.email' => 'Please enter a valid email address.',
+        'email.regex' => 'Please enter a valid email address.',
+        'email.max' => 'The email address is too long.',
+        'email.unique' => 'This email address is already registered.',
+    ],
+
+    'login_attributes' => [
+        'phone' => 'mobile number',
+        'otp' => 'verification code',
+        'first_name' => 'first name',
+        'last_name' => 'last name',
+        'email' => 'email address',
+    ],
 ];

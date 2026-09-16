@@ -57,7 +57,7 @@ class PageController extends Controller
         SEOTools::setDescription($seo_description);
         SEOTools::opengraph()->setUrl(route('page',$page->slug));
         SEOTools::setCanonical(route('page',$page->slug));
-        SEOTools::opengraph()->addProperty('type', 'articles');
+        SEOTools::opengraph()->addProperty('type', 'website');
 
     }
 

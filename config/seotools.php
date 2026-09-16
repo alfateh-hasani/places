@@ -11,7 +11,7 @@ return [
         'defaults'       => [
             'title'        =>'', // set false to total remove
             'titleBefore'  => false, // Put defaults.title before page title, like 'Places - Dashboard'
-            'description'  => 'For those who helped create the Genki Dama', // set false to total remove
+            'description'  => 'Book fully-furnished apartments and hotel units across Saudi Arabia with Places.', // set false to total remove
             'separator'    => ' - ',
             'keywords'     => [],
             'canonical'    => false, // Set to null or 'full' to use Url::full(), set to 'current' to use Url::current(), set false to total remove
@@ -37,7 +37,7 @@ return [
          */
         'defaults' => [
             'title'       => 'Places', // set false to total remove
-            'description' => 'For those who helped create the Genki Dama', // set false to total remove
+            'description' => 'Book fully-furnished apartments and hotel units across Saudi Arabia with Places.', // set false to total remove
             'url'         => false, // Set null for using Url::current(), set false to total remove
             'type'        => false,
             'site_name'   => false,
@@ -49,8 +49,7 @@ return [
          * The default values to be used by the twitter cards generator.
          */
         'defaults' => [
-            //'card'        => 'summary',
-            //'site'        => '@LuizVinicius73',
+            'card' => 'summary_large_image',
         ],
     ],
     'json-ld' => [
@@ -59,7 +58,7 @@ return [
          */
         'defaults' => [
             'title'       => 'Places', // set false to total remove
-            'description' => 'For those who helped create the Genki Dama', // set false to total remove
+            'description' => 'Book fully-furnished apartments and hotel units across Saudi Arabia with Places.', // set false to total remove
             'url'         => false, // Set to null or 'full' to use Url::full(), set to 'current' to use Url::current(), set false to total remove
             'type'        => 'WebPage',
             'images'      => [],

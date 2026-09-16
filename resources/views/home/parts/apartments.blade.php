@@ -60,7 +60,7 @@
         var infScroll = $('#apartments-container').infiniteScroll({
             path: '#list-links a[aria-label="pagination.next"]',
             append: '.apartment-card',
-            history: false,
+            history: 'push',
             scrollThreshold: false, // Disable automatic loading
         }).on('append.infiniteScroll', function (event, response, path, items) {
             // Reinitialize sliders if present in the new content
