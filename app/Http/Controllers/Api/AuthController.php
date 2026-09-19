@@ -8,6 +8,7 @@ use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Models\NotificationSeen;
 use App\Otp\CustomerRegistrationOtp;
+use App\Services\Otp\OtpRequestThrottle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Cache;
 
 class AuthController extends Controller
 {
-    use \App\Traits\ThrottlesOtpRequests;
+    public function __construct(private readonly OtpRequestThrottle $throttle) {}
 
     public function requestOtp(Request $request)
     {
@@ -40,10 +41,14 @@ class AuthController extends Controller
         }
         $customer = Customer::where('phone', $request->phone)->exists();
 
-        $retryAfter = $this->otpRetryAfter($request->phone);
-        if ($retryAfter > 0) {
-            $otpLog->warning('[API] OTP request throttled', ['phone' => $request->phone, 'retry_after' => $retryAfter]);
-            return $this->errorResponse([], trans('api.otp_cooldown', ['seconds' => $this->otpRetryAfterForHumans($retryAfter)]));
+        $decision = $this->throttle->attempt($request->phone);
+        if ($decision->denied()) {
+            $otpLog->warning('[API] OTP request throttled', [
+                'phone' => $request->phone,
+                'reason' => $decision->reason->name,
+                'retry_after' => $decision->retryAfter,
+            ]);
+            return $this->errorResponse([], trans('api.'.$decision->reason->messageKey(), ['seconds' => $decision->retryAfterForHumans(), 'hours' => $decision->retryAfterInHours()]));
         }
 
         try {
@@ -56,7 +61,7 @@ class AuthController extends Controller
             );
 
             if($otp['status'] == Otp::OTP_SENT){
-                $this->registerOtpSent($request->phone);
+                $this->throttle->recordSent($request->phone);
                 $otpLog->info('[API] OTP sent successfully', ['phone' => $request->phone]);
                 $data = [
                     'has_account' => (bool)$customer

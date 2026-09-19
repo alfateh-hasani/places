@@ -297,6 +297,13 @@ function showMessage(container, type, message) {
     $(container).html(html).fadeIn().delay(3000).fadeOut();
 }
 
+// A message that stays on screen (no auto fade-out) — for important, long-lived
+// states such as a 24h OTP lockout that the user must act on (contact support).
+function showPersistentMessage(container, type, message) {
+    const html = `<div class="alert alert-${type}">${message}</div>`;
+    $(container).stop(true, true).html(html).show();
+}
+
 // Clear Input Errors
 function clearInputErrors() {
     $('.modal').find('.error-message').remove();
@@ -337,6 +344,9 @@ $('#popup-7 form').validate({
 
 // Switch to OTP Popup
 function switchToOtpPopup(seconds) {
+    // Fresh OTP session: clear any stale messages/state (e.g. a previous lockout
+    // that was lifted by support) so a newly-sent code isn't hidden behind them.
+    resetOtpUi();
     $.fancybox.close('#popup-5');
     $.fancybox.open({
         src: '#popup-6',
@@ -349,6 +359,16 @@ function switchToOtpPopup(seconds) {
         }
     });
     startCountdown(seconds);
+}
+
+// Clear leftover result messages and reset the resend allowance/state.
+function resetOtpUi() {
+    $('#otp-result').stop(true, true).empty().show();
+    $('#login-result').stop(true, true).empty().show();
+    resendCount = 5;
+    $('#resend-button').prop('disabled', true);
+    $('.otp-input').val('');
+    $('#otp-submit-button').prop('disabled', true);
 }
 
 // OTP Countdown
@@ -405,6 +425,9 @@ $('#login-form').validate({
         }
     },
     submitHandler: function(form) {
+        // Drop any stale message (e.g. a lockout that support has since lifted).
+        $('#login-result').stop(true, true).empty().show();
+
         const phoneNumber = iti.getNumber();
         const formData = new FormData(form);
         formData.set('phone', phoneNumber);
@@ -427,6 +450,11 @@ $('#login-form').validate({
             error: function(xhr) {
                 HoldOn.close();
                 if (xhr.status === 429 && xhr.responseJSON) {
+                    if (xhr.responseJSON.reason === 'otp_blocked') {
+                        // Long lockout — no short countdown to resume; keep the notice visible.
+                        showPersistentMessage('#login-result', 'danger', xhr.responseJSON.message);
+                        return;
+                    }
                     // A code was already sent recently: move to the OTP step and
                     // resume the server-driven cooldown instead of resending.
                     $('#phone-number').text(xhr.responseJSON.phone);
@@ -535,6 +563,14 @@ $('#resend-button').on('click', function() {
         },
         error: function(xhr) {
             if (xhr.status === 429 && xhr.responseJSON) {
+                if (xhr.responseJSON.reason === 'otp_blocked') {
+                    // Long lockout: stop the timer, keep resend disabled, and keep the notice visible.
+                    clearInterval(otpInterval);
+                    $('#resend-button').prop('disabled', true);
+                    $('#resend-timer').text('@lang("site.resend_limit_reached")');
+                    showPersistentMessage('#otp-result', 'danger', xhr.responseJSON.message);
+                    return;
+                }
                 // Still within the server cooldown window: honor its timer (no attempt consumed).
                 startCountdown(xhr.responseJSON.retry_after);
                 showMessage('#otp-result', 'warning', xhr.responseJSON.message);

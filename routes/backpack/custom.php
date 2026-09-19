@@ -58,6 +58,8 @@ Route::group([
     Route::crud('customer', 'CustomerController');
     Route::post('customer/{id}/block', [\App\Http\Controllers\Admin\CustomerController::class, 'block'])->name('admin.customer.block');
     Route::post('customer/{id}/unblock', [\App\Http\Controllers\Admin\CustomerController::class, 'unblock'])->name('admin.customer.unblock');
+    Route::post('customer/reset-otp-by-phone', [\App\Http\Controllers\Admin\CustomerController::class, 'resetOtpByPhone'])->name('admin.customer.reset_otp_by_phone');
+    Route::post('customer/{id}/reset-otp', [\App\Http\Controllers\Admin\CustomerController::class, 'resetOtp'])->name('admin.customer.reset_otp');
     Route::crud('service', 'ServiceController');
 
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');

@@ -49,6 +49,7 @@ return [
     'resend_limit_reached' => 'Resend limit reached',
     'resend_limit_reached_message' => 'You have reached the maximum resend attempts. Please try again after an hour.',
     'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
+    'otp_blocked' => 'You have requested too many verification codes. Please try again after :hours hours or contact customer service.',
     'otp_invalid' => 'The verification code is incorrect.',
     'something_went_wrong' => 'Something went wrong, please try again.',
     'phone_required_or_expired' => 'Your verification session has expired, please try again.',

@@ -51,4 +51,19 @@ return [
     |
     */
     'request_cooldown' => env('OTP_REQUEST_COOLDOWN', 90),
+
+    /*
+    |--------------------------------------------------------------------------
+    | OTP send quota + lockout
+    |--------------------------------------------------------------------------
+    |
+    | A phone may only be sent "max_attempts" codes within "attempts_window"
+    | seconds. Exceeding that quota locks the phone out of new OTP requests for
+    | "block_duration" seconds. Staff can lift the lock manually (customer
+    | support). All values are seconds and safe to tune per-environment.
+    |
+    */
+    'max_attempts' => env('OTP_MAX_ATTEMPTS', 3),
+    'attempts_window' => env('OTP_ATTEMPTS_WINDOW', 600),
+    'block_duration' => env('OTP_BLOCK_DURATION', 86400),
 ];
