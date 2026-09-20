@@ -352,7 +352,9 @@ class DateChangeService
             'type' => 'deposit',
             'payment_gateway' => 'geidea',
             'payment_gateway_response' => null,
-            'platform' => $booking->booking_source ?? 'web',
+            // transactions.platform is ENUM('web','api','dashboard') — map the booking's source
+            // (which can be android/ios/ownerrez/…) to a valid value, else the insert truncates.
+            'platform' => $this->resolveTransactionPlatform($booking->booking_source),
         ]);
 
         $request->update(['transaction_id' => $transaction->id]);
@@ -365,6 +367,20 @@ class DateChangeService
         }
 
         throw ValidationException::withMessages(['payment' => __('api.payment_failed')]);
+    }
+
+    /**
+     * Map a booking's source to a value the transactions.platform ENUM('web','api','dashboard')
+     * accepts. Mobile app sources (android/ios) → 'api'; dashboard → 'dashboard'; anything else
+     * (web, ownerrez, airbnb, null, …) → 'web'.
+     */
+    private function resolveTransactionPlatform(?string $source): string
+    {
+        return match ($source) {
+            'android', 'ios', 'api' => 'api',
+            'dashboard' => 'dashboard',
+            default => 'web',
+        };
     }
 
     private function syncOwnerRez(Booking $booking): void

@@ -138,6 +138,22 @@ class BookingService
             ]);
         }
 
+        // 1c. حجب الوحدة الوجهة المحجوزة بطلب نقل وحدة مفتوح (بانتظار تأكيد العميل) —
+        // يمنع حجزاً/نقلاً آخر من أخذ الوحدة أثناء انتظار العميل لتأكيد النقل إليها.
+        $transferHoldExists = \App\Models\BookingUnitTransfer::query()
+            ->where('status', \App\Enums\UnitTransferStatus::PendingCustomer->value)
+            ->where('to_apartment_id', $apartment->id)
+            ->when($excludeBookingId, fn ($q) => $q->where('booking_id', '!=', $excludeBookingId))
+            ->where('check_in', '<', $checkOutDate)
+            ->where('check_out', '>', $checkInDate)
+            ->exists();
+
+        if ($transferHoldExists) {
+            throw ValidationException::withMessages([
+                'apartment_id' => __('api.already_booked'),
+            ]);
+        }
+
         // 2. التحقق من OwnerRez إذا كان العقار مربوطاً
         $mapping = $apartment->ownerrezMapping;
         if ($mapping && $mapping->check_availability_enabled && config('ownerrez.availability.enabled')) {

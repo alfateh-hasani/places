@@ -265,6 +265,29 @@ span.flatpickr-day.selected{
                         @endif
                     </div>
                 @endif
+
+                @if(!empty($unit_transfer))
+                    @php($ut = $unit_transfer)
+                    <div class="clear-both"></div>
+                    <div class="mt-4 p-4 rounded-lg" style="background-color:#111; border:1px solid #333;">
+                        <p class="text-sm mb-2">
+                            {{ __('booking.unit_transfer_offer') }}:
+                            <b>{{ optional($ut->toApartment)->name_ar ?? optional($ut->toApartment)->name_en }}</b>
+                        </p>
+                        @if($ut->direction === \App\Enums\TransferDirection::Refund)
+                            <p class="text-xs mb-3" style="color:#5cb85c;">{{ __('booking.unit_transfer_refund_note', ['new_price' => number_format((float) $ut->new_price, 2), 'amount' => number_format((float) $ut->refund_amount, 2)]) }}</p>
+                        @else
+                            <p class="text-xs mb-3" style="color:#f0ad4e;">{{ __('booking.unit_transfer_no_extra_charge') }}</p>
+                        @endif
+                        <button class="ut-confirm-btn py-2 px-4 rounded-md text-white ml-2" style="background:#28a745;" data-transfer-id="{{ $ut->id }}">
+                            {{ __('booking.unit_transfer_confirm') }}
+                        </button>
+                        <button class="ut-decline-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-transfer-id="{{ $ut->id }}">
+                            {{ __('booking.unit_transfer_decline') }}
+                        </button>
+                    </div>
+                @endif
+
                 <div class="clear-both"></div>
             </div>
             <div class="grid lg:grid-cols-5 gap-6 max-w-full">
@@ -971,6 +994,83 @@ $(document).ready(function() {
                     });
                 }
             });
+        });
+    });
+
+    // معالجة نقل الوحدة من العميل (تأكيد/رفض): نافذة تقدّم غير قابلة للإغلاق تمنع أي ضغط،
+    // وحارس يمنع الإرسال المزدوج، وإعادة تحميل دائمة (نجاحاً أو فشلاً) لمزامنة حالة الأزرار.
+    function utProcess(transferId, action) {
+        if (window._utBusy) { return; }
+        window._utBusy = true;
+
+        Swal.fire({
+            title: "{{ __('booking.unit_transfer_processing') }}",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: function () { Swal.showLoading(); }
+        });
+
+        $.ajax({
+            url: "{{ url('web-booking/unit-transfer') }}/" + transferId + "/" + action,
+            type: "POST",
+            headers: { "X-CSRF-TOKEN": dcCsrf },
+            success: function (res) {
+                Swal.fire({
+                    icon: 'success',
+                    title: "{{ __('booking.success') }}",
+                    text: res.message,
+                    allowOutsideClick: false,
+                    confirmButtonText: "{{ __('booking.ok') }}"
+                }).then(function () { window.location.reload(); });
+            },
+            error: function (xhr) {
+                // Reload on error too: the request state changed (failed/rejected/no longer
+                // pending), so re-sync the page instead of leaving stale buttons.
+                Swal.fire({
+                    icon: 'error',
+                    title: "{{ __('booking.error') }}",
+                    text: (xhr.responseJSON && xhr.responseJSON.message) || "{{ __('booking.error_message') }}",
+                    allowOutsideClick: false,
+                    confirmButtonText: "{{ __('booking.ok') }}"
+                }).then(function () { window.location.reload(); });
+            }
+        });
+    }
+
+    // تأكيد نقل الوحدة من العميل → يحرّر الوحدة القديمة ويحجز الجديدة
+    $(document).on('click', '.ut-confirm-btn', function () {
+        var transferId = $(this).data("transfer-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('booking.unit_transfer_confirm_text') }}",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "{{ __('booking.yes') }}",
+            cancelButtonText: "{{ __('booking.no') }}"
+        }).then(function (result) {
+            if (!result.isConfirmed) { return; }
+            utProcess(transferId, 'confirm');
+        });
+    });
+
+    // رفض نقل الوحدة من العميل → يحرّر الوحدة الوجهة ويبقى الحجز كما هو
+    $(document).on('click', '.ut-decline-btn', function () {
+        var transferId = $(this).data("transfer-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('booking.unit_transfer_decline_text') }}",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "{{ __('booking.yes') }}",
+            cancelButtonText: "{{ __('booking.no') }}"
+        }).then(function (result) {
+            if (!result.isConfirmed) { return; }
+            utProcess(transferId, 'decline');
         });
     });
 });

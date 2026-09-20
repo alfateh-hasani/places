@@ -49,6 +49,21 @@ return [
     'date_change_request_canceled' => 'Date-change request canceled',
     'account_blocked' => 'Your account has been blocked. Please contact support.',
     'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
+    'otp_blocked' => 'You have requested too many verification codes. Please try again after :hours hours or contact customer service.',
     'booking_created_successfully' => 'Booking created successfully',
     'ownerrez_sync_failed_retry' => 'OwnerRez sync failed and the booking was not saved. Please try again.',
+
+    // Unit transfer
+    'apartment_not_available' => 'The apartment is not available.',
+    'booking_cannot_be_transferred' => 'This booking cannot be transferred.',
+    'unit_transfer_resolve_date_change_first' => 'Resolve the open date-change request before transferring the unit.',
+    'unit_transfer_already_pending' => 'There is already a pending unit transfer for this booking.',
+    'unit_transfer_too_late' => 'The unit can no longer be transferred this close to check-in.',
+    'unit_transfer_same_apartment' => 'Choose a different apartment than the current one.',
+    'unit_transfer_not_pending' => 'This transfer is no longer awaiting confirmation.',
+    'unit_transfer_cannot_cancel' => 'This transfer can no longer be cancelled.',
+    'unit_transfer_cannot_retry' => 'Only a failed transfer can be retried.',
+    'unit_transfer_no_refund_due' => 'No refund is due for this transfer.',
+    'unit_transfer_confirmed' => 'Your booking has been moved to the new unit.',
+    'unit_transfer_declined' => 'The transfer request has been declined.',
 ];

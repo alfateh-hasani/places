@@ -5,6 +5,7 @@ use App\Enums\CustomerSource;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Otp\CustomerRegistrationOtp;
+use App\Services\Otp\OtpRequestThrottle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    use \App\Traits\ThrottlesOtpRequests;
+    public function __construct(private readonly OtpRequestThrottle $throttle) {}
 
     private function validatePhoneStartsWith5($phone)
     {
@@ -40,15 +41,20 @@ class LoginController extends Controller
 
             $customerExists = Customer::where('phone', $request->phone)->exists();
 
-            $retryAfter = $this->otpRetryAfter($request->phone);
-            if ($retryAfter > 0) {
-                $otpLog->warning('[Web] OTP request throttled', ['phone' => $request->phone, 'retry_after' => $retryAfter]);
+            $decision = $this->throttle->attempt($request->phone);
+            if ($decision->denied()) {
+                $otpLog->warning('[Web] OTP request throttled', [
+                    'phone' => $request->phone,
+                    'reason' => $decision->reason->name,
+                    'retry_after' => $decision->retryAfter,
+                ]);
                 return response()->json([
                     'status' => 'error',
-                    'message' => __('site.otp_cooldown', ['seconds' => $this->otpRetryAfterForHumans($retryAfter)]),
+                    'message' => __('site.'.$decision->reason->messageKey(), ['seconds' => $decision->retryAfterForHumans(), 'hours' => $decision->retryAfterInHours()]),
+                    'reason' => $decision->reason->messageKey(),
                     'phone' => $request->phone,
                     'has_account' => $customerExists,
-                    'retry_after' => $retryAfter,
+                    'retry_after' => $decision->retryAfter,
                 ], 429);
             }
 
@@ -60,14 +66,14 @@ class LoginController extends Controller
                 );
 
             if ($otp['status'] === Otp::OTP_SENT) {
-                $this->registerOtpSent($request->phone);
+                $this->throttle->recordSent($request->phone);
                 $otpLog->info('[Web] OTP sent successfully', ['phone' => $request->phone]);
                 return response()->json([
                     'status' => 'success',
                     'message' => __('site.otp_sent'),
                     'phone' => $request->phone,
                     'has_account' => $customerExists,
-                    'retry_after' => $this->otpCooldownSeconds(),
+                    'retry_after' => $this->throttle->cooldownSeconds(),
                 ], 200);
             }
 
@@ -94,13 +100,18 @@ class LoginController extends Controller
                 __('site.login_attributes')
             );
 
-            $retryAfter = $this->otpRetryAfter($request->phone);
-            if ($retryAfter > 0) {
-                $otpLog->warning('[Web] OTP resend throttled', ['phone' => $request->phone, 'retry_after' => $retryAfter]);
+            $decision = $this->throttle->attempt($request->phone);
+            if ($decision->denied()) {
+                $otpLog->warning('[Web] OTP resend throttled', [
+                    'phone' => $request->phone,
+                    'reason' => $decision->reason->name,
+                    'retry_after' => $decision->retryAfter,
+                ]);
                 return response()->json([
                     'status' => 'error',
-                    'message' => __('site.otp_cooldown', ['seconds' => $this->otpRetryAfterForHumans($retryAfter)]),
-                    'retry_after' => $retryAfter,
+                    'message' => __('site.'.$decision->reason->messageKey(), ['seconds' => $decision->retryAfterForHumans(), 'hours' => $decision->retryAfterInHours()]),
+                    'reason' => $decision->reason->messageKey(),
+                    'retry_after' => $decision->retryAfter,
                 ], 429);
             }
 
@@ -112,12 +123,12 @@ class LoginController extends Controller
                 );
 
             if ($otp['status'] === Otp::OTP_SENT) {
-                $this->registerOtpSent($request->phone);
+                $this->throttle->recordSent($request->phone);
                 $otpLog->info('[Web] OTP resent successfully', ['phone' => $request->phone]);
                 return response()->json([
                     'status' => 'success',
                     'message' => __('site.otp_resent'),
-                    'retry_after' => $this->otpCooldownSeconds(),
+                    'retry_after' => $this->throttle->cooldownSeconds(),
                 ], 200);
             }
 

@@ -90,6 +90,10 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
             Route::post('date-change/{request}/retry-payment', 'retryDateChangePayment')->name('date-change.retry-payment');
             Route::post('date-change/{request}/cancel', 'cancelDateChangeRequest')->name('date-change.cancel');
 
+            // Unit transfer — customer confirms / declines a staff-initiated move
+            Route::post('unit-transfer/{transfer}/confirm', 'confirmUnitTransfer')->name('unit-transfer.confirm');
+            Route::post('unit-transfer/{transfer}/decline', 'declineUnitTransfer')->name('unit-transfer.decline');
+
         });
     });
 

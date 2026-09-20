@@ -95,22 +95,43 @@ class LockAccessService
     }
 
     /**
-     * Revoke every active passcode for a booking. Idempotent — a booking
-     * with no stored passcode is left untouched.
+     * Revoke every active passcode for a booking, resolving the lock credentials from the
+     * booking's CURRENT apartment. Idempotent — a booking with no stored passcode is left
+     * untouched.
      *
      * @throws Throwable
      */
     public function revokeForBooking(Booking $booking, string $reason): void
     {
-        Cache::lock($this->lockKey($booking), 30)->block(10, function () use ($booking, $reason) {
+        $this->revokePasscodes($booking, $booking->apartment, $reason);
+    }
+
+    /**
+     * Revoke a booking's passcodes using an EXPLICIT apartment for the building/Sciener
+     * credentials. Required when moving a booking to another unit: the old passcode must be
+     * deleted with the SOURCE apartment's credentials while `booking.apartment_id` already
+     * points at the destination (buildings can have different Sciener accounts).
+     *
+     * @throws Throwable
+     */
+    public function revokeForBookingUsingApartment(Booking $booking, \App\Models\Apartment $credentialApartment, string $reason): void
+    {
+        $this->revokePasscodes($booking, $credentialApartment, $reason);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function revokePasscodes(Booking $booking, ?\App\Models\Apartment $credentialApartment, string $reason): void
+    {
+        Cache::lock($this->lockKey($booking), 30)->block(10, function () use ($booking, $credentialApartment, $reason) {
             $passcodes = $booking->smartLockPasscodes()->get();
 
             if ($passcodes->isEmpty()) {
                 return;
             }
 
-            $apartment = $booking->apartment;
-            $buildingCredentials = $apartment ? $this->credentials->forApartment($apartment) : null;
+            $buildingCredentials = $credentialApartment ? $this->credentials->forApartment($credentialApartment) : null;
 
             foreach ($passcodes as $passcode) {
                 try {
@@ -157,6 +178,31 @@ class LockAccessService
         } catch (Throwable $e) {
             Log::warning('Failed to revoke previous passcode during reschedule', [
                 'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $booking->refresh();
+        $booking->markPasscodeAsPending();
+
+        $this->provisionForBooking($booking->fresh());
+    }
+
+    /**
+     * Move a booking's passcode when it is transferred to a DIFFERENT apartment: revoke the
+     * old code on the SOURCE lock (using the source apartment's credentials, since the
+     * booking already points at the destination), then provision a fresh code on the new
+     * apartment's lock. A failed revoke is logged but never blocks provisioning of the new
+     * code; the retry command recovers a stuck old code.
+     */
+    public function moveForBooking(Booking $booking, \App\Models\Apartment $oldApartment): void
+    {
+        try {
+            $this->revokeForBookingUsingApartment($booking, $oldApartment, 'unit-transfer');
+        } catch (Throwable $e) {
+            Log::warning('Failed to revoke previous passcode during unit transfer', [
+                'booking_id' => $booking->id,
+                'old_apartment_id' => $oldApartment->id,
                 'error' => $e->getMessage(),
             ]);
         }

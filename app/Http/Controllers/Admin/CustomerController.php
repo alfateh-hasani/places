@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Customer;
+use App\Services\Otp\OtpRequestThrottle;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Backpack\CRUD\app\Library\Widget;
@@ -148,12 +149,29 @@ class CustomerController extends CrudController
             'searchLogic' => false,
         ]);
 
+        CRUD::addColumn([
+            'name' => 'otp_status',
+            'type' => 'custom_html',
+            'label' => __('cms.otp_status'),
+            'searchLogic' => false,
+            'orderable' => false,
+            'value' => fn ($entry) => app(OtpRequestThrottle::class)->isBlocked($entry->phone)
+                ? '<span style="background-color:#dc3545;color:#fff;padding:.35em .65em;border-radius:6px;font-weight:bold;">'.__('cms.otp_status_blocked').'</span>'
+                : '<span style="background-color:#28a745;color:#fff;padding:.35em .65em;border-radius:6px;font-weight:bold;">'.__('cms.otp_status_ok').'</span>',
+        ]);
+
         CRUD::addButtonFromView('line', 'block_customer', 'block_customer', 'end');
         CRUD::addButtonFromView('line', 'unblock_customer', 'unblock_customer', 'end');
+        CRUD::addButtonFromView('line', 'reset_otp_customer', 'reset_otp_customer', 'end');
 
         Widget::add([
             'type' => 'view',
             'view' => 'admin.customers.block_modal',
+        ])->to('before_content');
+
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.customers.reset_otp_by_phone',
         ])->to('before_content');
 
         // نفس نافذة التأكيد الأنيقة (SweetAlert) المستخدمة في شاشة طلبات تعديل التواريخ — بدل confirm() الافتراضي.
@@ -243,6 +261,65 @@ class CustomerController extends CrudController
         \Alert::success(__('cms.customer_unblocked_successfully'))->flash();
 
         return back();
+    }
+
+    /**
+     * رفع قفل إرسال رمز التحقق — يُستخدم عندما يتواصل العميل مع خدمة العملاء بعد تجاوز الحد
+     * المسموح لطلبات الرمز. يمسح فترة الانتظار والعدّاد والقفل معاً فيتمكن العميل من الطلب فوراً.
+     * منفصل تماماً عن حظر الحساب: لا يمسّ حالة العميل أو بياناته.
+     */
+    public function resetOtp($id, OtpRequestThrottle $throttle)
+    {
+        $customer = $this->authorizedCustomer($id);
+
+        $throttle->reset($customer->phone);
+
+        \Alert::success(__('cms.otp_reset_successfully'))->flash();
+
+        return back();
+    }
+
+    /**
+     * رفع قفل إرسال الرمز برقم الجوال مباشرة — يغطي الأرقام المحظورة التي لا تملك حساباً بعد
+     * (عميل جديد تجاوز الحد أثناء التسجيل، فلا يظهر في قائمة العملاء). يجب إدخال الرقم بنفس
+     * الصيغة الدولية التي أُرسل بها الطلب (مع رمز الدولة).
+     */
+    public function resetOtpByPhone(Request $request, OtpRequestThrottle $throttle)
+    {
+        if (! backpack_user()->can('customer.list')) {
+            abort(403, 'Unauthorized Access');
+        }
+
+        $request->validate(
+            ['phone' => 'required|string|max:20'],
+            ['phone.required' => __('cms.reset_otp_phone_required')],
+            ['phone' => __('cms.phone')],
+        );
+
+        $throttle->reset($this->normalizeOtpPhone((string) $request->input('dial_code'), (string) $request->input('phone')));
+
+        \Alert::success(__('cms.otp_reset_successfully'))->flash();
+
+        return back();
+    }
+
+    /**
+     * Build the E.164 phone the OTP throttle stored (e.g. +966774814450) from a
+     * country dial code + a national number. If staff pasted a full international
+     * number (starts with "+"), it is used as-is (digits only).
+     */
+    private function normalizeOtpPhone(string $dialCode, string $phone): string
+    {
+        $phone = trim((string) convertArabicNumbers($phone));
+
+        if (str_starts_with($phone, '+')) {
+            return '+' . preg_replace('/\D/', '', $phone);
+        }
+
+        $code = preg_replace('/\D/', '', $dialCode) ?: '966';
+        $national = ltrim(preg_replace('/\D/', '', $phone), '0');
+
+        return '+' . $code . $national;
     }
 
     private function authorizedCustomer($id): Customer

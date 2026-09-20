@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BookingCancellationController;
 use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\BookingUnitTransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -57,6 +58,8 @@ Route::group([
     Route::crud('customer', 'CustomerController');
     Route::post('customer/{id}/block', [\App\Http\Controllers\Admin\CustomerController::class, 'block'])->name('admin.customer.block');
     Route::post('customer/{id}/unblock', [\App\Http\Controllers\Admin\CustomerController::class, 'unblock'])->name('admin.customer.unblock');
+    Route::post('customer/reset-otp-by-phone', [\App\Http\Controllers\Admin\CustomerController::class, 'resetOtpByPhone'])->name('admin.customer.reset_otp_by_phone');
+    Route::post('customer/{id}/reset-otp', [\App\Http\Controllers\Admin\CustomerController::class, 'resetOtp'])->name('admin.customer.reset_otp');
     Route::crud('service', 'ServiceController');
 
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');
@@ -114,6 +117,17 @@ Route::group([
     Route::get('direct-booking/customers', [\App\Http\Controllers\Admin\DirectBookingController::class, 'customerSearch'])->name('admin.direct-booking.customers');
     Route::post('direct-booking/price-preview', [\App\Http\Controllers\Admin\DirectBookingController::class, 'pricePreview'])->name('admin.direct-booking.price-preview');
     Route::post('direct-booking', [\App\Http\Controllers\Admin\DirectBookingController::class, 'store'])->name('admin.direct-booking.store');
+
+    // نقل الحجز إلى وحدة أخرى (يبدأه الموظف، ويؤكده العميل) — بلا صلاحية خاصة:
+    // متاح لكل من يستطيع عرض الحجوزات. راجع BookingUnitTransferController.
+    Route::get('booking/{id}/transfer-unit', [BookingUnitTransferController::class, 'create'])->name('admin.booking.transfer-unit.create');
+    Route::post('booking/{id}/transfer-unit/price-preview', [BookingUnitTransferController::class, 'pricePreview'])->name('admin.booking.transfer-unit.price-preview');
+    Route::post('booking/{id}/transfer-unit', [BookingUnitTransferController::class, 'store'])->name('admin.booking.transfer-unit.store');
+    Route::post('unit-transfer/{transfer}/cancel', [BookingUnitTransferController::class, 'cancel'])->name('admin.unit-transfer.cancel');
+    Route::post('unit-transfer/{transfer}/retry', [BookingUnitTransferController::class, 'retry'])->name('admin.unit-transfer.retry');
+    Route::post('unit-transfer/{transfer}/refund', [BookingUnitTransferController::class, 'refund'])->name('admin.unit-transfer.refund');
+    Route::post('unit-transfer/{transfer}/mark-ownerrez-cancelled', [BookingUnitTransferController::class, 'markOwnerRezCancelled'])->name('admin.unit-transfer.mark-ownerrez-cancelled');
+    Route::post('unit-transfer/{transfer}/retry-park', [BookingUnitTransferController::class, 'retryPark'])->name('admin.unit-transfer.retry-park');
 
     // تقويم الحجوزات
     Route::get('apartment/{id}/calendar', [\App\Http\Controllers\Admin\CalenderController::class, 'showCalendar']);
