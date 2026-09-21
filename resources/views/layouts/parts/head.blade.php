@@ -83,6 +83,17 @@
         color: white !important;
       }
 
+      /* Guarantee a consistent 10px gutter on every device: overrides the
+         Tailwind Play CDN's zero-padding .container, which otherwise wins the
+         cascade race on some viewports and makes content touch the screen edge. */
+      .container {
+        max-width: calc(100% - 20px) !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
       section.app {
  
     background: #171515 !important;
