@@ -39,6 +39,10 @@ class CheckBookingsWithoutPasscodes extends Command
 
         // البحث عن الحجوزات المعتمدة التي تحتاج إلى باس كود
         $bookingsNeedingPasscodes = Booking::where('status', 'approved')
+            // تخطّي الحجوزات بدون عميل (سجلات قديمة) — تسجيل فشل المحاولة يتطلب customer_id غير فارغ
+            ->whereNotNull('customer_id')
+            // تخطّي الإقامات المنتهية — لا داعي لتوليد كود لإقامة انقضت
+            ->whereDate('check_out', '>=', now())
             ->where(function($query) {
                 $query->where('passcode_status', '!=', 'generated')
                       ->orWhereNull('passcode_status');
