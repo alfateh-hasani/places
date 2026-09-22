@@ -12,7 +12,7 @@
             {{__('site.quick_links')}}
         </h6> 
         <ul class="mt-4 lg:mt-10 grid grid-cols-2 gap-2 max-w-full mx-0">
-          <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('home')}}">{{__('site.home')}}</a li>
+          <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('home')}}">{{__('site.home')}}</a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','privacy-policy')}}"> {{__('site.privacy-policy')}}</a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','terms-and-conditions')}}"> {{__('site.terms')}}  </a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','contact')}}">{{__('site.blogs')}}</a></li>

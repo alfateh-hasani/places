@@ -219,7 +219,10 @@ $(document).ready(function() {
         locale: "ar",
         time_24hr: true,
         weekNumbers: false,
-        static: true,
+        // static:false lets flatpickr append the calendar to <body> and
+        // auto-position it within the viewport (so the checkout field near the
+        // screen edge no longer opens off-screen).
+        static: false,
         enableTime: false,
         noCalendar: false,
         inline: false,

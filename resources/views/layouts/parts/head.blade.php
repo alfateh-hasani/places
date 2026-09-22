@@ -83,15 +83,58 @@
         color: white !important;
       }
 
-      /* Guarantee a consistent 10px gutter on every device: overrides the
+      /* Guarantee a consistent side gutter on every device: overrides the
          Tailwind Play CDN's zero-padding .container, which otherwise wins the
-         cascade race on some viewports and makes content touch the screen edge. */
+         cascade race on some viewports and makes content touch the screen edge.
+         Uses inner padding (border-box) instead of a calc() max-width so the
+         gutter is identical on every device and never collapses to zero. */
       .container {
-        max-width: calc(100% - 20px) !important;
+        width: 100% !important;
+        max-width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+      @media (min-width: 768px) {
+        .container {
+          padding-left: 24px !important;
+          padding-right: 24px !important;
+        }
+      }
+      @media (min-width: 1280px) {
+        .container {
+          padding-left: 32px !important;
+          padding-right: 32px !important;
+        }
+      }
+
+      /* Scroll position indicator (thumb) stays visible while the scrollbar
+         track/gutter is fully transparent. The page scrollbar runs over both
+         the dark header/sections and the light content, so the thumb uses the
+         brand accent (#f7bb8e) — it reads clearly on light AND dark and looks
+         intentional. A transparent border padded via background-clip keeps the
+         pill slim with breathing room from the edge. */
+      * {
+        scrollbar-width: thin;                        /* Firefox */
+        scrollbar-color: #f7bb8e transparent;         /* thumb, track */
+      }
+      *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+        background: transparent;
+      }
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      *::-webkit-scrollbar-thumb {
+        background-color: #f7bb8e;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        border-radius: 999px;
+      }
+      *::-webkit-scrollbar-thumb:hover {
+        background-color: #f0a86e;
       }
 
       section.app {

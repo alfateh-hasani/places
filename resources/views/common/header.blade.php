@@ -121,14 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
           <span class="font-normal text-base text-black inline-block py-1.5">
             @lang('site.hello'), {{ Auth::guard('customer')->user()->first_name }}
           </span>
-          <ul class="absolute p-3  border border-border rounded-lg">
+          <ul class="absolute top-full mt-2 left-0 z-30 p-3 min-w-[200px] bg-[#fff] shadow-lg border border-border rounded-lg">
             <li>
               <a href="{{ route('customer.account') }}" class="block p-2 font-normal text-base text-black border-b border-border">
                 @lang('site.account')
               </a>
             </li>
             <li>
-              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block p-2 font-normal text-base text-black border-b border-border">
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block p-2 font-normal text-base text-black">
                 @lang('site.logout')
               </a>
               <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
@@ -138,26 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
           </ul>
         @else
-          {{-- Show login/signup button if not logged in --}}
-          <button data-src="#popup-5" data-fancybox dont-close-click-outside class="rounded-lg py-1.5 px-4 bg-gri font-normal text-base  ">
-            <img src="{{ asset('assets/img/login-header3.svg') }}" class="inline-block" alt="Login" />
+          {{-- Not logged in: a single button opening the phone-input modal, which
+               then decides login vs. sign-up. No hover dropdown (it only repeated
+               the same modal and overflowed the viewport). --}}
+          <button type="button" data-src="#popup-5" data-fancybox dont-close-click-outside class="rounded-lg py-1.5 px-4 bg-gri font-normal text-base">
+            <img src="{{ asset('assets/img/login-header3.svg') }}" class="inline-block" alt="" />
             @lang('site.login_or_signup')
           </button>
-          <ul class="absolute p-3  border border-border rounded-lg" style="min-width: 190px">
-            <li>
-              <button data-src="#popup-5" data-fancybox dont-close-click-outside class="block p-2 font-normal text-base text-black border-b border-border">
-                <img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" alt="Login" />
-                @lang('site.login')
-              </a>
-            </li>
-            <li>
-              <button data-src="#popup-5" data-fancybox dont-close-click-outside class="block p-2 font-normal text-base text-black border-b border-border">
-                <img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="Login" />
-                @lang('site.sign_up_new')
-              </a>
-            </li>
-            
-          </ul>
         @endauth
       </div>
 
@@ -187,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 right-menu">
       <button class="absolute ltr:right-5 rtl:left-5 top-5">
-          <svg height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg') }}" id="fi_2734822"><g id="Layer_22" data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
+          <svg height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
       <h6 class="font-semibold text-xl text-black mb-2">
@@ -211,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 left-menu">
       <button class="absolute ltr:right-5 rtl:left-5 top-5">
-          <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg') }}" id="fi_2734822"><g id="Layer_22" data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
+          <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
       @auth('customer')
