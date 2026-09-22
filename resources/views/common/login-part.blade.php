@@ -332,7 +332,8 @@ $('#popup-7 form').validate({
             success: function(response) {
                 HoldOn.close();
                 showMessage('#registration-result', 'success', '{{ __('site.created_in_successfully')}}');
-                window.location.href = response.redirect;
+                // Stay on the current page after registering (modal-based flow).
+                window.location.reload();
             },
             error: function(xhr) {
                 handleAjaxError(xhr,   '#registration-result');
@@ -491,7 +492,9 @@ $('#otp-form').on('submit', function (e) {
                     openRegistrationPopup(response.token);
                 } else {
                     showMessage('#otp-result', 'success', '{{ __('site.logged_in_successfully')}}');
-                    window.location.href = response.redirect || '/';
+                    // Login happens in a modal on the current page — return the user to
+                    // where they were (e.g. the apartment they were viewing), not home.
+                    window.location.reload();
                 }
             },
             error: function (xhr) {

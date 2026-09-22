@@ -27,6 +27,8 @@ return [
     'favorite_attached' => 'Apartment added to favorites',
     'favorite_added' => 'Apartment added to favorites',
     'favorite_removed' => 'Apartment removed from favorites',
+    'favorite_failed' => 'Something went wrong. Please try again.',
+    'remove_from_favorites' => 'Remove from favorites',
     'specifications' => 'Specifications',
     'total_reviews' => 'Total Reviews',
     'location' => 'Location',

@@ -1,20 +1,24 @@
-<div class="rounded-xl overflow-hidden border border-border">
+<div class="rounded-xl overflow-hidden border border-border" data-wishlist-card>
     <div class="relative">
         <div class="slider slider-checkout">
             @foreach ($apartment->getMedia('image') as $image)
                 <a href="{{$apartment->link}}">
-                    <img 
-                        class="object-cover w-full" 
-                        src="{{ $image->getUrl('grid') }}" 
-                        alt="@lang('apartment.apartment_name_default')"
+                    <img
+                        class="object-cover w-full"
+                        src="{{ $image->getUrl('grid') }}"
+                        alt="{{ $apartment->ml('name') }}"
                     />
                 </a>
             @endforeach
         </div>
 
-        <button 
+        <button
+            type="button"
+            data-wishlist-toggle
+            data-apartment-id="{{ $apartment->id }}"
+            aria-pressed="true"
+            aria-label="@lang('apartment.remove_from_favorites')"
             class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite favorite-active ease-in-out duration-300">
-         
         </button>
     </div>
 

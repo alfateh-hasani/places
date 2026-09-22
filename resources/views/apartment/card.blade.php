@@ -12,9 +12,13 @@
             @endforeach
         </div>
 
-        <button 
-            class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite {{ $apartment->is_favorite ? 'favorite-active' : '' }} ease-in-out duration-300" onclick="toggleFavorite({{ $apartment->id }})">
-         
+        <button
+            type="button"
+            data-wishlist-toggle
+            data-apartment-id="{{ $apartment->id }}"
+            aria-pressed="{{ $apartment->is_favorite ? 'true' : 'false' }}"
+            aria-label="@lang('apartment.favorite')"
+            class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite {{ $apartment->is_favorite ? 'favorite-active' : '' }} ease-in-out duration-300">
         </button>
     </div>
 

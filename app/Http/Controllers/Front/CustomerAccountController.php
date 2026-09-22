@@ -84,25 +84,6 @@ class CustomerAccountController extends Controller
     }
 
 
-    //favorite
-
-    public function favorite()
-    {
-        $customer = Auth::guard('customer')->user();
-        $favoriteApartments = $customer->favoriteApartments;
-          $data = [
-            'favorites' => $favoriteApartments,
-            'customer' => $customer,
-            'total_favorites' => $favoriteApartments->count(),
-          ];
-
-        $seo_title = __('customer.favorite') . ' | ' . __('site.seo_title');
-        $seo_description = __('customer.favorite');
-        $url = route('customer.favorite');
-        $this->generateSeo($seo_title, $seo_description, $url);
-        return view('customer.favorite', $data);
-    }
-
     public function notifications()
     {
         $customer = Auth::guard('customer')->user();
@@ -172,27 +153,6 @@ class CustomerAccountController extends Controller
     }
 
 
-    //toggleFavorite
-    public function toggleFavorite(Request $request)
-    {
-        $customer = Auth::guard('customer')->user();
-        $apartment = Apartment::find($request->apartment_id);
-    
-        if ($apartment) {
-            $isFavorited = $customer->favoriteApartments()->toggle($apartment->id);
-            $action = count($isFavorited['attached']) > 0 ? 'added' : 'removed';
-    
-            return response()->json([
-                'success' => true,
-                'action' => $action,
-                'message' => __('apartment.favorite_' . $action)
-            ]);
-        }
-    
-        return response()->json(['success' => false, 'message' => __('apartment.favorite_failed')], 404);
-    }
-    
-    
 
     //addReview
     public function addReview(Request $request)

@@ -27,6 +27,8 @@ return [
     'favorite_attached' => 'تمت إضافة الشقة إلى المفضلة',
     'favorite_added' => 'تمت إضافة الشقة إلى المفضلة',
     'favorite_removed' => 'تمت إزالة الشقة من المفضلة',
+    'favorite_failed' => 'حدث خطأ ما. الرجاء المحاولة مرة أخرى.',
+    'remove_from_favorites' => 'إزالة من المفضلة',
     'specifications' => 'المواصفات',
     'total_reviews' => 'إجمالي التقييمات',
     'location' => 'الموقع',

@@ -8,6 +8,7 @@ use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\PageController;
 use App\Http\Controllers\Front\RobotsController;
 use App\Http\Controllers\Front\SitemapController;
+use App\Http\Controllers\Front\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/apartments/{apartment}/unit.ics', [ApartmentsICSController::class, 'generateICS'])->name('apartments.ics');
@@ -61,12 +62,16 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
             Route::post('account-update', 'update')->name('update');
             Route::get('get-booking', 'getBooking')->name('booking');
             Route::get('booking-details/{number_of_booking}', 'BookingDetails')->name('booking.details');
-            Route::get('favorite', 'favorite')->name('favorite');
             Route::get('notifications', 'notifications')->name('notifications');
-            Route::post('toggle-favorite', 'toggleFavorite')->name('toggle.favorite');
             Route::post('post-review', 'addReview')->name('post.review');
             Route::get('booking-details/{number_of_booking}/print', 'printBookingDetails')->name('booking.print_details');
 
+        });
+
+        // Wishlist (favorites) — own controller/service so favorites concerns stay isolated.
+        Route::controller(WishlistController::class)->name('customer.')->prefix('customer')->group(function () {
+            Route::get('favorite', 'index')->name('favorite');
+            Route::post('toggle-favorite', 'toggle')->name('toggle.favorite');
         });
         Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
             Route::post('start-booking/{apartment_id}', 'determineBookingStatus')->name('determine');

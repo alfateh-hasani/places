@@ -37,18 +37,24 @@
                 </span>
             </button>
             
-            <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})"
-                class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto 
-                lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
-                @if (!$apartment->is_favorite)
-                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
-                @else
-                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favorite-active.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
-                @endif
+            <button type="button"
+                data-wishlist-toggle
+                data-apartment-id="{{ $apartment->id }}"
+                aria-pressed="{{ $apartment->is_favorite ? 'true' : 'false' }}"
+                aria-label="@lang('apartment.favorite')"
+                class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto
+                lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300 {{ $apartment->is_favorite ? 'favorite-active' : '' }}">
+                <img
+                    data-wishlist-icon
+                    data-icon-active="{{ asset('assets/img/favorite-active.svg') }}"
+                    data-icon-inactive="{{ asset('assets/img/favoritee.svg') }}"
+                    src="{{ $apartment->is_favorite ? asset('assets/img/favorite-active.svg') : asset('assets/img/favoritee.svg') }}"
+                    alt=""
+                    class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 <span class="hidden lg:inline">
                     {{ __('apartment.favorite') }}
                 </span>
-            </a>
+            </button>
             
             
         </div>

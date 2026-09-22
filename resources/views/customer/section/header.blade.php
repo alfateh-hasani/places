@@ -49,7 +49,7 @@
                 </svg>
             </div>
             <p class="float-right rtl:float-left font-normal text-2xl py-1">
-                {{$customer->favoriteApartments->count()}}
+                <span data-wishlist-count>{{$customer->favoriteApartments->count()}}</span>
             </p>
             <div class="clear-both"></div>
         </div>
