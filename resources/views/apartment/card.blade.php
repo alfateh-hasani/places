@@ -23,12 +23,10 @@
     </div>
 
     <a href="{{$apartment->link}}" class="pt-3 px-4 pb-4 block">
-        <div class="flex items-center">
-            <img src="{{ asset('assets/img/start-new-2.svg') }}" class="mr-2 rtl:ml-2 rtl:mr-0 h-4" />
-            <p class="font-normal text-xs text-reviews">
-                {{ $apartment->total_ratings }} ({{ $apartment->reviews->count() }}) @lang('apartment.reviews')
-            </p>
-        </div>
+        @include('partials.star-rating', [
+            'rating' => $apartment->total_ratings,
+            'count' => $apartment->reviews->count(),
+        ])
 
         <h3 class="font-semibold text-sm text-title my-2">
             {{ $apartment->ml('name')   }}

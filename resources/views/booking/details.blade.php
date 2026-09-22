@@ -214,7 +214,13 @@ span.flatpickr-day.selected{
                     @endif
                     
 
-                    @if (!$has_review and $booking->status == 'finished')
+                    @php
+                        $stayCompleted = $booking->status === \App\Enums\BookingStatus::Approved->value
+                            && $booking->payment_status === 'paid'
+                            && $booking->check_out->isPast();
+                    @endphp
+
+                    @if (!$has_review && $stayCompleted)
                         <button data-src="#popup-2" data-fancybox type="button" 
                                 class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
                             <!-- Replace the comment below with the SVG icon -->
