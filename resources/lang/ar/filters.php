@@ -16,5 +16,8 @@ return [
     'beds_label' => 'الأسرة',
     'bathrooms_label' => 'الحمامات',
     'beds' => 'الأسرة',
+    'building' => 'المبنى',
     'apply_filters' => 'تطبيق الفلاتر',
+    'clear_filters' => 'مسح الفلاتر',
+    'rate_and_up' => 'فأعلى',
 ];

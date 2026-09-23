@@ -89,6 +89,8 @@ return [
     'facebook' => 'Facebook',
     'X' => 'X',
     'link_copied' => 'Link Copied',
+    'no_results' => 'No available units',
+    'no_results_hint' => 'Try adjusting your dates or changing the filters to find available units.',
     'no_reviews' => 'No Reviews',
     'show_more' => 'Show More',
     'show_less' => 'Show Less',

@@ -140,28 +140,46 @@ class ApartmentController extends Controller
 
     public function search(Request $request)
     {
-        // التواريخ إن وجدت
-        $checkIn = $request->filled('check_in')
-            ? Carbon::parse($request->check_in)
-            : Carbon::today();
-        $checkOut = $request->filled('check_out')
-            ? Carbon::parse($request->check_out)
-            : Carbon::today()->addDay();
+        // Parse the requested window defensively — a malformed/mangled date
+        // (e.g. a corrupt "10/09/0191") must fall back to today→tomorrow instead
+        // of producing a ~year-long span (huge prices) and broken availability.
+        $checkIn = $this->safeSearchDate($request->check_in, Carbon::today());
+        $checkOut = $this->safeSearchDate($request->check_out, $checkIn->copy()->addDay());
+
+        if ($checkIn->lt(Carbon::today())) {
+            $checkIn = Carbon::today();
+        }
+        if ($checkOut->lte($checkIn)) {
+            $checkOut = $checkIn->copy()->addDay();
+        }
+
+        // Price is filtered in PHP against the same per-night price shown on the
+        // card (dynamic day/seasonal pricing), so the raw `price` column isn't used.
+        $priceMin = is_numeric($request->price_min) ? (float) $request->price_min : null;
+        $priceMax = is_numeric($request->price_max) ? (float) $request->price_max : null;
 
         // بناء الفلاتر الأصلي
         $filters = array_filter([
             'city_id' => $request->city_id,
-            'check_out' => $request->check_out,
-            'check_in' => $request->check_in,
-            'adults_count' => $request->adults_count,
-            'children_count' => $request->children_count,
-            'max_price' => $request->price_range,
-            'max_area' => $request->area_range,
+            'adults_count' => $request->adults,
+            'children_count' => $request->children,
+            'min_area' => $request->area_min,
+            'max_area' => $request->area_max,
             'num_rooms' => $request->rooms,
             'num_beds' => $request->beds,
+            'rate' => $request->rate,
+            'building_id' => $request->building_id,
         ], fn ($v) => ! is_null($v) && $v !== '');
 
         $query = $this->apartment::query()->where('is_active', true);
+
+        // Always show only units available for the requested window (defaults to
+        // today→tomorrow), so booked units don't appear. Canceled bookings don't block.
+        $query->whereDoesntHave('bookings', function ($q) use ($checkIn, $checkOut) {
+            $q->where('check_in', '<', $checkOut->format('Y-m-d'))
+                ->where('check_out', '>', $checkIn->format('Y-m-d'))
+                ->whereNotIn('status', [\App\Enums\BookingStatus::Canceled->value]);
+        });
 
         foreach ($filters as $key => $val) {
             if ($key === 'city_id') {
@@ -174,8 +192,28 @@ class ApartmentController extends Controller
 
                 continue;
             }
-            if ($key === 'max_price') {
-                $query->where('price', '<=', $val);
+            if (in_array($key, ['adults_count', 'children_count'])) {
+                $query->where($key, '>=', (int) $val);
+
+                continue;
+            }
+            if ($key === 'rate') {
+                // Match the rating shown on the card, which is number_format(AVG, 1).
+                // Rounding here (not RateFilter, shared with the mobile API) keeps the
+                // web filter consistent with the displayed value: a unit shown as "4.0"
+                // (avg 3.95+) passes the "4 & up" filter.
+                $rate = is_array($val) ? (float) min($val) : (float) $val;
+                $query->whereIn('id', function ($sub) use ($rate) {
+                    $sub->select('apartment_id')
+                        ->from('reviews')
+                        ->groupBy('apartment_id')
+                        ->havingRaw('ROUND(AVG(rating), 1) >= ?', [$rate]);
+                });
+
+                continue;
+            }
+            if ($key === 'min_area') {
+                $query->where('area', '>=', $val);
 
                 continue;
             }
@@ -184,28 +222,55 @@ class ApartmentController extends Controller
 
                 continue;
             }
-            if ($key === 'check_in' || $key === 'check_out') {
-                if (! isset($filters['check_in'], $filters['check_out'])) {
-                    continue;
-                }
-                $ci = Carbon::parse($filters['check_in'])->format('Y-m-d');
-                $co = Carbon::parse($filters['check_out'])->format('Y-m-d');
-                $query->whereDoesntHave('bookings', fn ($q) => $q->where('check_in', '<', $co)->where('check_out', '>', $ci)
-                );
-                break;
-            }
-
             $handler = FilterFactory::make($key);
             $query = $handler->apply($query, $val);
         }
 
-        $apartments = $query->latest()->paginate(8);
+        // Exclude OwnerRez-managed units booked for the window. Their availability
+        // lives in the OwnerRez calendar (cached), not the local bookings table, so
+        // the SQL filter above can't see it.
+        $matched = $query->with('ownerrezMapping')->latest()->get();
 
-        // دمج التسعير الجديد في كل شقة
-        $apartments->getCollection()->transform(fn (Apartment $apt) => tap($apt)->offsetSet(
+        // Price each matched unit for the requested window up front, so the price
+        // filter and the card display use the SAME per-night price.
+        $matched->each(fn (Apartment $apt) => $apt->offsetSet(
             'priceInfo',
             $this->pricing->calculate($apt, $checkIn, $checkOut)
         ));
+
+        if (config('ownerrez.availability.enabled')) {
+            $ci = $checkIn->format('Y-m-d');
+            $co = $checkOut->format('Y-m-d');
+            $matched = $matched->reject(function (Apartment $apt) use ($ci, $co) {
+                $mapping = $apt->ownerrezMapping;
+                if (! $mapping) {
+                    return false;
+                }
+
+                return $this->ownerRezSync->getCalendarBookings($mapping->ownerrez_property_id)
+                    ->contains(fn ($b) => ($b['arrival'] ?? '') < $co && ($b['departure'] ?? '') > $ci);
+            });
+        }
+
+        // Filter by the per-night price actually shown on the card (dynamic pricing),
+        // not the raw `price` column — so "min 840" never shows an 830 unit.
+        if ($priceMin !== null) {
+            $matched = $matched->filter(fn (Apartment $apt) => ($apt->priceInfo['one_night_price'] ?? $apt->price) >= $priceMin);
+        }
+        if ($priceMax !== null) {
+            $matched = $matched->filter(fn (Apartment $apt) => ($apt->priceInfo['one_night_price'] ?? $apt->price) <= $priceMax);
+        }
+        $matched = $matched->values();
+
+        $perPage = 8;
+        $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $apartments = new \Illuminate\Pagination\LengthAwarePaginator(
+            $matched->forPage($page, $perPage)->values(),
+            $matched->count(),
+            $perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath(), 'query' => $request->except('page')]
+        );
 
         $data = [
             'cities' => City::orderBy('sort_order')->withCount('apartments')->get(),
@@ -231,7 +296,38 @@ class ApartmentController extends Controller
             'max_area' => $this->apartment->max('area') ?? 0,
             'min_area' => $this->apartment->min('area') ?? 0,
             'bathrooms_options' => $this->apartment->pluck('bathrooms_count')->unique()->sort()->values()->toArray(),
+            'buildings_options' => Building::when(
+                request('city_id'),
+                fn ($q, $cityId) => $q->where('city_id', $cityId)
+            )
+                ->orderBy('name_'.app()->getLocale())
+                ->get()
+                ->mapWithKeys(fn (Building $b) => [$b->id => $b->ml('name')])
+                ->toArray(),
         ];
+    }
+
+    /**
+     * Parse a user-supplied search date, rejecting empty/unparseable/mangled
+     * values (e.g. a corrupt year) and returning $default instead.
+     */
+    private function safeSearchDate($value, Carbon $default): Carbon
+    {
+        if (empty($value)) {
+            return $default;
+        }
+
+        try {
+            $date = Carbon::parse($value);
+        } catch (\Throwable $e) {
+            return $default;
+        }
+
+        if ($date->year < 2000 || $date->year > 2100) {
+            return $default;
+        }
+
+        return $date;
     }
 
     private function generateSeo($seo_title, $seo_description, $url, $image = null)

@@ -38,19 +38,19 @@
         <ul class="my-2.5 flex gap-2 flex-wrap">
             <li 
                 class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/bed-new.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/apartment.svg') }}"
                 />
-                {{ $apartment->num_rooms }}  
+                {{ $apartment->num_rooms }}
             </li>
             <li 
                 class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/path-new.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/bed-new.svg') }}"
                 />
-                {{ $apartment->num_beds }}  
+                {{ $apartment->num_beds }}
             </li>
             <li 
                 class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
@@ -62,10 +62,19 @@
             </li>
         </ul>
 
+        @php
+            // Search results filter by the per-night price, so the card there must
+            // show that same figure. Everywhere else (home, building pages) keeps the
+            // original total. Callers opt in via ['showNightlyPrice' => true].
+            $displayPrice = ($showNightlyPrice ?? false)
+                ? ($apartment->priceInfo['one_night_price'] ?? $apartment->price)
+                : ($apartment->priceInfo['total'] ?? $apartment->price);
+        @endphp
+
         <div class="flex items-center">
-            
+
             <p class="font-bold text-sm text-price">
-                {{ $apartment->priceInfo['total'] ?? $apartment->price }} <span class="currency"> @lang('apartment.currency')</span> /
+                {{ $displayPrice }} <span class="currency"> @lang('apartment.currency')</span> /
             </p>
 
             <p class="font-normal text-sm text-reviews ml-1 rtl:mr-1 rtl:ml-0">@lang('apartment.night')</p>
