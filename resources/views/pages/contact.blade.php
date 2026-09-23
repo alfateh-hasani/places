@@ -1,10 +1,24 @@
 @extends('layouts.master')
 @push('css')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
-        iframe {
+        #map iframe {
             width: 100%;
             height: 100%;
             border: 0;
+        }
+        /* Keep validation messages below their field so the form layout never breaks. */
+        #contact-us span.contact-error {
+            display: block;
+            color: #ef4444;
+            font-size: 0.8rem;
+            margin-top: -0.5rem;
+            margin-bottom: 0.75rem;
+            text-align: start;
+        }
+        #contact-us input.contact-error,
+        #contact-us textarea.contact-error {
+            border-color: #ef4444;
         }
         </style>
 @endpush
@@ -54,11 +68,15 @@
                 <form id="contact-us" method="POST">
                     @csrf
                     <div class="lg:grid lg:grid-cols-2 lg:gap-4 w-full mx-0">
-                        <input name="name" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="name" placeholder="{{__('site.name')}}" />
-                        <input name="phone" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="phone" placeholder="{{__('site.phone')}}" />
+                        <div>
+                            <input name="name" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="text" placeholder="{{__('site.name')}}" />
+                        </div>
+                        <div>
+                            <input name="phone" dir="ltr" style="direction:ltr; text-align:left;" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="tel" inputmode="tel" placeholder="{{__('site.phone')}}" />
+                        </div>
                     </div>
                     <input  name="email" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="email" placeholder="{{__('site.email')}}" />
-                    <textarea  name="message" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 h-52 px-4 pt-4 resize-none" placeholder="{{__('site.message')}}"></textarea>
+                    <textarea  name="message" class="w-full mb-4 border border-border bg-footer rounded-lg h-52 px-4 pt-4 resize-none" placeholder="{{__('site.message')}}"></textarea>
                     
                     
                     <button class="bg-price py-4 px-16 font-normal text-sm text-white rounded-full">
@@ -78,9 +96,32 @@
         {{__('site.location')}}
     </p>
  
+    @php
+        // settings.map may hold: a full <iframe> embed, a Google Maps URL (from which we
+        // derive a keyless embed via its @lat,lng), or be empty. Handle each so the map
+        // always renders as an embedded iframe when coordinates are available.
+        $mapEmbedSrc = null;
+        if (! empty($map) && ! str_contains($map, '<iframe') && preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $map, $mapCoords)) {
+            $mapEmbedSrc = 'https://www.google.com/maps?q='.$mapCoords[1].','.$mapCoords[2].'&z=16&hl='.app()->getLocale().'&output=embed';
+        }
+    @endphp
+
     <div class="border border-border rounded-xl p-4">
-        <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map">
-            {!! $map !!}
+        <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map" aria-label="{{__('site.location')}}">
+            @if(! empty($map) && str_contains($map, '<iframe'))
+                {!! $map !!}
+            @elseif($mapEmbedSrc)
+                <iframe src="{{ $mapEmbedSrc }}" width="100%" height="100%" style="border:0;"
+                        loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                        title="{{__('site.location')}}"></iframe>
+            @else
+                <a href="{{ ! empty($map) ? $map : 'https://www.google.com/maps/search/?api=1&query='.urlencode($address) }}"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-2 font-semibold text-price hover:underline ease-in-out duration-300">
+                    <img class="w-5 h-5" src="{{ asset('assets/img/address.svg') }}" alt="" />
+                    {{ __('site.view_on_map') }}
+                </a>
+            @endif
         </div>
     </div>
 </section>
@@ -89,17 +130,30 @@
 
 @push('js')
 @include('customer.section.script-form')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     $(document).ready(function() {
+        // Phone may contain only digits and an optional leading "+".
+        $.validator.addMethod("phoneChars", function (value, element) {
+            return this.optional(element) || /^\+?[0-9]+$/.test(value);
+        }, "{{__('customer.phone_digits')}}");
+
         $("#contact-us").validate({
+            errorElement: "span",
+            errorClass: "contact-error",
             rules: {
                 name: "required",
                 phone: {
                     required: true,
+                    phoneChars: true,
                     minlength: 9
                 },
-                massage: "required",
+                email: {
+                    required: true,
+                    email: true
+                },
+                message: "required",
             },
             messages: {
                 name: "{{__('customer.first_name_required')}}",
@@ -107,7 +161,11 @@
                     required: "{{__('customer.phone_required')}}",
                     minlength: "{{__('customer.phone_min')}}"
                 },
-                massage: "{{__('customer.massage_required')}}",
+                email: {
+                    required: "{{__('customer.email_required')}}",
+                    email: "{{__('customer.email_email')}}"
+                },
+                message: "{{__('customer.message_required')}}",
             },
             submitHandler: function(form) {
                 HoldOn.open({

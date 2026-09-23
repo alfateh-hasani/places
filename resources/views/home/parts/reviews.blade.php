@@ -4,14 +4,13 @@
 <section class="comments py-12">
   <div class="container">
     <div class="text-center">
-      <div class="p-1 bg-black inline-block title text-left rounded-3xl">
-        <div class="bg-white w-9 h-9 rounded-full float-left relative mr-3">
+      <div class="p-1 bg-black inline-flex items-center title text-left rounded-3xl">
+        <div class="bg-white w-9 h-9 rounded-full relative mr-3">
           <img src="{{ asset('assets/img/star-comment.svg') }}" class="absolute" />
         </div>
-        <p class="float-left font-normal text-base sm:text-lg text-white pr-4 sm:pr-6 py-1.5 sm:py-1">
+        <p class="font-normal text-base sm:text-lg text-white pr-4 sm:pr-6 py-1.5 sm:py-1">
           @lang('site.related_reviews', ['rating' => $averageRating.'/5', 'users' => $totalUsers.' Dyafa'])
         </p>
-        <div class="clear-both"></div>
       </div>
     </div>
     <h3 class="text-center font-semibold text-base sm:text-3xl text-black mt-4 mb-6 sm:my-8" >

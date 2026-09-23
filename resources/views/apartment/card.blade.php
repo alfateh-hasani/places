@@ -58,7 +58,7 @@
                     class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
                     src="{{ asset('assets/img/space-new.svg') }}" 
                 />
-                {{ $apartment->area }} @lang('apartment.area')
+                {{ $apartment->area }} @lang('apartment.area_unit')
             </li>
         </ul>
 

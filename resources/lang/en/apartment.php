@@ -5,7 +5,7 @@ return [
     'reviews' => 'Reviews',
     'rooms' => 'Rooms',
     'beds' => 'Beds',
-    'area' => 'm²',
+    'area_unit' => 'm²',
     'night' => 'Night',
     'location_unknown' => 'Unknown Location',
     'apartment_name_default' => 'Studio Apartment',

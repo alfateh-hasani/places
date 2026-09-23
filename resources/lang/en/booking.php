@@ -70,6 +70,21 @@ return [
     'copy_code' => 'Copy code',
     'code_copied' => 'Code copied',
 
+    // Date change (customer request)
+    'edit_dates' => 'Edit Dates',
+    'date_change_request' => 'Date Change Request',
+    'awaiting_difference_payment' => 'Awaiting payment of the difference to complete the change',
+    'complete_payment' => 'Complete Payment',
+    'cancel_change_request' => 'Cancel Change Request',
+    'change_request_under_review' => 'Your request is under review — the difference will be refunded after approval',
+    'difference_will_be_charged' => 'A difference of',
+    'to_confirm_change' => 'will be charged to confirm the change',
+    'difference_will_be_refunded' => 'A difference of',
+    'after_admin_review' => 'will be refunded after admin review.',
+    'no_price_difference' => 'No price difference — the dates will be applied directly.',
+    'new_price' => 'New Price',
+    'cancel_date_change_request_confirm' => 'The date change request will be cancelled.',
+
     // Unit transfer (customer confirmation)
     'unit_transfer_offer' => 'Your booking is being moved to another unit',
     'unit_transfer_refund_note' => 'The new unit is cheaper (:new_price SAR) — :amount SAR will be refunded to you after you confirm.',

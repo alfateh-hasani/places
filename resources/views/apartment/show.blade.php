@@ -78,7 +78,6 @@
             </div>
 
             <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
-                {{-- <button class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer video-button"><img class="inline-block mr-2" src="assets/img/video.svg" /> Show All Videos</button> --}}
                 <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" /> 
                     <span>{{__('apartment.show_all_photos')}}</span>
                 </button>
@@ -250,9 +249,6 @@
                                 
                                 
                             </ul>
-                            {{-- <button class="show-specifications font-semibold text-base border border-black rounded-full py-2 px-6">
-                                Show All 30 Amenities
-                            </button> --}}
                         </div>
                         <div class="pt-8" id="tabs-2">
                             <h5 class="font-semibold text-xl text-filterhover mb-6">
@@ -519,7 +515,6 @@
         </div>
     </div>
 </div>
-{{-- @dd($apartment->booked_days($apartment->bookings)); --}}
 @endsection
 @push('js')
 @include('customer.section.script-form')
@@ -549,9 +544,10 @@
 
     
 
-    // alert($('.desctext').text().trim().split(/\s+/).length);
+    var descHtml = $('.desctext').html();
+    var descWordCount = descHtml && descHtml.trim() ? descHtml.trim().split(/\s+/).length : 0;
 
-    if ($('.desctext').html().trim().split(/\s+/).length < 50) {
+    if (descWordCount < 50) {
         $(".showmoreApartment").hide();
     }
 

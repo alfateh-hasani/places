@@ -35,7 +35,7 @@
         <input type="hidden" name="children" value="{{ request('children') }}">
     
         <div class="container">
-            <div class="rtl:float-right float-left rounded-xl bg-filterbackground border border-filterborder px-5 py-1.5 buttons mb-2 xl:mb-0" data-aos="fade-right rtl:fade-left">
+            <div class="rtl:float-right float-left rounded-xl bg-filterbackground border border-filterborder px-5 py-1.5 buttons mb-2 xl:mb-0 flex flex-wrap items-center gap-2" data-aos="fade-up">
                 @php
                     $activeFilterCount = collect([
                         request()->anyFilled(['price_min', 'price_max']),
@@ -46,7 +46,7 @@
                         request()->filled('building_id'),
                     ])->filter()->count();
                 @endphp
-                <p class="rtl:float-right float-left rtl:ml-2 mr-2 font-semibold text-base text-black pt-1.5 mb-1 lg:mb-0">
+                <p class="font-semibold text-base text-black">
                     {{ __('site.filters') }}
                     @if ($activeFilterCount)
                         <span class="inline-block bg-price text-white text-xs rounded-full px-2 py-0.5 align-middle">{{ $activeFilterCount }}</span>
@@ -54,7 +54,7 @@
                 </p>
                 
                 <!-- Price Range Filter -->
-                <div class="rtl:float-right float-left rtl:ml-2 mr-2 mb-1 lg:mb-0">
+                <div class="relative">
                     <button id="dropdownPriceButton" data-dropdown-toggle="dropdownPrice" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-black bg-filteritem rounded-lg hover:bg-filterhover hover:text-white" type="button">
                         <span class="rtl:mr-2 ml-2">{{ __('filters.price') }}</span>
                         <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -81,7 +81,7 @@
                 </div>
     
                 <!-- Rate Filter -->
-                <div class="rtl:float-right float-left rtl:ml-2 mr-2 mb-1 lg:mb-0">
+                <div class="relative">
                     <button id="dropdownRateButton" data-dropdown-toggle="dropdownRate" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-black bg-filteritem rounded-lg hover:bg-filterhover hover:text-white" type="button">
                         <span class="rtl:mr-2 ml-2">{{ __('filters.rate') }}</span>
                         <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -112,7 +112,7 @@
                 </div>
     
                 <!-- Area Range Filter -->
-                <div class="rtl:float-right float-left rtl:ml-2 mr-2 mb-1 lg:mb-0">
+                <div class="relative">
                     <button id="dropdownAreaButton" data-dropdown-toggle="dropdownArea" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-black bg-filteritem rounded-lg hover:bg-filterhover hover:text-white" type="button">
                         <span class="rtl:mr-2 ml-2">{{ __('filters.area') }}</span>
                         <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -139,7 +139,7 @@
                 </div>
     
                 <!-- Rooms Filter -->
-                <div class="rtl:float-right float-left rtl:ml-2 mr-2 mb-1 lg:mb-0">
+                <div class="relative">
                     <button id="dropdownSearchButton" data-dropdown-toggle="dropdownSearch3" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-black bg-filteritem rounded-lg hover:bg-filterhover hover:text-white" type="button">
                         <span class="rtl:mr-2 ml-2">{{ __('filters.rooms') }}</span>
                         <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -164,7 +164,7 @@
                 </div>
     
                 <!-- Beds Filter -->
-                <div class="rtl:float-right float-left rtl:ml-2 mr-2 mb-1 lg:mb-0">
+                <div class="relative">
                     <button id="dropdownSearchButton" data-dropdown-toggle="dropdownSearch4" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-black bg-filteritem rounded-lg hover:bg-filterhover hover:text-white" type="button">
                         <span class="rtl:mr-2 ml-2">{{ __('filters.beds') }}</span>
                         <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -189,7 +189,7 @@
                 </div>
 
                 <!-- Building Filter -->
-                <div class="rtl:float-right float-left rtl:ml-2 mr-2 mb-1 lg:mb-0">
+                <div class="relative">
                     <button id="dropdownBuildingButton" data-dropdown-toggle="dropdownBuilding" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-black bg-filteritem rounded-lg hover:bg-filterhover hover:text-white" type="button">
                         <span class="rtl:mr-2 ml-2">{{ __('filters.building') }}</span>
                         <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -217,18 +217,16 @@
                 @if (request()->anyFilled(['price_min', 'price_max', 'area_min', 'area_max', 'rate', 'rooms', 'beds', 'building_id']))
                     <a href="{{ route('apartments.search', collect(request()->only(['city_id', 'check_in', 'check_out']))->filter(fn ($v) => $v !== null && $v !== '')->all()) }}"
                        title="{{ __('filters.clear_filters') }}"
-                       class="rtl:float-left float-right inline-flex items-center gap-1.5 rtl:mr-2 ml-2 px-3 py-2 mb-1 lg:mb-0 text-sm font-medium text-price border border-price rounded-lg hover:bg-price hover:text-white ease-in-out duration-300">
+                       class="ms-auto inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-price border border-price rounded-lg hover:bg-price hover:text-white ease-in-out duration-300">
                         <svg class="w-3 h-3" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1l12 12M13 1 1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                         </svg>
                         {{ __('filters.clear_filters') }}
                     </a>
                 @endif
-
-                <div class="clear-both"></div>
             </div>
-            
-            <button class="float-right rtl:float-left rounded-xl h-12 bg-price font-semibold text-base text-white w-full xl:w-48 flex items-center justify-center gap-2" data-aos="fade-left rtl:fade-right">
+
+            <button class="float-right rtl:float-left rounded-xl h-12 bg-price font-semibold text-base text-white w-full xl:w-48 flex items-center justify-center gap-2" data-aos="fade-up">
                 <img class="inline-block" src="{{asset('assets/img/filter-icon.svg')}}" />
                 {{ __('filters.apply_filters') }}
             </button>

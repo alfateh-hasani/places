@@ -22,6 +22,9 @@ return [
     'email_required' => 'البريد الإلكتروني مطلوب',
     'email_email' => 'البريد الإلكتروني غير صحيح',
     'phone_required' => 'رقم الهاتف مطلوب',
+    'phone_min' => 'يجب ألا يقل رقم الهاتف عن 9 أرقام',
+    'phone_digits' => 'يجب أن يحتوي رقم الهاتف على أرقام وعلامة + فقط',
+    'message_required' => 'الرسالة مطلوبة',
     'password_required' => 'كلمة المرور مطلوبة',
     'success' => 'نجاح',
     'error' => 'خطأ',
@@ -36,4 +39,5 @@ return [
     'favorite' => 'المفضلة',
     'booking_details' => 'تفاصيل الحجز',
     'id_number' => 'رقم الهوية',
+    'currency' => 'ريال',
 ];

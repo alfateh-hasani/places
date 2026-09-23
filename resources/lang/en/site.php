@@ -77,6 +77,7 @@ return [
     'contact_us_success' => 'Your message has been sent successfully',
     'related_blogs' => 'Related Blogs',
     'location' => 'Where to Find Us',
+    'view_on_map' => 'View on Google Maps',
     'all_rights' => 'All Rights Reserved',
     'contact_us_menu' => 'Contact Us',
     'filters_city_id' => 'City',

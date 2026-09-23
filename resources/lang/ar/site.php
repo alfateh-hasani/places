@@ -89,6 +89,7 @@ return [
     'contact_us_success' => 'تم إرسال رسالتك بنجاح',
     'related_blogs' => 'مدونات ذات صلة',
     'location' => 'أين تجدنا',
+    'view_on_map' => 'عرض الموقع على خرائط جوجل',
     'all_rights' => 'جميع الحقوق محفوظة',
     'contact_us_menu' => 'تواصل معنا',
     'filters_city_id' => 'المدينة',

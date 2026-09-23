@@ -22,12 +22,12 @@
 
             <!-- Download Buttons -->
             <div class="flex flex-col space-y-2">
-                <a href="https://apps.apple.com/us/app/dyafa-%D8%B6%D9%8A%D8%A7%D9%81%D8%A9/id6711337244" 
-                   class="block w-32" target="_blank">
+                <a href="https://apps.apple.com/us/app/dyafa-%D8%B6%D9%8A%D8%A7%D9%81%D8%A9/id6711337244"
+                   class="block w-32" target="_blank" rel="noopener noreferrer">
                     <img src="{{ asset('img/AppStore.svg') }}" alt="App Store" class="w-full">
                 </a>
-                <a href="https://play.google.com/store/apps/details?id=co.Placess.app" 
-                   class="block w-32" target="_blank">
+                <a href="https://play.google.com/store/apps/details?id=co.Placess.app"
+                   class="block w-32" target="_blank" rel="noopener noreferrer">
                     <img src="{{ asset('img/GooglePlay.svg') }}" alt="Google Play" class="w-full">
                 </a>
             </div>
@@ -75,12 +75,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <header class="fixed w-full py-6  top-0 z-50 lg:block hidden" data-aos="fade-down">
   <div class="container">
-    <div class="float-left rtl:float-right">
+    <div class="flex items-center justify-between">
+    <div>
       <a href="{{ route('home')}}">
         <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="Logo" style="max-height: 35px" />
       </a>
-    </div> 
-    <ul class="menu absolute">
+    </div>
+    <ul class="menu absolute flex items-center">
       {{-- <li class="float-left rtl:float-right px-6">
         <a  href="" class="font-normal text-base text-black">@lang('site.listings')</a>
         <ul class="absolute p-3  border border-border rounded-lg">
@@ -92,20 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </ul>
       </li> --}}
 
-      <li class="float-left rtl:float-right px-6">
-        <a href="{{route('apartments.search')}}" class="font-normal text-base text-black">@lang('site.apartments_list')</a>
-      </li>
-
-      <li class="float-left rtl:float-right px-6">
-        <a href="{{route('page','blog')}}" class="font-normal text-base text-black">@lang('site.blog')</a>
-      </li>
-      <li class="float-left rtl:float-right px-6">
-        <a href="{{route('page','contact')}}" class="font-normal text-base text-black">@lang('site.contact_us')</a>
-      </li>
-      <li class="clear-both"></li>
+      @include('common.parts.nav-links', ['liClass' => 'px-6'])
     </ul>
-    <div class="right float-right rtl:float-left">
-      <div class="lang float-left rtl:float-right">
+    <div class="right flex items-center">
+      <div class="lang">
 
         @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
           @continue($localeCode == app()->getLocale())
@@ -115,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         @endforeach
 
       </div>
-      <div class="login float-left rtl:float-right ltr:ml-5 rtl:mr-5 relative">
+      <div class="login ltr:ml-5 rtl:mr-5 relative">
         @auth('customer')
           {{-- Show customer name and account links if logged in --}}
           <span class="font-normal text-base text-black inline-block py-1.5">
@@ -147,33 +138,31 @@ document.addEventListener('DOMContentLoaded', function() {
           </button>
         @endauth
       </div>
-
-      <div class="clear-both"></div>
     </div>
-    <div class="clear-both"></div>
+    </div>
   </div>
 </header>
 
 <header class="fixed w-full py-4  top-0 z-50 border border-blackopacity lg:hidden" data-aos="zoom-in">
   <div class="container">
    
-    <div class="cursor-pointer float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5 login-button">
+    <button type="button" class="cursor-pointer float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5 login-button">
       @auth('customer') {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}    @endauth
-    </div>
+    </button>
     
 
       <div class="logo absolute">
           <a href="{{ route('home')}}">
-              <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" />
+              <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" alt="{{ config('app.name') }}" />
           </a>
       </div>
-      <div class="cursor-pointer float-right py-1 menu-button">
+      <button type="button" class="cursor-pointer float-right py-1 menu-button">
           <img src="{{ asset('assets/img/menu.svg') }}" />
-      </div>
+      </button>
       <div class="clear-both"></div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 right-menu">
-      <button class="absolute ltr:right-5 rtl:left-5 top-5">
+      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
           <svg height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
@@ -181,11 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         @lang('site.menu')
       </h6>
       <ul>
-          <li class="mb-5">
-              <a href="{{route('apartments.search')}}" class="font-normal text-base text-black">@lang('site.apartments_list')</a>
-          </li>
-          <li class="mb-5"><a href="{{route('page','blog')}}" class="font-normal text-base text-black">@lang('site.blog')</a></li>
-          <li class="mb-5"><a href="{{route('page','contact')}}" class="font-normal text-base text-black">@lang('site.contact_us')</a></li>
+          @include('common.parts.nav-links', ['liClass' => 'mb-5'])
       </ul>
       <div class="mt-2">
           <h6 class="font-semibold text-xl text-black"> @lang('site.contact')</h6>
@@ -197,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 left-menu">
-      <button class="absolute ltr:right-5 rtl:left-5 top-5">
+      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
           <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>

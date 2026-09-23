@@ -79,7 +79,7 @@
         @foreach($array as $key => $value)
             @if($value)
                 <li class="inline-block">
-                    <a href="{{$value}}" target="_blank" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
+                    <a href="{{$value}}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
                         <img class="absolute" src="{{ asset('assets/img/'.$key.'.svg') }}" alt="{{$key}}" />
                     </a>
                 </li>

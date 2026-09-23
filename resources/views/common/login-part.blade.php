@@ -262,7 +262,6 @@ function handleAjaxError(xhr,   container) {
 // إعداد حقل الهاتف
 const phoneInput = document.querySelector("#phoneNumber");
 const iti = window.intlTelInput(phoneInput, {
-      //  utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
     initialCountry: "sa",
     separateDialCode: true,
     formatOnDisplay: true,
@@ -592,14 +591,10 @@ $('#resend-button').on('click', function() {
  
 var handleChange = function() {
     let number = phoneInput.value.trim();
-    console.log(number);
-    console.log(iti.getNumber());
     if (number) {
         if (iti.isValidNumber()) {
-            console.log('Valid Number:', iti.getNumber());
             $('#login-submit-button').prop('disabled', false);
         } else {
-            console.log('Invalid Number');
             $('#login-submit-button').prop('disabled', true);
         }
     }

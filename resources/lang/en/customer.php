@@ -22,6 +22,9 @@ return [
     'email_required' => 'Email is required',
     'email_email' => 'Invalid Email',
     'phone_required' => 'Phone Number is required',
+    'phone_min' => 'Phone number must be at least 9 digits',
+    'phone_digits' => 'Phone number may contain only digits and +',
+    'message_required' => 'Message is required',
     'password_required' => 'Password is required',
     'success' => 'Success',
     'error' => 'Error',
@@ -36,4 +39,5 @@ return [
     'favorite' => 'Favorite',
     'booking_details' => 'Booking Details',
     'id_number' => 'ID Number',
+    'currency' => 'SAR',
 ];
