@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <span class="font-normal text-base text-black inline-block py-1.5">
             @lang('site.hello'), {{ Auth::guard('customer')->user()->first_name }}
           </span>
-          <ul class="absolute top-full mt-2 left-0 z-30 p-3 min-w-[200px] bg-[#fff] shadow-lg border border-border rounded-lg">
+          <ul class="absolute top-full left-0 z-30 p-3 min-w-[200px] bg-[#fff] shadow-lg border border-border rounded-lg">
             <li>
               <a href="{{ route('customer.account') }}" class="block p-2 font-normal text-base text-black border-b border-border">
                 @lang('site.account')

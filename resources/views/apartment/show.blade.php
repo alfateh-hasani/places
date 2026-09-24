@@ -18,6 +18,11 @@
             color: #fff !important;
             border-color: #EF552C !important;
         }
+        /* Photo gallery expand/collapse — CSS-driven so it works with lazy images
+           (no JS height measurement, which mis-measures before images load). */
+        .banner-container { overflow: hidden; transition: max-height .4s ease; }
+        .banner-container:not(.active) { max-height: 464px; }
+        .banner-container.active { max-height: 5000px; }
     </style>
 
         
@@ -87,12 +92,20 @@
     </div>
 
     <script>
-        $('#allphotos').click(function () {
-            if ($(".banner-container").hasClass("active")) {
-                $('#allphotos span').text("{{ __('apartment.show_all_photos') }}");
-            } else {
-                $('#allphotos span').text("{{ __('apartment.show_some_photos') }}");
-            }
+        // Override the submodule's height-measured toggle with a CSS max-height
+        // expand (reliable with lazy images). Runs on window load so it supersedes
+        // main.js's document-ready handler.
+        $(window).on('load', function () {
+            var $btn = $('#allphotos');
+            if (! $btn.length) return;
+            $btn.off('click');
+            $('.banner-container').css('height', '');
+            $btn.on('click', function () {
+                var active = $('.banner-container').toggleClass('active').hasClass('active');
+                $('#allphotos span').text(active
+                    ? @json(__('apartment.show_some_photos'))
+                    : @json(__('apartment.show_all_photos')));
+            });
         });
     </script>
  

@@ -13,9 +13,8 @@
             <form id="login-form" method="post">
                 @csrf
                 <div id="login-result"></div>
-                <label>
+                <label for="phoneNumber">
                     <p class="text-sm mb-3">{{ __('site.your_mobile_number') }}</p>
-                    
                 </label>
                 <div class="w-full">
                         <input autocomplete="off" type="tel" id="phoneNumber" name="phone" class="w-full border border-border rounded-lg h-12 px-3">
@@ -48,7 +47,7 @@
               <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" />
           </p>
           <p class="text-sm mb-4">
-              @lang('site.enter_code_sms') <span dir="ltr" id="phone-number"></span>:
+              @lang('site.enter_code_sms') <span dir="ltr" id="phone-number" style="direction:ltr; unicode-bidi:isolate; display:inline-block;"></span>:
           </p>
 
           <div id="otp-result"></div>
@@ -58,16 +57,18 @@
                   @for ($i = 1; $i <= 4; $i++)
                   <div>
                       <label for="code-{{ $i }}" class="sr-only">@lang('site.code') {{ $i }}</label>
-                      <input 
-                          type="text" 
-                          maxlength="1" 
-                          id="code-{{ $i }}" 
-                           
-                          class="otp-input block w-12 h-12 text-center text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 rtl:border-gray-500" 
-                          data-focus-input-init 
-                          data-focus-input-next="code-{{ $i+1 }}" 
-                          data-focus-input-prev="code-{{ $i-1 }}" 
-                          required 
+                      <input
+                          type="text"
+                          inputmode="numeric"
+                          pattern="[0-9]*"
+                          autocomplete="one-time-code"
+                          maxlength="1"
+                          id="code-{{ $i }}"
+                          class="otp-input block w-12 h-12 text-center text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 rtl:border-gray-500"
+                          data-focus-input-init
+                          data-focus-input-next="code-{{ $i+1 }}"
+                          data-focus-input-prev="code-{{ $i-1 }}"
+                          required
                       />
                   </div>
                   @endfor
@@ -249,11 +250,13 @@ function handleAjaxError(xhr,   container) {
     HoldOn.close();  // Close loading animation
     clearInputErrors();  // Clear previous input errors
 
-    if (xhr.status === 422) {
-        // Input validation errors
+    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+        // Field-level validation errors ({errors: {field: [...]}}).
         displayInputErrors(xhr.responseJSON.errors);
     } else {
-        // General error message for other statuses
+        // Flat error responses ({message: '...'}, e.g. an invalid phone from
+        // request-otp) and all other statuses — surface the message to the user
+        // instead of silently doing nothing.
         let message = xhr.responseJSON?.message || '@lang("site.something_went_wrong")';
         showGeneralErrorMessage(container, message);
     }
@@ -412,11 +415,11 @@ function startCountdown(seconds) {
 
 // Login Form Validation and Submission
 $('#login-form').validate({
-    rules: { 
-        phone: { 
-            required: true, 
-             
-        } 
+    rules: {
+        phone: {
+            required: true,
+            validPhone: true
+        }
     },
     messages: {
         phone: {
@@ -472,9 +475,14 @@ $('#login-form').validate({
 // OTP Form Submission
 $('#otp-form').on('submit', function (e) {
         e.preventDefault();
-        HoldOn.open({ theme: "sk-rect" });
 
         let otpCode = $('.otp-input').map((_, el) => $(el).val()).get().join('');
+        // Ignore incomplete codes (e.g. pressing Enter before all 4 digits are entered).
+        if (otpCode.length !== 4) {
+            return;
+        }
+
+        HoldOn.open({ theme: "sk-rect" });
 
         $.ajax({
             url: "{{ route('login.step2') }}",
@@ -590,14 +598,10 @@ $('#resend-button').on('click', function() {
 
  
 var handleChange = function() {
-    let number = phoneInput.value.trim();
-    if (number) {
-        if (iti.isValidNumber()) {
-            $('#login-submit-button').prop('disabled', false);
-        } else {
-            $('#login-submit-button').prop('disabled', true);
-        }
-    }
+    // Keep the button clickable; jQuery Validate's validPhone rule surfaces a clear
+    // "invalid number" error instead of silently disabling the button (which left
+    // the user with no feedback for e.g. a number that doesn't match the country).
+    $('#login-submit-button').prop('disabled', false);
 };
 
  
