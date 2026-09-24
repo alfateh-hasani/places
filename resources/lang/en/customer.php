@@ -40,4 +40,9 @@ return [
     'booking_details' => 'Booking Details',
     'id_number' => 'ID Number',
     'currency' => 'SAR',
+    'email_required_email' => 'Invalid Email',
+    'emergency_phone_minlength' => 'Phone number must be at least 9 digits',
+    'loading_message' => 'Processing...',
+    'notification_confirm_email' => 'Please confirm your email address by clicking on the link we just emailed you',
+    'notification_sample_date' => 'February 27, 2019',
 ];

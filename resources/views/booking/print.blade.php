@@ -38,7 +38,7 @@
         <div class=" ">
             <div class="  pb-2 mb-2">
                 <p class="font-semibold text-lg   text-center py-2.5">
-                  Booking ID:   #{{$booking->number_of_booking }} -     {{$booking->apartment->{'name_'.app()->getLocale()} }}
+                  {{__('booking.number_of_booking')}}:   #{{$booking->number_of_booking }} -     {{$booking->apartment->{'name_'.app()->getLocale()} }}
                 </p>
                
                 <div class="clear-both"></div>

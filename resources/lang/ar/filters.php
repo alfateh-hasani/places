@@ -20,4 +20,5 @@ return [
     'apply_filters' => 'تطبيق الفلاتر',
     'clear_filters' => 'مسح الفلاتر',
     'rate_and_up' => 'فأعلى',
+    'star' => 'نجمة',
 ];

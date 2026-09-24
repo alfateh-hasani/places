@@ -89,9 +89,9 @@
     <script>
         $('#allphotos').click(function () {
             if ($(".banner-container").hasClass("active")) {
-                $('#allphotos span').text("عرض جميع الصور");
+                $('#allphotos span').text("{{ __('apartment.show_all_photos') }}");
             } else {
-                $('#allphotos span').text("عرض بعض الصور");
+                $('#allphotos span').text("{{ __('apartment.show_some_photos') }}");
             }
         });
     </script>
@@ -344,8 +344,8 @@
                             <ul class="   bg-white p-4 border border-border rounded-lg">
                                 <li class="border-b border-blackopacity pb-4 mb-4 flex justify-between items-center">
                                     <p class="text-lg">
-                                        الكبار
-                                        <span class="block text-xs opacity-50">أعلى من 12 سنة</span>
+                                        {{ __('apartment.adults') }}
+                                        <span class="block text-xs opacity-50">{{ __('apartment.adults_age_hint') }}</span>
                                     </p>
                                     <div class="flex items-center space-x-2 rtl:space-x-reverse">
                                         <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="adults_count">
@@ -364,8 +364,8 @@
                                 
                                 <li class="  flex justify-between items-center">
                                     <p class="text-lg">
-                                        الأطفال
-                                        <span class="block text-xs opacity-50">أقل من 12 سنة</span>
+                                        {{ __('apartment.children') }}
+                                        <span class="block text-xs opacity-50">{{ __('apartment.children_age_hint') }}</span>
                                     </p>
                                     <div class="flex items-center space-x-2 rtl:space-x-reverse">
                                         <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="children_count">
@@ -428,7 +428,7 @@
                         </ul>
                         @if ($errors->any())
                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                            <strong class="font-bold">حدث خطأ!</strong>
+                            <strong class="font-bold">{{ __('apartment.error_occurred') }}</strong>
                             <span class="block sm:inline">
                                 @foreach ($errors->all() as $error)
                                     {{ $error }}

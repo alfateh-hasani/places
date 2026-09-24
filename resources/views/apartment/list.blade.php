@@ -251,8 +251,8 @@ $('.grid-container .grid-items').infiniteScroll({
         if (parseInt(maxPrice.value) < parseInt(minPrice.value)) {
             maxPrice.value = minPrice.value;
         }
-        minPriceLabel.textContent = `${minPrice.value} SAR`;
-        maxPriceLabel.textContent = `${maxPrice.value} SAR`;
+        minPriceLabel.textContent = `${minPrice.value} {{ __('apartment.currency') }}`;
+        maxPriceLabel.textContent = `${maxPrice.value} {{ __('apartment.currency') }}`;
         const minPos = (minPrice.value - minPrice.min) / (minPrice.max - minPrice.min) * 100;
         const maxPos = (maxPrice.value - maxPrice.min) / (maxPrice.max - maxPrice.min) * 100;
         rangeHighlight.style.left = `${minPos}%`;

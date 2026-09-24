@@ -10,7 +10,7 @@
             <p class="font-semibold text-xs">
                 {{ __('site.search') }}
             </p>
-            <p class="text-sm">Check In . Check Out . Add Guest</p>
+            <p class="text-sm">{{ __('site.search_mobile_desc') }}</p>
         </div>
         <div class="clear-both"></div>
     </div>
@@ -22,7 +22,7 @@
       
       <!-- العنوان والإغلاق -->
       <div class="mb-5 lg:hidden">
-        <p class="float-left rtl:float-right font-semibold">Stays</p>
+        <p class="float-left rtl:float-right font-semibold">{{ __('site.search_mobile') }}</p>
         <button type="button" class="float-right close-button"><img src="assets/img/close.svg" /></button>
         <div class="clear-both"></div>
       </div>

@@ -99,7 +99,7 @@
                                         {{ (string) request('rate') === (string) $i ? 'checked' : '' }}>
                                         <label for="rate-{{ $i }}" class="w-full ms-2 text-sm font-medium text-gray-900 rounded flex items-center">
                                             @for ($j = 1; $j <= $i; $j++)
-                                                <img class="inline-block -translate-y-0.5" src="{{ asset('assets/img/star.svg') }}" alt="Star">
+                                                <img class="inline-block -translate-y-0.5" src="{{ asset('assets/img/star.svg') }}" alt="{{ __('filters.star') }}">
                                             @endfor
                                             <span class="ms-1.5 text-gray-500">{{ __('filters.rate_and_up') }}</span>
                                         </label>

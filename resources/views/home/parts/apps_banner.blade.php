@@ -16,14 +16,14 @@
                         <img
                             src="{{ asset('assets/img/apple.svg') }}"
                             class="mr-3 rtl:ml-3 w-40 lg:w-auto"
-                            alt="Download on Apple Store"
+                            alt="{{ __('site.download_apple') }}"
                         />
                     </a>
                     <a  href="https://play.google.com/store/apps/details?id=co.Placess.app">
                         <img
                             src="{{ asset('assets/img/android.svg') }}"
                             class="mr-3 rtl:ml-3 w-40 lg:w-auto"
-                            alt="Download on Google Play"
+                            alt="{{ __('site.download_google') }}"
                         />
                     </a>
                 </div>

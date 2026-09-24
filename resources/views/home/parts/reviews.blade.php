@@ -55,7 +55,7 @@
                       {{ $review->review_text }}
                   </p>
                   <h4 class="font-normal text-lg text-price">{{ $review->customer->first_name   }} {{ $review->customer->last_name   }}</h4>
-                  <p class="font-normal text-sm text-gri mt-1">{{ $review?->apartment?->ml('name') ?? 'Anonymous' }}</p>
+                  <p class="font-normal text-sm text-gri mt-1">{{ $review?->apartment?->ml('name') ?? __('site.anonymous') }}</p>
               </a>
           </li>
       @endforeach
@@ -81,8 +81,8 @@
                     <p class="font-normal text-sm text-black mt-5 mb-6">
                         {{ $review->review_text }}
                     </p>
-                    <h4 class="font-normal text-lg text-price">{{ $review->customer->first_name ?? 'Anonymous' }}</h4>
-                    <p class="font-normal text-sm text-gri mt-1">Customer</p>
+                    <h4 class="font-normal text-lg text-price">{{ $review->customer->first_name ?? __('site.anonymous') }}</h4>
+                    <p class="font-normal text-sm text-gri mt-1">{{ __('site.customer') }}</p>
                 </a>
             </li>
         @endforeach

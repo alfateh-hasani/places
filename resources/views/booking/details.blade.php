@@ -254,7 +254,7 @@ span.flatpickr-day.selected{
                             <p class="text-xs mb-3" style="color:#f0ad4e;">
                                 {{ __('booking.awaiting_difference_payment') }}
                                 @if((float) $dc->price_delta > 0)
-                                    (<b style="color:#e74c3c;">+{{ number_format(abs((float) $dc->price_delta), 2) }} SAR</b>)
+                                    (<b style="color:#e74c3c;">+{{ number_format(abs((float) $dc->price_delta), 2) }} {{ __('apartment.price') }}</b>)
                                 @endif
                             </p>
                             <button class="dc-retry-pay-btn py-2 px-4 rounded-md text-white ml-2" style="background:#3085d6;" data-request-id="{{ $dc->id }}">
@@ -801,9 +801,9 @@ $(document).ready(function() {
             var delta = parseFloat(q.price_delta);
             var summary;
             if (delta > 0.001) {
-                summary = "{{ __('booking.difference_will_be_charged') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('booking.to_confirm_change') }}";
+                summary = "{{ __('booking.difference_will_be_charged') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " {{ __('apartment.price') }}</b> {{ __('booking.to_confirm_change') }}";
             } else if (delta < -0.001) {
-                summary = "{{ __('booking.difference_will_be_refunded') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('booking.after_admin_review') }}";
+                summary = "{{ __('booking.difference_will_be_refunded') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " {{ __('apartment.price') }}</b> {{ __('booking.after_admin_review') }}";
             } else {
                 summary = "<span style='color:#6c757d;'>{{ __('booking.no_price_difference') }}</span>";
             }
@@ -815,7 +815,7 @@ $(document).ready(function() {
                 title: "{{ __('booking.date_change_confirmation') }}",
                 html: "<div style='text-align:center;'>" +
                     "<bdo dir='ltr' style='display:inline-block;'>" + q.new_check_out + " ← " + q.new_check_in + "</bdo><br><br>" +
-                    "{{ __('booking.new_price') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " SAR</b><br>" + summary + "</div>",
+                    "{{ __('booking.new_price') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " {{ __('apartment.price') }}</b><br>" + summary + "</div>",
                 icon: 'question',
                 showDenyButton: true,
                 denyButtonText: "{{ __('booking.previous') }}",

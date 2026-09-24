@@ -57,7 +57,7 @@
               <div class="flex mb-2 space-x-2    justify-center items-center" style="    direction: ltr;" dir="ltr">
                   @for ($i = 1; $i <= 4; $i++)
                   <div>
-                      <label for="code-{{ $i }}" class="sr-only">Code {{ $i }}</label>
+                      <label for="code-{{ $i }}" class="sr-only">@lang('site.code') {{ $i }}</label>
                       <input 
                           type="text" 
                           maxlength="1" 

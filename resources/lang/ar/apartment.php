@@ -105,4 +105,11 @@ return [
     'vat'=>'ضريبة القيمة المضافة',
     'remove_coupon'=>'حذف',
     'coupon_removed'=>'تم حذف الكوبون بنجاح!',
+    'show_some_photos' => 'عرض بعض الصور',
+    'adults' => 'الكبار',
+    'adults_age_hint' => 'أعلى من 12 سنة',
+    'children' => 'الأطفال',
+    'children_age_hint' => 'أقل من 12 سنة',
+    'error_occurred' => 'حدث خطأ!',
+    'apartments_title' => 'الشقق',
 ];

@@ -20,4 +20,5 @@ return [
     'apply_filters' => 'Apply Filters',
     'clear_filters' => 'Clear filters',
     'rate_and_up' => '& up',
+    'star' => 'Star',
 ];

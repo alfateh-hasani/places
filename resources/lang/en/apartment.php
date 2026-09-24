@@ -96,4 +96,11 @@ return [
     'show_less' => 'Show Less',
     'show_all_photos' => 'Show All Photos',
     'price_tax' => 'Including Tax',
+    'show_some_photos' => 'Show Some Photos',
+    'adults' => 'Adults',
+    'adults_age_hint' => 'Over 12 years',
+    'children' => 'Children',
+    'children_age_hint' => 'Under 12 years',
+    'error_occurred' => 'An error occurred!',
+    'apartments_title' => 'Apartments',
 ];

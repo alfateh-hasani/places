@@ -15,7 +15,7 @@
         {!! $blog->{'content_'.app()->getLocale()} !!}
     </p>
     <div class="my-5">
-        <p class="inline-block translate-y-[-12px] me-2">شارك الخبر</p>
+        <p class="inline-block translate-y-[-12px] me-2">{{ __('site.share_post') }}</p>
        
 
 

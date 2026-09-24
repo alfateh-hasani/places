@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="flex items-center justify-between">
     <div>
       <a href="{{ route('home')}}">
-        <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="Logo" style="max-height: 35px" />
+        <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="{{ __('site.logo') }}" style="max-height: 35px" />
       </a>
     </div>
     <ul class="menu absolute flex items-center">
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
           @continue($localeCode == app()->getLocale())
         <a href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" class="py-1.5 font-normal text-base text-black block">
-          <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="Language" /> {{ strtoupper($localeCode) }}
+          <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="{{ __('site.language') }}" /> {{ strtoupper($localeCode) }}
         </a>
         @endforeach
 

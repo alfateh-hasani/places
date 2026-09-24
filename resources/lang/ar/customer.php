@@ -40,4 +40,9 @@ return [
     'booking_details' => 'تفاصيل الحجز',
     'id_number' => 'رقم الهوية',
     'currency' => 'ريال',
+    'email_required_email' => 'البريد الإلكتروني غير صحيح',
+    'emergency_phone_minlength' => 'يجب ألا يقل رقم الهاتف عن 9 أرقام',
+    'loading_message' => 'جارٍ المعالجة...',
+    'notification_confirm_email' => 'يرجى تأكيد عنوان بريدك الإلكتروني بالنقر على الرابط الذي أرسلناه إليك للتو',
+    'notification_sample_date' => '27 فبراير 2019',
 ];
