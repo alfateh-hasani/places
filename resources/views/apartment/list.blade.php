@@ -2,7 +2,8 @@
 
 
 @section('content')
- 
+
+<h1 class="sr-only">{{ __('site.search_results') }}</h1>
 <section class="container py-8 lg:hidden cursor-pointer search-button" data-aos="zoom-in">
     <div class="px-6 py-3 bg-white shadow-xl rounded-full border border-border">
         <img src="{{asset('assets/img/search-black.svg')}}" class="float-left rtl:float-right w-4 mr-5 py-2" />
@@ -238,29 +239,6 @@ $('.grid-container .grid-items').infiniteScroll({
         });
     });
     </script>
-<script>
-    function updateRange() {
-        const minPrice = document.getElementById('min-price');
-        const maxPrice = document.getElementById('max-price');
-        const minPriceLabel = document.getElementById('min-price-label');
-        const maxPriceLabel = document.getElementById('max-price-label');
-        const rangeHighlight = document.getElementById('range-highlight');
-        if (parseInt(minPrice.value) > parseInt(maxPrice.value)) {
-            minPrice.value = maxPrice.value;
-        }
-        if (parseInt(maxPrice.value) < parseInt(minPrice.value)) {
-            maxPrice.value = minPrice.value;
-        }
-        minPriceLabel.textContent = `${minPrice.value} {{ __('apartment.currency') }}`;
-        maxPriceLabel.textContent = `${maxPrice.value} {{ __('apartment.currency') }}`;
-        const minPos = (minPrice.value - minPrice.min) / (minPrice.max - minPrice.min) * 100;
-        const maxPos = (maxPrice.value - maxPrice.min) / (maxPrice.max - maxPrice.min) * 100;
-        rangeHighlight.style.left = `${minPos}%`;
-        rangeHighlight.style.width = `${maxPos - minPos}%`;
-    }
-    updateRange();
-</script>
-
 <script>
     (function () {
         var ciEl = document.getElementById('datepicker-range-start');

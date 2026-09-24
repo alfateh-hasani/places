@@ -24,17 +24,17 @@
     <div class="text-center">
       <div class="px-4 py-3 sm:p-1 sm:ps-6 bg-black inline-flex flex-col sm:flex-row-reverse items-center gap-2 sm:gap-3 title rounded-3xl sm:rounded-3xl max-w-full text-center sm:text-start">
         <div class="bg-white w-9 h-9 rounded-full relative flex-shrink-0">
-          <img src="{{ asset('assets/img/star-comment.svg') }}" class="absolute" />
+          <img src="{{ asset('assets/img/star-comment.svg') }}" class="absolute" loading="lazy" />
         </div>
         <p class="font-normal text-sm sm:text-lg text-white py-1.5 sm:py-1">
           @lang('site.related_reviews', ['rating' => $averageRating.'/5', 'users' => $totalUsers.' Dyafa'])
         </p>
       </div>
     </div>
-    <h3 class="text-center font-semibold text-base sm:text-3xl text-black mt-4 mb-6 sm:my-8" >
+    <h2 class="text-center font-semibold text-base sm:text-3xl text-black mt-4 mb-6 sm:my-8" >
       @lang('site.words_of_praise')
-       
-    </h3>
+
+    </h2>
   </div>
 
 
@@ -48,7 +48,7 @@
                   <div>
                       <!-- Loop to show star rating based on actual rating value -->
                       @foreach (range(1, $review->rating) as $item)
-                          <img src="{{ asset('assets/img/comment-star.svg') }}" class="inline-block" />
+                          <img src="{{ asset('assets/img/comment-star.svg') }}" class="inline-block" loading="lazy" />
                       @endforeach
                   </div>
                   <p class="font-normal text-sm text-black mt-5 mb-6">
@@ -75,7 +75,7 @@
                     <div>
                         <!-- Loop to show star rating based on actual rating value -->
                         @foreach (range(1, $review->rating) as $item)
-                            <img src="{{ asset('assets/img/comment-star.svg') }}" class="inline-block" />
+                            <img src="{{ asset('assets/img/comment-star.svg') }}" class="inline-block" loading="lazy" />
                         @endforeach
                     </div>
                     <p class="font-normal text-sm text-black mt-5 mb-6">

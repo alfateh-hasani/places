@@ -25,7 +25,7 @@
                                 <path id="Path_4320" data-name="Path 4320" d="M18.634,31.5a1.866,1.866,0,0,1-3.229,0" transform="translate(-4.121 -10.77)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/>
                             </g>
                         </svg>
-                        <p class="inline-block ml-4">{{__('apartment.notifications_list')}} <span class="text-price font-semibold">({{$total_notifications}})</span></p>
+                        <h1 class="inline-block ml-4">{{__('apartment.notifications_list')}} <span class="text-price font-semibold">({{$total_notifications}})</span></h1>
 
                     </div>
                     <ul>

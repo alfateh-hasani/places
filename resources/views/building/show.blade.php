@@ -2,7 +2,7 @@
 
 
 @section('content')
- 
+
 <section class="container py-8 lg:hidden cursor-pointer search-button" data-aos="zoom-in">
     <div class="px-6 py-3 bg-white shadow-xl rounded-full border border-border">
         <img src="{{asset('assets/img/search-black.svg')}}" class="float-left rtl:float-right w-4 mr-5 py-2" />
@@ -149,6 +149,9 @@
 
   <section class="list pt-2 sm:pt-20 pb-2 sm:pb-20">
     <div class="container grid-container">
+        <h1 class="font-semibold text-xl sm:text-3xl text-black mb-6 sm:mb-10 text-center md:text-start rtl:md:text-right">
+            {{ $building->ml('name') }}
+        </h1>
         <div class="grid grid-items grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-0">
             @foreach($apartments as $apartment)
                 @include('apartment.card', ['apartment' => $apartment])
@@ -202,28 +205,6 @@ $('.grid-container .grid-items').infiniteScroll({
         });
     });
     </script>
-<script>
-    function updateRange() {
-        const minPrice = document.getElementById('min-price');
-        const maxPrice = document.getElementById('max-price');
-        const minPriceLabel = document.getElementById('min-price-label');
-        const maxPriceLabel = document.getElementById('max-price-label');
-        const rangeHighlight = document.getElementById('range-highlight');
-        if (parseInt(minPrice.value) > parseInt(maxPrice.value)) {
-            minPrice.value = maxPrice.value;
-        }
-        if (parseInt(maxPrice.value) < parseInt(minPrice.value)) {
-            maxPrice.value = minPrice.value;
-        }
-        minPriceLabel.textContent = `${minPrice.value} {{ __('apartment.price') }}`;
-        maxPriceLabel.textContent = `${maxPrice.value} {{ __('apartment.price') }}`;
-        const minPos = (minPrice.value - minPrice.min) / (minPrice.max - minPrice.min) * 100;
-        const maxPos = (maxPrice.value - maxPrice.min) / (maxPrice.max - maxPrice.min) * 100;
-        rangeHighlight.style.left = `${minPos}%`;
-        rangeHighlight.style.width = `${maxPos - minPos}%`;
-    }
-    updateRange();
-</script>    
 
 
 @endpush

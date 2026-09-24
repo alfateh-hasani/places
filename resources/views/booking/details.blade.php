@@ -140,16 +140,16 @@ span.flatpickr-day.selected{
                   <path id="Path_843" data-name="Path 843" d="M5.843,11.343H16.116m-5.7,4.844L6.178,11.95a.856.856,0,0,1,0-1.211L10.416,6.5" transform="translate(-5.177 -5.97)" fill="none" stroke="#000" stroke-width="1.5"/>
                 </svg>
             </div>
-            <p class="inline-block font-semibold text-2xl ml-4 -translate-y-2">
+            <h1 class="inline-block font-semibold text-2xl ml-4 -translate-y-2">
                 # {{$booking->number_of_booking }}
-            </p>
+            </h1>
         </div>
         <div class="py-8 px-6   rounded-2xl mt-6" style="background-color: #000;">
             <div class="border-b border-border pb-8 mb-8">
-               <a href="{{route('apartments.show',$booking->apartment?->slug)}}" > 
-                    <p class="font-semibold text-lg float-left  rtl:float-right py-2.5">
+               <a href="{{route('apartments.show',$booking->apartment?->slug)}}" >
+                    <h2 class="font-semibold text-lg float-left  rtl:float-right py-2.5">
                         {{$booking->apartment->{'name_'.app()->getLocale()} }}
-                    </p>
+                    </h2>
                </a>
                 <div class="float-right rtl:float-left">
                     <a class="py-3 px-4 inline-block rounded-md bg-gri text-white ml-2" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">

@@ -4,9 +4,9 @@
 
 @include('pages.partials.breadcrumb')
 <section class="py-12 container">
-    <h1 class="font-bold text-3xl text-black mb-5 text-center">
+    <h2 class="font-bold text-3xl text-black mb-5 text-center">
         {{ $page->{'name_'.app()->getLocale()} }}
-    </h1>
+    </h2>
     <p class="font-light text-base text-titletext text-center md:px-32 lg:px-56 xl:px-96 mb-10">
         {{ strip_tags(str_replace('&nbsp;', ' ', $page->{'content_'.app()->getLocale()})) }}
     </p>

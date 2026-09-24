@@ -69,7 +69,7 @@
         <div class="banner-container">
             <div class="new-detail-banner">
                 @foreach ($apartment->getMedia('image') as $key=> $photo)
-                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}"><img src="{{ $photo->getUrl() }}" /></a>
+                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}"><img src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
                 @endforeach
 
 
@@ -100,7 +100,7 @@
         <div class="block sm:hidden photos banner-side ease-in-out duration-300">
             @foreach ($apartment->getMedia('image') as $key=> $photo)
                 <div>
-                    <a data-fancybox="telbanner" href="{{ $photo->getUrl() }}"><img class="h-[256px] w-full object-cover" src="{{ $photo->getUrl() }}" /></a>
+                    <a data-fancybox="telbanner" href="{{ $photo->getUrl() }}"><img class="h-[256px] w-full object-cover" src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
                 </div>
                     
                 @endforeach
@@ -173,9 +173,9 @@
                     <div class="clear-both"></div>
                 </div>
                 <div class="py-2 xl:py-7 detail-description border-b border-blackopacity mb-8">
-                    <h4 class="font-semibold text-xl text-title">   
+                    <h2 class="font-semibold text-xl text-title">
                         {{__('apartment.description')}}
-                    </h4>
+                    </h2>
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[92px] overflow-hidden desctext">
                         {!! $apartment->ml('description') !!}
 
@@ -233,9 +233,9 @@
                     </ul>
                     <div class="sections">
                         <div class="pt-8" id="tabs-1">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.specifications_title')}}
-                            </h5>
+                            </h2>
                             <ul>
                                 @foreach ($apartment->features as $item)
                                     <li class="inline-block mb-6 w-full xl:w-4/12 hover:text-price ease-in-out duration-300 cursor-pointer">
@@ -251,18 +251,18 @@
                             </ul>
                         </div>
                         <div class="pt-8" id="tabs-2">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.reviews_title')}}
-                            </h5>
+                            </h2>
                             <ul>
                                 @forelse ($apartment->reviews as $item)
                                     <li class="bg-sort border border-filteritem rounded-lg p-5 mb-4">
                                         <div>
                                             <div class="w-10 h-10 rounded-full rtl:ml-4 mr-4 float-left rtl:float-right inline-block" 
                                                  style="background-image: url({{asset('assets/img/slider.png')}}"></div>
-                                            <h5 class="font-normal text-base">  
+                                            <h3 class="font-normal text-base">
                                                 {{$item->customer->first_name.' '.$item->customer->last_name}}
-                                            </h5>
+                                            </h3>
                                             <p class="font-normal text-xs text-filterhover"></p>
                                         </div>
                                         <div class="my-3">
@@ -286,22 +286,22 @@
                             
                         </div>
                         <div class="pt-8" id="tabs-3">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">    
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.where_us')}}
-                            </h5>
+                            </h2>
                              
                             <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map">
                                 {!! $apartment->building?->map !!}
                             </div>
                         </div>
                         <div class="pt-8" id="tabs-4">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6 text-white">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6 text-white">
                                 {{__('apartment.terms_policies_title')}}
-                            </h5>
+                            </h2>
                            
-                            <h6 class="mt-8 text-white">
+                            <h3 class="mt-8 text-white">
                                 {{$apartment->policy?->{'name_'.app()->getLocale()} }}
-                            </h6>
+                            </h3>
                             <div class="font-light text-white text-base mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                                 {!! $apartment->policy?->{'description_'.app()->getLocale()} !!}              
                             </div>

@@ -108,6 +108,7 @@ return [
     'download_app_desc' => ' Explore the Best Hotel Apartments in the Saudi Kingdom',
     'download_apple' => 'Download on the App Store',
     'download_google' => 'Get it on Google Play',
+    'search_results' => 'Search Results',
     'anonymous' => 'Anonymous',
     'customer' => 'Customer',
     'our_locations' => 'Our Locations',

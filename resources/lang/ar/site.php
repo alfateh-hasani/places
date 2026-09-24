@@ -127,6 +127,7 @@ return [
     'download_app_desc' => 'استكشف أفضل الشقق الفندقية في المملكة العربية السعودية',
     'download_apple' => 'حمّل من App Store',
     'download_google' => 'حمّل من Google Play',
+    'search_results' => 'نتائج البحث',
     'anonymous' => 'زائر',
     'customer' => 'عميل',
     'our_locations' => 'مواقعنا',

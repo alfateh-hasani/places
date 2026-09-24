@@ -1,8 +1,8 @@
 <section class="list pt-2 sm:pt-10 pb-2 sm:pb-20">
     <div class="container">
-        <h2 class="text-center sm:text-left rtl:sm:text-right font-semibold text-base sm:text-2xl text-black mb-4 sm:mb-10">
+        <h1 class="text-center sm:text-left rtl:sm:text-right font-semibold text-base sm:text-2xl text-black mb-4 sm:mb-10">
                  @lang('site.explor_title')
-        </h2>
+        </h1>
 
         <div id="apartments-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full">
             @foreach($apartments as $apartment)

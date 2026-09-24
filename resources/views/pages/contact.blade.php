@@ -62,9 +62,9 @@
                 </ul>
             </div>
             <div class="bg-white border border-border rounded-2xl p-7 sm:p-12">
-                <p class="font-semibold text-3xl text-black mb-8">
+                <h2 class="font-semibold text-3xl text-black mb-8">
                     {{__('site.contact_us')}}
-                </p>
+                </h2>
                 <form id="contact-us" method="POST">
                     @csrf
                     <div class="lg:grid lg:grid-cols-2 lg:gap-4 w-full mx-0">
@@ -92,9 +92,9 @@
 </section> 
 
 <section class="py-12 container">
-    <p class="font-semibold text-2xl mb-10">
+    <h2 class="font-semibold text-2xl mb-10">
         {{__('site.location')}}
-    </p>
+    </h2>
  
     @php
         // settings.map may hold: a full <iframe> embed, a Google Maps URL (from which we

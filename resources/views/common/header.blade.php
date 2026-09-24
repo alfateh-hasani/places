@@ -175,9 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="mt-2">
           <h6 class="font-semibold text-xl text-black"> @lang('site.contact')</h6>
           <ul class="mt-4 lg:mt-10">
-            <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" />   {{Config::get('settings.email')}}</a></li>
-            <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" /> {{Config::get('settings.phone')}}</a></li>
-            <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
+            <li><a href="mailto:{{ Config::get('settings.email') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" />   {{Config::get('settings.email')}}</a></li>
+            <li><a href="tel:{{ Config::get('settings.phone') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" /> {{Config::get('settings.phone')}}</a></li>
+            <li><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode(Config::get('settings.address_'.app()->getLocale())) }}" target="_blank" rel="noopener noreferrer" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
         </ul>
       </div>
   </div>

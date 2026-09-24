@@ -1,9 +1,9 @@
 <section class="properitirs pt-10 pb-10 md:pt-20 md:pb-20   bg-properits">
     <div class="container">
   
-        <h3 class="font-semibold text-base md:text-3xl text-black mt-1 md:mt-3 mb-5 md:mb-0 text-center md:text-left rtl:md:text-right">
+        <h2 class="font-semibold text-base md:text-3xl text-black mt-1 md:mt-3 mb-5 md:mb-0 text-center md:text-left rtl:md:text-right">
             @lang('site.explore_more_properties')
-        </h3>
+        </h2>
 
 
        
@@ -16,6 +16,7 @@
                                 src="{{ $building->image_grid }}"
                                 class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
                                 alt="{{ $building->ml('name') }}"
+                                loading="lazy"
                             />
                             <div class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"></div>
                             <h3 class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5">

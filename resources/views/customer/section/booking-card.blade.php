@@ -1,7 +1,7 @@
 <div class="bg-feature border border-feature-border rounded-xl p-4 relative mb-4 reservations">
     <a href="{{route('customer.booking.details',$item->number_of_booking)}}" >
         @if($item->apartment)
-            <img class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover" 
+            <img loading="lazy" class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover"
                 src="{{getImage($item->apartment,'image')}}" />
         @endif
     </a>

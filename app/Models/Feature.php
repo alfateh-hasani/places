@@ -9,9 +9,10 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use App\Traits\HasTranslations;
 class Feature extends Model implements HasMedia
 {
-    use CrudTrait, HasFactory, InteractsWithMedia, LogsActivity;
+    use CrudTrait, HasFactory, InteractsWithMedia, LogsActivity, HasTranslations;
 
     protected $connection = 'mysql';
 

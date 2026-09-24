@@ -8,9 +8,9 @@
         <a href="{{getImage($blog,'image')}}" data-fancybox="slider">
             <img class="h-96 object-cover rounded-lg w-full" src="{{getImage($blog,'image')}}" /></a>
     </div>
-    <h1 class="font-bold text-3xl text-black mb-8">
+    <h2 class="font-bold text-3xl text-black mb-8">
         {{$blog->{'name_'.app()->getLocale()} }}
-    </h1>
+    </h2>
     <p class="font-normal text-base text-black mb-20">
         {!! $blog->{'content_'.app()->getLocale()} !!}
     </p>
@@ -41,18 +41,10 @@
             </a>
             </li>
             </ul>
-
-
-
-
-
-
-
-
     </div>
-    <h1 class="font-bold text-3xl text-black mb-8">
+    <h2 class="font-bold text-3xl text-black mb-8">
         {{__('site.related_blogs')}}
-    </h1>
+    </h2>
     <div class="lg:grid lg:grid-cols-3 lg:gap-4 w-full mx-0">
 
         @foreach ($blogs as $blog)

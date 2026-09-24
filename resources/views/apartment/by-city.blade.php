@@ -2,7 +2,7 @@
 
 
 @section('content')
- 
+
 <section class="container py-8 lg:hidden cursor-pointer search-button" data-aos="zoom-in">
     <div class="px-6 py-3 bg-white shadow-xl rounded-full border border-border">
         <img src="assets/img/search-black.svg" class="float-left rtl:float-right w-4 mr-5 py-2" />
@@ -142,6 +142,9 @@
 
 <section class="list pt-2 sm:pt-20 pb-2 sm:pb-20">
     <div class="container">
+        <h1 class="font-semibold text-xl sm:text-3xl text-black mb-6 sm:mb-10 text-center md:text-start rtl:md:text-right">
+            {{ $city->ml('name') }}
+        </h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-0">
             @if($apartments->isNotEmpty())
               @foreach($apartments as $apartment)
