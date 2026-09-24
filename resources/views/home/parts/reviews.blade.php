@@ -1,14 +1,32 @@
  
 
 
+@php
+    // Slick autoplay only scrolls when there are more slides than slidesToShow
+    // (up to 6 on wide screens, per main.js). With only a few reviews the strip
+    // would sit static/centered, so repeat the reviews to guarantee scrolling.
+    $repeatReviews = function ($reviews, $min = 9) {
+        if ($reviews->isEmpty()) {
+            return $reviews;
+        }
+        $out = collect();
+        while ($out->count() < $min) {
+            $out = $out->merge($reviews);
+        }
+        return $out->values();
+    };
+    $slides1 = $repeatReviews($topReviews1);
+    $slides2 = $repeatReviews($topReviews2);
+@endphp
+
 <section class="comments py-12">
   <div class="container">
     <div class="text-center">
-      <div class="p-1 bg-black inline-flex items-center title text-left rounded-3xl">
-        <div class="bg-white w-9 h-9 rounded-full relative mr-3">
+      <div class="px-4 py-3 sm:p-1 sm:ps-6 bg-black inline-flex flex-col sm:flex-row-reverse items-center gap-2 sm:gap-3 title rounded-3xl sm:rounded-3xl max-w-full text-center sm:text-start">
+        <div class="bg-white w-9 h-9 rounded-full relative flex-shrink-0">
           <img src="{{ asset('assets/img/star-comment.svg') }}" class="absolute" />
         </div>
-        <p class="font-normal text-base sm:text-lg text-white pr-4 sm:pr-6 py-1.5 sm:py-1">
+        <p class="font-normal text-sm sm:text-lg text-white py-1.5 sm:py-1">
           @lang('site.related_reviews', ['rating' => $averageRating.'/5', 'users' => $totalUsers.' Dyafa'])
         </p>
       </div>
@@ -24,7 +42,7 @@
   <div class="relative comment-list top-list mb-4">
     <ul class="comment-slider-1">
  
-      @foreach ($topReviews1 as $review)
+      @foreach ($slides1 as $review)
           <li class="px-2">
               <a class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl">
                   <div>
@@ -51,7 +69,7 @@
   @if($topReviews2->isNotEmpty())
   <div class="relative comment-list bottom-list hidden sm:block">
       <ul class="comment-slider-2">
-          @foreach ($topReviews2 as $review)
+          @foreach ($slides2 as $review)
             <li class="px-2">
                 <a class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl">
                     <div>

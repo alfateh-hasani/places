@@ -37,9 +37,10 @@
             </a>
           </li>
           <li>
-            <a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300" href="tel:{{Config::get('settings.phone')}}">
+            @php $footerPhone = preg_replace('/^00/', '+', (string) Config::get('settings.phone')); @endphp
+            <a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300" href="tel:{{ $footerPhone }}">
               <img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" alt="Phone Icon" />
-              {{Config::get('settings.phone')}}
+              <span dir="ltr" style="direction:ltr; unicode-bidi:isolate;">{{ $footerPhone }}</span>
             </a>
           </li>
           <li>
