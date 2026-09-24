@@ -900,7 +900,10 @@ $(document).ready(function() {
         var checkinVal = $('#dc-in').val();
         var checkoutVal = $(this).val();
         if (checkinVal && checkoutVal && new Date(checkoutVal) <= new Date(checkinVal)) {
-            alert("{{ __('apartment.checkout_greater_than') }}");
+            Swal.fire({
+                icon: 'warning',
+                title: "{{ __('apartment.checkout_greater_than') }}",
+            });
             $(this).val('');
         }
     });

@@ -73,6 +73,7 @@ return [
     'booking_failed_message' => 'فشلت عملية الحجز',
     'success' => 'نجاح',
     'failed' => 'فشل',
+    'error' => 'خطأ',
     'discounted_cost' => 'قيمة الكوبون',
     'enter_coupon' => 'أدخل كود الكوبون',
     'coupon_applied' => 'تم تطبيق الكوبون',

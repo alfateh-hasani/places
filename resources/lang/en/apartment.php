@@ -72,6 +72,8 @@ return [
     'booking_failed_message' => 'Booking failed',
     'success' => 'Success',
     'failed' => 'Failed',
+    'error' => 'Error',
+    'price_calculation_error' => 'An error occurred while calculating the price, please try again',
     'discounted_cost' => 'Coupon Value',
     'enter_coupon' => 'Enter Coupon Code',
     'coupon_applied' => 'Coupon Applied',

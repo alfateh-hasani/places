@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
-        iframe{
+        #map iframe{
             width: 100%;
             height: 100% !important;
         }
@@ -185,7 +185,7 @@
                     </button> 
                 </div>
                 <div class="tabs" id="tabs">
-                    <ul class="buttons w-[210vw] xl:w-auto">
+                    <ul class="buttons whitespace-nowrap overflow-x-auto xl:overflow-visible">
                         <li class="inline-block">
                             <a class="xl:px-5 xl:py-3 rounded-lg me-2 block bg-price" href="#tabs-1">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" id="building" xmlns="http://www.w3.org/2000/svg" width="17.371" height="18.707" viewBox="0 0 17.371 18.707">
@@ -290,8 +290,34 @@
                                 {{__('apartment.where_us')}}
                             </h2>
                              
-                            <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map">
-                                {!! $apartment->building?->map !!}
+                            @php
+                                // Prefer the building's stored coordinates for a keyless embed (a
+                                // short maps.app.goo.gl link can't be iframed). Fall back to an
+                                // <iframe> embed or @lat,lng inside the map field, else a safe link.
+                                $aptMap = $apartment->building?->map;
+                                $bLat = $apartment->building?->latitude;
+                                $bLng = $apartment->building?->longitude;
+                                $aptMapEmbedSrc = null;
+                                if (is_numeric($bLat) && is_numeric($bLng)) {
+                                    $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$bLat.','.$bLng.'&z=16&hl='.app()->getLocale().'&output=embed';
+                                } elseif (! empty($aptMap) && ! str_contains($aptMap, '<iframe') && preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $aptMap, $aptMapCoords)) {
+                                    $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$aptMapCoords[1].','.$aptMapCoords[2].'&z=16&hl='.app()->getLocale().'&output=embed';
+                                }
+                            @endphp
+                            <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map" aria-label="{{ __('apartment.where_us') }}">
+                                @if(! empty($aptMap) && str_contains($aptMap, '<iframe'))
+                                    {!! $aptMap !!}
+                                @elseif($aptMapEmbedSrc)
+                                    <iframe src="{{ $aptMapEmbedSrc }}" width="100%" height="100%" style="border:0;"
+                                            loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                                            title="{{ __('apartment.where_us') }}"></iframe>
+                                @elseif(! empty($aptMap))
+                                    <a href="{{ $aptMap }}" target="_blank" rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-2 font-semibold text-price hover:underline">
+                                        <img class="w-5 h-5" src="{{ asset('assets/img/location-check.svg') }}" alt="" />
+                                        {{ __('apartment.where_us') }}
+                                    </a>
+                                @endif
                             </div>
                         </div>
                         <div class="pt-8" id="tabs-4">
