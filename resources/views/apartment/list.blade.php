@@ -2,7 +2,8 @@
 
 
 @section('content')
- 
+
+<h1 class="sr-only">{{ __('site.search_results') }}</h1>
 <section class="container py-8 lg:hidden cursor-pointer search-button" data-aos="zoom-in">
     <div class="px-6 py-3 bg-white shadow-xl rounded-full border border-border">
         <img src="{{asset('assets/img/search-black.svg')}}" class="float-left rtl:float-right w-4 mr-5 py-2" />
@@ -20,7 +21,18 @@
 
 
 <section class="search lg:container z-40 xl:px-40 lg:py-16 h-[100vh] lg:h-auto fixed lg:relative rtl:right-0 left-0 bottom-0 right-0 bg-blackopacity lg:bg-[transparent]" data-aos="zoom-out">
-    <form action="{{ route('apartments.search') }}" method="GET" class="absolute lg:relative bottom-0 lg:bottom-auto rtl:right-0 left-0 margin-0 w-full lg:w-auto lg:grid grid-cols-2 lg:grid-cols-5 gap-1 max-w-full py-5 lg:pl-10 pl-5 pr-5 bg-white shadow-xl rounded-xl lg:rounded-full border border-border" id="date-range-picker" date-rangepicker>
+    <form action="{{ route('apartments.search') }}" method="GET" class="absolute lg:relative bottom-0 lg:bottom-auto rtl:right-0 left-0 margin-0 w-full lg:w-auto lg:grid grid-cols-2 lg:grid-cols-5 gap-1 max-w-full py-5 lg:pl-10 pl-5 pr-5 bg-white shadow-xl rounded-xl lg:rounded-full border border-border" id="date-range-picker">
+      {{-- Preserve the applied filters when re-searching with new dates/city/guests. --}}
+      @foreach (['price_min', 'price_max', 'area_min', 'area_max', 'rate'] as $keepKey)
+          @if (request()->filled($keepKey))
+              <input type="hidden" name="{{ $keepKey }}" value="{{ request($keepKey) }}">
+          @endif
+      @endforeach
+      @foreach (['rooms', 'beds', 'building_id'] as $keepKey)
+          @foreach ((array) request($keepKey, []) as $keepVal)
+              <input type="hidden" name="{{ $keepKey }}[]" value="{{ $keepVal }}">
+          @endforeach
+      @endforeach
       
       <!-- العنوان والإغلاق -->
       <div class="mb-5 lg:hidden">
@@ -45,6 +57,17 @@
         </select>
       </div>
       
+      @php
+          // Only echo a requested date back into the field if it is valid and
+          // reasonable — never re-display a mangled value like "10/09/0191".
+          $validDate = function ($v) {
+              if (empty($v)) { return ''; }
+              try {
+                  $d = \Carbon\Carbon::parse($v);
+                  return ($d->year >= 2000 && $d->year <= 2100) ? $v : '';
+              } catch (\Throwable $e) { return ''; }
+          };
+      @endphp
       <!-- حقل تسجيل الدخول (Check In) -->
       <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
         <p class="font-normal text-xs text-black">  
@@ -54,9 +77,11 @@
           id="datepicker-range-start"
           name="check_in"
           type="text"
+          autocomplete="off"
+          readonly
           class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
           placeholder="{{now()->format('Y-m-d')}}"
-          value="{{ old('check_in', request('check_in')) }}"
+          value="{{ old('check_in', $validDate(request('check_in'))) }}"
         />
       </div>
       
@@ -69,9 +94,11 @@
           id="datepicker-range-end"
           name="check_out"
           type="text"
+          autocomplete="off"
+          readonly
           class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
           placeholder="{{ now()->addDay()->format('Y-m-d') }}"
-          value="{{ old('check_out', request('check_out')) }}"
+          value="{{ old('check_out', $validDate(request('check_out'))) }}"
         />
       </div>
       
@@ -149,13 +176,22 @@
 
   <section class="list pt-2 sm:pt-20 pb-2 sm:pb-20">
     <div class="container grid-container">
-        <div class="grid grid-items grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-0">
-            @foreach($apartments as $apartment)
-                @include('apartment.card', ['apartment' => $apartment])
-            @endforeach
-        </div>
-
-        
+        @if ($apartments->isEmpty())
+            <div class="flex flex-col items-center justify-center text-center py-16 sm:py-24">
+                <svg class="w-14 h-14 mb-4 text-reviews" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+                <h3 class="font-semibold text-lg text-title mb-2">@lang('apartment.no_results')</h3>
+                <p class="font-normal text-sm text-reviews max-w-md">@lang('apartment.no_results_hint')</p>
+            </div>
+        @else
+            <div class="grid grid-items grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-0">
+                @foreach($apartments as $apartment)
+                    @include('apartment.card', ['apartment' => $apartment, 'showNightlyPrice' => true])
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <div id="list-links">
@@ -166,7 +202,7 @@
 @endsection
 
 @push('css')
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     #list-links{
         display:none;
@@ -176,6 +212,7 @@
 @push('js')
 
 <script src="{{ asset('assets/js/infinite-scroll.pkgd.min.js')}}"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
 
@@ -203,26 +240,60 @@ $('.grid-container .grid-items').infiniteScroll({
     });
     </script>
 <script>
-    function updateRange() {
-        const minPrice = document.getElementById('min-price');
-        const maxPrice = document.getElementById('max-price');
-        const minPriceLabel = document.getElementById('min-price-label');
-        const maxPriceLabel = document.getElementById('max-price-label');
-        const rangeHighlight = document.getElementById('range-highlight');
-        if (parseInt(minPrice.value) > parseInt(maxPrice.value)) {
-            minPrice.value = maxPrice.value;
+    (function () {
+        var ciEl = document.getElementById('datepicker-range-start');
+        var coEl = document.getElementById('datepicker-range-end');
+
+        // Clear any browser-restored/invalid value (e.g. a mangled "10/09/0191")
+        // before flatpickr initialises, so only clean Y-m-d dates remain.
+        [ciEl, coEl].forEach(function (el) {
+            if (el && el.value && !/^20\d{2}-\d{2}-\d{2}$/.test(el.value.trim())) { el.value = ''; }
+        });
+
+        var addDay = function (ymd) {
+            var d = new Date(ymd);
+            d.setDate(d.getDate() + 1);
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
+
+        // Normalize an out-of-order range (e.g. a hand-edited URL): check-out must be after check-in.
+        if (ciEl && coEl && ciEl.value && coEl.value && coEl.value <= ciEl.value) {
+            coEl.value = addDay(ciEl.value);
         }
-        if (parseInt(maxPrice.value) < parseInt(minPrice.value)) {
-            maxPrice.value = minPrice.value;
+
+        // Reliable date picker: flatpickr with Y-m-d (the format the backend
+        // parses), replacing the previous picker that produced corrupt dates.
+        if (window.flatpickr && ciEl && coEl) {
+            var coMin = /^20\d{2}-\d{2}-\d{2}$/.test(ciEl.value) ? new Date(addDay(ciEl.value)) : new Date(Date.now() + 86400000);
+            var checkoutFp = flatpickr(coEl, { dateFormat: 'Y-m-d', minDate: coMin, disableMobile: true });
+            flatpickr(ciEl, {
+                dateFormat: 'Y-m-d',
+                minDate: 'today',
+                disableMobile: true,
+                onChange: function (sel) {
+                    if (!sel[0]) { return; }
+                    var next = new Date(sel[0]);
+                    next.setDate(next.getDate() + 1);
+                    checkoutFp.set('minDate', next);
+                    // Auto-fill / bump check-out to check-in + 1 when it's empty or invalid.
+                    if (! checkoutFp.selectedDates[0] || checkoutFp.selectedDates[0] <= sel[0]) {
+                        checkoutFp.setDate(next);
+                    }
+                }
+            });
         }
-        minPriceLabel.textContent = `${minPrice.value} SAR`;
-        maxPriceLabel.textContent = `${maxPrice.value} SAR`;
-        const minPos = (minPrice.value - minPrice.min) / (minPrice.max - minPrice.min) * 100;
-        const maxPos = (maxPrice.value - maxPrice.min) / (maxPrice.max - maxPrice.min) * 100;
-        rangeHighlight.style.left = `${minPos}%`;
-        rangeHighlight.style.width = `${maxPos - minPos}%`;
-    }
-    updateRange();
+
+        // Guarantee the search always carries dates: if none were picked, fall
+        // back to today / tomorrow (valid Y-m-d) at submit time.
+        document.getElementById('date-range-picker')?.addEventListener('submit', function () {
+            if (ciEl && !ciEl.value.trim()) { ciEl.value = @json(now()->format('Y-m-d')); }
+            if (coEl && !coEl.value.trim()) {
+                var base = (ciEl && /^20\d{2}-\d{2}-\d{2}$/.test(ciEl.value.trim())) ? new Date(ciEl.value) : new Date();
+                base.setDate(base.getDate() + 1);
+                coEl.value = base.getFullYear() + '-' + String(base.getMonth() + 1).padStart(2, '0') + '-' + String(base.getDate()).padStart(2, '0');
+            }
+        });
+    })();
 </script>    
 
 

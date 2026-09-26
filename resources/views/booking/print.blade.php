@@ -37,9 +37,9 @@
    
         <div class=" ">
             <div class="  pb-2 mb-2">
-                <p class="font-semibold text-lg   text-center py-2.5">
-                  Booking ID:   #{{$booking->number_of_booking }} -     {{$booking->apartment->{'name_'.app()->getLocale()} }}
-                </p>
+                <h1 class="font-semibold text-lg   text-center py-2.5">
+                  {{__('booking.number_of_booking')}}:   #{{$booking->number_of_booking }} -     {{$booking->apartment->{'name_'.app()->getLocale()} }}
+                </h1>
                
                 <div class="clear-both"></div>
             </div>
@@ -81,19 +81,7 @@
                     </div>
                
  
-                    <p class="font-semibold py-4 mx-5">
-                        {{__('booking.summary')}}
-                    </p>
-                    <p class="text-title mx-5">  {{__('booking.night_price')}} <span class="float-right rtl:float-left font-semibold">{{$booking->total_price/$booking->number_of_nights }} SAR</span></p>
-                    @if($booking->coupon_code != null)
-                        <p class="text-title mx-5">  {{__('booking.copon').' ( ' .$booking->coupon_code.' ) '}} <span class="float-right rtl:float-left font-semibold">{{$booking->discount}} SAR</span></p>
-                    @endif
-                    <div class="bg-feature border border-feature-border rounded-lg mx-5 mt-4 p-3">
-                        <p>         {{__('booking.summary')}} (    {{$booking->number_of_nights   .' '.__('booking.nights')}})</p>
-                        <p class="font-semibold text-lg">
-                            {{$booking->final_price}}
-                            SAR</p>
-                    </div>
+                    @include('booking.partials.summary', ['booking' => $booking])
                 </div>
             </div>
         </div>

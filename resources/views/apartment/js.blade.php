@@ -1,6 +1,8 @@
 <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
  
 </style>
@@ -71,7 +73,11 @@ $(document).ready(function() {
             error: function(xhr) {
                 console.error('Error calculating price:', xhr);
                 $('#totalCost').text('--');
-                alert("{{ __('apartment.price_calculation_error') }}");
+                Swal.fire({
+                    icon: 'error',
+                    title: "{{ __('apartment.error') }}",
+                    text: "{{ __('apartment.price_calculation_error') }}",
+                });
             },
             complete: function() {
                 isCalculating = false;
@@ -219,7 +225,10 @@ $(document).ready(function() {
         locale: "ar",
         time_24hr: true,
         weekNumbers: false,
-        static: true,
+        // static:false lets flatpickr append the calendar to <body> and
+        // auto-position it within the viewport (so the checkout field near the
+        // screen edge no longer opens off-screen).
+        static: false,
         enableTime: false,
         noCalendar: false,
         inline: false,
@@ -281,7 +290,10 @@ $(document).ready(function() {
         var checkinVal = $('#checkin').val();
         var checkoutVal = $(this).val();
         if (new Date(checkoutVal) <= new Date(checkinVal)) {
-            alert("{{ __('apartment.checkout_greater_than') }}");
+            Swal.fire({
+                icon: 'warning',
+                title: "{{ __('apartment.checkout_greater_than') }}",
+            });
             $(this).val('');
         }
     });

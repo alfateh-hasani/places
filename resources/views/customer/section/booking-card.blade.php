@@ -1,7 +1,7 @@
 <div class="bg-feature border border-feature-border rounded-xl p-4 relative mb-4 reservations">
     <a href="{{route('customer.booking.details',$item->number_of_booking)}}" >
         @if($item->apartment)
-            <img class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover" 
+            <img loading="lazy" class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover"
                 src="{{getImage($item->apartment,'image')}}" />
         @endif
     </a>
@@ -10,11 +10,11 @@
             <p class="text-sm sm:text-base font-semibold text-lg mb-1">{{__('apartment.booking_summary')}}</p>
         </a>
         <a><p class="text-sm sm:text-sm text-reviews "> {{__('apartment.night_price')}} 
-            <span class="leading-none block font-semibold text-black">{{$item->price_per_night}} SAR</span></p></a>
+            <span class="leading-none block font-semibold text-black">{{$item->price_per_night}} {{ __('customer.currency') }}</span></p></a>
         <a><p class="text-sm sm:text-sm text-reviews "> {{__('apartment.discount')}} 
-            <span class="leading-none block font-semibold text-black">{{$item->discount}} SAR</span></p></a>
+            <span class="leading-none block font-semibold text-black">{{$item->discount}} {{ __('customer.currency') }}</span></p></a>
         <a><p class="text-sm sm:text-sm text-reviews ">{{__('apartment.total_price')}} ({{$item->number_of_nights .' '.__('apartment.nights')}})
-            <span class="leading-none block font-semibold text-black mb-2">{{$item->final_price}} SAR</span></p></a>
+            <span class="leading-none block font-semibold text-black mb-2">{{$item->final_price}} {{ __('customer.currency') }}</span></p></a>
     </div>
     <div>
         <a>

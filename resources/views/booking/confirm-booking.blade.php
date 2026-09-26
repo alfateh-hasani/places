@@ -40,9 +40,9 @@
                         <input type="hidden" name="check_in" value="{{$booking->check_in}}">
                         <input type="hidden" name="check_out" value="{{$booking->check_out}}">
                         @csrf
-                        <h1 class="font-semibold text-2xl text-title border-t border-blackopacity ">
+                        <h2 class="font-semibold text-2xl text-title border-t border-blackopacity ">
                             {{__('booking.payment_method')}}
-                        </h1>
+                        </h2>
                         <ul class="pb-8 border-b border-blackopacity">
                             @foreach ($payment_details as $key => $item)
                                 <li>
@@ -68,16 +68,10 @@
                
                 </div>
                 <div class="py-2 xl:py-7 detail-description border-b border-blackopacity mb-8">
-                    <h5 class="font-semibold text-xl text-filterhover mb-6">
+                    <h2 class="font-semibold text-xl text-filterhover mb-6">
                         {{$policy_title}}
-                    </h5>
-                    {{-- <ul>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Free Cancellation For 48 Hours</li>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Free Cancellation For 48 Hours</li>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Dive Right In</li>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Dive Right In</li>
-                    </ul> --}}
-                  
+                    </h2>
+
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                         {!!$policy_description!!}
                     </div>
@@ -257,12 +251,12 @@
                         placeholder="@lang('apartment.coupon_code')" 
                         class="border border-gray-300 rounded-lg h-12 px-3 flex-1">
                     
-                        <button type="button" id="verify_coupon" class="mr-4 bg-price rounded-lg h-12 px-4 font-semibold text-white">
+                        <button type="button" id="verify_coupon" class="me-4 bg-price rounded-lg h-12 px-4 font-semibold text-white">
                             @lang('apartment.verify_coupon')
                         </button>
                     
-                        <button type="button" id="remove_coupon" 
-                            class="mr-4  bg-red-500 rounded-lg h-12 px-4 font-semibold text-white"
+                        <button type="button" id="remove_coupon"
+                            class="me-4  bg-red-500 rounded-lg h-12 px-4 font-semibold text-white"
                             @if(!$booking->coupon_code) style="display: none;" @endif>
                             @lang('apartment.remove_coupon')
                         </button>

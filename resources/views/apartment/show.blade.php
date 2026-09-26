@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
-        iframe{
+        #map iframe{
             width: 100%;
             height: 100% !important;
         }
@@ -18,6 +18,11 @@
             color: #fff !important;
             border-color: #EF552C !important;
         }
+        /* Photo gallery expand/collapse — CSS-driven so it works with lazy images
+           (no JS height measurement, which mis-measures before images load). */
+        .banner-container { overflow: hidden; transition: max-height .4s ease; }
+        .banner-container:not(.active) { max-height: 464px; }
+        .banner-container.active { max-height: 5000px; }
     </style>
 
         
@@ -37,18 +42,24 @@
                 </span>
             </button>
             
-            <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})"
-                class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto 
-                lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
-                @if (!$apartment->is_favorite)
-                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
-                @else
-                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favorite-active.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
-                @endif
+            <button type="button"
+                data-wishlist-toggle
+                data-apartment-id="{{ $apartment->id }}"
+                aria-pressed="{{ $apartment->is_favorite ? 'true' : 'false' }}"
+                aria-label="@lang('apartment.favorite')"
+                class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto
+                lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300 {{ $apartment->is_favorite ? 'favorite-active' : '' }}">
+                <img
+                    data-wishlist-icon
+                    data-icon-active="{{ asset('assets/img/favorite-active.svg') }}"
+                    data-icon-inactive="{{ asset('assets/img/favoritee.svg') }}"
+                    src="{{ $apartment->is_favorite ? asset('assets/img/favorite-active.svg') : asset('assets/img/favoritee.svg') }}"
+                    alt=""
+                    class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 <span class="hidden lg:inline">
                     {{ __('apartment.favorite') }}
                 </span>
-            </a>
+            </button>
             
             
         </div>
@@ -63,7 +74,7 @@
         <div class="banner-container">
             <div class="new-detail-banner">
                 @foreach ($apartment->getMedia('image') as $key=> $photo)
-                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}"><img src="{{ $photo->getUrl() }}" /></a>
+                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}"><img src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
                 @endforeach
 
 
@@ -72,7 +83,6 @@
             </div>
 
             <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
-                {{-- <button class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer video-button"><img class="inline-block mr-2" src="assets/img/video.svg" /> Show All Videos</button> --}}
                 <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" /> 
                     <span>{{__('apartment.show_all_photos')}}</span>
                 </button>
@@ -82,12 +92,20 @@
     </div>
 
     <script>
-        $('#allphotos').click(function () {
-            if ($(".banner-container").hasClass("active")) {
-                $('#allphotos span').text("عرض جميع الصور");
-            } else {
-                $('#allphotos span').text("عرض بعض الصور");
-            }
+        // Override the submodule's height-measured toggle with a CSS max-height
+        // expand (reliable with lazy images). Runs on window load so it supersedes
+        // main.js's document-ready handler.
+        $(window).on('load', function () {
+            var $btn = $('#allphotos');
+            if (! $btn.length) return;
+            $btn.off('click');
+            $('.banner-container').css('height', '');
+            $btn.on('click', function () {
+                var active = $('.banner-container').toggleClass('active').hasClass('active');
+                $('#allphotos span').text(active
+                    ? @json(__('apartment.show_some_photos'))
+                    : @json(__('apartment.show_all_photos')));
+            });
         });
     </script>
  
@@ -95,7 +113,7 @@
         <div class="block sm:hidden photos banner-side ease-in-out duration-300">
             @foreach ($apartment->getMedia('image') as $key=> $photo)
                 <div>
-                    <a data-fancybox="telbanner" href="{{ $photo->getUrl() }}"><img class="h-[256px] w-full object-cover" src="{{ $photo->getUrl() }}" /></a>
+                    <a data-fancybox="telbanner" href="{{ $photo->getUrl() }}"><img class="h-[256px] w-full object-cover" src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
                 </div>
                     
                 @endforeach
@@ -168,9 +186,9 @@
                     <div class="clear-both"></div>
                 </div>
                 <div class="py-2 xl:py-7 detail-description border-b border-blackopacity mb-8">
-                    <h4 class="font-semibold text-xl text-title">   
+                    <h2 class="font-semibold text-xl text-title">
                         {{__('apartment.description')}}
-                    </h4>
+                    </h2>
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[92px] overflow-hidden desctext">
                         {!! $apartment->ml('description') !!}
 
@@ -180,7 +198,7 @@
                     </button> 
                 </div>
                 <div class="tabs" id="tabs">
-                    <ul class="buttons w-[210vw] xl:w-auto">
+                    <ul class="buttons whitespace-nowrap overflow-x-auto xl:overflow-visible">
                         <li class="inline-block">
                             <a class="xl:px-5 xl:py-3 rounded-lg me-2 block bg-price" href="#tabs-1">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" id="building" xmlns="http://www.w3.org/2000/svg" width="17.371" height="18.707" viewBox="0 0 17.371 18.707">
@@ -228,9 +246,9 @@
                     </ul>
                     <div class="sections">
                         <div class="pt-8" id="tabs-1">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.specifications_title')}}
-                            </h5>
+                            </h2>
                             <ul>
                                 @foreach ($apartment->features as $item)
                                     <li class="inline-block mb-6 w-full xl:w-4/12 hover:text-price ease-in-out duration-300 cursor-pointer">
@@ -244,23 +262,20 @@
                                 
                                 
                             </ul>
-                            {{-- <button class="show-specifications font-semibold text-base border border-black rounded-full py-2 px-6">
-                                Show All 30 Amenities
-                            </button> --}}
                         </div>
                         <div class="pt-8" id="tabs-2">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.reviews_title')}}
-                            </h5>
+                            </h2>
                             <ul>
                                 @forelse ($apartment->reviews as $item)
                                     <li class="bg-sort border border-filteritem rounded-lg p-5 mb-4">
                                         <div>
                                             <div class="w-10 h-10 rounded-full rtl:ml-4 mr-4 float-left rtl:float-right inline-block" 
                                                  style="background-image: url({{asset('assets/img/slider.png')}}"></div>
-                                            <h5 class="font-normal text-base">  
+                                            <h3 class="font-normal text-base">
                                                 {{$item->customer->first_name.' '.$item->customer->last_name}}
-                                            </h5>
+                                            </h3>
                                             <p class="font-normal text-xs text-filterhover"></p>
                                         </div>
                                         <div class="my-3">
@@ -284,22 +299,48 @@
                             
                         </div>
                         <div class="pt-8" id="tabs-3">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">    
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.where_us')}}
-                            </h5>
+                            </h2>
                              
-                            <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map">
-                                {!! $apartment->building?->map !!}
+                            @php
+                                // Prefer the building's stored coordinates for a keyless embed (a
+                                // short maps.app.goo.gl link can't be iframed). Fall back to an
+                                // <iframe> embed or @lat,lng inside the map field, else a safe link.
+                                $aptMap = $apartment->building?->map;
+                                $bLat = $apartment->building?->latitude;
+                                $bLng = $apartment->building?->longitude;
+                                $aptMapEmbedSrc = null;
+                                if (is_numeric($bLat) && is_numeric($bLng)) {
+                                    $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$bLat.','.$bLng.'&z=16&hl='.app()->getLocale().'&output=embed';
+                                } elseif (! empty($aptMap) && ! str_contains($aptMap, '<iframe') && preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $aptMap, $aptMapCoords)) {
+                                    $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$aptMapCoords[1].','.$aptMapCoords[2].'&z=16&hl='.app()->getLocale().'&output=embed';
+                                }
+                            @endphp
+                            <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map" aria-label="{{ __('apartment.where_us') }}">
+                                @if(! empty($aptMap) && str_contains($aptMap, '<iframe'))
+                                    {!! $aptMap !!}
+                                @elseif($aptMapEmbedSrc)
+                                    <iframe src="{{ $aptMapEmbedSrc }}" width="100%" height="100%" style="border:0;"
+                                            loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                                            title="{{ __('apartment.where_us') }}"></iframe>
+                                @elseif(! empty($aptMap))
+                                    <a href="{{ $aptMap }}" target="_blank" rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-2 font-semibold text-price hover:underline">
+                                        <img class="w-5 h-5" src="{{ asset('assets/img/location-check.svg') }}" alt="" />
+                                        {{ __('apartment.where_us') }}
+                                    </a>
+                                @endif
                             </div>
                         </div>
                         <div class="pt-8" id="tabs-4">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6 text-white">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6 text-white">
                                 {{__('apartment.terms_policies_title')}}
-                            </h5>
+                            </h2>
                            
-                            <h6 class="mt-8 text-white">
+                            <h3 class="mt-8 text-white">
                                 {{$apartment->policy?->{'name_'.app()->getLocale()} }}
-                            </h6>
+                            </h3>
                             <div class="font-light text-white text-base mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                                 {!! $apartment->policy?->{'description_'.app()->getLocale()} !!}              
                             </div>
@@ -342,8 +383,8 @@
                             <ul class="   bg-white p-4 border border-border rounded-lg">
                                 <li class="border-b border-blackopacity pb-4 mb-4 flex justify-between items-center">
                                     <p class="text-lg">
-                                        الكبار
-                                        <span class="block text-xs opacity-50">أعلى من 12 سنة</span>
+                                        {{ __('apartment.adults') }}
+                                        <span class="block text-xs opacity-50">{{ __('apartment.adults_age_hint') }}</span>
                                     </p>
                                     <div class="flex items-center space-x-2 rtl:space-x-reverse">
                                         <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="adults_count">
@@ -362,8 +403,8 @@
                                 
                                 <li class="  flex justify-between items-center">
                                     <p class="text-lg">
-                                        الأطفال
-                                        <span class="block text-xs opacity-50">أقل من 12 سنة</span>
+                                        {{ __('apartment.children') }}
+                                        <span class="block text-xs opacity-50">{{ __('apartment.children_age_hint') }}</span>
                                     </p>
                                     <div class="flex items-center space-x-2 rtl:space-x-reverse">
                                         <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="children_count">
@@ -426,7 +467,7 @@
                         </ul>
                         @if ($errors->any())
                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                            <strong class="font-bold">حدث خطأ!</strong>
+                            <strong class="font-bold">{{ __('apartment.error_occurred') }}</strong>
                             <span class="block sm:inline">
                                 @foreach ($errors->all() as $error)
                                     {{ $error }}
@@ -513,7 +554,6 @@
         </div>
     </div>
 </div>
-{{-- @dd($apartment->booked_days($apartment->bookings)); --}}
 @endsection
 @push('js')
 @include('customer.section.script-form')
@@ -543,9 +583,10 @@
 
     
 
-    // alert($('.desctext').text().trim().split(/\s+/).length);
+    var descHtml = $('.desctext').html();
+    var descWordCount = descHtml && descHtml.trim() ? descHtml.trim().split(/\s+/).length : 0;
 
-    if ($('.desctext').html().trim().split(/\s+/).length < 50) {
+    if (descWordCount < 50) {
         $(".showmoreApartment").hide();
     }
 

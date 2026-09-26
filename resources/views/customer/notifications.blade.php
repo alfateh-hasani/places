@@ -25,7 +25,7 @@
                                 <path id="Path_4320" data-name="Path 4320" d="M18.634,31.5a1.866,1.866,0,0,1-3.229,0" transform="translate(-4.121 -10.77)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/>
                             </g>
                         </svg>
-                        <p class="inline-block ml-4">{{__('apartment.notifications_list')}} <span class="text-price font-semibold">({{$total_notifications}})</span></p>
+                        <h1 class="inline-block ml-4">{{__('apartment.notifications_list')}} <span class="text-price font-semibold">({{$total_notifications}})</span></h1>
 
                     </div>
                     <ul>
@@ -33,8 +33,8 @@
                             <a class="border border-border rounded-xl p-6 mb-2 block">
                                 <button class="float-right"><img src="assets/img/cancel.svg" /></button>
                                 <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
-                                <p class="text-sm">Please confirm your email address by clicking on the link we just emailed you</p>
-                                <p class="text-xs text-reviews">February 27, 2019</p>
+                                <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
+                                <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>
                             </a>
                         </li>
@@ -42,8 +42,8 @@
                             <a class="border border-border rounded-xl p-6 mb-2 block">
                                 <button class="float-right"><img src="assets/img/cancel.svg" /></button>
                                 <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
-                                <p class="text-sm">Please confirm your email address by clicking on the link we just emailed you</p>
-                                <p class="text-xs text-reviews">February 27, 2019</p>
+                                <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
+                                <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>
                             </a>
                         </li>
@@ -51,8 +51,8 @@
                             <a class="border border-border rounded-xl p-6 mb-2 block">
                                 <button class="float-right"><img src="assets/img/cancel.svg" /></button>
                                 <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
-                                <p class="text-sm">Please confirm your email address by clicking on the link we just emailed you</p>
-                                <p class="text-xs text-reviews">February 27, 2019</p>
+                                <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
+                                <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>
                             </a>
                         </li>
@@ -60,8 +60,8 @@
                             <a class="border border-border rounded-xl p-6 mb-2 block">
                                 <button class="float-right"><img src="assets/img/cancel.svg" /></button>
                                 <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
-                                <p class="text-sm">Please confirm your email address by clicking on the link we just emailed you</p>
-                                <p class="text-xs text-reviews">February 27, 2019</p>
+                                <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
+                                <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>
                             </a>
                         </li>

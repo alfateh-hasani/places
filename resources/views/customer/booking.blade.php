@@ -28,11 +28,11 @@
                                 </g>
                             </svg>
                         
-                        <p class="inline-block ml-4">{{__('site.total_reservations')}} <span class="text-price font-semibold">({{$total_bookings}})</span></p>
+                        <h1 class="inline-block ml-4">{{__('site.total_reservations')}} <span class="text-price font-semibold">({{$total_bookings}})</span></h1>
                     </div>
-                    <p class="mb-4">
+                    <h2 class="mb-4">
                         {{__('customer.upcoming_bookings')}}
-                    </p>
+                    </h2>
                     @if ($upcoming_bookings->isNotEmpty())
                         @foreach ($upcoming_bookings as $item) 
                             @include('customer.section.booking-card',['item'=>$item])
@@ -42,7 +42,7 @@
                     @endif
                   
                  
-                    <p class="mb-4">{{__('customer.past_bookings')}}</p>
+                    <h2 class="mb-4">{{__('customer.past_bookings')}}</h2>
                     @if ($past_bookings->isNotEmpty())
                         @foreach ($past_bookings as $item) 
                             @include('customer.section.booking-card',['item'=>$item])

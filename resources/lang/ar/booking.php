@@ -76,6 +76,21 @@ return [
     'copy_code' => 'نسخ الكود',
     'code_copied' => 'تم نسخ الكود',
 
+    // تعديل التواريخ (طلب العميل)
+    'edit_dates' => 'تعديل التواريخ',
+    'date_change_request' => 'طلب تعديل التواريخ',
+    'awaiting_difference_payment' => 'بانتظار دفع الفرق لإتمام التعديل',
+    'complete_payment' => 'إكمال الدفع',
+    'cancel_change_request' => 'إلغاء طلب التعديل',
+    'change_request_under_review' => 'طلبك قيد المراجعة — سيتم استرداد الفرق بعد الموافقة',
+    'difference_will_be_charged' => 'سيتم تحصيل فرق قدره',
+    'to_confirm_change' => 'لأجل تأكيد التعديل',
+    'difference_will_be_refunded' => 'سيتم استرداد فرق قدره',
+    'after_admin_review' => 'بعد مراجعة الإدارة.',
+    'no_price_difference' => 'لا يوجد فرق في السعر — سيتم تطبيق التواريخ مباشرة.',
+    'new_price' => 'السعر الجديد',
+    'cancel_date_change_request_confirm' => 'سيتم إلغاء طلب تعديل التواريخ.',
+
     // نقل الوحدة (تأكيد العميل)
     'unit_transfer_offer' => 'يجري نقل حجزك إلى وحدة أخرى',
     'unit_transfer_refund_note' => 'الوحدة الجديدة أرخص (:new_price ريال) — سيُستردّ لك :amount ريال بعد التأكيد.',

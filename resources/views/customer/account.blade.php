@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css" />
 <link rel="stylesheet" href="{{asset('assets/plugin/HoldOn.min.css')}}" />
 <style>
-    .bg-white {
+    .account-page .bg-white {
         background-color: #0f0c0c !important;
     }
 
@@ -27,7 +27,7 @@
 @endpush
 @section('content')
 
-<section class="profile py-5 lg:py-16  min-h-screen text-white lg:min-h-min">
+<section class="account-page profile py-5 lg:py-16  min-h-screen text-white lg:min-h-min">
     <div class="container">
         <div class="lg:grid lg:grid-cols-4 lg:gap-6 w-full mx-0">
            @include('customer.section.sidebar')
@@ -39,11 +39,9 @@
                         <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
                             <path id="user" fill="currentColor" d="M11,2A10,10,0,1,0,21,12,10.01,10.01,0,0,0,11,2ZM4.955,19.006a7.532,7.532,0,0,1,5.852-2.941c.035,0,.069.01.1.01h.034c.033,0,.062-.009.095-.01a7.522,7.522,0,0,1,5.9,3.025,9.227,9.227,0,0,1-11.989-.084Zm5.962-3.688c-.037,0-.072.006-.109.007a3.311,3.311,0,1,1,.235,0C11,15.325,10.96,15.318,10.917,15.318Zm6.575,3.275a8.271,8.271,0,0,0-4.607-3.034,4.065,4.065,0,1,0-3.918,0,8.283,8.283,0,0,0-4.556,2.95,9.266,9.266,0,1,1,13.081.087Z" transform="translate(-1 -2)"/>
                         </svg>
-                        <p class="inline-block ml-4">
+                        <h1 class="inline-block ms-4">
                             {{__('customer.profile')}}
-                            <span class="font-semibold text-price">
-                                </span>
-                            </p>
+                        </h1>
                     </div>
 
                     <form id="customerForm" class="md:grid md:grid-cols-2 md:gap-4 w-full mx-0">
@@ -83,8 +81,7 @@
                             <p>
                                 {{__('customer.emergency_phone')}}
                             </p>
-                            <!-- <input dir="ltr" type="tel"   id="emergency_phone"  class="w-full border border-border rounded-lg h-12" /> -->
-                            <input dir="ltr"   type="tel"   value="{{$customer->emergency_phone}}" name="emergency_phone" class="w-full border border-border rounded-lg h-12" />
+                            <input dir="ltr" id="emergency_phone" type="tel" value="{{$customer->emergency_phone}}" name="emergency_phone" class="w-full border border-border rounded-lg h-12" />
 
                              
                         </label>
@@ -113,14 +110,8 @@
 
 @include('customer.section.script-form')
 <script>
-    new WOW().init();   
-    // const phoneInput = document.querySelector("#phone");
+    new WOW().init();
     const emergencyPhoneInput = document.querySelector("#emergency_phone");
-    // window.intlTelInput(phoneInput, {
-    //     loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
-    //     initialCountry: "SA",
-    //     separateDialCode: true,
-    // });
     window.intlTelInput(emergencyPhoneInput, {
         loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
         initialCountry: "SA",
@@ -155,7 +146,6 @@
                     email: "{{__('customer.email_required_email')}}",
                 },
                 emergency_phone: {
-                    digits: "{{ __('customer.emergency_phone_digits')}}",
                     minlength: "{{__('customer.emergency_phone_minlength')}}",
                 }
             },
@@ -192,7 +182,4 @@
         });
     });
 </script>
-    
-    
-<!-- End Javascript --
 @endpush

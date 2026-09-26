@@ -22,12 +22,12 @@
 
             <!-- Download Buttons -->
             <div class="flex flex-col space-y-2">
-                <a href="https://apps.apple.com/us/app/dyafa-%D8%B6%D9%8A%D8%A7%D9%81%D8%A9/id6711337244" 
-                   class="block w-32" target="_blank">
+                <a href="https://apps.apple.com/us/app/dyafa-%D8%B6%D9%8A%D8%A7%D9%81%D8%A9/id6711337244"
+                   class="block w-32" target="_blank" rel="noopener noreferrer">
                     <img src="{{ asset('img/AppStore.svg') }}" alt="App Store" class="w-full">
                 </a>
-                <a href="https://play.google.com/store/apps/details?id=co.Placess.app" 
-                   class="block w-32" target="_blank">
+                <a href="https://play.google.com/store/apps/details?id=co.Placess.app"
+                   class="block w-32" target="_blank" rel="noopener noreferrer">
                     <img src="{{ asset('img/GooglePlay.svg') }}" alt="Google Play" class="w-full">
                 </a>
             </div>
@@ -75,12 +75,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <header class="fixed w-full py-6  top-0 z-50 lg:block hidden" data-aos="fade-down">
   <div class="container">
-    <div class="float-left rtl:float-right">
+    <div class="flex items-center justify-between">
+    <div>
       <a href="{{ route('home')}}">
-        <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="Logo" style="max-height: 35px" />
+        <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="{{ __('site.logo') }}" style="max-height: 35px" />
       </a>
-    </div> 
-    <ul class="menu absolute">
+    </div>
+    <ul class="menu absolute flex items-center">
       {{-- <li class="float-left rtl:float-right px-6">
         <a  href="" class="font-normal text-base text-black">@lang('site.listings')</a>
         <ul class="absolute p-3  border border-border rounded-lg">
@@ -92,43 +93,33 @@ document.addEventListener('DOMContentLoaded', function() {
         </ul>
       </li> --}}
 
-      <li class="float-left rtl:float-right px-6">
-        <a href="{{route('apartments.search')}}" class="font-normal text-base text-black">@lang('site.apartments_list')</a>
-      </li>
-
-      <li class="float-left rtl:float-right px-6">
-        <a href="{{route('page','blog')}}" class="font-normal text-base text-black">@lang('site.blog')</a>
-      </li>
-      <li class="float-left rtl:float-right px-6">
-        <a href="{{route('page','contact')}}" class="font-normal text-base text-black">@lang('site.contact_us')</a>
-      </li>
-      <li class="clear-both"></li>
+      @include('common.parts.nav-links', ['liClass' => 'px-6'])
     </ul>
-    <div class="right float-right rtl:float-left">
-      <div class="lang float-left rtl:float-right">
+    <div class="right flex items-center">
+      <div class="lang">
 
         @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
           @continue($localeCode == app()->getLocale())
         <a href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" class="py-1.5 font-normal text-base text-black block">
-          <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="Language" /> {{ strtoupper($localeCode) }}
+          <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="{{ __('site.language') }}" /> {{ strtoupper($localeCode) }}
         </a>
         @endforeach
 
       </div>
-      <div class="login float-left rtl:float-right ltr:ml-5 rtl:mr-5 relative">
+      <div class="login ltr:ml-5 rtl:mr-5 relative">
         @auth('customer')
           {{-- Show customer name and account links if logged in --}}
           <span class="font-normal text-base text-black inline-block py-1.5">
             @lang('site.hello'), {{ Auth::guard('customer')->user()->first_name }}
           </span>
-          <ul class="absolute p-3  border border-border rounded-lg">
+          <ul class="absolute top-full left-0 z-30 p-3 min-w-[200px] bg-[#fff] shadow-lg border border-border rounded-lg">
             <li>
               <a href="{{ route('customer.account') }}" class="block p-2 font-normal text-base text-black border-b border-border">
                 @lang('site.account')
               </a>
             </li>
             <li>
-              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block p-2 font-normal text-base text-black border-b border-border">
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block p-2 font-normal text-base text-black">
                 @lang('site.logout')
               </a>
               <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
@@ -138,80 +129,61 @@ document.addEventListener('DOMContentLoaded', function() {
             
           </ul>
         @else
-          {{-- Show login/signup button if not logged in --}}
-          <button data-src="#popup-5" data-fancybox dont-close-click-outside class="rounded-lg py-1.5 px-4 bg-gri font-normal text-base  ">
-            <img src="{{ asset('assets/img/login-header3.svg') }}" class="inline-block" alt="Login" />
+          {{-- Not logged in: a single button opening the phone-input modal, which
+               then decides login vs. sign-up. No hover dropdown (it only repeated
+               the same modal and overflowed the viewport). --}}
+          <button type="button" data-src="#popup-5" data-fancybox dont-close-click-outside class="rounded-lg py-1.5 px-4 bg-gri font-normal text-base">
+            <img src="{{ asset('assets/img/login-header3.svg') }}" class="inline-block" alt="" />
             @lang('site.login_or_signup')
           </button>
-          <ul class="absolute p-3  border border-border rounded-lg" style="min-width: 190px">
-            <li>
-              <button data-src="#popup-5" data-fancybox dont-close-click-outside class="block p-2 font-normal text-base text-black border-b border-border">
-                <img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" alt="Login" />
-                @lang('site.login')
-              </a>
-            </li>
-            <li>
-              <button data-src="#popup-5" data-fancybox dont-close-click-outside class="block p-2 font-normal text-base text-black border-b border-border">
-                <img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="Login" />
-                @lang('site.sign_up_new')
-              </a>
-            </li>
-            
-          </ul>
         @endauth
       </div>
-
-      <div class="clear-both"></div>
     </div>
-    <div class="clear-both"></div>
+    </div>
   </div>
 </header>
 
 <header class="fixed w-full py-4  top-0 z-50 border border-blackopacity lg:hidden" data-aos="zoom-in">
   <div class="container">
    
-    <div class="cursor-pointer float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5 login-button">
+    <button type="button" class="cursor-pointer float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5 login-button">
       @auth('customer') {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}    @endauth
-    </div>
+    </button>
     
 
       <div class="logo absolute">
           <a href="{{ route('home')}}">
-              <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" />
+              <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" alt="{{ config('app.name') }}" />
           </a>
       </div>
-      <div class="cursor-pointer float-right py-1 menu-button">
+      <button type="button" class="cursor-pointer float-right py-1 menu-button">
           <img src="{{ asset('assets/img/menu.svg') }}" />
-      </div>
+      </button>
       <div class="clear-both"></div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 right-menu">
-      <button class="absolute ltr:right-5 rtl:left-5 top-5">
-          <svg height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg') }}" id="fi_2734822"><g id="Layer_22" data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
+      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
+          <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
       <h6 class="font-semibold text-xl text-black mb-2">
         @lang('site.menu')
       </h6>
       <ul>
-          <li class="mb-5">
-              <a href="{{route('apartments.search')}}" class="font-normal text-base text-black">@lang('site.apartments_list')</a>
-          </li>
-          <li class="mb-5"><a href="{{route('page','blog')}}" class="font-normal text-base text-black">@lang('site.blog')</a></li>
-          <li class="mb-5"><a href="{{route('page','contact')}}" class="font-normal text-base text-black">@lang('site.contact_us')</a></li>
+          @include('common.parts.nav-links', ['liClass' => 'mb-5'])
       </ul>
       <div class="mt-2">
           <h6 class="font-semibold text-xl text-black"> @lang('site.contact')</h6>
           <ul class="mt-4 lg:mt-10">
-            <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" />   {{Config::get('settings.email')}}</a></li>
-            <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" /> {{Config::get('settings.phone')}}</a></li>
-            <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
+            <li><a href="mailto:{{ Config::get('settings.email') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" />   {{Config::get('settings.email')}}</a></li>
+            <li><a href="tel:{{ Config::get('settings.phone') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" /> {{Config::get('settings.phone')}}</a></li>
+            <li><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode(Config::get('settings.address_'.app()->getLocale())) }}" target="_blank" rel="noopener noreferrer" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
         </ul>
       </div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 left-menu">
-      <button class="absolute ltr:right-5 rtl:left-5 top-5">
-          <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg') }}" id="fi_2734822"><g id="Layer_22" data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
+      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
+          <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
       @auth('customer')
@@ -227,14 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
                   class="font-normal text-base text-black">   @lang('site.my_favorate')</a></li>
         </ul>
       @endauth
-      <div class="mt-1">
-          <h6 class="font-semibold text-xl text-black">@lang('site.contact')</h6>
-          <ul class="mt-4 lg:mt-10">
-              <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" />   {{Config::get('settings.email')}}</a></li>
-              <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" /> {{Config::get('settings.phone')}}</a></li>
-              <li><a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
-          </ul>
-      </div>
       <div class="login text-center relative">
           <ul class="w-full">
             @auth('customer')

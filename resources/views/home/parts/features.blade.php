@@ -20,17 +20,17 @@
                             </div>
                             <div>
                                 <h4 class="font-normal text-base text-black mb-2">
-                                    {{ $feature->name_ar }}
+                                    {{ $feature->ml('name') }}
                                 </h4>
                                 <p class="font-normal text-sm text-gritext">
-                                    {{ $feature->description_ar }}
+                                    {{ $feature->ml('description') }}
                                 </p>
                             </div>
                         </li>
                     @endforeach
                 </ul>
             </div>
-            
+
             <div class="text-center">
                 <img src="{{ asset('assets/img/Group 437.png') }}" class="inline" />
             </div>
@@ -46,16 +46,16 @@
                             </div>
                             <div>
                                 <h4 class="font-normal text-base text-black mb-2">
-                                    {{ $feature->name_ar }}
+                                    {{ $feature->ml('name') }}
                                 </h4>
                                 <p class="font-normal text-sm text-gritext">
-                                    {{ $feature->description_ar }}
+                                    {{ $feature->ml('description') }}
                                 </p>
                             </div>
                         </li>
                     @endforeach
                 </ul>
-            </div> 
+            </div>
         </div>
     </div>
 </section>

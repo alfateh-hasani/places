@@ -140,16 +140,16 @@ span.flatpickr-day.selected{
                   <path id="Path_843" data-name="Path 843" d="M5.843,11.343H16.116m-5.7,4.844L6.178,11.95a.856.856,0,0,1,0-1.211L10.416,6.5" transform="translate(-5.177 -5.97)" fill="none" stroke="#000" stroke-width="1.5"/>
                 </svg>
             </div>
-            <p class="inline-block font-semibold text-2xl ml-4 -translate-y-2">
+            <h1 class="inline-block font-semibold text-2xl ml-4 -translate-y-2">
                 # {{$booking->number_of_booking }}
-            </p>
+            </h1>
         </div>
         <div class="py-8 px-6   rounded-2xl mt-6" style="background-color: #000;">
             <div class="border-b border-border pb-8 mb-8">
-               <a href="{{route('apartments.show',$booking->apartment?->slug)}}" > 
-                    <p class="font-semibold text-lg float-left  rtl:float-right py-2.5">
+               <a href="{{route('apartments.show',$booking->apartment?->slug)}}" >
+                    <h2 class="font-semibold text-lg float-left  rtl:float-right py-2.5">
                         {{$booking->apartment->{'name_'.app()->getLocale()} }}
-                    </p>
+                    </h2>
                </a>
                 <div class="float-right rtl:float-left">
                     <a class="py-3 px-4 inline-block rounded-md bg-gri text-white ml-2" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
@@ -171,7 +171,7 @@ span.flatpickr-day.selected{
                         <button {{ $can_cancel ? '' : 'disabled' }}
                             class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}" 
                             data-booking-id="{{ $booking->id }}">
-                            <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }}</span>
+                            <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }}</span>
                         </button>
                     
                         <!-- Tooltip -->
@@ -189,7 +189,7 @@ span.flatpickr-day.selected{
                             data-booking-id="{{ $booking->id }}"
                             data-check-in="{{ $booking->check_in->format('Y-m-d') }}"
                             data-check-out="{{ $booking->check_out->format('Y-m-d') }}">
-                            <span class="inline-block ml-2 text-sm">{{ __('تعديل التواريخ') }}</span>
+                            <span class="inline-block ml-2 text-sm">{{ __('booking.edit_dates') }}</span>
                         </button>
                         @if(!$can_cancel)
                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 translate-y-2 px-3 py-2 mb-3
@@ -208,13 +208,19 @@ span.flatpickr-day.selected{
                     </button>
                     @else
                     <div class="py-3 px-4 inline-block rounded-md bg-gray-200 text-gray-600 ml-2 cursor-not-allowed">
-                        <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}</span>
+                        <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }} - {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}</span>
                     </div>
                     @endif
                     @endif
                     
 
-                    @if (!$has_review and $booking->status == 'finished')
+                    @php
+                        $stayCompleted = $booking->status === \App\Enums\BookingStatus::Approved->value
+                            && $booking->payment_status === 'paid'
+                            && $booking->check_out->isPast();
+                    @endphp
+
+                    @if (!$has_review && $stayCompleted)
                         <button data-src="#popup-2" data-fancybox type="button" 
                                 class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
                             <!-- Replace the comment below with the SVG icon -->
@@ -241,26 +247,26 @@ span.flatpickr-day.selected{
                     <div class="clear-both"></div>
                     <div class="mt-4 p-4 rounded-lg" style="background-color:#111; border:1px solid #333;">
                         <p class="text-sm mb-2">
-                            {{ __('طلب تعديل التواريخ') }}:
+                            {{ __('booking.date_change_request') }}:
                             <bdo dir="ltr" style="display:inline-block; font-weight:bold;">{{ $dc->new_check_out->format('Y-m-d') }} ← {{ $dc->new_check_in->format('Y-m-d') }}</bdo>
                         </p>
                         @if($dc->status === 'awaiting_payment')
                             <p class="text-xs mb-3" style="color:#f0ad4e;">
-                                {{ __('بانتظار دفع الفرق لإتمام التعديل') }}
+                                {{ __('booking.awaiting_difference_payment') }}
                                 @if((float) $dc->price_delta > 0)
-                                    (<b style="color:#e74c3c;">+{{ number_format(abs((float) $dc->price_delta), 2) }} SAR</b>)
+                                    (<b style="color:#e74c3c;">+{{ number_format(abs((float) $dc->price_delta), 2) }} {{ __('apartment.price') }}</b>)
                                 @endif
                             </p>
                             <button class="dc-retry-pay-btn py-2 px-4 rounded-md text-white ml-2" style="background:#3085d6;" data-request-id="{{ $dc->id }}">
-                                {{ __('إكمال الدفع') }}
+                                {{ __('booking.complete_payment') }}
                             </button>
                             <button class="dc-cancel-req-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-request-id="{{ $dc->id }}">
-                                {{ __('إلغاء طلب التعديل') }}
+                                {{ __('booking.cancel_change_request') }}
                             </button>
                         @elseif($dc->status === 'pending_review')
-                            <p class="text-xs mb-3" style="color:#3498db;">{{ __('طلبك قيد المراجعة — سيتم استرداد الفرق بعد الموافقة') }}</p>
+                            <p class="text-xs mb-3" style="color:#3498db;">{{ __('booking.change_request_under_review') }}</p>
                             <button class="dc-cancel-req-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-request-id="{{ $dc->id }}">
-                                {{ __('إلغاء طلب التعديل') }}
+                                {{ __('booking.cancel_change_request') }}
                             </button>
                         @endif
                     </div>
@@ -364,14 +370,6 @@ span.flatpickr-day.selected{
                         </span></p>
                         <div class="clear-both"></div>
                     </div>
-                    {{-- <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 p-4">
-                        <p class="float-left rtl:float-right text-sm">{{__('booking.link')}}   :</p>
-                        <a class="float-right rtl:float-left text-sm underline decoration-solid">
-                            {{__('booking.go_to_link')}}
-                        </a>
-                        <div class="clear-both"></div>
-                    </div> --}}
-
                     @if($booking->status == 'approved')
                     <div class="border border-price bg-[#fdeee9] rounded-lg mx-5 px-3 py-5 relative pin text-price">
                         <svg class="float-left rtl:float-right" fill="currentColor" id="fi_16916738" height="32" viewBox="0 0 24 24" width="32" xmlns="http://www.w3.org/2000/svg">
@@ -387,25 +385,7 @@ span.flatpickr-day.selected{
                         <div class="clear-both"></div>
                     </div>
                     @endif
-                    <p class="font-semibold py-4 mx-5">
-                        {{__('booking.summary')}}
-                    </p>
-                    <p class="text-title mx-5">  {{__('booking.night_price')}} <span class="float-right rtl:float-left font-semibold">{{$booking->total_price/$booking->number_of_nights }} SAR</span></p>
-                    @if($booking->coupon_code != null)
-                        <p class="text-title mx-5">  {{__('booking.copon').' ( ' .$booking->coupon_code.' ) '}} <span class="float-right rtl:float-left font-semibold">{{$booking->discount}} SAR</span></p>
-                    @endif
-                    <div class="bg-feature border border-feature-border rounded-lg mx-5 mt-4 p-3">
-                    
-                        <p>         {{__('booking.summary')}} (    {{$booking->number_of_nights   .' '.__('booking.nights')}})
-
-                            <span class="font-normal text-base text-reviews">
-                                ({{__('apartment.price_tax') }})
-                            </span>
-                        </p>
-                        <p class="font-semibold text-lg">
-                            {{$booking->final_price}}
-                            SAR</p>
-                    </div>
+                    @include('booking.partials.summary', ['booking' => $booking, 'showTax' => true])
                 </div>
             </div>
         </div>
@@ -692,7 +672,7 @@ $(document).ready(function() {
 
     function dcOpenModal(bookingId, curIn, curOut, disabledDates, checkoutDisabledDates) {
         Swal.fire({
-            title: "{{ __('تعديل التواريخ') }}",
+            title: "{{ __('booking.edit_dates') }}",
             html:
                 // نفس تخطيط حقول التواريخ في صفحة الحجز (apartment/show.blade.php)
                 '<div class="flex flex-wrap -mx-2">' +
@@ -821,11 +801,11 @@ $(document).ready(function() {
             var delta = parseFloat(q.price_delta);
             var summary;
             if (delta > 0.001) {
-                summary = "{{ __('سيتم تحصيل فرق قدره') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('لأجل تأكيد التعديل') }}";
+                summary = "{{ __('booking.difference_will_be_charged') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " {{ __('apartment.price') }}</b> {{ __('booking.to_confirm_change') }}";
             } else if (delta < -0.001) {
-                summary = "{{ __('سيتم استرداد فرق قدره') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('بعد مراجعة الإدارة.') }}";
+                summary = "{{ __('booking.difference_will_be_refunded') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " {{ __('apartment.price') }}</b> {{ __('booking.after_admin_review') }}";
             } else {
-                summary = "<span style='color:#6c757d;'>{{ __('لا يوجد فرق في السعر — سيتم تطبيق التواريخ مباشرة.') }}</span>";
+                summary = "<span style='color:#6c757d;'>{{ __('booking.no_price_difference') }}</span>";
             }
 
             // زر التأكيد: "دفع" عند وجود فرق مستحق (زيادة)، و"طلب" عدا ذلك.
@@ -835,7 +815,7 @@ $(document).ready(function() {
                 title: "{{ __('booking.date_change_confirmation') }}",
                 html: "<div style='text-align:center;'>" +
                     "<bdo dir='ltr' style='display:inline-block;'>" + q.new_check_out + " ← " + q.new_check_in + "</bdo><br><br>" +
-                    "{{ __('السعر الجديد') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " SAR</b><br>" + summary + "</div>",
+                    "{{ __('booking.new_price') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " {{ __('apartment.price') }}</b><br>" + summary + "</div>",
                 icon: 'question',
                 showDenyButton: true,
                 denyButtonText: "{{ __('booking.previous') }}",
@@ -920,7 +900,10 @@ $(document).ready(function() {
         var checkinVal = $('#dc-in').val();
         var checkoutVal = $(this).val();
         if (checkinVal && checkoutVal && new Date(checkoutVal) <= new Date(checkinVal)) {
-            alert("{{ __('apartment.checkout_greater_than') }}");
+            Swal.fire({
+                icon: 'warning',
+                title: "{{ __('apartment.checkout_greater_than') }}",
+            });
             $(this).val('');
         }
     });
@@ -962,7 +945,7 @@ $(document).ready(function() {
         var requestId = $(this).data("request-id");
         Swal.fire({
             title: "{{ __('booking.are_you_sure') }}",
-            text: "{{ __('سيتم إلغاء طلب تعديل التواريخ.') }}",
+            text: "{{ __('booking.cancel_date_change_request_confirm') }}",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
