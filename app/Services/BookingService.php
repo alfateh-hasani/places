@@ -106,6 +106,15 @@ class BookingService
             ]);
         }
 
+        // 0. حجب الوحدات التابعة لمبنى غير مفعّل — المبنى غير المفعّل يُخفي جميع وحداته
+        // عن العرض والحجز في الموقع والتطبيق. هذا هو الحاجز المركزي لكل مسارات الحجز
+        // (الويب والـ API) لضمان عدم حجز وحدة عبر معرّف قديم بعد تعطيل المبنى.
+        if ($apartment->building && ! $apartment->building->is_active) {
+            throw ValidationException::withMessages([
+                'apartment_id' => __('api.apartment_not_available'),
+            ]);
+        }
+
         // 1. التحقق من الحجوزات المحلية
         // ملاحظة: customer_canceled = "طلب إلغاء قيد المراجعة" يبقى حاجزاً للوحدة حتى يُقبل الإلغاء نهائياً (يصبح canceled)
         $activeStatuses = \App\Enums\BookingStatus::occupying();

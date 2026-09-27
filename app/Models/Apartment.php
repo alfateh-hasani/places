@@ -7,6 +7,7 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Cache;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -64,6 +65,36 @@ class Apartment extends Model implements HasMedia
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
+    }
+
+    /**
+     * Only apartments whose own listing flag is enabled.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where($this->qualifyColumn('is_active'), true);
+    }
+
+    /**
+     * Only apartments whose parent building is active. An inactive building
+     * hides every unit it contains.
+     */
+    public function scopeInActiveBuilding(Builder $query): Builder
+    {
+        return $query->whereHas('building', fn (Builder $building) => $building->where('is_active', true));
+    }
+
+    /**
+     * Only apartments that may be listed and booked on the public site & API:
+     * the unit itself is active AND it belongs to an active building.
+     *
+     * This is the single source of truth for "which units are retrievable for
+     * bookings" — use it everywhere the customer-facing web or mobile API
+     * fetches units, so the rule stays consistent across surfaces.
+     */
+    public function scopeBookable(Builder $query): Builder
+    {
+        return $query->active()->inActiveBuilding();
     }
 
     // features

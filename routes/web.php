@@ -38,10 +38,15 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
     Route::post('/apartments/{apartmentId}/calculate-price', [ApartmentController::class, 'calculatePrice'])->name('apartments.calculate-price');
     Route::get('/apartments/{id}/blocked-dates', [ApartmentController::class, 'blockedDates'])->name('apartments.blocked-dates');
-    Route::get('building/{slug}', [ApartmentController::class, 'getApartmentBuliding'])->name('building.show');
+    // NOTE: named `building.details` (not `building.show`) on purpose — Backpack's
+    // Route::crud('building', ...) auto-generates an admin route named `building.show`,
+    // and since admin routes load later they would win the name lookup, making
+    // route('building.show') resolve to /admin/building/{id}/show. A unique public
+    // name keeps the customer-facing link pointing at /building/{slug}.
+    Route::get('building/{slug}', [ApartmentController::class, 'getApartmentBuliding'])->name('building.details');
     // Old, misspelled URL — kept as a permanent redirect so previously indexed/shared links keep working.
     // TODO:: remove this after month today is 14/septemper 9 / 2026
-    Route::get('buliding/{slug}', fn($slug) => redirect()->route('building.show', ['slug' => $slug], 301));
+    Route::get('buliding/{slug}', fn($slug) => redirect()->route('building.details', ['slug' => $slug], 301));
     // search
 
     Route::middleware('guest:customer')->group(function () {

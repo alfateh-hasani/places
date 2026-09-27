@@ -43,12 +43,16 @@ class HomeController extends Controller
         });
 
         $data['cities'] = City::orderBy('sort_order', 'asc')->withCount('apartments')->get();
-        $data['buildings'] = City::with('buildings')->orderBy('sort_order', 'asc')->whereHas('buildings')->get();
+        $data['buildings'] = City::with(['buildings' => fn ($q) => $q->active()])
+            ->orderBy('sort_order', 'asc')
+            ->whereHas('buildings', fn ($q) => $q->active())
+            ->get();
 
-        // جلب المباني مع الإحداثيات للخريطة
-        $data['mapBuildings'] = \App\Models\Building::whereNotNull('latitude')
+        // جلب المباني مع الإحداثيات للخريطة — المباني غير المفعّلة تُستبعد من الخريطة
+        $data['mapBuildings'] = \App\Models\Building::active()
+            ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->with(['city', 'media', 'apartments'])
+            ->with(['city', 'media', 'apartments' => fn ($q) => $q->where('is_active', true)])
             ->get()
             ->map(function ($building) {
                 $building->apartments_count = $building->apartments->count();
@@ -166,7 +170,7 @@ class HomeController extends Controller
         $url = route('by-city', $city->slug);
         $this->generateSeo($seo_top_title, $seo_description, $url);
         $this->data['city'] = $city;
-        $this->data['apartments'] = $city->apartments()->where('is_active', true)->orderBy('id', 'desc')->paginate(30);
+        $this->data['apartments'] = $city->apartments()->bookable()->orderBy('id', 'desc')->paginate(30);
 
         $checkIn = Carbon::today();
         $checkOut = Carbon::tomorrow();

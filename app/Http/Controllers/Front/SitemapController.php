@@ -23,14 +23,14 @@ class SitemapController extends Controller
             $this->entry(route('apartments.search'), now(), 'daily', '0.7'),
         ]);
 
-        Apartment::where('is_active', true)->select('slug', 'updated_at')->get()
+        Apartment::bookable()->select('slug', 'updated_at')->get()
             ->each(fn (Apartment $apartment) => $entries->push(
                 $this->entry(route('apartments.show', $apartment->slug), $apartment->updated_at, 'weekly', '0.8')
             ));
 
-        Building::select('slug', 'updated_at')->get()
+        Building::active()->select('slug', 'updated_at')->get()
             ->each(fn (Building $building) => $entries->push(
-                $this->entry(route('building.show', $building->slug), $building->updated_at, 'weekly', '0.7')
+                $this->entry(route('building.details', $building->slug), $building->updated_at, 'weekly', '0.7')
             ));
 
         City::select('slug', 'updated_at')->get()

@@ -31,6 +31,8 @@ Route::group([
     Route::crud('building', 'BuildingController');
     Route::post('building/{id}/test-sciener-connection', 'BuildingController@testScienerConnection')
         ->name('admin.building.test-sciener-connection');
+    Route::put('building/{id}/toggle-active', 'BuildingController@toggleActive')
+        ->name('admin.building.toggle-active');
     Route::crud('apartment-label', 'ApartmentLabelController');
     Route::crud('ownerrez-property-mapping', 'OwnerRezPropertyMappingController');
     Route::get('ownerrez-property-mapping/{id}/sync', 'OwnerRezPropertyMappingController@sync');

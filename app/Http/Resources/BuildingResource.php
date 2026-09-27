@@ -15,7 +15,7 @@ class BuildingResource extends JsonResource
             'image' => getImage($this, 'image','grid'),
             'city_id' => $this->city_id,
             'city_name' => $this->city->{'name_' . app()->getLocale()},
-            'apartments_count' => $this->apartments()->count(),
+            'apartments_count' => $this->apartments()->where('is_active', true)->count(),
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'link' => $this->link,

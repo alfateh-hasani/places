@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\HasTranslations;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
@@ -45,7 +46,7 @@ class Building extends Model implements HasMedia
         'ttlock_username',
         'ttlock_password',
         'sort_order',
-
+        'is_active',
     ];
 
     /**
@@ -59,6 +60,7 @@ class Building extends Model implements HasMedia
         'check_in_time' => 'datetime',
         'check_out_time' => 'datetime',
         'ttlock_password' => 'encrypted',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -106,6 +108,14 @@ class Building extends Model implements HasMedia
     public function apartments()
     {
         return $this->hasMany(Apartment::class);
+    }
+
+    /**
+     * Only buildings that are currently active (available to the public site & API).
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where($this->qualifyColumn('is_active'), true);
     }
 
     public function supervisor()
