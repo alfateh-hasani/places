@@ -1,0 +1,200 @@
+@charest "utf-8";
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css');
+@import url('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css');
+@import url('https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css');
+@import url('https://unpkg.com/aos@2.3.1/dist/aos.css');
+@import url('https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css');
+@import "hamburgers";
+@import "tel";
+
+$grid: 1400px;
+$bigGrid: 1780px;
+
+$turuncu: #FF5A5F;
+$price: #EF552C;
+$priceOpacity: rgba(239, 85, 44, .12);
+
+
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    list-style: none;
+    background-position: center;
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    word-wrap: break-word;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    font-style: normal;
+    outline: 0;
+    background-color: transparent;
+    resize: none;
+    font-family: "Sora", sans-serif
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0
+}
+
+input[type=number] {
+    -moz-appearance: textfield
+}
+
+html, body {
+    overflow-x: hidden;
+    scroll-behavior: smooth
+}
+
+a {
+    color: inherit;
+    font-weight: inherit;
+    text-decoration: none
+}
+
+select, form button, button, .slick-dots li {
+    cursor: pointer
+}
+
+@mixin grid {
+    max-width: $grid;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    @media (max-width: $grid + 20px) {
+        margin-left: 10px;
+        margin-right: 10px
+    }
+}
+
+@mixin bigGrid {
+    max-width: $bigGrid;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    @media (max-width: $bigGrid + 20px) {
+        margin-left: 10px;
+        margin-right: 10px
+    }
+}
+
+@mixin fullAbsolute {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%
+}
+
+@mixin ortala {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%)
+}
+
+@mixin clear {
+    &:after {
+        content: "";
+        display: block;
+        clear: both
+    }
+}
+
+@mixin yanOrtala {
+    left: 50%;
+    transform: translateX(-50%)
+}
+
+@mixin dikOrtala {
+    top: 50%;
+    transform: translateY(-50%)
+}
+
+@mixin animate($hiz) {
+    transition: all $hiz * .1s ease;
+    &:hover {
+        transition: all $hiz * .1s ease
+    }
+}
+
+@mixin placeHolder($renk, $tipi) {
+    ::-webkit-input-placeholder {
+        color: $renk;
+        text-transform: $tipi
+    }
+    ::-moz-input-placeholder {
+        color: $renk;
+        text-transform: $tipi
+    }
+    :-moz-input-placeholder {
+        color: $renk;
+        text-transform: $tipi
+    }
+    :-ms-input-placeholder {
+        color: $renk;
+        text-transform: $tipi
+    }
+}
+
+@mixin gradient($solRenk, $sagRenk) {
+    background: $solRenk;
+    background: linear-gradient(to right, $solRenk , $sagRenk)
+}
+
+@mixin dikGradient($ustRenk, $altRenk) {
+    background: $ustRenk;
+    background: linear-gradient($ustRenk , $altRenk)
+}
+
+@mixin ucluGradient($solRenk, $ortaRenk, $sagRenk) {
+    background: $solRenk;
+    background: linear-gradient(to bottom right, $solRenk, $ortaRenk, $sagRenk)
+}
+
+@mixin ucludikGradient($ustRenk, $ortaRenk, $altRenk) {
+    background: $ustRenk;
+    background: linear-gradient($ustRenk, $ortaRenk, $altRenk)
+}
+
+@mixin besliGradient($birinciRenk, $ikinciRenk, $ucuncuRenk, $dorduncuRenk, $besinciRenk) {
+    background: $birinciRenk;
+    background: linear-gradient(to right, $birinciRenk, $ikinciRenk, $ucuncuRenk, $dorduncuRenk, $besinciRenk)
+}
+
+@mixin container($sayi, $bosluk, $alt) {
+    > div {
+        margin: 0 $bosluk * -1 / 2;
+        display: flex;
+        flex-wrap: wrap;
+        > * {
+            width: calc(100% / #{$sayi} - #{$bosluk});
+            margin: 0 #{$bosluk / 2} $alt
+        }
+        @for $i from 1 through $sayi {
+            a:nth-last-child(#{$i}) {
+                margin-bottom: 0
+            }
+        }
+    }
+}
+
+.clear {
+    @include clear
+}
+
+.grid {
+    @include grid
+}
+
+.container {
+    max-width: calc(100% - 20px)
+}

@@ -1,0 +1,99 @@
+body {
+    background-color: #171515;
+}
+
+header {
+    background-color: #171515;
+}
+
+.text-black {
+    color: #f7bb8e !important;
+}
+
+.text-title {
+    color: #fff !important;
+}
+
+.card-feading {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    /* إذا كان هناك حواف دائرية */
+}
+
+/* الفيدينغ الأسود */
+.card-feading::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    /* نسبة الفيدينغ (يمكن تعديلها) */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    pointer-events: none;
+    /* حتى لا يمنع التفاعل مع العناصر فوقه */
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* في حالة الهوفر إذا تريد تزيد وضوح الفيدينغ */
+.card-feading:hover::before {
+    opacity: 1;
+}
+
+section.properitirs.bg-properits {
+    background: #0f0f0f !important;
+}
+
+section.properitirs .slider:before,
+section.properitirs .slider:after {
+
+    background-color: #0f0f0f;
+
+}
+
+section.properitirs .category .slick-dots {
+
+    display: none !important;
+}
+
+.bg-commentbg {
+    --tw-bg-opacity: 1;
+    background-color: #343233 !important;
+}
+
+section.descriptions .tabs .buttons li a {
+    background-color: rgb(247 187 142 / 36%);
+    color: #ffffff8a;
+}
+
+section.descriptions .tabs .buttons li.ui-tabs-active a {
+    background-color: #f7bb8e;
+    color: #000;
+}
+
+label.font-semibold {
+    color: #fff;
+    font-family: inherit;
+}
+
+.flatpickr-input[readonly] {
+    color: #fff;
+}
+
+header .right-menu.active {
+    background: #000;
+}
+
+header .left-menu.active {
+    background: #171515;
+}
+
+.left-menu .font-normal {
+
+    color: #fff;
+}
+
+div#download-app-banner {
+    background: #fff;
+}
