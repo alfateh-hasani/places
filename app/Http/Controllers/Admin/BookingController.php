@@ -495,7 +495,6 @@ class BookingController extends CrudController
                     'type' => 'view',
                     'view' => 'admin.booking.cancellation_show_action',
                     'booking' => $currentBooking,
-                    'ownerrezCanceled' => $this->ownerrezBookingIsCanceled($currentBooking),
                 ])->to('before_content');
             }
             $this->addCancellationWidgets();
@@ -1060,33 +1059,6 @@ class BookingController extends CrudController
             'type' => 'view',
             'view' => 'admin.booking.cancellation_modals',
         ])->to('before_content');
-    }
-
-    /**
-     * Live-check OwnerRez: is this booking's reservation actually cancelled (or deleted)
-     * there? Gates the local "force cancel" fallback so staff can only free the unit
-     * locally once OwnerRez itself no longer holds it (i.e. the webhook was missed).
-     * Only calls the API for a mapped booking still awaiting cancellation; any error,
-     * unmapped or non-pending booking returns false (hide the action).
-     */
-    private function ownerrezBookingIsCanceled(\App\Models\Booking $booking): bool
-    {
-        if (! $booking->isLinkedToOwnerRez() || ! $booking->isCancellationRequested()) {
-            return false;
-        }
-
-        try {
-            $data = app(\App\Services\OwnerRez\OwnerRezApiService::class)
-                ->getBooking((int) $booking->ownerrez_booking_id);
-        } catch (\App\Exceptions\OwnerRez\OwnerRezApiException $e) {
-            // Deleted in OwnerRez (404) counts as cancelled; other errors → cannot confirm.
-            return $e->getStatusCode() === 404;
-        } catch (\Throwable $e) {
-            return false;
-        }
-
-        return strtolower((string) ($data['status'] ?? '')) === 'canceled'
-            || ! empty($data['canceled_utc']);
     }
 
     protected function addBuildingFilter()

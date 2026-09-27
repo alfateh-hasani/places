@@ -244,6 +244,7 @@ return [
     'gateway_result' => 'نتيجة الاسترداد',
     'gateway_ok' => 'نجحت العملية',
     'gateway_not_ok' => 'لم تنجح العملية',
+    'refund_manual_result' => 'تمّ الاسترداد يدوياً (خارج البوابة)',
     'gateway_not_sent' => 'لم تُرسل إلى البوابة بعد',
     'gateway_message' => 'رسالة البوابة',
     'gateway_code' => 'رمز الاستجابة',

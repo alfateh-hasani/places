@@ -196,6 +196,12 @@ class RefundCrudController extends CrudController
             return '<span class="text-muted">— '.__('cms.gateway_not_sent').' —</span>';
         }
 
+        // Manual refund (direct/bank-transfer booking, settled outside the gateway) —
+        // there is no gateway "success" flag, so report it as a manual refund, not a failure.
+        if (data_get($resp, 'manual') === true) {
+            return '<span style="color:#28a745;font-weight:600;"><i class="la la-hand-holding-usd"></i> '.__('cms.refund_manual_result').'</span>';
+        }
+
         $success = (bool) data_get($resp, 'success');
         $message = data_get($resp, 'message');
         $code = data_get($resp, 'data.responseCode') ?? data_get($resp, 'error.responseCode');

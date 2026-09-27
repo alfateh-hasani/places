@@ -174,6 +174,7 @@ return [
     'refund_amount_hint' => 'Enter an amount up to the full price.',
     'partial_refund_disabled' => 'Partial refund is currently disabled — the full amount will be refunded.',
     'confirm_refund' => 'Confirm refund',
+    'refund_manual_result' => 'Refunded manually (outside the gateway)',
 
     'payment_status_pending' => 'Pending',
     'payment_status_paid' => 'Paid',
