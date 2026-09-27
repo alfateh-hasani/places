@@ -12,7 +12,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-2">{{ __('cms.refund_full_amount') }}: <strong><span id="rf-max"></span> SAR</strong></p>
+                    <p class="mb-2">{{ __('cms.refund_full_amount') }}: <strong><span id="rf-max"></span> <x-riyal-svg /></strong></p>
 
                     @if ($partialEnabled)
                         <div class="form-check">
@@ -24,13 +24,13 @@
                             <label class="form-check-label" for="rf-partial">{{ __('cms.refund_partial') }}</label>
                         </div>
                         <div class="form-group mb-0">
-                            <label for="rf-amount">{{ __('cms.refund_amount') }} (SAR)</label>
+                            <label for="rf-amount">{{ __('cms.refund_amount') }} (<x-riyal-svg />)</label>
                             <input type="number" step="0.01" min="0.01" class="form-control" name="amount" id="rf-amount" readonly required>
                             <small class="text-muted">{{ __('cms.refund_amount_hint') }}</small>
                         </div>
                     @else
                         <div class="form-group mb-0">
-                            <label for="rf-amount">{{ __('cms.refund_amount') }} (SAR)</label>
+                            <label for="rf-amount">{{ __('cms.refund_amount') }} (<x-riyal-svg />)</label>
                             <input type="number" step="0.01" min="0.01" class="form-control" name="amount" id="rf-amount" readonly required>
                             <small class="text-warning">{{ __('cms.partial_refund_disabled') }}</small>
                         </div>

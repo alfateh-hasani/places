@@ -82,7 +82,7 @@ class TransactionController extends CrudController
             'type' => 'custom_html',
             'label' =>  __('cms.amount') . '(SAR) <i class="la la-money"></i>',
             'value' => function ($entry) {
-                return '<span class="text-primary font-weight-bold">' . number_format($entry->amount, 2) . ' SAR'  . '</span>';
+                return '<span class="text-primary font-weight-bold">' . number_format($entry->amount, 2) . ' ' . \App\Support\Riyal::svg() . '</span>';
             }
         ]);
 
@@ -219,7 +219,7 @@ class TransactionController extends CrudController
                         </tr>
                         <tr>
                             <th>' . __('cms.amount') . ' <i class="la la-money"></i></th>
-                            <td><span class="text-primary font-weight-bold">' . number_format($entry->amount, 2) . ' ' . $entry->currency . '</span></td>
+                            <td><span class="text-primary font-weight-bold">' . number_format($entry->amount, 2) . ' ' . ($entry->currency === 'SAR' ? \App\Support\Riyal::svg() : e($entry->currency)) . '</span></td>
                         </tr>
                         <tr>
                             <th>' . __('cms.status') . ' <i class="la la-info-circle"></i></th>

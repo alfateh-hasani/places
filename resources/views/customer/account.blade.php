@@ -156,7 +156,7 @@
                 });
     
                 $.ajax({
-                    url: "{{ route('customer.update') }}",  
+                    url: "{{ route('customer.profile-update') }}",
                     method: "POST",
                     data: $(form).serialize(), 
                     success: function(response) {

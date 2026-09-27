@@ -59,7 +59,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
         Route::delete('/push/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'unsubscribe'])->name('customer.push.unsubscribe');
         Route::controller(CustomerAccountController::class)->name('customer.')->prefix('customer')->group(function () {
             Route::get('account', 'profile')->name('account');
-            Route::post('account-update', 'update')->name('update');
+            Route::post('account-update', 'update')->name('profile-update');
             Route::get('get-booking', 'getBooking')->name('booking');
             Route::get('booking-details/{number_of_booking}', 'BookingDetails')->name('booking.details');
             Route::get('notifications', 'notifications')->name('notifications');

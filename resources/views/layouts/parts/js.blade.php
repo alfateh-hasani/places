@@ -12,6 +12,24 @@
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
   <script>
+    /* Saudi Riyal symbol helpers for prices built in JavaScript.
+       Use with .html() (NOT .text()) so the symbol span renders:
+           $('#total').html(window.formatSAR(response.total));   // "1,234.00 ⃁"
+       window.SAR_SYMBOL is the bare symbol markup for manual concatenation. */
+    window.SAR_SYMBOL = '<span class="sar-symbol" role="img" aria-label="{{ __('apartment.currency') }}">⃁</span>';
+    window.formatSAR = function (amount, decimals) {
+      if (typeof decimals === 'undefined') { decimals = 2; }
+      var value = (amount === '' || amount === null || isNaN(amount))
+        ? amount
+        : Number(amount).toLocaleString(undefined, {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+          });
+      return '<span class="sar-amount">' + value + '</span> ' + window.SAR_SYMBOL;
+    };
+  </script>
+
+  <script>
     $(document).ready(function () {
       $(".select2").select2();
     });

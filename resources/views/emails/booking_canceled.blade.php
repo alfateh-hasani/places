@@ -109,7 +109,7 @@
         </tr>
         <tr>
             <td>المبلغ المطلوب استرداده:</td>
-            <td style="color: #dc3545; font-weight: bold;">{{ number_format($booking->refund_amount, 2) }} SAR</td>
+            <td style="color: #dc3545; font-weight: bold;">{{ number_format($booking->refund_amount, 2) }} <x-riyal-email /></td>
         </tr>
         <tr>
             <td>حالة الاسترداد:</td>

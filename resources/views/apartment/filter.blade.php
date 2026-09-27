@@ -74,8 +74,8 @@
                                    value="{{ request('price_max', $filter_keys['max_price']) }}">
                         </div>
                         <div class="flex justify-between text-sm text-gray-700 mt-3 dual-range-labels">
-                            <span><span id="minPriceValue">{{ request('price_min', $filter_keys['min_price']) }}</span> @lang('apartment.currency')</span>
-                            <span><span id="maxPriceValue">{{ request('price_max', $filter_keys['max_price']) }}</span> @lang('apartment.currency')</span>
+                            <span><span id="minPriceValue">{{ request('price_min', $filter_keys['min_price']) }}</span> <x-riyal /></span>
+                            <span><span id="maxPriceValue">{{ request('price_max', $filter_keys['max_price']) }}</span> <x-riyal /></span>
                         </div>
                     </div>
                 </div>

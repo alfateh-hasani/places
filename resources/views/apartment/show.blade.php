@@ -1,6 +1,7 @@
 @extends('layouts.master')
 @push('css')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{{ asset('assets/plugin/HoldOn.min.css') }}">
 
     <style>
         #map iframe{
@@ -352,9 +353,10 @@
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
                     <p class="font-normal text-base text-reviews">
                         <span class="font-bold text-2xl text-black translate-y-0.5 inline-block" id="mainPrice">
-                            {{ $priceInfo['total'] }} 
-                        </span> 
-                        {{__('apartment.sar2')}}
+                            {{ $priceInfo['total'] }}
+                        </span>
+                        <x-riyal class="text-black" />
+
                     </p>
                     <form action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="POST">
              
@@ -442,7 +444,7 @@
                                     {{__('apartment.one_night')}}
                                 </span>
                                 <span class="float-right rtl:float-left" id="nightlyPrice">
-                                    {{ $priceInfo['total'] . ' ' . __('apartment.price')}} 
+                                    <x-riyal :amount="$priceInfo['total']" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -456,8 +458,8 @@
                                 <span class="font-normal text-base text-reviews">
                                     ({{__('apartment.price_tax') }})
                                 </span>
-                                <span class="float-right rtl:float-left" id="totalCost"> 
-                                    {{ $priceInfo['total'] .' '.__('apartment.price') }} 
+                                <span class="float-right rtl:float-left" id="totalCost">
+                                    <x-riyal :amount="$priceInfo['total']" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>

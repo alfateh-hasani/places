@@ -10,11 +10,11 @@
             <p class="text-sm sm:text-base font-semibold text-lg mb-1">{{__('apartment.booking_summary')}}</p>
         </a>
         <a><p class="text-sm sm:text-sm text-reviews "> {{__('apartment.night_price')}} 
-            <span class="leading-none block font-semibold text-black">{{$item->price_per_night}} {{ __('customer.currency') }}</span></p></a>
+            <span class="leading-none block font-semibold text-black"><x-riyal :amount="$item->price_per_night" :format="false" /></span></p></a>
         <a><p class="text-sm sm:text-sm text-reviews "> {{__('apartment.discount')}} 
-            <span class="leading-none block font-semibold text-black">{{$item->discount}} {{ __('customer.currency') }}</span></p></a>
+            <span class="leading-none block font-semibold text-black"><x-riyal :amount="$item->discount" :format="false" /></span></p></a>
         <a><p class="text-sm sm:text-sm text-reviews ">{{__('apartment.total_price')}} ({{$item->number_of_nights .' '.__('apartment.nights')}})
-            <span class="leading-none block font-semibold text-black mb-2">{{$item->final_price}} {{ __('customer.currency') }}</span></p></a>
+            <span class="leading-none block font-semibold text-black mb-2"><x-riyal :amount="$item->final_price" :format="false" /></span></p></a>
     </div>
     <div>
         <a>

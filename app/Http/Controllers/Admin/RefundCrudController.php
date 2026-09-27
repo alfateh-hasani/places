@@ -80,7 +80,7 @@ class RefundCrudController extends CrudController
             'name' => 'amount',
             'type' => 'custom_html',
             'label' => __('cms.refund_amount'),
-            'value' => fn ($entry) => '<span class="font-weight-bold">'.number_format((float) $entry->amount, 2).' '.e($entry->currency).'</span>',
+            'value' => fn ($entry) => '<span class="font-weight-bold">'.number_format((float) $entry->amount, 2).' '.($entry->currency === 'SAR' ? \App\Support\Riyal::svg() : e($entry->currency)).'</span>',
             'searchLogic' => function ($query, $column, $searchTerm) {
                 $query->orWhere('amount', 'like', "%{$searchTerm}%");
             },
@@ -166,7 +166,7 @@ class RefundCrudController extends CrudController
             'label' => __('cms.refund_timeline'),
             'value' => fn ($entry) => $this->timeline($entry),
         ]);
-        CRUD::addColumn(['name' => 'amount', 'type' => 'number', 'label' => __('cms.refund_amount'), 'suffix' => ' '.'SAR']);
+        CRUD::addColumn(['name' => 'amount', 'type' => 'custom_html', 'label' => __('cms.refund_amount'), 'value' => fn ($entry) => number_format((float) $entry->amount, 2).' '.\App\Support\Riyal::svg()]);
         CRUD::addColumn(['name' => 'order_id', 'type' => 'text', 'label' => 'Gateway Order ID']);
         CRUD::addColumn(['name' => 'gateway_refund_id', 'type' => 'text', 'label' => 'Gateway Refund ID']);
         CRUD::addColumn(['name' => 'attempts', 'type' => 'number', 'label' => __('cms.refund_attempts')]);
