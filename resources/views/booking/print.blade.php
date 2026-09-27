@@ -120,8 +120,10 @@
 @push('js')
  
 <script>
- window.print()
-
+    // Print only after images have loaded, so the printout isn't missing them.
+    window.addEventListener('load', function () {
+        window.print();
+    });
 </script>
 
 
