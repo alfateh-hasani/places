@@ -35,7 +35,7 @@ class ApartmentController extends Controller
         $checkIn = Carbon::today();
         $checkOut = Carbon::tomorrow();
 
-        $apartments = Apartment::where('is_active', true)
+        $apartments = Apartment::bookable()
             ->paginate(12);
 
         // دمج أسعار الفترة في كل كائن
@@ -64,7 +64,7 @@ class ApartmentController extends Controller
             'policy',
             'ownerrezMapping',
         ])
-            ->where('is_active', true)
+            ->bookable()
             ->where('slug', $slug)
             ->first();
 
@@ -171,7 +171,7 @@ class ApartmentController extends Controller
             'building_id' => $request->building_id,
         ], fn ($v) => ! is_null($v) && $v !== '');
 
-        $query = $this->apartment::query()->where('is_active', true);
+        $query = $this->apartment::query()->bookable();
 
         // Always show only units available for the requested window (defaults to
         // today→tomorrow), so booked units don't appear. Canceled bookings don't block.
@@ -420,7 +420,7 @@ class ApartmentController extends Controller
      */
     public function blockedDates(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $apartment = Apartment::with('ownerrezMapping')->where('is_active', true)->findOrFail($id);
+        $apartment = Apartment::with('ownerrezMapping')->bookable()->findOrFail($id);
 
         $bookedDays = $apartment->bookings()
             ->where('check_out', '>=', now()->startOfDay())
@@ -504,13 +504,19 @@ class ApartmentController extends Controller
         $building = Building::where('slug', $slug)->first();
 
         if (! $building) {
-            if ($redirect = $this->redirectFromOldSlug(Building::class, $slug, 'building.show')) {
+            if ($redirect = $this->redirectFromOldSlug(Building::class, $slug, 'building.details')) {
                 return $redirect;
             }
             abort(404);
         }
 
-        $apartments = Apartment::where('building_id', $building->id)->where('is_active', true)->paginate(12);
+        // An inactive building is hidden from the public site entirely — its
+        // landing page 404s rather than showing an empty (or stale) unit list.
+        if (! $building->is_active) {
+            abort(404);
+        }
+
+        $apartments = Apartment::where('building_id', $building->id)->active()->paginate(12);
 
         $checkIn = Carbon::today();
         $checkOut = Carbon::tomorrow();
@@ -529,7 +535,7 @@ class ApartmentController extends Controller
 
         $seo_title = $building->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
         $seo_description = $building->ml('seo_description');
-        $url = route('building.show', $building->slug);
+        $url = route('building.details', $building->slug);
         $this->generateSeo($seo_title, $seo_description, $url, $building->image);
         $this->generateBuildingJsonLd($building, $url, $apartments->total());
 

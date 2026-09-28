@@ -1,0 +1,107 @@
+@media (max-width: $grid + 20px) {}
+
+@media (max-width: 1280px) {
+    section {
+        &.filter {
+            .buttons {
+                width: 100%
+            }
+        }
+        &.descriptions {
+            .tabs {
+                .buttons {
+                    li {
+                        a {
+                            background-color: transparent
+                        }
+                        &.ui-tabs-active {
+                            a {
+                                background-color: transparent;
+                                color: $price;
+                                text-decoration: underline
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 1024px) {
+    section {
+        &.search {
+            top: 100vh;
+            @include animate(4);
+            &.active {
+                top: 0
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    section {
+        &.properitirs {
+            .category {
+                .slick-dots {
+                    width: 100%;
+                    li {
+                        font-size: 15px;
+                        padding: 10px 20px;
+                        margin-left: 0;
+                        margin-right: 10px
+                    }
+                }
+            }
+            .slider {
+                height: 250px;
+                a {
+                    h3 {
+                        bottom: 16px
+                    }
+                    &:hover {
+                        h3 {
+                            bottom: 50px
+                        }
+                        ul {
+                            bottom: 16px;
+                            left: 1rem;
+                            right: 1rem
+                        }
+                    }
+                }
+                .slick-arrow {
+                    &.slick-prev {
+                        left: 20px
+                    }
+                    &.slick-next {
+                        right: 20px
+                    }
+                }
+            }
+        }
+        &.comments {
+            .comment-list {
+                ul {
+                    width: 100vw;
+                    margin-left: 0 !important
+                }
+            }
+        }
+    }
+}
+
+@media (min-width: 768px) {
+    section {
+        &.properitirs {
+            .slider {
+                a {
+                    &:hover {
+                        width: 450px !important
+                    }
+                }
+            }
+        }
+    }
+}

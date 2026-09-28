@@ -33,7 +33,7 @@
                 </svg>
             </div>
             <p class="float-right rtl:float-left font-normal text-2xl py-1">
-                {{$customer->wallet_balance??0}}   {{ __('customer.currency') }}
+                <x-riyal :amount="$customer->wallet_balance ?? 0" :format="false" />
             </p>
             <div class="clear-both"></div>
         </div>

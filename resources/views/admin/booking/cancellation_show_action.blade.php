@@ -1,8 +1,12 @@
 {{-- Detail-page cancellation action bar. Only renders when the booking needs an
      action, so it stays invisible for normal bookings. --}}
 @php($booking = $widget['booking'])
-@php($ownerrezCanceled = $widget['ownerrezCanceled'] ?? false)
 @php($isRequest = $booking->status === \App\Enums\BookingStatus::CancellationRequested->value)
+{{-- Force cancel is the manual fallback for when the OwnerRez webhook never frees the
+     unit locally (network/credentials/etc). Always available while a request is pending
+     on an OwnerRez-linked booking — staff cancel it in OwnerRez by hand and use this to
+     free the unit locally. Unmapped units use the modal's "Cancel locally" instead. --}}
+@php($showForceCancel = $isRequest && $booking->isLinkedToOwnerRez())
 @if (
     ($isRequest || $booking->status === \App\Enums\BookingStatus::Canceled->value)
     && $booking->refund_status === 'pending'
@@ -15,9 +19,9 @@
             <span class="d-flex align-items-center" style="gap:.5rem;">
                 @include('admin.booking.partials.manage_cancellation_button', ['booking' => $booking])
 
-                {{-- Force cancel locally — shown only once OwnerRez itself confirms the
-                     reservation is cancelled/deleted (the webhook was missed). --}}
-                @if ($ownerrezCanceled && $isRequest)
+                {{-- Force cancel locally — the manual fallback when the OwnerRez webhook
+                     doesn't finalize the cancellation. Frees the unit locally only. --}}
+                @if ($showForceCancel)
                     <form method="POST"
                           action="{{ url(config('backpack.base.route_prefix').'/booking/'.$booking->getKey().'/cancel-local') }}"
                           id="force-cancel-form-{{ $booking->getKey() }}" style="display:inline;">
@@ -34,9 +38,9 @@
                 @endif
             </span>
         </div>
-        @if ($ownerrezCanceled && $isRequest)
+        @if ($showForceCancel)
             <div class="card-footer py-1 small text-muted">
-                <i class="la la-check-circle text-success"></i> {{ __('cms.ownerrez_confirmed_canceled_hint') }}
+                <i class="la la-exclamation-triangle text-warning"></i> {{ __('cms.force_cancel_warning') }}
             </div>
         @endif
     </div>

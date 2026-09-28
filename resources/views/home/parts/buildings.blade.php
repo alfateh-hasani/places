@@ -11,7 +11,7 @@
                  @foreach ($buildings as $city)
                 <div class="slider px-5 -mx-5" data-title="{{ $city->ml('name') }}">
                     @foreach ($city->buildings as $building)
-                        <a href="{{route('building.show',$building->slug)}}" class="relative block px-1 overflow-hidden">
+                        <a href="{{route('building.details',$building->slug)}}" class="relative block px-1 overflow-hidden">
                             <img
                                 src="{{ $building->image_grid }}"
                                 class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"

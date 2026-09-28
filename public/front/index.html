@@ -1,0 +1,3271 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="author" content="MADAR SOLUTIONS" />
+    <title>Places</title>
+    <meta name="description" content="Places" />
+    <meta name="keywords" content="Places" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link href="assets/css/style.css" rel="stylesheet" />
+    <link rel="icon" href="assets/img/favicon.svg" />
+    <script
+      type="text/javascript"
+      src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+    ></script>
+    <script type="text/javascript" src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          container: {
+            center: true,
+          },
+          colors: {
+            gri: "#303610",
+            white: "#fff",
+            black: "#000",
+            border: "#E8E8E8",
+            reviews: "#999999",
+            title: "#2C2C2C",
+            feature: "#F6F6F6",
+            "feature-border": "#E8E8E8",
+            price: "#EF552C",
+            "automated-1": "rgba(239, 85, 44, .2)",
+            "automated-2": "rgba(255, 90, 95, .2)",
+            "automated-3": "rgba(233, 187, 113, .2)",
+            gritext: "#444",
+            commentbg: "#F4F6F8",
+            commentborder: "#F1F1F1",
+            blackopacity: "rgba(0, 0, 0, .1)",
+            properits: "#F8F7FD",
+          },
+        },
+      };
+    </script>
+    <style>
+      .datepicker-cell {
+        color: #787e8b !important;
+      }
+      .focused {
+        color: black !important;
+      }
+      .select2-selection {
+        border: none !important;
+      }
+      .select2-container--default
+        .select2-selection--single
+        .select2-selection__rendered {
+        color: inherit !important;
+      }
+      .view-switch,
+      .prev-btn > svg,
+      .next-btn > svg {
+        color: #000 !important;
+      }
+      .range-start {
+        color: white !important;
+      }
+    </style>
+  </head>
+  <body class="lg:pt-20 pt-16">
+    <header class="fixed w-full py-6 bg-white top-0 z-50 lg:block hidden">
+      <div class="container">
+        <div class="float-left">
+          <a>
+            <img src="assets/img/logo.svg" />
+          </a>
+        </div>
+        <ul class="menu absolute">
+          <li class="float-left px-6">
+            <a class="font-normal text-base text-black">Listings</a>
+            <ul class="absolute pt-3">
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mb-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Sub Menu</a
+                >
+              </li>
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mb-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Sub Menu</a
+                >
+              </li>
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mb-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Sub Menu</a
+                >
+              </li>
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mb-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Sub Menu</a
+                >
+              </li>
+            </ul>
+          </li>
+          <li class="float-left px-6">
+            <a class="font-normal text-base text-black">Blog</a>
+          </li>
+          <li class="float-left px-6">
+            <a class="font-normal text-base text-black">Contact Us</a>
+          </li>
+          <li class="clear-both"></li>
+        </ul>
+        <div class="right float-right">
+          <div class="lang float-left">
+            <button class="py-1.5 font-normal text-base text-black">
+              <img src="assets/img/lang.svg" class="inline-block" /> En
+            </button>
+            <ul class="absolute">
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mb-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Tr</a
+                >
+              </li>
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mb-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Ar</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="login float-left ml-5 relative">
+            <button
+              class="rounded-lg py-1.5 px-4 bg-gri font-normal text-base text-white"
+            >
+              <img src="assets/img/login-header.svg" class="inline-block" />
+              LOGIN OR SIGN UP
+              <img src="assets/img/header-arrow.svg" class="inline-block" />
+            </button>
+            <ul class="absolute w-full">
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mt-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Login</a
+                >
+              </li>
+              <li>
+                <a
+                  class="bg-white block py-1 px-4 mt-1 rounded-md border border-black font-normal text-base text-black hover:bg-gri hover:text-white ease-in-out duration-300"
+                  >Sign Up</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="clear-both"></div>
+        </div>
+        <div class="clear-both"></div>
+      </div>
+    </header>
+
+    <header class="fixed w-full py-4 bg-white top-0 z-50 lg:hidden">
+      <div class="container">
+        <div
+          class="float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5"
+        >
+          ha
+        </div>
+        <div class="logo absolute">
+          <a>
+            <img class="h-7" src="assets/img/logo.svg" />
+          </a>
+        </div>
+        <div class="float-right py-1">
+          <img src="assets/img/menu.svg" />
+        </div>
+        <div class="clear-both"></div>
+      </div>
+    </header>
+
+    <section class="slider w-[140vw] -ml-[20vw] sm:ml-0 sm:w-full">
+      <a><img src="assets/img/slider.png" /></a>
+      <a><img src="assets/img/slider.png" /></a>
+      <a><img src="assets/img/slider.png" /></a>
+    </section>
+
+    <section class="search container px-40 -translate-y-[50%]">
+      <form
+        class="grid grid-cols-5 gap-1 max-w-full py-5 pl-10 pr-5 bg-white shadow-xl rounded-full"
+        id="date-range-picker"
+        date-rangepicker
+      >
+        <div>
+          <p class="font-normal text-xs text-black">Where</p>
+          <select class="select2 w-full border-0 font-semibold text-sm">
+            <option>Alryiadh</option>
+            <option>Alryiadh</option>
+            <option>Alryiadh</option>
+            <option>Alryiadh</option>
+          </select>
+        </div>
+        <div class="px-4 border-l border-blackopacity cursor-pointer">
+          <p class="font-normal text-xs text-black">Check In</p>
+          <input
+            id="datepicker-range-start"
+            name="start"
+            type="text"
+            class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
+            placeholder="27/09/2024"
+          />
+        </div>
+        <div class="px-4 border-l border-blackopacity cursor-pointer">
+          <p class="font-normal text-xs text-black">Check Out</p>
+          <input
+            id="datepicker-range-end"
+            name="end"
+            type="text"
+            class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
+            placeholder="29/09/2024"
+          />
+        </div>
+        <div
+          class="px-4 border-l border-blackopacity cursor-pointer persons relative"
+        >
+          <p class="font-normal text-xs text-black">Who</p>
+          <p class="font-semibold text-sm text-black py-1 content">Add Guest</p>
+          <ul class="hidden absolute w-full bg-white p-3">
+            <li class="border-b border-blackopacity pb-3 mb-3">
+              <p class="inline-block w-24">Adults</p>
+              <div class="inline-block">
+                <div class="relative flex items-center">
+                  <button
+                    type="button"
+                    id="decrement-button"
+                    data-input-counter-decrement="counter-input"
+                    class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
+                  >
+                    <svg
+                      class="w-2.5 h-2.5 text-gray-900 dark:text-white"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 18 2"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M1 1h16"
+                      />
+                    </svg>
+                  </button>
+                  <input
+                    type="text"
+                    id="counter-input"
+                    data-input-counter
+                    class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1"
+                    placeholder=""
+                    value="1"
+                    required
+                  />
+                  <button
+                    type="button"
+                    id="increment-button"
+                    data-input-counter-increment="counter-input"
+                    class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
+                  >
+                    <svg
+                      class="w-2.5 h-2.5 text-gray-900 dark:text-white"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 18 18"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 1v16M1 9h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </li>
+            <li>
+              <p class="inline-block w-24">Childrens</p>
+              <div class="inline-block">
+                <div class="relative flex items-center">
+                  <button
+                    type="button"
+                    id="decrement-button"
+                    data-input-counter-decrement="counter-input1"
+                    class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
+                  >
+                    <svg
+                      class="w-2.5 h-2.5 text-gray-900 dark:text-white"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 18 2"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M1 1h16"
+                      />
+                    </svg>
+                  </button>
+                  <input
+                    type="text"
+                    id="counter-input1"
+                    data-input-counter
+                    class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1"
+                    placeholder=""
+                    value="1"
+                    required
+                  />
+                  <button
+                    type="button"
+                    id="increment-button"
+                    data-input-counter-increment="counter-input1"
+                    class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
+                  >
+                    <svg
+                      class="w-2.5 h-2.5 text-gray-900 dark:text-white"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 18 18"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 1v16M1 9h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <button
+            class="bg-price text-white w-full h-11 text-center rounded-full hover:bg-black ease-in-out duration-200"
+          >
+            <img
+              class="inline-block -translate-y-0.5 mr-2"
+              src="assets/img/search.svg"
+            />Search
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="list pt-2 sm:pt-10 pb-2 sm:pb-20">
+      <div class="container">
+        <h2
+          class="text-center sm:text-left font-semibold text-base sm:text-2xl text-black mb-4 sm:mb-10"
+        >
+          Explore Our Latest Listings
+        </h2>
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full"
+        >
+          <div class="rounded-xl overflow-hidden border border-border">
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div class="rounded-xl overflow-hidden border border-border">
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div class="rounded-xl overflow-hidden border border-border">
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div class="rounded-xl overflow-hidden border border-border">
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div class="rounded-xl overflow-hidden border border-border">
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div class="rounded-xl overflow-hidden border border-border">
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden border border-border hidden sm:block"
+          >
+            <div class="relative">
+              <div class="slider">
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-7.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-1.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-2.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-3.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-4.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-5.jpg"
+                /></a>
+                <a
+                  ><img
+                    class="h-80 2xl:h-96 object-cover w-full"
+                    src="assets/img/list-6.jpg"
+                /></a>
+              </div>
+              <button
+                class="absolute w-6 h-5 top-4 left-4 bg-contain favorite ease-in-out duration-300"
+              ></button>
+            </div>
+            <a class="pt-3 px-4 pb-4 block">
+              <div>
+                <img src="assets/img/star.svg" class="float-left mr-2" />
+                <p class="float-left font-normal text-xs text-reviews">
+                  10.0 (10) Review
+                </p>
+                <div class="clear-both"></div>
+              </div>
+              <h3 class="font-semibold text-sm text-title my-2">
+                Studio With Master Bed
+              </h3>
+              <h4 class="font-normal text-xs text-reviews">
+                Riyadh, Al Qadisiyah Dist.
+              </h4>
+              <ul class="my-2.5">
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-1.svg"
+                  />
+                  1
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-2.svg"
+                  />
+                  2
+                </li>
+                <li
+                  class="float-left bg-feature border border-feature-border mr-2 py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300"
+                >
+                  <img
+                    class="h-[14px] mr-2 inline-block"
+                    src="assets/img/feature-3.svg"
+                  />
+                  80M
+                </li>
+                <li class="clear-both"></li>
+              </ul>
+              <div>
+                <p class="float-left font-bold text-sm text-price">250 SAR /</p>
+                <p class="float-left font-normal text-sm text-reviews ml-1">
+                  Night
+                </p>
+                <div
+                  class="w-1 h-1 inline-block bg-reviews mx-2 float-left translate-y-2 rounded-sm"
+                ></div>
+                <p class="float-left font-normal text-sm text-reviews">
+                  12500 Total
+                </p>
+                <div class="clear-both"></div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="text-center">
+          <a
+            class="inline-block font-normal font-semibold text-base text-title border border-title px-6 py-2 mt-4 sm:mt-10 rounded-3xl hover:bg-black hover:text-white ease-in-out duration-300"
+            >Explore More</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <section class="py-2 sm:py-20 cities">
+      <div class="container">
+        <p
+          class="text-center sm:text-left font-normal text-xs sm:text-base text-price"
+        >
+          Readable Content
+        </p>
+        <h3
+          class="text-center sm:text-left font-semibold text-base sm:text-3xl text-black mt-1 sm:mt-3 mb-4 sm:mb-12"
+        >
+          Popular Cities We Offer
+        </h3>
+        <div
+          class="sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 max-w-full slider"
+        >
+          <a class="col-span-2 relative px-2 sm:px-0">
+            <img
+              src="assets/img/city-1.jpg"
+              class="w-full h-80 object-cover rounded-xl"
+            />
+            <h1
+              class="absolute left-6 bottom-6 font-normal font-semibold text-base text-white z-10 ease-in-out duration-200"
+            >
+              Ryiadh
+            </h1>
+            <p
+              class="absolute right-6 bottom-6 font-normal font-semibold text-sm text-black z-10 bg-white py-1.5 px-5 rounded-2xl ease-in-out duration-700"
+            >
+              32 Properties
+            </p>
+          </a>
+          <a class="relative px-2 sm:px-0">
+            <img
+              src="assets/img/city-2.jpg"
+              class="w-full h-80 object-cover rounded-xl"
+            />
+            <h1
+              class="absolute left-6 bottom-6 font-normal font-semibold text-base text-white z-10 ease-in-out duration-200"
+            >
+              Ryiadh
+            </h1>
+            <p
+              class="absolute right-6 bottom-6 font-normal font-semibold text-sm text-black z-10 bg-white py-1.5 px-5 rounded-2xl ease-in-out duration-700"
+            >
+              32 Properties
+            </p>
+          </a>
+          <a class="relative px-2 sm:px-0">
+            <img
+              src="assets/img/city-3.jpg"
+              class="w-full h-80 object-cover rounded-xl"
+            />
+            <h1
+              class="absolute left-6 bottom-6 font-normal font-semibold text-base text-white z-10 ease-in-out duration-200"
+            >
+              Ryiadh
+            </h1>
+            <p
+              class="absolute right-6 bottom-6 font-normal font-semibold text-sm text-black z-10 bg-white py-1.5 px-5 rounded-2xl ease-in-out duration-700"
+            >
+              32 Properties
+            </p>
+          </a>
+          <a class="relative px-2 sm:px-0">
+            <img
+              src="assets/img/city-4.jpg"
+              class="w-full h-80 object-cover rounded-xl"
+            />
+            <h1
+              class="absolute left-6 bottom-6 font-normal font-semibold text-base text-white z-10 ease-in-out duration-200"
+            >
+              Ryiadh
+            </h1>
+            <p
+              class="absolute right-6 bottom-6 font-normal font-semibold text-sm text-black z-10 bg-white py-1.5 px-5 rounded-2xl ease-in-out duration-700"
+            >
+              32 Properties
+            </p>
+          </a>
+          <a class="relative px-2 sm:px-0">
+            <img
+              src="assets/img/city-5.jpg"
+              class="w-full h-80 object-cover rounded-xl"
+            />
+            <h1
+              class="absolute left-6 bottom-6 font-normal font-semibold text-base text-white z-10 ease-in-out duration-200"
+            >
+              Ryiadh
+            </h1>
+            <p
+              class="absolute right-6 bottom-6 font-normal font-semibold text-sm text-black z-10 bg-white py-1.5 px-5 rounded-2xl ease-in-out duration-700"
+            >
+              32 Properties
+            </p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="properitirs pt-10 pb-10 md:pt-20 md:pb-20 mb-10 bg-properits"
+    >
+      <div class="container">
+        <p
+          class="font-normal text-xs md:text-base text-price text-center md:text-left"
+        >
+          Explore Our Buildnigs
+        </p>
+        <h3
+          class="font-semibold text-base md:text-3xl text-black mt-1 md:mt-3 mb-5 md:mb-0 text-center md:text-left"
+        >
+          Explore More Properities
+        </h3>
+        <div class="category relative pt-16 md:pt-24">
+          <div class="slider px-5 -mx-5" data-title="Ryiadh">
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-3.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-4.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+          </div>
+          <div class="slider px-5 -mx-5" data-title="Jeddah">
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-3.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-4.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+          </div>
+          <div class="slider px-5 -mx-5" data-title="Dammam">
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-3.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-1.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+            <a class="relative block px-1 overflow-hidden">
+              <img
+                src="assets/img/properits-4.jpg"
+                class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
+              />
+              <div
+                class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"
+              ></div>
+              <h3
+                class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5"
+              >
+                Building Name Here
+              </h3>
+              <ul
+                class="max-w-full grid grid-cols-3 bg-white bg-opacity-20 py-4 px-1 rounded-md text-center absolute z-20 mx-0"
+              >
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/pin.svg"
+                  />
+                  Ryiadh
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/apartment.svg"
+                  />
+                  20 Properties
+                </li>
+                <li class="font-nromal text-xs sm:text-sm text-white">
+                  <img
+                    class="h-[15px] sm:h-[19px] -translate-y-0.5"
+                    src="assets/img/fire.svg"
+                  />
+                  Top Rated
+                </li>
+              </ul>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="automated pb-24">
+      <div class="container">
+        <div class="text-center">
+          <h2
+            class="font-semibold text-base md:text-3xl text-center mb-8 md:mb-16 relative inline-block ml-auto mr-auto"
+          >
+            Automated Marketing<br />With Data - <span>Driven Insight</span>
+          </h2>
+        </div>
+        <div class="md:grid md:grid-cols-3 md:gap-6 max-w-full">
+          <div class="md:pt-24">
+            <ul>
+              <li class="mb-6">
+                <div
+                  class="w-12 h-12 rounded-full bg-automated-1 float-left relative mt-3 mb-5 mr-5 sm:mr-7 ease-in-out duration-300"
+                >
+                  <img src="assets/img/automated-1.svg" class="absolute" />
+                </div>
+                <div>
+                  <h4 class="font-normal text-base text-black mb-2">
+                    Automated Marketing
+                  </h4>
+                  <p class="font-normal text-sm text-gritext">
+                    With tools make sed ut perspiciatis unde omnis iste natus
+                    error sit voluptatem
+                  </p>
+                </div>
+              </li>
+              <li class="mb-6">
+                <div
+                  class="w-12 h-12 rounded-full bg-automated-2 float-left relative mt-3 mb-5 mr-5 sm:mr-7 ease-in-out duration-300"
+                >
+                  <img src="assets/img/automated-2.svg" class="absolute" />
+                </div>
+                <div>
+                  <h4 class="font-normal text-base text-black mb-2">
+                    Automated Marketing
+                  </h4>
+                  <p class="font-normal text-sm text-gritext">
+                    With tools make sed ut perspiciatis unde omnis iste natus
+                    error sit voluptatem
+                  </p>
+                </div>
+              </li>
+              <li class="mb-6">
+                <div
+                  class="w-12 h-12 rounded-full bg-automated-3 float-left relative mt-3 mb-5 mr-5 sm:mr-7 ease-in-out duration-300"
+                >
+                  <img src="assets/img/automated-3.svg" class="absolute" />
+                </div>
+                <div>
+                  <h4 class="font-normal text-base text-black mb-2">
+                    Automated Marketing
+                  </h4>
+                  <p class="font-normal text-sm text-gritext">
+                    With tools make sed ut perspiciatis unde omnis iste natus
+                    error sit voluptatem
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="text-center">
+            <img src="assets/img/automated.png" class="inline" />
+          </div>
+          <div class="md:pt-24">
+            <ul>
+              <li class="mb-6">
+                <div
+                  class="w-12 h-12 rounded-full bg-automated-1 float-left relative mt-3 mb-5 mr-5 sm:mr-7 ease-in-out duration-300"
+                >
+                  <img src="assets/img/automated-1.svg" class="absolute" />
+                </div>
+                <div>
+                  <h4 class="font-normal text-base text-black mb-2">
+                    Automated Marketing
+                  </h4>
+                  <p class="font-normal text-sm text-gritext">
+                    With tools make sed ut perspiciatis unde omnis iste natus
+                    error sit voluptatem
+                  </p>
+                </div>
+              </li>
+              <li class="mb-6">
+                <div
+                  class="w-12 h-12 rounded-full bg-automated-2 float-left relative mt-3 mb-5 mr-5 sm:mr-7 ease-in-out duration-300"
+                >
+                  <img src="assets/img/automated-2.svg" class="absolute" />
+                </div>
+                <div>
+                  <h4 class="font-normal text-base text-black mb-2">
+                    Automated Marketing
+                  </h4>
+                  <p class="font-normal text-sm text-gritext">
+                    With tools make sed ut perspiciatis unde omnis iste natus
+                    error sit voluptatem
+                  </p>
+                </div>
+              </li>
+              <li class="mb-6">
+                <div
+                  class="w-12 h-12 rounded-full bg-automated-3 float-left relative mt-3 mb-5 mr-5 sm:mr-7 ease-in-out duration-300"
+                >
+                  <img src="assets/img/automated-3.svg" class="absolute" />
+                </div>
+                <div>
+                  <h4 class="font-normal text-base text-black mb-2">
+                    Automated Marketing
+                  </h4>
+                  <p class="font-normal text-sm text-gritext">
+                    With tools make sed ut perspiciatis unde omnis iste natus
+                    error sit voluptatem
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="app pt-16 lg:pt-24 relative">
+      <img
+        src="assets/img/app-bg.png"
+        class="absolute bottom-0 left-0 right-0"
+      />
+      <div class="container">
+        <div class="lg:grid lg:grid-cols-2 max-w-full">
+          <div>
+            <h3 class="font-semibold text-4xl lg:text-6xl text-white lg:pt-14">
+              Download #1<br />Real State App
+            </h3>
+            <p class="font-normal text-base text-white my-6">
+              With tools make sed ut perspiciatis unde omnis iste natus error
+              sit voluptatem accusantium doloremque
+            </p>
+            <div>
+              <a
+                ><img
+                  src="assets/img/apple.svg"
+                  class="float-left mr-3 w-40 lg:w-auto"
+              /></a>
+              <a
+                ><img
+                  src="assets/img/android.svg"
+                  class="float-left mr-3 w-40 lg:w-auto"
+              /></a>
+              <div class="clear-both"></div>
+            </div>
+          </div>
+          <div class="text-right mt-10 lg:mt-0">
+            <img src="assets/img/app.png" class="inline" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="comments py-12">
+      <div class="container">
+        <div class="text-center">
+          <div class="p-1 bg-black inline-block title text-left rounded-3xl">
+            <div class="bg-white w-9 h-9 rounded-full float-left relative mr-3">
+              <img src="assets/img/star-comment.svg" class="absolute" />
+            </div>
+            <p
+              class="float-left font-normal text-base sm:text-lg text-white pr-4 sm:pr-6 py-1.5 sm:py-1"
+            >
+              Related 4/5 by over 1 dyafa users
+            </p>
+            <div class="clear-both"></div>
+          </div>
+        </div>
+        <h3
+          class="text-center font-semibold text-base sm:text-3xl text-black mt-4 mb-6 sm:my-8"
+        >
+          Words Of Parise From Others<br />About Our Presence
+        </h3>
+      </div>
+      <div class="relative comment-list top-list mb-4">
+        <ul class="w-[5000vw]">
+          <li class="float-left w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-left w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-left w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-left w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-left w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="clear-both"></li>
+        </ul>
+      </div>
+      <div class="relative comment-list bottom-list hidden sm:block">
+        <ul class="w-[5000vw]">
+          <li class="float-right w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-right w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-right w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-right w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="float-right w-[400px] mx-2">
+            <a
+              class="block bg-commentbg border border-commentborder py-6 px-8 rounded-xl"
+            >
+              <div>
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+                <img class="inline-block" src="assets/img/comment-star.svg" />
+              </div>
+              <p class="font-normal text-sm text-black mt-5 mb-6">
+                Established Fact That A Reader Will Be Distracted By The
+                Readable Content Of A Page When Looking At Its Layout. The Point
+              </p>
+              <h4 class="font-normal text-lg text-price">Hazem Anwar</h4>
+              <p class="font-normal text-sm text-gri mt-1">Founder & CEO</p>
+            </a>
+          </li>
+          <li class="clear-both"></li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="border-t border-blackopacity pt-12">
+      <div class="container border-b border-blackopacity pb-6">
+        <div class="lg:grid lg:grid-cols-3 lg:gap-8 max-w-full">
+          <div>
+            <img src="assets/img/logo.svg" />
+            <p
+              class="font-normal text-sm lg:text-base text-black mt-8 text-justify"
+            >
+              established fact that a reader will be distracted by the readable
+              content of a page when looking at its layout. The point of using
+              Lorem Ipsum is that it has a more-or-less normal distribution of
+              letters, as opposed
+            </p>
+          </div>
+          <div class="my-6 lg:my-0">
+            <h6 class="font-semibold text-xl text-black">Site Map</h6>
+            <ul class="mt-4 lg:mt-10 grid grid-cols-2 gap-2 max-w-full mx-0">
+              <li>
+                <a class="block font-light text-black mb-2 lg:mb-5">Home</a>
+              </li>
+              <li>
+                <a class="block font-light text-black mb-2 lg:mb-5"
+                  >Privacy&Policy</a
+                >
+              </li>
+              <li>
+                <a class="block font-light text-black mb-2 lg:mb-5">Blogs</a>
+              </li>
+              <li>
+                <a class="block font-light text-black mb-2 lg:mb-5"
+                  >Terms Of Use</a
+                >
+              </li>
+              <li>
+                <a class="block font-light text-black mb-2 lg:mb-5"
+                  >Contact Us</a
+                >
+              </li>
+              <li>
+                <a class="block font-light text-black mb-2 lg:mb-5">FAQ</a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h6 class="font-semibold text-xl text-black">Site Map</h6>
+            <ul class="mt-4 lg:mt-10">
+              <li>
+                <a class="block font-light text-black mb-5"
+                  ><img class="inline-block mr-3" src="assets/img/mail.svg" />
+                  Info@Testmail.Com</a
+                >
+              </li>
+              <li>
+                <a class="block font-light text-black mb-5"
+                  ><img class="inline-block mr-3" src="assets/img/tel.svg" />
+                  +966-13-858-9000</a
+                >
+              </li>
+              <li>
+                <a class="block font-light text-black mb-5"
+                  ><img
+                    class="inline-block mr-3"
+                    src="assets/img/address.svg"
+                  />
+                  Address Here</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="container py-4">
+        <div
+          class="float-left w-full sm:w-auto text-center sm:text-left mb-3 sm:mb-0"
+        >
+          <p class="inline-block font-normal text-base text-black">
+            All Rights Reserved © 2024
+          </p>
+          <a class="inline-block font-normal text-base text-price"
+            >Website Title</a
+          >
+        </div>
+        <div class="float-right w-full sm:w-auto text-center sm:text-left">
+          <ul class="social">
+            <li class="inline-block">
+              <a class="block w-8 h-8 bg-blackopacity rounded-lg relative"
+                ><img class="absolute" src="assets/img/linkedin.svg"
+              /></a>
+            </li>
+            <li class="inline-block">
+              <a class="block w-8 h-8 bg-blackopacity rounded-lg relative"
+                ><img class="absolute" src="assets/img/twitter.svg"
+              /></a>
+            </li>
+            <li class="inline-block">
+              <a class="block w-8 h-8 bg-blackopacity rounded-lg relative"
+                ><img class="absolute" src="assets/img/instagram.svg"
+              /></a>
+            </li>
+            <li class="inline-block">
+              <a class="block w-8 h-8 bg-blackopacity rounded-lg relative"
+                ><img class="absolute" src="assets/img/facebook.svg"
+              /></a>
+            </li>
+          </ul>
+        </div>
+        <div class="clear-both"></div>
+      </div>
+    </footer>
+  </body>
+  <script
+    type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"
+  ></script>
+  <script
+    type="text/javascript"
+    src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"
+  ></script>
+  <script
+    type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"
+  ></script>
+  <script type="text/javascript" src="assets/js/jquery-searchbox.js"></script>
+  <script type="text/javascript" src="assets/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      $(".select2").select2();
+    });
+  </script>
+</html>

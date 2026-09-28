@@ -51,11 +51,14 @@ class HomeController extends Controller
         $this->data['sliders'] = SliderResource::collection($sliders);
         $cities = $this->city->orderBy('sort_order')->whereHas('apartments')->get();
         $this->data['cities'] = []; // CityResource::collection($cities);
-        $cities = $this->city->with('buildings')->whereHas('buildings')->get();
+        $cities = $this->city
+            ->with(['buildings' => fn ($q) => $q->active()])
+            ->whereHas('buildings', fn ($q) => $q->active())
+            ->get();
         $this->data['cities_with_building'] = CityResource::collection($cities);
-        $apartments = $this->apartment->with('building.city')->where('is_active', true)->latest()->limit(5)->get();
+        $apartments = $this->apartment->with('building.city')->bookable()->latest()->limit(5)->get();
         $this->data['apartments'] = ApartmentResource::collection($apartments);
-        $buildings = $this->building->orderBy('sort_order', 'asc')->get();
+        $buildings = $this->building->active()->orderBy('sort_order', 'asc')->get();
         $this->data['buildings'] = BuildingResource::collection($buildings);
         $user = \Auth::guard('api')->user();
         $this->data['user_name'] = $user?->first_name.' '.$user?->last_name;
@@ -84,7 +87,7 @@ class HomeController extends Controller
 
     public function getListingApartments()
     {
-        $apartments = $this->apartment->with('building.city')->where('is_active', 1)->latest()->paginate(20);
+        $apartments = $this->apartment->with('building.city')->bookable()->latest()->paginate(20);
         $this->data['apartments'] = ApartmentResource::collection($apartments);
         $this->data['pagination'] = $this->pagination($apartments);
 
@@ -148,7 +151,7 @@ class HomeController extends Controller
             }
         }
 
-        $apartments = $query->where('is_active', 1)->paginate(30);
+        $apartments = $query->bookable()->paginate(30);
         $this->data['apartments'] = ApartmentResource::collection($apartments); // total_amount
         $this->data['pagination'] = $this->pagination($apartments);
 
@@ -161,7 +164,7 @@ class HomeController extends Controller
     {
         $id = $request->id;
 
-        $apartments = Apartment::where('is_active', 1)
+        $apartments = Apartment::bookable()
             ->where(function ($query) use ($id) {
                 $query->where('id', $id)->orWhere('slug', $id);
             })

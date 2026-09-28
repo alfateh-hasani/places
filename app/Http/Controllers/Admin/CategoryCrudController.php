@@ -37,6 +37,11 @@ class CategoryCrudController extends CrudController
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
+    protected function setupShowOperation()
+    {
+        $this->setupListOperation();
+    }
+
     protected function setupListOperation()
     {
         $this->crud->addColumn([
@@ -47,16 +52,16 @@ class CategoryCrudController extends CrudController
         
         $this->crud->addColumn([
             'name' => 'price',
-            'type' =>  'number',
+            'type' =>  'custom_html',
             'label' => __('cms.price') . ' (السعر الأساسي)',
-            'suffix' => ' ر.س',
+            'value' => fn ($entry) => number_format((float) $entry->price, 2).' '.\App\Support\Riyal::svg(),
         ]);
-        
+
         $this->crud->addColumn([
             'name' => 'weekend_price',
-            'type' => 'number',
+            'type' => 'custom_html',
             'label' => 'سعر نهاية الأسبوع',
-            'suffix' => ' ر.س',
+            'value' => fn ($entry) => $entry->weekend_price ? number_format((float) $entry->weekend_price, 2).' '.\App\Support\Riyal::svg() : '—',
         ]);
         
         $this->crud->addColumn([

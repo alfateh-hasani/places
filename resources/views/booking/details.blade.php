@@ -3,8 +3,8 @@
 <!-- SweetAlert2 CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <!-- Flatpickr — نفس تحميلات صفحة الحجز (base + dark theme) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
 
 <style>
 /* نفس ستايل تقويم صفحة الحجز (apartment/show.blade.php) */
@@ -254,7 +254,7 @@ span.flatpickr-day.selected{
                             <p class="text-xs mb-3" style="color:#f0ad4e;">
                                 {{ __('booking.awaiting_difference_payment') }}
                                 @if((float) $dc->price_delta > 0)
-                                    (<b style="color:#e74c3c;">+{{ number_format(abs((float) $dc->price_delta), 2) }} {{ __('apartment.price') }}</b>)
+                                    (<b style="color:#e74c3c;">+<x-riyal :amount="abs((float) $dc->price_delta)" /></b>)
                                 @endif
                             </p>
                             <button class="dc-retry-pay-btn py-2 px-4 rounded-md text-white ml-2" style="background:#3085d6;" data-request-id="{{ $dc->id }}">
@@ -500,7 +500,7 @@ $('#closeMe').on('click',function(){
 <!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- Flatpickr (same date picker as the booking flow) — default English LTR for guaranteed header/day alignment -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
 @include('customer.section.script-form')
 <script>
 
@@ -801,9 +801,9 @@ $(document).ready(function() {
             var delta = parseFloat(q.price_delta);
             var summary;
             if (delta > 0.001) {
-                summary = "{{ __('booking.difference_will_be_charged') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " {{ __('apartment.price') }}</b> {{ __('booking.to_confirm_change') }}";
+                summary = "{{ __('booking.difference_will_be_charged') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " " + window.SAR_SYMBOL + "</b> {{ __('booking.to_confirm_change') }}";
             } else if (delta < -0.001) {
-                summary = "{{ __('booking.difference_will_be_refunded') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " {{ __('apartment.price') }}</b> {{ __('booking.after_admin_review') }}";
+                summary = "{{ __('booking.difference_will_be_refunded') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " " + window.SAR_SYMBOL + "</b> {{ __('booking.after_admin_review') }}";
             } else {
                 summary = "<span style='color:#6c757d;'>{{ __('booking.no_price_difference') }}</span>";
             }
@@ -815,7 +815,7 @@ $(document).ready(function() {
                 title: "{{ __('booking.date_change_confirmation') }}",
                 html: "<div style='text-align:center;'>" +
                     "<bdo dir='ltr' style='display:inline-block;'>" + q.new_check_out + " ← " + q.new_check_in + "</bdo><br><br>" +
-                    "{{ __('booking.new_price') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " {{ __('apartment.price') }}</b><br>" + summary + "</div>",
+                    "{{ __('booking.new_price') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " " + window.SAR_SYMBOL + "</b><br>" + summary + "</div>",
                 icon: 'question',
                 showDenyButton: true,
                 denyButtonText: "{{ __('booking.previous') }}",

@@ -116,7 +116,7 @@
                     <p id="rowEmail"><strong>البريد الإلكتروني:</strong> <span id="customerEmail"></span></p>
                     <p><strong>المصدر:</strong> <span id="bookingSource"></span></p>
                     <p id="rowStatus"><strong>الحالة:</strong> <span id="bookingStatus"></span></p>
-                    <p id="rowTotal"><strong>الإجمالي:</strong> <span id="totalPrice"></span> ريال</p>
+                    <p id="rowTotal"><strong>الإجمالي:</strong> <span id="totalPrice"></span> <x-riyal-svg /></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
@@ -281,7 +281,7 @@
                         <td><span class="badge bg-${typeInfo.badge}">${typeInfo.label}</span><br><small class="text-muted">${source}</small></td>
                         <td>${type === 'booking' ? `<span class="badge bg-${statusInfo.badge}">${statusInfo.label}</span>` : '-'}</td>
                         <td>${e.extendedProps?.customer_name ?? '-'}</td>
-                        <td>${e.extendedProps?.total_price ? e.extendedProps.total_price + ' ر.س' : '-'}</td>
+                        <td>${e.extendedProps?.total_price ? e.extendedProps.total_price + ' ' + @json(\App\Support\Riyal::svg()) : '-'}</td>
                     </tr>`;
                 }).join('');
 

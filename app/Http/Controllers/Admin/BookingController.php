@@ -315,7 +315,7 @@ class BookingController extends CrudController
         //     'type' => 'custom_html',
         //     'label' => __('cms.total_price') . ' (SAR) <i class="la la-money"></i>',
         //     'value' => function($entry) {
-        //         return '<span class="text-primary font-weight-bold">' . number_format($entry->total_price, 2) . ' SAR</span>';
+        //         return '<span class="text-primary font-weight-bold">' . number_format($entry->total_price, 2) . ' '.\App\Support\Riyal::svg().'</span>';
         //     }
         // ]);
 
@@ -325,7 +325,7 @@ class BookingController extends CrudController
             'type' => 'custom_html',
             'label' => 'المبلغ النهائية شامل الضريبة'.' (SAR) <i class="la la-money-bill"></i>',
             'value' => function ($entry) {
-                return '<span class="text-success font-weight-bold">'.number_format($entry->final_price, 2).' SAR</span>';
+                return '<span class="text-success font-weight-bold">'.number_format($entry->final_price, 2).' '.\App\Support\Riyal::svg().'</span>';
             },
         ]);
 
@@ -495,7 +495,6 @@ class BookingController extends CrudController
                     'type' => 'view',
                     'view' => 'admin.booking.cancellation_show_action',
                     'booking' => $currentBooking,
-                    'ownerrezCanceled' => $this->ownerrezBookingIsCanceled($currentBooking),
                 ])->to('before_content');
             }
             $this->addCancellationWidgets();
@@ -670,19 +669,19 @@ class BookingController extends CrudController
                     <table class="table table-bordered">
                         <tr>
                             <th> المبلغ الإجمالي قبل الضريبة (SAR) <i class="la la-money"></i></th>
-                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price_before_tax, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price_before_tax, 2).' '.\App\Support\Riyal::svg().'</span></td>
                         </tr>
                         <tr>
                             <th> الضريبة (SAR) <i class="la la-money"></i></th>
-                            <td><span class="font-weight-bold text-primary">'.number_format($entry->tax, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-primary">'.number_format($entry->tax, 2).' '.\App\Support\Riyal::svg().'</span></td>
                         </tr>
                         <tr>
                             <th> المبلغ الإجمالي شامل الضريبة (SAR) <i class="la la-money"></i></th>
-                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price, 2).' '.\App\Support\Riyal::svg().'</span></td>
                         </tr>
                         '.($entry->discount ? '<tr>
                             <th>'.__('cms.discount').' (SAR)</th>
-                            <td><span class="font-weight-bold text-danger">'.number_format($entry->discount, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-danger">'.number_format($entry->discount, 2).' '.\App\Support\Riyal::svg().'</span></td>
                         </tr>
                         <tr>
                             <th>نسبة الخصم (%)</th>
@@ -694,7 +693,7 @@ class BookingController extends CrudController
                         </tr>' : '').'
                         <tr>
                             <th> المبلغ النهائي شامل الضريبة (SAR) <i class="la la-money-bill"></i></th>
-                            <td><span class="font-weight-bold text-success">'.number_format($entry->final_price, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-success">'.number_format($entry->final_price, 2).' '.\App\Support\Riyal::svg().'</span></td>
                         </tr>
                     </table>';
             },
@@ -728,7 +727,7 @@ class BookingController extends CrudController
                         <tr>
                             <th>'.__('cms.refund_status').' <i class="la la-money-bill-wave"></i></th>
                             <td>'.$this->getRefundStatusBadge($entry->refund_status).
-                            ($entry->refund_amount ? ' <span class="text-muted">('.number_format($entry->refund_amount, 2).' SAR)</span>' : '').'</td>
+                            ($entry->refund_amount ? ' <span class="text-muted">('.number_format($entry->refund_amount, 2).' '.\App\Support\Riyal::svg().')</span>' : '').'</td>
                         </tr>' : '';
 
                 return '
@@ -1060,33 +1059,6 @@ class BookingController extends CrudController
             'type' => 'view',
             'view' => 'admin.booking.cancellation_modals',
         ])->to('before_content');
-    }
-
-    /**
-     * Live-check OwnerRez: is this booking's reservation actually cancelled (or deleted)
-     * there? Gates the local "force cancel" fallback so staff can only free the unit
-     * locally once OwnerRez itself no longer holds it (i.e. the webhook was missed).
-     * Only calls the API for a mapped booking still awaiting cancellation; any error,
-     * unmapped or non-pending booking returns false (hide the action).
-     */
-    private function ownerrezBookingIsCanceled(\App\Models\Booking $booking): bool
-    {
-        if (! $booking->isLinkedToOwnerRez() || ! $booking->isCancellationRequested()) {
-            return false;
-        }
-
-        try {
-            $data = app(\App\Services\OwnerRez\OwnerRezApiService::class)
-                ->getBooking((int) $booking->ownerrez_booking_id);
-        } catch (\App\Exceptions\OwnerRez\OwnerRezApiException $e) {
-            // Deleted in OwnerRez (404) counts as cancelled; other errors → cannot confirm.
-            return $e->getStatusCode() === 404;
-        } catch (\Throwable $e) {
-            return false;
-        }
-
-        return strtolower((string) ($data['status'] ?? '')) === 'canceled'
-            || ! empty($data['canceled_utc']);
     }
 
     protected function addBuildingFilter()

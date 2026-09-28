@@ -80,7 +80,7 @@ class RefundCrudController extends CrudController
             'name' => 'amount',
             'type' => 'custom_html',
             'label' => __('cms.refund_amount'),
-            'value' => fn ($entry) => '<span class="font-weight-bold">'.number_format((float) $entry->amount, 2).' '.e($entry->currency).'</span>',
+            'value' => fn ($entry) => '<span class="font-weight-bold">'.number_format((float) $entry->amount, 2).' '.($entry->currency === 'SAR' ? \App\Support\Riyal::svg() : e($entry->currency)).'</span>',
             'searchLogic' => function ($query, $column, $searchTerm) {
                 $query->orWhere('amount', 'like', "%{$searchTerm}%");
             },
@@ -166,7 +166,7 @@ class RefundCrudController extends CrudController
             'label' => __('cms.refund_timeline'),
             'value' => fn ($entry) => $this->timeline($entry),
         ]);
-        CRUD::addColumn(['name' => 'amount', 'type' => 'number', 'label' => __('cms.refund_amount'), 'suffix' => ' '.'SAR']);
+        CRUD::addColumn(['name' => 'amount', 'type' => 'custom_html', 'label' => __('cms.refund_amount'), 'value' => fn ($entry) => number_format((float) $entry->amount, 2).' '.\App\Support\Riyal::svg()]);
         CRUD::addColumn(['name' => 'order_id', 'type' => 'text', 'label' => 'Gateway Order ID']);
         CRUD::addColumn(['name' => 'gateway_refund_id', 'type' => 'text', 'label' => 'Gateway Refund ID']);
         CRUD::addColumn(['name' => 'attempts', 'type' => 'number', 'label' => __('cms.refund_attempts')]);
@@ -194,6 +194,12 @@ class RefundCrudController extends CrudController
         $resp = $entry->response_payload;
         if (empty($resp)) {
             return '<span class="text-muted">— '.__('cms.gateway_not_sent').' —</span>';
+        }
+
+        // Manual refund (direct/bank-transfer booking, settled outside the gateway) —
+        // there is no gateway "success" flag, so report it as a manual refund, not a failure.
+        if (data_get($resp, 'manual') === true) {
+            return '<span style="color:#28a745;font-weight:600;"><i class="la la-hand-holding-usd"></i> '.__('cms.refund_manual_result').'</span>';
         }
 
         $success = (bool) data_get($resp, 'success');

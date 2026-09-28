@@ -1,7 +1,7 @@
-<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
  
@@ -20,7 +20,7 @@ $(document).ready(function() {
 
         if (!checkinVal || !checkoutVal) {
             $('#totalNights').text('0');
-            $('#totalCost').text('0.00 {{ __("apartment.price") }}');
+            $('#totalCost').html(window.formatSAR(0));
             return;
         }
 
@@ -30,7 +30,7 @@ $(document).ready(function() {
 
         if (nights <= 0) {
             $('#totalNights').text('0');
-            $('#totalCost').text('0.00 {{ __("apartment.price") }}');
+            $('#totalCost').html(window.formatSAR(0));
             return;
         }
 
@@ -54,16 +54,16 @@ $(document).ready(function() {
                 if (response.success) {
                     // تحديث جميع عناصر السعر
                     $('#totalNights').text(response.nights + ' ' + "{{ __('apartment.nights') }}");
-                    $('#totalCost').text(response.total.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
+                    $('#totalCost').html(window.formatSAR(response.total));
                     $('#mainPrice').text(response.total.toFixed(2));
-                    $('#nightlyPrice').text(response.one_night_price.toFixed(2) + ' {{ __("apartment.price") }}');
+                    $('#nightlyPrice').html(window.formatSAR(response.one_night_price));
                     
                     // عرض معلومات الخصم إذا وجد
                     if (response.discount > 0) {
                         $('#discountedCost').html(
                             '<span class="text-green-600"><i class="la la-tag"></i> ' +
-                            "{{ __('apartment.long_stay_discount') }}: " + 
-                            response.discount.toFixed(2) + ' {{ __("apartment.price") }}</span>'
+                            "{{ __('apartment.long_stay_discount') }}: " +
+                            response.discount.toFixed(2) + ' ' + window.SAR_SYMBOL + '</span>'
                         );
                     } else {
                         $('#discountedCost').text('');

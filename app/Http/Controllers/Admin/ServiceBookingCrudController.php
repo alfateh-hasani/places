@@ -38,9 +38,14 @@ class ServiceBookingCrudController extends CrudController
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
+    protected function setupShowOperation()
+    {
+        $this->setupListOperation();
+    }
+
     protected function setupListOperation()
     {
-        
+
         CRUD::addColumn([
             'name' => 'id',
             'label' => 'رقم الطلب',
@@ -92,8 +97,8 @@ class ServiceBookingCrudController extends CrudController
         CRUD::addColumn([
             'name' => 'price',
             'label' => 'السعر',
-            'type' => 'number',
-            'suffix' => ' ر.س'
+            'type' => 'custom_html',
+            'value' => fn ($entry) => number_format((float) $entry->price, 2).' '.\App\Support\Riyal::svg(),
         ]);
     
         CRUD::addColumn([

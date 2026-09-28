@@ -8,6 +8,7 @@ use App\Services\Locks\Contracts\LockProviderInterface;
 use App\Services\Locks\LockCredentials;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Backpack\CRUD\app\Library\Widget;
 use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 
 /**
@@ -112,6 +113,29 @@ class BuildingController extends CrudController
             'type' => 'time',
             'label' => __('cms.check_out_time'),
         ]);
+
+        // Inline activation switch — flips buildings.is_active over AJAX straight from
+        // the list. Only rendered for users who can update; everyone else sees a
+        // read-only yes/no so they can't toggle without permission.
+        if ($this->crud->hasAccess('update')) {
+            $this->crud->addColumn([
+                'name' => 'is_active',
+                'label' => __('cms.is_active'),
+                'type' => 'view',
+                'view' => 'admin.columns.active_switch',
+            ]);
+
+            Widget::add([
+                'type' => 'view',
+                'view' => 'admin.building.active_switch_script',
+            ])->to('after_content');
+        } else {
+            $this->crud->addColumn([
+                'name' => 'is_active',
+                'type' => 'boolean',
+                'label' => __('cms.is_active'),
+            ]);
+        }
     }
 
     /**
@@ -404,6 +428,16 @@ class BuildingController extends CrudController
             ],
         ]);
 
+        $this->crud->addField([
+            'name' => 'is_active',
+            'type' => 'select_from_array',
+            'label' => __('cms.is_active'),
+            'options' => [1 => __('cms.yes'), 0 => __('cms.no')],
+            'wrapperAttributes' => [
+                'class' => 'form-group col-md-6',
+            ],
+        ]);
+
     }
 
     /**
@@ -511,5 +545,27 @@ class BuildingController extends CrudController
         }
 
         return back();
+    }
+
+    /**
+     * Flip a building's active flag from the list's inline switch (AJAX).
+     * An inactive building hides all of its units from the public site & API.
+     */
+    public function toggleActive(int $id): \Illuminate\Http\JsonResponse
+    {
+        if (! backpack_user()->can('building.update')) {
+            abort(403, 'Unauthorized Access');
+        }
+
+        $building = Building::findOrFail($id);
+        $building->is_active = ! $building->is_active;
+        $building->save();
+
+        return response()->json([
+            'is_active' => $building->is_active,
+            'message' => $building->is_active
+                ? __('cms.building_activated')
+                : __('cms.building_deactivated'),
+        ]);
     }
 }
