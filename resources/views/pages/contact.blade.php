@@ -49,11 +49,12 @@
                             </p>
                         </a>
                     </li>
+                    @php $contactPhone = preg_replace('/^00/', '+', (string) $phone); @endphp
                     <li class="mb-9">
-                        <a>
+                        <a href="tel:{{ $contactPhone }}">
                             <div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
-                                <img class="inline-block" src="{{asset('assets/img/tel.svg')}}" /></div> 
-                                <p class="font-semibold text-lg text-black"> {{__('site.send_phone')}} <br> {{$phone}}</p></a></li>
+                                <img class="inline-block" src="{{asset('assets/img/tel.svg')}}" /></div>
+                                <p class="font-semibold text-lg text-black"> {{__('site.send_phone')}} <br> <span dir="ltr" style="direction:ltr; unicode-bidi:isolate; display:inline-block;">{{ $contactPhone }}</span></p></a></li>
                     <li class="mb-9"><a><div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
                         <img class="inline-block" src="{{asset('assets/img/address.svg')}}" /></div> <p class="font-semibold text-lg text-black">
                              {{__('site.address')}} <br> 

@@ -189,7 +189,7 @@ class BuildingController extends CrudController
         $this->crud->addField([
             'name' => 'ttlock_username',
             'type' => 'text',
-            'label' => 'TTLOCK Username',
+            'label' => __('cms.ttlock_username'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -198,9 +198,9 @@ class BuildingController extends CrudController
         $this->crud->addField([
             'name' => 'ttlock_password',
             'type' => 'password',
-            'label' => 'TTLOCK Password',
+            'label' => __('cms.ttlock_password'),
             'value' => '',
-            'hint' => $this->crud->getCurrentEntry() ? 'اتركه فارغاً للإبقاء على كلمة المرور الحالية' : null,
+            'hint' => $this->crud->getCurrentEntry() ? __('cms.ttlock_password_hint') : null,
             'attributes' => [
                 'autocomplete' => 'new-password',
             ],
@@ -223,7 +223,7 @@ class BuildingController extends CrudController
                                 data-test-sciener
                                 data-action="'.route('admin.building.test-sciener-connection', $this->crud->getCurrentEntry()->id).'"
                                 data-token="'.csrf_token().'">
-                            <i class="la la-plug"></i> اختبار الاتصال بحساب TTLOCK
+                            <i class="la la-plug"></i> '.__('cms.ttlock_test_connection').'
                         </button>
                     </div>
                     <script>
@@ -323,7 +323,7 @@ class BuildingController extends CrudController
             'name' => 'check_in_time',
             'type' => 'time',
             'label' => __('cms.check_in_time'),
-            'value' => $this->crud->getCurrentEntry()?->check_in_time?->format('H:i'),
+            'value' => ($this->crud->getCurrentEntry() ?: null)?->check_in_time?->format('H:i'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -336,7 +336,7 @@ class BuildingController extends CrudController
             'name' => 'check_out_time',
             'type' => 'time',
             'label' => __('cms.check_out_time'),
-            'value' => $this->crud->getCurrentEntry()?->check_out_time?->format('H:i'),
+            'value' => ($this->crud->getCurrentEntry() ?: null)?->check_out_time?->format('H:i'),
             'attributes' => [
                 'required' => 'required',
             ],
@@ -447,7 +447,15 @@ class BuildingController extends CrudController
      */
     private function currentImageFieldValue(): ?string
     {
-        $media = $this->crud->getCurrentEntry()?->getFirstMedia('image');
+        $entry = $this->crud->getCurrentEntry();
+
+        // On the create page Backpack returns `false` (not `null`), so the nullsafe operator
+        // does not short-circuit — guard explicitly before touching the media relation.
+        if (! $entry) {
+            return null;
+        }
+
+        $media = $entry->getFirstMedia('image');
 
         if (! $media) {
             return null;
