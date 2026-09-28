@@ -163,6 +163,13 @@ class BuildingController extends CrudController
                 'collection' => 'image', // will pick the collection definition from your model
             ]);
 
+        // Keep the image field's preview compact and tidy (the default template renders
+        // the uploaded photo at full column width/height). Scoped to the building form only.
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.building.image_field_style',
+        ])->to('after_content');
+
         $this->crud->addField([
             'name' => 'name_ar',
             'type' => 'text',
