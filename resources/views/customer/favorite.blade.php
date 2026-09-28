@@ -4,7 +4,9 @@
 <link rel="stylesheet" href="{{asset('assets/plugin/HoldOn.min.css')}}" />
 
 <style>
-    .bg-white {
+    /* Scope the dark-panel override to the customer dashboard so it doesn't leak
+       to the site header/footer/modals rendered on this page. */
+    .profile .bg-white {
         background-color: #0f0c0c;
     }
 </style>
@@ -30,9 +32,16 @@
                         @foreach ($favorites as $item)
                             @include('customer.section.favorite-card', ['apartment' => $item])
                         @endforeach
-                        <p class="text-center text-gray-500 col-span-full {{ $favorites->isNotEmpty() ? 'hidden' : '' }}" data-wishlist-empty>
-                            {{ __('customer.no_favorites') }}
-                        </p>
+                        <div class="col-span-full flex flex-col items-center justify-center text-center py-14 {{ $favorites->isNotEmpty() ? 'hidden' : '' }}" data-wishlist-empty>
+                            <svg class="w-14 h-14 mb-4 text-reviews" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 20.5 4.2 12.9a4.5 4.5 0 0 1 6.36-6.37L12 7.97l1.44-1.44a4.5 4.5 0 1 1 6.36 6.37L12 20.5Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <h3 class="font-semibold text-lg text-white mb-2">{{ __('customer.no_favorites') }}</h3>
+                            <p class="font-normal text-sm text-gray-400 max-w-xs mb-5">{{ __('customer.no_favorites_hint') }}</p>
+                            <a href="{{ route('apartments.index') }}" class="inline-flex items-center justify-center bg-price text-white font-semibold text-sm rounded-xl px-6 py-2.5 hover:bg-black ease-in-out duration-300">
+                                {{ __('customer.browse_units') }}
+                            </a>
+                        </div>
                     </div>
                     
                 </div>

@@ -35,6 +35,8 @@ return [
     'no_past_bookings' => 'No past bookings available',
     'no_upcoming_bookings' => 'No upcoming bookings available',
     'no_favorites' => 'No favorite items available',
+    'no_favorites_hint' => 'Save the units you like to find them here easily.',
+    'browse_units' => 'Browse Units',
     'account' => 'Profile',
     'favorite' => 'Favorite',
     'booking_details' => 'Booking Details',

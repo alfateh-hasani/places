@@ -1,15 +1,24 @@
 <div class="rounded-xl overflow-hidden border border-border apartment-card card-feading">
     <div class="relative">
         <div class="slider">
-            @foreach ($apartment->getMedia('image') as $image)
+            @forelse ($apartment->getMedia('image') as $image)
                 <a href="{{$apartment->link}}">
-                    <img 
-                        class="object-cover w-full" 
-                        src="{{ $image->getUrl('grid') }}" 
+                    <img
+                        class="object-cover w-full"
+                        src="{{ $image->getUrl('grid') ?: $image->getUrl() }}"
+                        alt="@lang('apartment.apartment_name_default')"
+                        onerror="this.onerror=null;this.src='{{ url('img/placeholder.svg') }}';"
+                    />
+                </a>
+            @empty
+                <a href="{{$apartment->link}}">
+                    <img
+                        class="w-full aspect-[364/300]"
+                        src="{{ url('img/placeholder.svg') }}"
                         alt="@lang('apartment.apartment_name_default')"
                     />
                 </a>
-            @endforeach
+            @endforelse
         </div>
 
         <button

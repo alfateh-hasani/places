@@ -1,15 +1,25 @@
 <div class="rounded-xl overflow-hidden border border-border" data-wishlist-card>
     <div class="relative">
         <div class="slider slider-checkout">
-            @foreach ($apartment->getMedia('image') as $image)
+            @forelse ($apartment->getMedia('image') as $image)
                 <a href="{{$apartment->link}}">
                     <img
-                        class="object-cover w-full"
-                        src="{{ $image->getUrl('grid') }}"
+                        class="object-cover w-full aspect-[364/300]"
+                        src="{{ $image->getUrl('grid') ?: $image->getUrl() }}"
+                        alt="{{ $apartment->ml('name') }}"
+                        onerror="this.onerror=null;this.src='{{ url('img/placeholder.svg') }}';"
+                    />
+                </a>
+            @empty
+                {{-- No photos yet: show a clean placeholder image (keeps the card shape). --}}
+                <a href="{{$apartment->link}}">
+                    <img
+                        class="w-full aspect-[364/300]"
+                        src="{{ url('img/placeholder.svg') }}"
                         alt="{{ $apartment->ml('name') }}"
                     />
                 </a>
-            @endforeach
+            @endforelse
         </div>
 
         <button
@@ -34,7 +44,7 @@
             {{ $apartment->ml('name')   }}
         </h3>
         <h4 class="font-normal text-xs text-reviews">
-            {{ $apartment->building->address }}
+            {{ $apartment->building?->address }}
         </h4>
 
         <ul class="my-2.5 flex gap-2 flex-wrap">

@@ -35,6 +35,8 @@ return [
     'no_past_bookings' => 'لا توجد حجوزات سابقة',
     'no_upcoming_bookings' => 'لا توجد حجوزات قادمة',
     'no_favorites' => 'لا توجد عناصر في المفضلة',
+    'no_favorites_hint' => 'احفظ الوحدات التي تعجبك لتجدها هنا بسهولة.',
+    'browse_units' => 'تصفّح الوحدات',
     'account' => 'الملف الشخصي ',
     'favorite' => 'المفضلة',
     'booking_details' => 'تفاصيل الحجز',
