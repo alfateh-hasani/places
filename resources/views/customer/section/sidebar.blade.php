@@ -48,7 +48,7 @@
             </a>
         </li>
         <li>
-            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"  class="block py-2 bg-[#fdede9] text-center rounded-lg text-price mt-20">
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"  class="block py-3 bg-[#fdede9] hover:bg-[#fbdbd1] text-center rounded-lg text-[#ef552c] font-medium ease-in-out duration-300 mt-20">
                 <div class="inline-block w-6">
                     <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="17.501" height="17.5" viewBox="0 0 17.501 17.5">
                         <path id="logout" d="M20.53,12.53l-3,3a.75.75,0,0,1-1.06-1.061l1.72-1.72H9a.75.75,0,0,1,0-1.5H18.19l-1.72-1.72a.75.75,0,0,1,1.061-1.061l3,3a.75.75,0,0,1,0,1.061ZM9.75,20A.75.75,0,0,0,9,19.25H6A1.252,1.252,0,0,1,4.75,18V6A1.252,1.252,0,0,1,6,4.75H9a.75.75,0,0,0,0-1.5H6A2.752,2.752,0,0,0,3.25,6V18A2.752,2.752,0,0,0,6,20.75H9A.75.75,0,0,0,9.75,20Z" transform="translate(-3.25 -3.25)" fill="currentColor"/>
