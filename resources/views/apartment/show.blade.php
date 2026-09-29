@@ -358,7 +358,7 @@
                         <x-riyal class="text-black" />
 
                     </p>
-                    <form action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="POST">
+                    <form id="booking" action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="POST">
              
                         @csrf
 

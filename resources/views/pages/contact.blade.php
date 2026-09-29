@@ -20,6 +20,18 @@
         #contact-us textarea.contact-error {
             border-color: #ef4444;
         }
+        /* Phone field: keep the placeholder right-aligned like the other RTL
+           fields, but flip to LTR — so the leading + and digits start from the
+           left — as soon as the field is focused or holds a value. */
+        #contact-us .phone-ltr-value {
+            direction: rtl;
+            text-align: right;
+        }
+        #contact-us .phone-ltr-value:focus,
+        #contact-us .phone-ltr-value:not(:placeholder-shown) {
+            direction: ltr;
+            text-align: left;
+        }
         </style>
 @endpush
 @section('content')
@@ -29,15 +41,21 @@
     <div class="container">
         <div class="lg:grid lg:grid-cols-2 lg:gap-4 w-full mx-0">
             <div class="pr-0 xl:pr-24">
-                <p class="font-normal text-base text-price mb-5">
-                    {{$page->{'name_'.app()->getLocale()} ?? ''}}
-                </p>
-                <p class="font-semibold text-3xl sm:text-5xl mb-6">
-                    {!!$page->{'content_'.app()->getLocale()} ?? ''!!}
-                </p>
-                <p class="font-light text-base text-gri mb-12"> 
-                   
-                </p>
+                @php
+                    $locale = app()->getLocale();
+                    $pageName = $page->{'name_'.$locale} ?? '';
+                    $pageContent = (string) ($page->{'content_'.$locale} ?? '');
+                @endphp
+                {{-- Page title. The CMS "content" field is rich text that already
+                     contains block-level <p> tags, so it must NOT be wrapped in a
+                     <p> (nesting <p> inside <p> makes the browser collapse the outer
+                     heading, which is why the title was rendering tiny). Render the
+                     page name as the heading and the content as a description inside
+                     a <div>. --}}
+                <h1 class="font-semibold text-3xl sm:text-5xl text-price mb-5">{{ $pageName }}</h1>
+                @if (filled(trim(strip_tags($pageContent))))
+                    <div class="font-light text-base text-gritext mb-12">{!! $pageContent !!}</div>
+                @endif
                 <ul>
                     <li class="mb-9">
                         <a href="mailto:{{$email}}">
@@ -73,7 +91,7 @@
                             <input name="name" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="text" placeholder="{{__('site.name')}}" />
                         </div>
                         <div>
-                            <input name="phone" dir="ltr" style="direction:ltr; text-align:left;" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="tel" inputmode="tel" placeholder="{{__('site.phone')}}" />
+                            <input name="phone" class="phone-ltr-value w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="tel" inputmode="tel" placeholder="{{__('site.phone')}}" />
                         </div>
                     </div>
                     <input  name="email" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="email" placeholder="{{__('site.email')}}" />

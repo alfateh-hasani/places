@@ -111,12 +111,12 @@ $(document).ready(function() {
                 required: true,
                 greaterThan: "#checkin"
             },
-            adults_count: {
+            number_of_adults: {
                 required: true,
                 min: 1,
                 max: "{{$apartment->adults_count}}"
             },
-            children_count: {
+            number_of_children: {
                 required: true,
                 min: 0,
                 max: {{$apartment->children_count}}
@@ -128,51 +128,38 @@ $(document).ready(function() {
                 required: "{{ __('apartment.checkout_required') }}",
                 greaterThan: "{{ __('apartment.checkout_greater_than') }}"
             },
-            adults_count: {
+            number_of_adults: {
                 required: "{{ __('apartment.adults_count_required') }}",
                 min: "{{ __('apartment.adults_count_min') }}",
                 max: "{{ __('apartment.adults_count_max') }}"
             },
-            children_count: {
+            number_of_children: {
                 required: "{{ __('apartment.children_count_required') }}",
                 min: "{{ __('apartment.children_count_min') }}",
                 max: "{{ __('apartment.children_count_max') }}"
             }
         },
-        submitHandler: function(form) {
+        errorClass: "text-red-600 text-xs mt-1 block",
+        errorElement: "span",
+        errorPlacement: function (error, element) {
+            // Guest counters sit inside the styled ".persons" box; drop their
+            // messages below the whole box so the +/- rows keep their layout.
+            if (element.closest('.persons').length) {
+                error.appendTo(element.closest('.persons'));
+            } else {
+                error.insertAfter(element);
+            }
+        },
+        // determineBookingStatus() answers with a redirect — to the confirm page on
+        // success, or back to this page with validation errors on failure — so the
+        // booking must be a real form POST, NOT an AJAX request. Client-side
+        // validation gates the submit here; the browser then follows the redirect.
+        submitHandler: function (form) {
             HoldOn.open({
                 theme: "sk-cube-grid",
                 message: "{{ __('apartment.loading_message') }}"
             });
-
-            var apartment_id = $('#apartment_id').val();
-            var bookingUrlTemplate = "{{ route('web-booking.determine', ['apartment_id' => $apartment_id ]) }}";
-            var bookingUrl = bookingUrlTemplate.replace('APARTMENT_ID_PLACEHOLDER', apartment_id);
-
-            $.ajax({
-                url: bookingUrl,
-                method: "POST",
-                data: $(form).serialize(), 
-                success: function(response) {
-                    HoldOn.close();
-                    Swal.fire({
-                        icon: 'success',
-                        title: "{{ __('apartment.success') }}",
-                        text: "{{ __('apartment.booking_success_message') }}",
-                        button: true,
-                    });
-                    location.reload();
-                },
-                error: function(xhr) {
-                    HoldOn.close();
-                    Swal.fire({
-                        icon: 'error',
-                        title: "{{ __('apartment.error') }}",
-                        text: "{{ __('apartment.booking_failed_message') }}",
-                        button: true,
-                    });
-                }
-            });
+            form.submit();
         }
     });
 

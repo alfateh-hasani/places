@@ -1,5 +1,63 @@
 @extends('layouts.master')
 
+@push('css')
+<style>
+    /* The theme paints the category sidebar with a loud red gradient
+       (section .aside in the theme CSS). Replace it with a calm dark card that
+       fits the rest of the dark page. */
+    section .aside {
+        background: #17130f !important;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    /* Question cards: a subtle dark surface with light, readable text instead of
+       the busy all-orange look. Keep the brand orange only for hover/active. */
+    .faq .faq-item {
+        background: #121110;
+        border-color: rgba(255, 255, 255, 0.14);
+    }
+    .faq .faq-item:hover {
+        border-color: #f7bb8e;
+    }
+    /* Open state: highlight the border and add a divider above the answer so it
+       is obvious which question is expanded. */
+    .faq .faq-item.faq-open {
+        border-color: #f7bb8e;
+        background: #17130f;
+    }
+    .faq .faq-question {
+        color: #f5f5f4;
+    }
+    .faq .faq-item.faq-open .faq-answer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .faq .faq-answer {
+        color: #a8a29e;
+        line-height: 1.9;
+    }
+    /* The theme's arrow SVG is black, so it is invisible on the dark card.
+       Tint it light and rotate it when the question is open. */
+    .faq .faq-question img {
+        filter: brightness(0) invert(0.7);
+        transition: transform 0.3s ease;
+    }
+    .faq .faq-item.faq-open .faq-question img {
+        filter: brightness(0) saturate(100%) invert(72%) sepia(28%) saturate(900%) hue-rotate(330deg);
+        transform: rotate(180deg);
+    }
+    /* Category list: the SELECTED category uses the accent color (orange) so it
+       is obvious which category is showing; inactive categories stay muted white.
+       This keeps orange meaning "active" consistently (selected category / open
+       question), while the two use it differently (text vs. border) so they never
+       look like the same control. */
+    section .aside .category-tab.opacity-100 {
+        color: #f7bb8e;
+    }
+    section .aside .category-tab.opacity-100 img {
+        filter: brightness(0) saturate(100%) invert(72%) sepia(28%) saturate(900%) hue-rotate(330deg);
+    }
+</style>
+@endpush
+
 @section('content')
 
 @include('pages.partials.breadcrumb')
@@ -65,6 +123,7 @@
 
     $(".faq-question").on("click", function () {
         $(this).next(".faq-answer").slideToggle();
+        $(this).closest(".faq-item").toggleClass("faq-open");
     });
 });
 
