@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Blog;
+use App\Models\Building;
 use App\Models\City;
 use App\Models\ContactUs;
 use App\Models\Page;
 use App\Models\Review;
 use App\Models\SiteFeature;
 use App\Models\Slider;
+use App\Rules\Recaptcha;
 use App\Services\HomeApartmentOrderingService;
 use App\Services\Pricing\PricingService;
 use Artesaos\SEOTools\Facades\SEOTools;
@@ -49,7 +51,7 @@ class HomeController extends Controller
             ->get();
 
         // جلب المباني مع الإحداثيات للخريطة — المباني غير المفعّلة تُستبعد من الخريطة
-        $data['mapBuildings'] = \App\Models\Building::active()
+        $data['mapBuildings'] = Building::active()
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->with(['city', 'media', 'apartments' => fn ($q) => $q->where('is_active', true)])
@@ -110,6 +112,7 @@ class HomeController extends Controller
             'email' => 'required|email',
             'phone' => 'required',
             'message' => 'required',
+            'g-recaptcha-response' => [new Recaptcha('contact_us')],
         ]);
         $data = [
             'name' => $request->name,
