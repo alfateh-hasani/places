@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Front;
 
 use App\Enums\DateChangeStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\BookingCanceled;
+use App\Mail\ReservationDetails;
 use App\Models\Apartment;
 use App\Models\Booking;
-use App\Models\Building;
 use App\Models\BookingUnitTransfer;
+use App\Models\Building;
 use App\Models\DateChangeRequest;
 use App\Models\Policy;
+use App\Models\User;
+use App\Services\Bookings\BookingCancellationService;
 use App\Services\BookingService;
 use App\Services\BookingUnitTransfer\BookingUnitTransferService;
 use App\Services\DateChangeService;
@@ -65,7 +69,7 @@ class BookingController extends Controller
             } else {
                 return redirect()->back()->with('error', $paymentResponse);
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             //  dd($exception->getMessage());
             return redirect()->back()->with('error', $exception->getMessage());
         }
@@ -77,7 +81,9 @@ class BookingController extends Controller
             return redirect()->back()->with('error', __('api.payment_method_not_supported'));
         }
 
-        $booking = $this->booking->where('transaction_id', $transaction_id)->first();
+        $booking = $this->booking->where('transaction_id', $transaction_id)
+            ->where('customer_id', auth()->id())
+            ->first();
 
         if (! $booking) {
             return redirect()->back()->with('error', __('api.booking_not_found'));
@@ -113,18 +119,18 @@ class BookingController extends Controller
         try {
 
             if ($booking->customer_email) {
-                Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+                Mail::to($booking->customer_email)->send(new ReservationDetails($booking));
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // dd($e->getMessage());
         }
 
         $building = Building::where('id', $booking?->apartment?->building_id)->first();
         if ($building) {
-            $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+            $superVisor = User::where('id', $building->supervisor_id)->first();
             $superVisorEmail = $superVisor->email;
             if ($superVisorEmail) {
-                Mail::to($superVisorEmail)->send(new \App\Mail\ReservationDetails($booking));
+                Mail::to($superVisorEmail)->send(new ReservationDetails($booking));
             }
 
         }
@@ -379,13 +385,13 @@ class BookingController extends Controller
         try {
             $building = Building::where('id', $booking?->apartment?->building_id)->first();
             if ($building) {
-                $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $superVisor = User::where('id', $building->supervisor_id)->first();
                 $superVisorEmail = $superVisor?->email;
                 if ($superVisorEmail) {
-                    Mail::to($superVisorEmail)->send(new \App\Mail\BookingCanceled($booking));
+                    Mail::to($superVisorEmail)->send(new BookingCanceled($booking));
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // تجاهل أخطاء الإيميل لتجنب فشل عملية الإلغاء
             \Log::error('فشل في إرسال إيميل الإلغاء للمشرف: '.$e->getMessage());
         }
@@ -416,7 +422,7 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => __('api.cannot_withdraw_cancellation')], 422);
         }
 
-        app(\App\Services\Bookings\BookingCancellationService::class)->reject($booking);
+        app(BookingCancellationService::class)->reject($booking);
 
         return response()->json(['success' => true, 'message' => __('api.cancellation_withdrawn')]);
     }
@@ -498,6 +504,7 @@ class BookingController extends Controller
 
         $dateChangeRequest = DateChangeRequest::with('booking')
             ->where('id', $requestId)
+            ->where('transaction_id', $transactionId)
             ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
             ->first();
 

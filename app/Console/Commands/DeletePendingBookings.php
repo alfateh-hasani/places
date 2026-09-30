@@ -2,8 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\ReservationDetails;
 use App\Models\Booking;
 use App\Models\Building;
+use App\Models\Transaction;
+use App\Models\User;
 use App\Services\BookingService;
 use App\Services\PaymentMethods\GeideaPayment;
 use Illuminate\Console\Command;
@@ -53,10 +56,10 @@ class DeletePendingBookings extends Command
 
                 $detailedStatus = $orderData['order']['detailedStatus'] ?? null;
 
-                if ($detailedStatus === 'Paid') {
+                if ($geidea->isPaidForTransaction($orderData, $transaction)) {
                     // مدفوع فعلاً! نأكد الحجز بدل ما نحذفه مع lock لمنع race condition مع الـ webhook
                     $confirmed = DB::transaction(function () use ($transaction) {
-                        $tx = \App\Models\Transaction::where('id', $transaction->id)->lockForUpdate()->first();
+                        $tx = Transaction::where('id', $transaction->id)->lockForUpdate()->first();
 
                         if ($tx->status === 'completed') {
                             return false;
@@ -105,16 +108,16 @@ class DeletePendingBookings extends Command
     {
         try {
             if ($booking->customer_email) {
-                Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+                Mail::to($booking->customer_email)->send(new ReservationDetails($booking));
             }
 
             $building = Building::where('id', $booking->apartment?->building_id)->first();
 
             if ($building) {
-                $supervisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $supervisor = User::where('id', $building->supervisor_id)->first();
 
                 if ($supervisor?->email) {
-                    Mail::to($supervisor->email)->send(new \App\Mail\ReservationDetails($booking));
+                    Mail::to($supervisor->email)->send(new ReservationDetails($booking));
                 }
             }
         } catch (\Exception $e) {
