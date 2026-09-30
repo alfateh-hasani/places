@@ -7,7 +7,7 @@ return [
     'popular_cities' => 'ضيافة حول المملكة',
     'apartments'=>'شقة',
     'explore_buildings' => 'استكشاف المباني لدينا',
-    'explore_more_properties' => 'الأشهر بالرياض',
+    'explore_more_properties' => 'استكشف المزيد من العقارات',
     'properties' => 'وحدة',
     'top_rated' => 'أعلى تقييم',
     'automated_marketing' => 'التسويق الآلي',
