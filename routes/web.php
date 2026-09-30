@@ -15,20 +15,11 @@ Route::get('/apartments/{apartment}/unit.ics', [ApartmentsICSController::class, 
 Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('robots.txt', [RobotsController::class, 'index'])->name('robots');
 
-Route::get('test-mail', function () {
-    $booking = \App\Models\Booking::find(4);
-    // ReservationDetails
-    Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking, null));
-
-    return response()->json(['message' => 'Email sent successfully!']);
-});
-
 Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     Route::get('apartments-filter', [ApartmentController::class, 'search'])->name('apartments.search');
 
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
-    Route::get('/test', [TestController::class, 'index'])->name('test');
 
     Route::get('{slug}', [PageController::class, 'index'])->name('page');
     Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
