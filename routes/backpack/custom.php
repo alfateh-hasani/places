@@ -3,6 +3,20 @@
 use App\Http\Controllers\Admin\BookingCancellationController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\BookingUnitTransferController;
+use App\Http\Controllers\Admin\CalenderController;
+use App\Http\Controllers\Admin\Charts\AverageRatingChartController;
+use App\Http\Controllers\Admin\Charts\DailyOccupancyChartController;
+use App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController;
+use App\Http\Controllers\Admin\Charts\OngoingBookingsChartController;
+use App\Http\Controllers\Admin\Charts\TotalUsersChartController;
+use App\Http\Controllers\Admin\Charts\UnitsAvailableChartController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\DateChangeRequestCrudController;
+use App\Http\Controllers\Admin\DirectBookingController;
+use App\Http\Controllers\Admin\RefundCrudController;
+use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\Admin\WebNotificationController;
+use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -14,13 +28,13 @@ Route::group([
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () {
     // Browser Web Push subscription for the logged-in staff/admin user.
-    Route::post('push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])->name('admin.push.subscribe');
-    Route::delete('push/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'unsubscribe'])->name('admin.push.unsubscribe');
+    Route::post('push/subscribe', [PushSubscriptionController::class, 'subscribe'])->name('admin.push.subscribe');
+    Route::delete('push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe'])->name('admin.push.unsubscribe');
 
     // Staff notification bell (in-app web_notifications).
-    Route::get('web-notifications', [\App\Http\Controllers\Admin\WebNotificationController::class, 'index'])->name('admin.web-notifications.index');
-    Route::post('web-notifications/read-all', [\App\Http\Controllers\Admin\WebNotificationController::class, 'markAllAsRead'])->name('admin.web-notifications.read-all');
-    Route::post('web-notifications/{id}/read', [\App\Http\Controllers\Admin\WebNotificationController::class, 'markAsRead'])->name('admin.web-notifications.read');
+    Route::get('web-notifications', [WebNotificationController::class, 'index'])->name('admin.web-notifications.index');
+    Route::post('web-notifications/read-all', [WebNotificationController::class, 'markAllAsRead'])->name('admin.web-notifications.read-all');
+    Route::post('web-notifications/{id}/read', [WebNotificationController::class, 'markAsRead'])->name('admin.web-notifications.read');
 
     Route::crud('smart-lock', 'LockSmartController');
     Route::get('get-smart-locks', 'LockSmartController@getSmartLocks');
@@ -36,7 +50,7 @@ Route::group([
     Route::crud('apartment-label', 'ApartmentLabelController');
     Route::crud('ownerrez-property-mapping', 'OwnerRezPropertyMappingController');
     Route::get('ownerrez-property-mapping/{id}/sync', 'OwnerRezPropertyMappingController@sync');
-    Route::get('api/ownerrez-properties', 'OwnerRezPropertyController@index')->name('admin.ownerrez-properties.index');
+    Route::get('api/ownerrez-properties', 'OwnerRezPropertyController@index')->name('admin.ownerrez-properties.index')->middleware('staff.can:apartment.update');
     Route::crud('policy', 'PolicyController');
     Route::crud('buildings', 'BuildingController');
     Route::crud('sliders', 'SliderController');
@@ -58,10 +72,10 @@ Route::group([
 
     Route::crud('transaction', 'TransactionController');
     Route::crud('customer', 'CustomerController');
-    Route::post('customer/{id}/block', [\App\Http\Controllers\Admin\CustomerController::class, 'block'])->name('admin.customer.block');
-    Route::post('customer/{id}/unblock', [\App\Http\Controllers\Admin\CustomerController::class, 'unblock'])->name('admin.customer.unblock');
-    Route::post('customer/reset-otp-by-phone', [\App\Http\Controllers\Admin\CustomerController::class, 'resetOtpByPhone'])->name('admin.customer.reset_otp_by_phone');
-    Route::post('customer/{id}/reset-otp', [\App\Http\Controllers\Admin\CustomerController::class, 'resetOtp'])->name('admin.customer.reset_otp');
+    Route::post('customer/{id}/block', [CustomerController::class, 'block'])->name('admin.customer.block');
+    Route::post('customer/{id}/unblock', [CustomerController::class, 'unblock'])->name('admin.customer.unblock');
+    Route::post('customer/reset-otp-by-phone', [CustomerController::class, 'resetOtpByPhone'])->name('admin.customer.reset_otp_by_phone');
+    Route::post('customer/{id}/reset-otp', [CustomerController::class, 'resetOtp'])->name('admin.customer.reset_otp');
     Route::crud('service', 'ServiceController');
 
     Route::post('booking/{id}/change-status/{status}', [BookingController::class, 'changeStatus'])->name('admin.booking.change-status');
@@ -78,47 +92,47 @@ Route::group([
 
     // Refunds tracker (follow the money)
     Route::crud('refund', 'RefundCrudController');
-    Route::post('refund/{id}/retry', [\App\Http\Controllers\Admin\RefundCrudController::class, 'retry'])->name('admin.refund.retry');
+    Route::post('refund/{id}/retry', [RefundCrudController::class, 'retry'])->name('admin.refund.retry');
 
     // Date-change requests — review the "cheaper" path (apply + refund the difference)
     Route::crud('date-change-requests', 'DateChangeRequestCrudController');
-    Route::post('date-change-requests/{id}/approve', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'approve'])->name('admin.date-change-requests.approve');
-    Route::post('date-change-requests/{id}/reject', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'reject'])->name('admin.date-change-requests.reject');
-    Route::post('date-change-requests/{id}/retry', [\App\Http\Controllers\Admin\DateChangeRequestCrudController::class, 'retry'])->name('admin.date-change-requests.retry');
+    Route::post('date-change-requests/{id}/approve', [DateChangeRequestCrudController::class, 'approve'])->name('admin.date-change-requests.approve');
+    Route::post('date-change-requests/{id}/reject', [DateChangeRequestCrudController::class, 'reject'])->name('admin.date-change-requests.reject');
+    Route::post('date-change-requests/{id}/retry', [DateChangeRequestCrudController::class, 'retry'])->name('admin.date-change-requests.retry');
 
     // Daily Occupancy
-    Route::get('charts/daily-occupancy', [\App\Http\Controllers\Admin\Charts\DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');
+    Route::get('charts/daily-occupancy', [DailyOccupancyChartController::class, 'data'])->name('charts.daily-occupancy');
 
     // Ongoing Bookings
-    Route::get('charts/ongoing-bookings', [\App\Http\Controllers\Admin\Charts\OngoingBookingsChartController::class, 'data'])->name('charts.ongoing-bookings');
+    Route::get('charts/ongoing-bookings', [OngoingBookingsChartController::class, 'data'])->name('charts.ongoing-bookings');
 
     // Units Available
-    Route::get('charts/units-available', [\App\Http\Controllers\Admin\Charts\UnitsAvailableChartController::class, 'data'])->name('charts.units-available');
+    Route::get('charts/units-available', [UnitsAvailableChartController::class, 'data'])->name('charts.units-available');
 
     // Average Rating
-    Route::get('charts/average-rating', [\App\Http\Controllers\Admin\Charts\AverageRatingChartController::class, 'data'])->name('charts.average-rating');
+    Route::get('charts/average-rating', [AverageRatingChartController::class, 'data'])->name('charts.average-rating');
 
     // Monthly Bookings
-    Route::get('charts/monthly-bookings', [\App\Http\Controllers\Admin\Charts\MonthlyBookingsChartController::class, 'data'])->name('charts.monthly-bookings');
+    Route::get('charts/monthly-bookings', [MonthlyBookingsChartController::class, 'data'])->name('charts.monthly-bookings');
 
-    Route::get('charts/total-users', [\App\Http\Controllers\Admin\Charts\TotalUsersChartController::class, 'data'])
+    Route::get('charts/total-users', [TotalUsersChartController::class, 'data'])
         ->name('charts.total-users');
-    Route::get('reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');
-    Route::get('/reports/daily-checkout', [\App\Http\Controllers\Admin\ReportsController::class, 'dailyCheckOutReport'])->name('admin.reports.daily-checkout');
-    Route::get('/reports/daily-checkout/ownerrez', [\App\Http\Controllers\Admin\ReportsController::class, 'ownerRezCheckoutToday'])->name('admin.reports.daily-checkout.ownerrez');
-    Route::get('/reports/daily-checkout/ownerrez-maintenance', [\App\Http\Controllers\Admin\ReportsController::class, 'ownerRezMaintenanceToday'])->name('admin.reports.daily-checkout.ownerrez-maintenance');
-    Route::get('/reports/daily-checkin', [\App\Http\Controllers\Admin\ReportsController::class, 'dailyCheckInReport'])->name('admin.reports.daily-checkin');
-    Route::get('/reports/daily-checkin/ownerrez', [\App\Http\Controllers\Admin\ReportsController::class, 'ownerRezCheckinToday'])->name('admin.reports.daily-checkin.ownerrez');
-    Route::get('/reports/daily-checkin/ownerrez-maintenance', [\App\Http\Controllers\Admin\ReportsController::class, 'ownerRezMaintenanceCheckinToday'])->name('admin.reports.daily-checkin.ownerrez-maintenance');
+    Route::get('reports', [ReportsController::class, 'index'])->name('admin.reports.index')->middleware('staff.can:booking.list');
+    Route::get('/reports/daily-checkout', [ReportsController::class, 'dailyCheckOutReport'])->name('admin.reports.daily-checkout')->middleware('staff.can:booking.list');
+    Route::get('/reports/daily-checkout/ownerrez', [ReportsController::class, 'ownerRezCheckoutToday'])->name('admin.reports.daily-checkout.ownerrez')->middleware('staff.can:booking.list');
+    Route::get('/reports/daily-checkout/ownerrez-maintenance', [ReportsController::class, 'ownerRezMaintenanceToday'])->name('admin.reports.daily-checkout.ownerrez-maintenance')->middleware('staff.can:booking.list');
+    Route::get('/reports/daily-checkin', [ReportsController::class, 'dailyCheckInReport'])->name('admin.reports.daily-checkin')->middleware('staff.can:booking.list');
+    Route::get('/reports/daily-checkin/ownerrez', [ReportsController::class, 'ownerRezCheckinToday'])->name('admin.reports.daily-checkin.ownerrez')->middleware('staff.can:booking.list');
+    Route::get('/reports/daily-checkin/ownerrez-maintenance', [ReportsController::class, 'ownerRezMaintenanceCheckinToday'])->name('admin.reports.daily-checkin.ownerrez-maintenance')->middleware('staff.can:booking.list');
     Route::crud('contact-us', 'ContactUsCrudController');
     Route::crud('service-booking', 'ServiceBookingCrudController');
     Route::crud('review', 'ReviewCrudController');
 
     // حجز مباشر من لوحة التحكم (تحويل بنكي)
-    Route::get('direct-booking', [\App\Http\Controllers\Admin\DirectBookingController::class, 'create'])->name('admin.direct-booking.create');
-    Route::get('direct-booking/customers', [\App\Http\Controllers\Admin\DirectBookingController::class, 'customerSearch'])->name('admin.direct-booking.customers');
-    Route::post('direct-booking/price-preview', [\App\Http\Controllers\Admin\DirectBookingController::class, 'pricePreview'])->name('admin.direct-booking.price-preview');
-    Route::post('direct-booking', [\App\Http\Controllers\Admin\DirectBookingController::class, 'store'])->name('admin.direct-booking.store');
+    Route::get('direct-booking', [DirectBookingController::class, 'create'])->name('admin.direct-booking.create');
+    Route::get('direct-booking/customers', [DirectBookingController::class, 'customerSearch'])->name('admin.direct-booking.customers');
+    Route::post('direct-booking/price-preview', [DirectBookingController::class, 'pricePreview'])->name('admin.direct-booking.price-preview');
+    Route::post('direct-booking', [DirectBookingController::class, 'store'])->name('admin.direct-booking.store');
 
     // نقل الحجز إلى وحدة أخرى (يبدأه الموظف، ويؤكده العميل) — بلا صلاحية خاصة:
     // متاح لكل من يستطيع عرض الحجوزات. راجع BookingUnitTransferController.
@@ -132,16 +146,16 @@ Route::group([
     Route::post('unit-transfer/{transfer}/retry-park', [BookingUnitTransferController::class, 'retryPark'])->name('admin.unit-transfer.retry-park');
 
     // تقويم الحجوزات
-    Route::get('apartment/{id}/calendar', [\App\Http\Controllers\Admin\CalenderController::class, 'showCalendar']);
-    Route::get('apartment/{id}/bookings', [\App\Http\Controllers\Admin\CalenderController::class, 'getApartmentBookings']);
-    Route::get('apartment/{id}/ownerrez-bookings', [\App\Http\Controllers\Admin\CalenderController::class, 'getOwnerRezBookings']);
+    Route::get('apartment/{id}/calendar', [CalenderController::class, 'showCalendar'])->middleware('staff.can:apartment.list');
+    Route::get('apartment/{id}/bookings', [CalenderController::class, 'getApartmentBookings'])->middleware('staff.can:apartment.list');
+    Route::get('apartment/{id}/ownerrez-bookings', [CalenderController::class, 'getOwnerRezBookings'])->middleware('staff.can:apartment.list');
 
     // تقويم الأسعار (منفصل)
-    Route::get('apartment/{id}/pricing', [\App\Http\Controllers\Admin\CalenderController::class, 'showPricingCalendar']);
-    Route::get('apartment/{id}/custom-prices', [\App\Http\Controllers\Admin\CalenderController::class, 'getCustomPrices']);
-    Route::post('apartment/{id}/custom-price', [\App\Http\Controllers\Admin\CalenderController::class, 'saveCustomPrice']);
-    Route::delete('apartment/{id}/custom-price/{priceId}', [\App\Http\Controllers\Admin\CalenderController::class, 'deleteCustomPrice']);
-    Route::post('apartment/{id}/preview-pricing', [\App\Http\Controllers\Admin\CalenderController::class, 'previewPricing']);
+    Route::get('apartment/{id}/pricing', [CalenderController::class, 'showPricingCalendar'])->middleware('staff.can:apartment.list');
+    Route::get('apartment/{id}/custom-prices', [CalenderController::class, 'getCustomPrices'])->middleware('staff.can:apartment.list');
+    Route::post('apartment/{id}/custom-price', [CalenderController::class, 'saveCustomPrice'])->middleware('staff.can:apartment.update');
+    Route::delete('apartment/{id}/custom-price/{priceId}', [CalenderController::class, 'deleteCustomPrice'])->middleware('staff.can:apartment.update');
+    Route::post('apartment/{id}/preview-pricing', [CalenderController::class, 'previewPricing'])->middleware('staff.can:apartment.list');
 
     Route::crud('category', 'CategoryCrudController');
     Route::crud('onboarding', 'OnboardingCrudController');
@@ -152,7 +166,7 @@ Route::group([
     Route::get('booking-channel-conflicts/resolve-all-conflicts', 'BookingChannelConflictController@resolveAllConflicts');
 
     // OwnerRez OAuth
-    Route::get('ownerrez/oauth', 'OwnerRezOAuthController@index')->name('admin.ownerrez.oauth');
-    Route::get('ownerrez/oauth/authorize', 'OwnerRezOAuthController@authorize')->name('admin.ownerrez.oauth.authorize');
-    Route::delete('ownerrez/oauth/disconnect', 'OwnerRezOAuthController@disconnect')->name('admin.ownerrez.oauth.disconnect');
+    Route::get('ownerrez/oauth', 'OwnerRezOAuthController@index')->name('admin.ownerrez.oauth')->middleware('staff.can:role.update');
+    Route::get('ownerrez/oauth/authorize', 'OwnerRezOAuthController@authorize')->name('admin.ownerrez.oauth.authorize')->middleware('staff.can:role.update');
+    Route::delete('ownerrez/oauth/disconnect', 'OwnerRezOAuthController@disconnect')->name('admin.ownerrez.oauth.disconnect')->middleware('staff.can:role.update');
 });

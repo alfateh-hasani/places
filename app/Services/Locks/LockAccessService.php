@@ -3,10 +3,12 @@
 namespace App\Services\Locks;
 
 use App\Exceptions\Locks\LockOperationException;
+use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\PasscodeRetryAttempt;
 use App\Models\SmartLockPasscode;
 use App\Services\Locks\Contracts\LockProviderInterface;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -114,7 +116,7 @@ class LockAccessService
      *
      * @throws Throwable
      */
-    public function revokeForBookingUsingApartment(Booking $booking, \App\Models\Apartment $credentialApartment, string $reason): void
+    public function revokeForBookingUsingApartment(Booking $booking, Apartment $credentialApartment, string $reason): void
     {
         $this->revokePasscodes($booking, $credentialApartment, $reason);
     }
@@ -122,7 +124,7 @@ class LockAccessService
     /**
      * @throws Throwable
      */
-    private function revokePasscodes(Booking $booking, ?\App\Models\Apartment $credentialApartment, string $reason): void
+    private function revokePasscodes(Booking $booking, ?Apartment $credentialApartment, string $reason): void
     {
         Cache::lock($this->lockKey($booking), 30)->block(10, function () use ($booking, $credentialApartment, $reason) {
             $passcodes = $booking->smartLockPasscodes()->get();
@@ -195,7 +197,7 @@ class LockAccessService
      * apartment's lock. A failed revoke is logged but never blocks provisioning of the new
      * code; the retry command recovers a stuck old code.
      */
-    public function moveForBooking(Booking $booking, \App\Models\Apartment $oldApartment): void
+    public function moveForBooking(Booking $booking, Apartment $oldApartment): void
     {
         try {
             $this->revokeForBookingUsingApartment($booking, $oldApartment, 'unit-transfer');
@@ -230,16 +232,21 @@ class LockAccessService
         }
     }
 
+    /**
+     * Door passcode from a CSPRNG over the full digit space (repeated digits allowed).
+     * str_shuffle is not cryptographically secure and never repeats a digit, which cut
+     * the 6-digit space from 1,000,000 to ~151,000 codes.
+     */
     private function generatePasscode(int $length = 6): string
     {
-        return substr(str_shuffle('0123456789'), 0, $length);
+        return str_pad((string) random_int(0, 10 ** $length - 1), $length, '0', STR_PAD_LEFT);
     }
 
-    private function combineDateAndTime($date, $time): \Carbon\Carbon
+    private function combineDateAndTime($date, $time): Carbon
     {
         $time = $time?->format('H:i:s') ?? '00:00:00';
 
-        return \Carbon\Carbon::parse($date->format('Y-m-d').' '.$time);
+        return Carbon::parse($date->format('Y-m-d').' '.$time);
     }
 
     private function lockKey(Booking $booking): string

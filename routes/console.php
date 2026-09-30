@@ -23,6 +23,9 @@ Schedule::command('booking:check-missing-passcodes')->cron('*/10 * * * *');
 // يكتشف تدهور بيانات الاعتماد بشكل دوري بدل انتظار فشل حجز حقيقي
 Schedule::command('sciener:refresh-tokens')->daily();
 
+// Drop mobile-app tokens past config('sanctum.expiration') so stolen/abandoned tokens don't linger.
+Schedule::command('sanctum:prune-expired --hours=24')->daily();
+
 // Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
 // Schedule::command('ownerrez:sync-bookings')->everyFiveMinutes();
 Schedule::command('ownerrez:warm-cache')->everyFiveMinutes();
