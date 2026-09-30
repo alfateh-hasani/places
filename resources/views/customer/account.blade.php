@@ -113,8 +113,6 @@
                         <button class="h-12 bg-price rounded-lg col-span-2 font-semibold text-white">
                             {{__('customer.save')}}
                         </button>
-                        {!!  GoogleReCaptchaV3::render(['contact_us_id'=>'contact_us']) !!}
-                        {!!  GoogleReCaptchaV3::init() !!}
                     </form>
 
                 </div>

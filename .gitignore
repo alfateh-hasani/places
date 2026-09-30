@@ -20,3 +20,8 @@ yarn-error.log
 /.vscode
 artisan
 .claude/worktrees/
+
+# Service-account credentials never belong in the repo
+*firebase-adminsdk*.json
+*-credentials.json
+*service-account*.json

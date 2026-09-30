@@ -38,7 +38,6 @@
         "timehunter/laravel-google-recaptcha-v3": "~2.5"
     },
     "require-dev": {
-        "backpack/devtools": "^3.1",
         "backpack/generators": "^4.0",
         "fakerphp/faker": "^1.23",
         "laravel/boost": "^1.8",
@@ -98,9 +97,15 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": {
-        "backpack": {
-            "type": "composer",
-            "url": "https://repo.backpackforlaravel.com/"
+        "backpack-pro": {
+            "type": "path",
+            "url": "packages/backpack/pro",
+            "options": {
+                "symlink": false,
+                "versions": {
+                    "backpack/pro": "2.2.36"
+                }
+            }
         }
     }
 }

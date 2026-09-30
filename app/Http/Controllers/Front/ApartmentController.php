@@ -2,17 +2,24 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Enums\BookingStatus;
+use App\Enums\DateChangeStatus;
 use App\Filters\FilterFactory;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Building;
 use App\Models\City;
+use App\Models\DateChangeRequest;
+use App\Models\SlugRedirect;
 use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\Pricing\PricingService;
 use Artesaos\SEOTools\Facades\SEOTools;
 use Carbon\Carbon;
 use Config;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ApartmentController extends Controller
 {
@@ -49,7 +56,7 @@ class ApartmentController extends Controller
             'reviews',
             'features',
             'bookings' => function ($query) {
-                $query->where('check_out', '>=', now()->startOfDay())->whereNotIn('status', [\App\Enums\BookingStatus::Canceled->value]);
+                $query->where('check_out', '>=', now()->startOfDay())->whereNotIn('status', [BookingStatus::Canceled->value]);
             },
             'policy',
             'ownerrezMapping',
@@ -111,8 +118,8 @@ class ApartmentController extends Controller
         );
 
         // إعداد SEO
-        $seo_title = $apartment->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = $apartment->ml('seo_description');
+        $seo_title = ($apartment->ml('seo_title') ?: $apartment->ml('name')).' | '.Config::get('settings.seo_title_'.app()->getLocale());
+        $seo_description = $apartment->ml('seo_description') ?: Config::get('settings.seo_description_'.app()->getLocale());
         $url = route('apartments.show', $apartment->slug);
         $this->generateSeo($seo_title, $seo_description, $url, $apartment->image_view);
         $this->generateJsonLd($apartment, $url, $priceInfo);
@@ -260,13 +267,13 @@ class ApartmentController extends Controller
         $matched = $matched->values();
 
         $perPage = 8;
-        $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
-        $apartments = new \Illuminate\Pagination\LengthAwarePaginator(
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $apartments = new LengthAwarePaginator(
             $matched->forPage($page, $perPage)->values(),
             $matched->count(),
             $perPage,
             $page,
-            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath(), 'query' => $request->except('page')]
+            ['path' => LengthAwarePaginator::resolveCurrentPath(), 'query' => $request->except('page')]
         );
 
         $data = [
@@ -279,6 +286,7 @@ class ApartmentController extends Controller
         $seo_description = Config::get('settings.seo_description_'.app()->getLocale());
         $url = route('apartments.search');
         $this->generateSeo($seo_title, $seo_description, $url);
+        SEOTools::metatags()->setRobots('noindex, follow');
 
         return view('apartment.list', $data);
     }
@@ -345,9 +353,9 @@ class ApartmentController extends Controller
      * A listing whose slug was renamed 404s under its old URL unless we forward it here —
      * this is what keeps that old link's ranking/shares alive instead of losing them overnight.
      */
-    private function redirectFromOldSlug(string $type, string $oldSlug, string $routeName): ?\Illuminate\Http\RedirectResponse
+    private function redirectFromOldSlug(string $type, string $oldSlug, string $routeName): ?RedirectResponse
     {
-        $current = \App\Models\SlugRedirect::where('redirectable_type', $type)
+        $current = SlugRedirect::where('redirectable_type', $type)
             ->where('old_slug', $oldSlug)
             ->first()
             ?->redirectable;
@@ -415,13 +423,13 @@ class ApartmentController extends Controller
     /**
      * API endpoint لإرجاع التواريخ المحجوزة من الكاش (للتحديث التلقائي للتقويم)
      */
-    public function blockedDates(Request $request, int $id): \Illuminate\Http\JsonResponse
+    public function blockedDates(Request $request, int $id): JsonResponse
     {
         $apartment = Apartment::with('ownerrezMapping')->bookable()->findOrFail($id);
 
         $bookedDays = $apartment->bookings()
             ->where('check_out', '>=', now()->startOfDay())
-            ->whereNotIn('status', [\App\Enums\BookingStatus::Canceled->value])
+            ->whereNotIn('status', [BookingStatus::Canceled->value])
             ->get()
             ->map(fn ($b) => [
                 'check_in' => $b->check_in->format('Y-m-d'),
@@ -455,8 +463,8 @@ class ApartmentController extends Controller
      */
     private function pendingDateChangeWindows(Apartment $apartment): array
     {
-        return \App\Models\DateChangeRequest::query()
-            ->whereIn('status', \App\Enums\DateChangeStatus::openValues())
+        return DateChangeRequest::query()
+            ->whereIn('status', DateChangeStatus::openValues())
             ->whereHas('booking', fn ($q) => $q->where('apartment_id', $apartment->id))
             ->where('new_check_out', '>=', now()->startOfDay())
             ->get()
@@ -530,8 +538,8 @@ class ApartmentController extends Controller
             'cities' => City::orderBy('sort_order')->withCount('apartments')->get(),
         ];
 
-        $seo_title = $building->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = $building->ml('seo_description');
+        $seo_title = ($building->ml('seo_title') ?: $building->ml('name')).' | '.Config::get('settings.seo_title_'.app()->getLocale());
+        $seo_description = $building->ml('seo_description') ?: Config::get('settings.seo_description_'.app()->getLocale());
         $url = route('building.details', $building->slug);
         $this->generateSeo($seo_title, $seo_description, $url, $building->image);
         $this->generateBuildingJsonLd($building, $url, $apartments->total());

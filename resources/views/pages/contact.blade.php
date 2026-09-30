@@ -102,8 +102,6 @@
                         {{__('site.send')}}
                         <img class="w-3 inline-block ml-3" src="{{asset('assets/img/slider-right.svg')}}" /></button>
 
-                    {!!  GoogleReCaptchaV3::render(['contact_us_id'=>'contact_us']) !!}
-                    {!!  GoogleReCaptchaV3::init() !!}
                 </form>
             </div>
         </div>
@@ -192,29 +190,31 @@
                     message: "{{__('customer.loading_message')}}"  
                 });
     
-                $.ajax({
-                    url: "{{ route('home.contact-us') }}",  
-                    method: "POST",
-                    data: $(form).serialize(), 
-                    success: function(response) {
-                        HoldOn.close();
-                        Swal.fire({
-                            icon: 'success',
-                            title: "{{__('customer.success')}}",
-                            text: "{{__('customer.success_message')}}",
-                            button: true,
-                        });
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        HoldOn.close();
-                        Swal.fire({
-                            icon: 'error',
-                            title: "{{__('customer.error')}}",
-                            text: "{{__('customer.error_message')}}",
-                            button: true,
-                        });
-                    }
+                window.recaptchaToken('contact_us').then(function(token) {
+                    $.ajax({
+                        url: "{{ route('home.contact-us') }}",  
+                        method: "POST",
+                        data: $(form).serialize() + '&g-recaptcha-response=' + encodeURIComponent(token),
+                        success: function(response) {
+                            HoldOn.close();
+                            Swal.fire({
+                                icon: 'success',
+                                title: "{{__('customer.success')}}",
+                                text: "{{__('customer.success_message')}}",
+                                button: true,
+                            });
+                            location.reload();
+                        },
+                        error: function(xhr) {
+                            HoldOn.close();
+                            Swal.fire({
+                                icon: 'error',
+                                title: "{{__('customer.error')}}",
+                                text: xhr.responseJSON?.errors?.['g-recaptcha-response']?.[0] || "{{__('customer.error_message')}}",
+                                button: true,
+                            });
+                        }
+                    });
                 });
             }
         });

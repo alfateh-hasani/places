@@ -1,23 +1,29 @@
 <?php
+
 namespace App\Http\Controllers\Front\Auth;
 
 use App\Enums\CustomerSource;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Otp\CustomerRegistrationOtp;
+use App\Rules\Recaptcha;
 use App\Services\Otp\OtpRequestThrottle;
+use App\Services\Otp\OtpVerificationGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use SadiqSalau\LaravelOtp\Facades\Otp;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use SadiqSalau\LaravelOtp\Facades\Otp;
 
 class LoginController extends Controller
 {
-    public function __construct(private readonly OtpRequestThrottle $throttle) {}
+    public function __construct(
+        private readonly OtpRequestThrottle $throttle,
+        private readonly OtpVerificationGuard $verificationGuard,
+    ) {}
 
     private function validatePhoneStartsWith5($phone)
     {
@@ -30,11 +36,14 @@ class LoginController extends Controller
 
         try {
             $request->merge([
-                'phone' =>  convertArabicNumbers($request->phone),
+                'phone' => convertArabicNumbers($request->phone),
             ]);
 
             $validatedData = $request->validate(
-                ['phone' => ['required', 'phone']],
+                [
+                    'phone' => ['required', 'phone'],
+                    'g-recaptcha-response' => [new Recaptcha('login')],
+                ],
                 __('site.login_validation'),
                 __('site.login_attributes')
             );
@@ -48,6 +57,7 @@ class LoginController extends Controller
                     'reason' => $decision->reason->name,
                     'retry_after' => $decision->retryAfter,
                 ]);
+
                 return response()->json([
                     'status' => 'error',
                     'message' => __('site.'.$decision->reason->messageKey(), ['seconds' => $decision->retryAfterForHumans(), 'hours' => $decision->retryAfterInHours()]),
@@ -60,14 +70,16 @@ class LoginController extends Controller
 
             $otpLog->info('[Web] Sending OTP', ['phone' => $request->phone, 'has_account' => $customerExists]);
 
-            $otp = Otp::identifier('otp_' . $request->phone)
+            $otp = Otp::identifier('otp_'.$request->phone)
                 ->send(new CustomerRegistrationOtp($request->phone),
                     Notification::route('sms', $request->phone)
                 );
 
             if ($otp['status'] === Otp::OTP_SENT) {
                 $this->throttle->recordSent($request->phone);
+                $this->verificationGuard->reset($request->phone);
                 $otpLog->info('[Web] OTP sent successfully', ['phone' => $request->phone]);
+
                 return response()->json([
                     'status' => 'success',
                     'message' => __('site.otp_sent'),
@@ -78,9 +90,11 @@ class LoginController extends Controller
             }
 
             $otpLog->error('[Web] OTP send failed', ['phone' => $request->phone, 'status' => $otp['status']]);
+
             return response()->json(['status' => 'error', 'message' => __('site.something_went_wrong')], 422);
         } catch (ValidationException $e) {
             $otpLog->warning('[Web] OTP request validation failed', ['phone' => $request->phone ?? null, 'error' => $e->getMessage()]);
+
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -95,7 +109,10 @@ class LoginController extends Controller
             ]);
 
             $request->validate(
-                ['phone' => ['required', 'phone']],
+                [
+                    'phone' => ['required', 'phone'],
+                    'g-recaptcha-response' => [new Recaptcha('login')],
+                ],
                 __('site.login_validation'),
                 __('site.login_attributes')
             );
@@ -107,6 +124,7 @@ class LoginController extends Controller
                     'reason' => $decision->reason->name,
                     'retry_after' => $decision->retryAfter,
                 ]);
+
                 return response()->json([
                     'status' => 'error',
                     'message' => __('site.'.$decision->reason->messageKey(), ['seconds' => $decision->retryAfterForHumans(), 'hours' => $decision->retryAfterInHours()]),
@@ -117,14 +135,16 @@ class LoginController extends Controller
 
             $otpLog->info('[Web] Resending OTP', ['phone' => $request->phone]);
 
-            $otp = Otp::identifier('otp_' . $request->phone)
+            $otp = Otp::identifier('otp_'.$request->phone)
                 ->send(new CustomerRegistrationOtp($request->phone),
                     Notification::route('sms', $request->phone)
                 );
 
             if ($otp['status'] === Otp::OTP_SENT) {
                 $this->throttle->recordSent($request->phone);
+                $this->verificationGuard->reset($request->phone);
                 $otpLog->info('[Web] OTP resent successfully', ['phone' => $request->phone]);
+
                 return response()->json([
                     'status' => 'success',
                     'message' => __('site.otp_resent'),
@@ -133,12 +153,15 @@ class LoginController extends Controller
             }
 
             $otpLog->error('[Web] OTP resend failed', ['phone' => $request->phone, 'status' => $otp['status']]);
+
             return response()->json(['status' => 'error', 'message' => __('site.resend_failed')], 422);
         } catch (ValidationException $e) {
             $otpLog->warning('[Web] OTP resend validation failed', ['phone' => $request->phone ?? null, 'error' => $e->getMessage()]);
+
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
         } catch (\Throwable $th) {
             $otpLog->error('[Web] OTP resend exception', ['phone' => $request->phone ?? null, 'error' => $th->getMessage()]);
+
             return response()->json(['status' => 'error', 'message' => __('site.resend_failed')], 500);
         }
     }
@@ -148,14 +171,14 @@ class LoginController extends Controller
         $otpLog = Log::channel('otp');
 
         $request->merge([
-            'phone' =>  convertArabicNumbers($request->phone),
-            'otp'   =>  convertArabicNumbers($request->otp),
+            'phone' => convertArabicNumbers($request->phone),
+            'otp' => convertArabicNumbers($request->otp),
         ]);
 
         $validatedData = $request->validate(
             [
                 'phone' => 'required|phone',
-                'otp'   => 'required|digits:4',
+                'otp' => 'required|digits:4',
             ],
             __('site.login_validation'),
             __('site.login_attributes')
@@ -163,22 +186,35 @@ class LoginController extends Controller
 
         $otpLog->info('[Web] Verifying OTP', ['phone' => $request->phone]);
 
-        $otpStatus = Otp::identifier('otp_' . $request->phone)->attempt($request->otp);
+        if ($this->verificationGuard->isLockedOut($request->phone)) {
+            $otpLog->warning('[Web] OTP verification locked - too many wrong codes', ['phone' => $request->phone]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => __('site.otp_too_many_attempts'),
+            ], 429);
+        }
+
+        $otpStatus = Otp::identifier('otp_'.$request->phone)->attempt($request->otp);
 
         $masterCodeAllowed = app()->environment(['local', 'testing']) && $request->otp === '2020';
 
-        if ($otpStatus['status'] !== Otp::OTP_PROCESSED  && ! $masterCodeAllowed) {
+        if ($otpStatus['status'] !== Otp::OTP_PROCESSED && ! $masterCodeAllowed) {
+            $this->verificationGuard->recordFailure($request->phone);
             $otpLog->warning('[Web] OTP verification failed', [
                 'phone' => $request->phone,
                 'status' => $otpStatus['status'],
             ]);
+
             return response()->json([
                 'status' => 'error',
                 'message' => __('site.otp_invalid'),
             ], 400);
-        }elseif($masterCodeAllowed){
+        } elseif ($masterCodeAllowed) {
             $otpLog->info('[Web] OTP bypassed with master code', ['phone' => $request->phone]);
         }
+
+        $this->verificationGuard->reset($request->phone);
 
         $customer = Customer::where('phone', $request->phone)->first();
 
@@ -195,6 +231,7 @@ class LoginController extends Controller
             Auth::guard('customer')->login($customer);
 
             $otpLog->info('[Web] Login successful', ['phone' => $request->phone, 'customer_id' => $customer->id]);
+
             return response()->json([
                 'status' => 'success',
                 'message' => trans('site.logged_in_successfully'),
@@ -203,9 +240,10 @@ class LoginController extends Controller
         }
 
         $token = Str::random(60);
-        Cache::put('verified_phone_' . $token, $request->phone, now()->addMinutes(10));
+        Cache::put('verified_phone_'.$token, $request->phone, now()->addMinutes(10));
 
         $otpLog->info('[Web] OTP verified - registration required', ['phone' => $request->phone]);
+
         return response()->json([
             'status' => 'success',
             'register_required' => true,
@@ -226,9 +264,9 @@ class LoginController extends Controller
             __('site.login_attributes')
         );
 
-        $phone = Cache::pull('verified_phone_' . $request->token);
+        $phone = Cache::pull('verified_phone_'.$request->token);
 
-        if (!$phone) {
+        if (! $phone) {
             return response()->json([
                 'status' => 'error',
                 'message' => __('site.phone_required_or_expired'),

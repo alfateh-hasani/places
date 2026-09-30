@@ -133,9 +133,10 @@ class DirectBookingService
         // 1) Geidea-first — did the online payment actually go through (missed webhook)?
         $transaction = $booking->transaction;
         if ($transaction && $transaction->order_id) {
-            $orderData = (new GeideaPayment)->verifyPayment($transaction->order_id);
+            $geidea = new GeideaPayment;
+            $orderData = $geidea->verifyPayment($transaction->order_id);
 
-            if (($orderData['order']['detailedStatus'] ?? null) === 'Paid') {
+            if ($geidea->isPaidForTransaction($orderData, $transaction)) {
                 if ($transaction->status !== 'completed') {
                     $transaction->update([
                         'status' => 'completed',
