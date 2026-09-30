@@ -29,6 +29,8 @@ return [
     'favorite_removed' => 'تمت إزالة الشقة من المفضلة',
     'favorite_failed' => 'حدث خطأ ما. الرجاء المحاولة مرة أخرى.',
     'remove_from_favorites' => 'إزالة من المفضلة',
+    'unavailable' => 'غير متاح',
+    'unavailable_hint' => 'هذه الوحدة غير متاحة للحجز حالياً.',
     'no_reviews_yet' => 'لا تقييمات بعد',
     'out_of_5' => 'من 5',
     'specifications' => 'المواصفات',

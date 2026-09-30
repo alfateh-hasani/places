@@ -30,9 +30,9 @@ class WishlistService
 
     public function count(Customer $customer): int
     {
-        // Count only bookable favorites so the badge matches the favorites page
-        // (which hides deactivated units).
-        return $customer->favoriteApartments()->bookable()->count();
+        // Count all favorites so the badge matches the favorites page, which now
+        // shows every saved unit (unavailable ones are flagged, not hidden).
+        return $customer->favoriteApartments()->count();
     }
 
     public function has(Customer $customer, Apartment $apartment): bool
