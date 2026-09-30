@@ -24,3 +24,4 @@ artisan
 # Service-account credentials never belong in the repo (keep them in ~/secrets)
 *firebase-adminsdk*.json
 *-credentials.json
+*service-account*.json
