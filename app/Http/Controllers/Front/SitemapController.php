@@ -48,12 +48,12 @@ class SitemapController extends Controller
                 $this->entry(route('page', $page->slug), $page->updated_at, 'monthly', '0.5')
             ));
 
-        return response()
-            ->view('sitemap.index', [
-                'entries' => $entries->filter()->values(),
-                'locales' => $locales,
-            ])
-            ->header('Content-Type', 'text/xml');
+        $xml = '<'.'?xml version="1.0" encoding="UTF-8"?'.">\n".view('sitemap.index', [
+            'entries' => $entries->filter()->values(),
+            'locales' => $locales,
+        ])->render();
+
+        return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
     }
 
     /**
