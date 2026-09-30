@@ -12,6 +12,10 @@ class RobotsController extends Controller
         $lines = [
             'User-agent: *',
             'Disallow: /admin',
+            'Disallow: /customer/',
+            'Disallow: /en/customer/',
+            'Disallow: /web-booking/',
+            'Disallow: /en/web-booking/',
             '',
             'Sitemap: '.route('sitemap'),
         ];

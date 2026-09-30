@@ -19,8 +19,6 @@ class SitemapController extends Controller
 
         $entries = collect([
             $this->entry(route('home'), now(), 'daily', '1.0'),
-            $this->entry(route('apartments.index'), now(), 'daily', '0.9'),
-            $this->entry(route('apartments.search'), now(), 'daily', '0.7'),
         ]);
 
         Apartment::bookable()->select('slug', 'updated_at')->get()
@@ -43,7 +41,7 @@ class SitemapController extends Controller
                 $this->entry(route('blog', $blog->slug), $blog->updated_at, 'monthly', '0.5')
             ));
 
-        Page::select('slug', 'updated_at')->get()
+        Page::where('template', '!=', 'about')->select('slug', 'updated_at')->get()
             ->each(fn (Page $page) => $entries->push(
                 $this->entry(route('page', $page->slug), $page->updated_at, 'monthly', '0.5')
             ));
