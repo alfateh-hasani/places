@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 return [
     'explor_title' => 'Explore the Best Hotel Apartments with Blizze',
     'explor_more' => 'View More',
@@ -52,6 +53,7 @@ return [
     'otp_blocked' => 'You have requested too many verification codes. Please try again after :hours hours or contact customer service.',
     'otp_invalid' => 'The verification code is incorrect.',
     'something_went_wrong' => 'Something went wrong, please try again.',
+    'recaptcha_failed' => 'We could not verify your request. Please refresh the page and try again.',
     'phone_required_or_expired' => 'Your verification session has expired, please try again.',
     'account_created' => 'Your account has been created successfully.',
     'sign_up' => 'Sign Up',
@@ -103,7 +105,7 @@ return [
     'search_mobile_desc' => 'Search for hotel apartments anywhere',
     'sign_up_new' => 'Create Account',
     'seo_title' => 'The Best Hotel Apartments in the World',
-    'apartments_list'=>'Units',
+    'apartments_list' => 'Units',
     'download_app' => 'Download the App',
     'download_app_desc' => ' Explore the Best Hotel Apartments in the Saudi Kingdom',
     'download_apple' => 'Download on the App Store',

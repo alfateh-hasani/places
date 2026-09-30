@@ -437,37 +437,41 @@ $('#login-form').validate({
 
         HoldOn.open({ theme: "sk-rect" });
 
-        $.ajax({
-            url: "{{ route('login.step1') }}",
-            type: "POST",
-            data: formData,
-            contentType: false,
-            processData: false,
-            headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
-            success: function(response) {
-                HoldOn.close();
-                $('#phone-number').text(response.phone);
-                switchToOtpPopup(response.retry_after);
-                if (!response.has_account) $('#otp-form').data('registerRequired', true);
-            },
-            error: function(xhr) {
-                HoldOn.close();
-                if (xhr.status === 429 && xhr.responseJSON) {
-                    if (xhr.responseJSON.reason === 'otp_blocked') {
-                        // Long lockout — no short countdown to resume; keep the notice visible.
-                        showPersistentMessage('#login-result', 'danger', xhr.responseJSON.message);
+        window.recaptchaToken('login').then(function(token) {
+            formData.set('g-recaptcha-response', token);
+
+            $.ajax({
+                url: "{{ route('login.step1') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                success: function(response) {
+                    HoldOn.close();
+                    $('#phone-number').text(response.phone);
+                    switchToOtpPopup(response.retry_after);
+                    if (!response.has_account) $('#otp-form').data('registerRequired', true);
+                },
+                error: function(xhr) {
+                    HoldOn.close();
+                    if (xhr.status === 429 && xhr.responseJSON) {
+                        if (xhr.responseJSON.reason === 'otp_blocked') {
+                            // Long lockout — no short countdown to resume; keep the notice visible.
+                            showPersistentMessage('#login-result', 'danger', xhr.responseJSON.message);
+                            return;
+                        }
+                        // A code was already sent recently: move to the OTP step and
+                        // resume the server-driven cooldown instead of resending.
+                        $('#phone-number').text(xhr.responseJSON.phone);
+                        switchToOtpPopup(xhr.responseJSON.retry_after);
+                        if (!xhr.responseJSON.has_account) $('#otp-form').data('registerRequired', true);
+                        showMessage('#otp-result', 'warning', xhr.responseJSON.message);
                         return;
                     }
-                    // A code was already sent recently: move to the OTP step and
-                    // resume the server-driven cooldown instead of resending.
-                    $('#phone-number').text(xhr.responseJSON.phone);
-                    switchToOtpPopup(xhr.responseJSON.retry_after);
-                    if (!xhr.responseJSON.has_account) $('#otp-form').data('registerRequired', true);
-                    showMessage('#otp-result', 'warning', xhr.responseJSON.message);
-                    return;
+                    handleAjaxError(xhr, '#login-result');
                 }
-                handleAjaxError(xhr, '#login-result');
-            }
+            });
         });
     }
 });
@@ -562,36 +566,38 @@ $('#resend-button').on('click', function() {
 
     $(this).prop('disabled', true);
 
-    $.ajax({
-        url: "{{ route('login.resend_otp') }}",
-        type: "POST",
-        data: { phone: $('#phone-number').text(), _token: "{{ csrf_token() }}" },
-        success: function(response) {
-            resendCount--; // only a successful send counts against the attempt limit
-            startCountdown(response.retry_after);
-            showMessage('#otp-result', 'success', response.message || '@lang("site.otp_sent")');
-        },
-        error: function(xhr) {
-            if (xhr.status === 429 && xhr.responseJSON) {
-                if (xhr.responseJSON.reason === 'otp_blocked') {
-                    // Long lockout: stop the timer, keep resend disabled, and keep the notice visible.
-                    clearInterval(otpInterval);
-                    $('#resend-button').prop('disabled', true);
-                    $('#resend-timer').text('@lang("site.resend_limit_reached")');
-                    showPersistentMessage('#otp-result', 'danger', xhr.responseJSON.message);
+    window.recaptchaToken('login').then(function(token) {
+        $.ajax({
+            url: "{{ route('login.resend_otp') }}",
+            type: "POST",
+            data: { phone: $('#phone-number').text(), _token: "{{ csrf_token() }}", 'g-recaptcha-response': token },
+            success: function(response) {
+                resendCount--; // only a successful send counts against the attempt limit
+                startCountdown(response.retry_after);
+                showMessage('#otp-result', 'success', response.message || '@lang("site.otp_sent")');
+            },
+            error: function(xhr) {
+                if (xhr.status === 429 && xhr.responseJSON) {
+                    if (xhr.responseJSON.reason === 'otp_blocked') {
+                        // Long lockout: stop the timer, keep resend disabled, and keep the notice visible.
+                        clearInterval(otpInterval);
+                        $('#resend-button').prop('disabled', true);
+                        $('#resend-timer').text('@lang("site.resend_limit_reached")');
+                        showPersistentMessage('#otp-result', 'danger', xhr.responseJSON.message);
+                        return;
+                    }
+                    // Still within the server cooldown window: honor its timer (no attempt consumed).
+                    startCountdown(xhr.responseJSON.retry_after);
+                    showMessage('#otp-result', 'warning', xhr.responseJSON.message);
                     return;
                 }
-                // Still within the server cooldown window: honor its timer (no attempt consumed).
-                startCountdown(xhr.responseJSON.retry_after);
-                showMessage('#otp-result', 'warning', xhr.responseJSON.message);
-                return;
+                // Genuine failure: keep the button usable so the user can retry, don't start a
+                // timer, and surface the real reason from the server when available.
+                $('#resend-button').prop('disabled', false);
+                let message = (xhr.responseJSON && xhr.responseJSON.message) || '@lang("site.resend_failed")';
+                showMessage('#otp-result', 'danger', message);
             }
-            // Genuine failure: keep the button usable so the user can retry, don't start a
-            // timer, and surface the real reason from the server when available.
-            $('#resend-button').prop('disabled', false);
-            let message = (xhr.responseJSON && xhr.responseJSON.message) || '@lang("site.resend_failed")';
-            showMessage('#otp-result', 'danger', message);
-        }
+        });
     });
 });
 
