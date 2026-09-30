@@ -1,4 +1,5 @@
 <?php
+
 return [
     'registered' => 'You have successfully registered',
     'logout' => 'You have successfully logged out',
@@ -48,6 +49,7 @@ return [
     'date_change_cannot_cancel' => 'This request cannot be canceled in its current state',
     'date_change_request_canceled' => 'Date-change request canceled',
     'account_blocked' => 'Your account has been blocked. Please contact support.',
+    'otp_too_many_attempts' => 'Too many incorrect attempts. Please request a new verification code.',
     'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
     'otp_blocked' => 'You have requested too many verification codes. Please try again after :hours hours or contact customer service.',
     'booking_created_successfully' => 'Booking created successfully',
