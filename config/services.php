@@ -66,4 +66,12 @@ return [
         'token_cache_key' => env('GUESTY_TOKEN_CACHE_KEY', 'guesty:access-token'),
     ],
 
+    /*
+    | Per-apartment booking calendar feed (/apartments/{id}/unit.ics) that external
+    | channels such as Airbnb can import. Off while OwnerRez handles channel sync.
+    */
+    'ics_feed' => [
+        'enabled' => (bool) env('ICS_FEED_ENABLED', false),
+    ],
+
 ];

@@ -38,6 +38,7 @@ return [
     'services_added' => 'تمت إضافة الخدمات بنجاح',
     'payment_creation_failed' => 'فشل في إنشاء عملية الدفع',
     'account_blocked' => 'تم إيقاف حسابك. يرجى التواصل مع الدعم.',
+    'otp_too_many_attempts' => 'محاولات خاطئة كثيرة. يرجى طلب رمز تحقق جديد.',
 
     // OwnerRez Integration
     'apartment_not_available_external' => 'الشقة محجوزة عبر منصة أخرى في هذه التواريخ',

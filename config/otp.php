@@ -1,5 +1,7 @@
 <?php
 
+use App\Notifications\OtpNotification;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -39,7 +41,7 @@ return [
     | Notification to use for OTP
     |
     */
-    'notification' => \App\Notifications\OtpNotification::class,
+    'notification' => OtpNotification::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -66,4 +68,16 @@ return [
     'max_attempts' => env('OTP_MAX_ATTEMPTS', 3),
     'attempts_window' => env('OTP_ATTEMPTS_WINDOW', 600),
     'block_duration' => env('OTP_BLOCK_DURATION', 86400),
+
+    /*
+    |--------------------------------------------------------------------------
+    | OTP verification attempts
+    |--------------------------------------------------------------------------
+    |
+    | Wrong codes allowed against one OTP before it is discarded and a new code
+    | must be requested. Protects the 4-digit code from brute force.
+    |
+    */
+
+    'verify_max_attempts' => env('OTP_VERIFY_MAX_ATTEMPTS', 5),
 ];

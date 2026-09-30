@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Otp\CustomerRegistrationOtp;
 use App\Rules\Recaptcha;
 use App\Services\Otp\OtpRequestThrottle;
+use App\Services\Otp\OtpVerificationGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -19,7 +20,10 @@ use SadiqSalau\LaravelOtp\Facades\Otp;
 
 class LoginController extends Controller
 {
-    public function __construct(private readonly OtpRequestThrottle $throttle) {}
+    public function __construct(
+        private readonly OtpRequestThrottle $throttle,
+        private readonly OtpVerificationGuard $verificationGuard,
+    ) {}
 
     private function validatePhoneStartsWith5($phone)
     {
@@ -73,6 +77,7 @@ class LoginController extends Controller
 
             if ($otp['status'] === Otp::OTP_SENT) {
                 $this->throttle->recordSent($request->phone);
+                $this->verificationGuard->reset($request->phone);
                 $otpLog->info('[Web] OTP sent successfully', ['phone' => $request->phone]);
 
                 return response()->json([
@@ -137,6 +142,7 @@ class LoginController extends Controller
 
             if ($otp['status'] === Otp::OTP_SENT) {
                 $this->throttle->recordSent($request->phone);
+                $this->verificationGuard->reset($request->phone);
                 $otpLog->info('[Web] OTP resent successfully', ['phone' => $request->phone]);
 
                 return response()->json([
@@ -180,11 +186,21 @@ class LoginController extends Controller
 
         $otpLog->info('[Web] Verifying OTP', ['phone' => $request->phone]);
 
+        if ($this->verificationGuard->isLockedOut($request->phone)) {
+            $otpLog->warning('[Web] OTP verification locked - too many wrong codes', ['phone' => $request->phone]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => __('site.otp_too_many_attempts'),
+            ], 429);
+        }
+
         $otpStatus = Otp::identifier('otp_'.$request->phone)->attempt($request->otp);
 
         $masterCodeAllowed = app()->environment(['local', 'testing']) && $request->otp === '2020';
 
         if ($otpStatus['status'] !== Otp::OTP_PROCESSED && ! $masterCodeAllowed) {
+            $this->verificationGuard->recordFailure($request->phone);
             $otpLog->warning('[Web] OTP verification failed', [
                 'phone' => $request->phone,
                 'status' => $otpStatus['status'],
@@ -197,6 +213,8 @@ class LoginController extends Controller
         } elseif ($masterCodeAllowed) {
             $otpLog->info('[Web] OTP bypassed with master code', ['phone' => $request->phone]);
         }
+
+        $this->verificationGuard->reset($request->phone);
 
         $customer = Customer::where('phone', $request->phone)->first();
 
