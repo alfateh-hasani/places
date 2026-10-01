@@ -5,6 +5,7 @@ use App\Http\Middleware\ApiSecretKeyMiddleware;
 use App\Http\Middleware\EnsureCustomerNotBlocked;
 use App\Http\Middleware\EnsureStaffCan;
 use App\Http\Middleware\OwnerRezWebhookAuth;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,6 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api([
             ApiLocaleKeyMiddleware::class,
 
+        ]);
+
+        $middleware->web(append: [
+            SecurityHeaders::class,
         ]);
 
         $middleware->alias([

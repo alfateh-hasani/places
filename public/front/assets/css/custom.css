@@ -402,3 +402,33 @@ strong {
     background-color: #f7bb8e !important;
     color: white;
 }
+/* Reserve each carousel's final layout before slick initialises, so the
+   page doesn't render every slide stacked and then collapse (CLS). */
+section.slider:not(.slick-initialized) > a:not(:first-child),
+section.properitirs .category:not(.slick-initialized) > .slider:not(:first-child) {
+    display: none;
+}
+section.properitirs .slider:not(.slick-initialized),
+section.comments .comment-slider:not(.slick-initialized) {
+    display: flex;
+    overflow: hidden;
+}
+section.properitirs .slider:not(.slick-initialized) > a {
+    flex: 0 0 100%;
+}
+section.comments .comment-slider:not(.slick-initialized) > div {
+    flex: 0 0 100%;
+}
+@media (min-width: 768px) {
+    section.properitirs .slider:not(.slick-initialized) > a {
+        flex-basis: 25%;
+    }
+    section.comments .comment-slider:not(.slick-initialized) > div {
+        flex-basis: calc(100vw / 3);
+    }
+}
+@media (min-width: 1200px) {
+    section.comments .comment-slider:not(.slick-initialized) > div {
+        flex-basis: calc(100vw / 4);
+    }
+}

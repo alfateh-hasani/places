@@ -13,17 +13,24 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://code.jquery.com" crossorigin />
     <link rel="dns-prefetch" href="https://code.jquery.com" />
-    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
-    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
     <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <link rel="dns-prefetch" href="https://unpkg.com" />
-    <link rel="preconnect" href="https://code.iconify.design" crossorigin />
-    <link rel="dns-prefetch" href="https://code.iconify.design" />
 
     @stack('TopCss')
 
-    <link href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('assets/css/style.css')) }}" rel="stylesheet" />
-    <link    href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css"  rel="stylesheet"  />
+    {{-- Formerly @import-ed from style.css / rtl.css (which chained the requests). Same
+         cascade position as before; select2 + flowbite are linked once, further down. --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap" rel="stylesheet" />
+    @if(app()->getLocale() == 'ar')
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    @endif
+    <link href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" rel="stylesheet" />
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+    <link href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('front/assets/css/style.css')) }}" rel="stylesheet" />
+    <link    href="{{ asset('assets/vendor/flowbite-2.5.1/flowbite.min.css') }}"  rel="stylesheet"  />
     <link    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"   rel="stylesheet" />
     {{-- Official Saudi Riyal symbol (Unicode U+20C1, SAMA 2025). Registers the
          "saudi_riyal" / "saudi_riyal_bold" font-families used by the x-riyal component. --}}
@@ -31,51 +38,11 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg')}}" />
     <link rel="icon" type="image/x-www-form ico" href="{{ asset('favicon.ico') }}" />
     <link rel="apple-touch-icon" href="{{ asset('assets/img/favicon.svg') }}" />
-    <script  type="text/javascript"    src="https://code.jquery.com/jquery-3.7.1.js"  ></script>
-    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
+    <script  type="text/javascript"    src="https://code.jquery.com/jquery-3.7.1.min.js"  ></script>
 
     
-    <script type="text/javascript" src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="{{ asset('assets/js/maplace.js') }}?v={{ @filemtime(public_path('assets/js/maplace.js')) }}"></script>
 
 
-    <script>
-      tailwind.config = {
-          theme: {
-              container: {
-                  center: true,
-              },
-              colors: {
-                  'gri': '#f7bb8e',
-                  'white': '#fff',
-                  'black': '#000',
-                  'border': '#f7bb8e',
-                  'reviews': '#999999',
-                  'title': '#2C2C2C',
-                  'feature': '#343233',
-                  'feature-border': '#E8E8E8',
-                  'price': '#f7bb8e',
-                  'automated-1': 'rgba(239, 85, 44, .2)',
-                  'automated-2': 'rgba(255, 90, 95, .2)',
-                  'automated-3': 'rgba(233, 187, 113, .2)',
-                  'gritext': '#444',
-                  'commentbg': '#F4F6F8',
-                  'commentborder': '#F1F1F1',
-                  'blackopacity': 'rgba(0, 0, 0, .1)',
-                  'properits': '#F8F7FD',
-                  'filterbackground': '#fbfbfb',
-                  'filterborder': '#ececec',
-                  'filteritem': '#ebebe8',
-                  'filterhover': '#f7bb8e',
-                  'sort': '#f6f6f6',
-                  'sortactive': '#f7bb8e',
-                  'blue': '#0068CF',
-                  'footer': '#fcfcfc',
-                  'titletext': '#848484'
-              }
-          }
-      }
-  </script> 
     <style>
       .datepicker-cell {
         color: #787e8b !important;
@@ -100,9 +67,9 @@
         color: white !important;
       }
 
-      /* Guarantee a consistent side gutter on every device: overrides the
-         Tailwind Play CDN's zero-padding .container, which otherwise wins the
-         cascade race on some viewports and makes content touch the screen edge.
+      /* Guarantee a consistent side gutter on every device: overrides
+         Tailwind's zero-padding .container (tailwind.css is loaded last in the
+         head), which otherwise makes content touch the screen edge.
          Uses inner padding (border-box) instead of a calc() max-width so the
          gutter is identical on every device and never collapses to zero. */
       .container {
@@ -195,10 +162,14 @@ section.app.relative > div {
 
 
     @if(app()->getLocale() == 'ar')
-      <link    href="{{ asset('assets/css/rtl.css') }}?v={{ @filemtime(public_path('assets/css/rtl.css')) }}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/rtl.css') }}?v={{ @filemtime(public_path('front/assets/css/rtl.css')) }}"   rel="stylesheet" />
     @endif
 
-      <link    href="{{ asset('assets/css/custom.css') }}?v={{ @filemtime(public_path('assets/css/custom.css')) }}"   rel="stylesheet" />
-      <link    href="{{ asset('assets/css/dark.css') }}?v={{ @filemtime(public_path('assets/css/dark.css')) }}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/custom.css') }}?v={{ @filemtime(public_path('front/assets/css/custom.css')) }}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/dark.css') }}?v={{ @filemtime(public_path('front/assets/css/dark.css')) }}"   rel="stylesheet" />
 
     @stack('css')
+
+    {{-- Compiled Tailwind (tailwind.config.js). Kept last in <head> so it wins
+         the cascade exactly as the former Play CDN's injected <style> did. --}}
+    <link href="{{ asset('assets/css/tailwind.css') }}?v={{ @filemtime(public_path('front/assets/css/tailwind.css')) }}" rel="stylesheet" />

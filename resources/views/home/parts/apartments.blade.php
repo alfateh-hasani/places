@@ -27,6 +27,7 @@
         </div>
 </section>
 
+@if($apartments->hasMorePages())
 @push('js')
 
 <script src="{{ asset('assets/js/infinite-scroll.pkgd.min.js')}}"></script>
@@ -58,7 +59,7 @@
 <script>
     $(document).ready(function () {
         var infScroll = $('#apartments-container').infiniteScroll({
-            path: '#list-links a[aria-label="pagination.next"]',
+            path: '#list-links a[rel="next"]',
             append: '.apartment-card',
             history: 'push',
             scrollThreshold: false, // Disable automatic loading
@@ -91,3 +92,4 @@
 </script>
  
 @endpush
+@endif

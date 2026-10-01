@@ -11,7 +11,7 @@
         <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse">
             <!-- App Icon -->
             <div class="flex-shrink-0">
-                <img src="{{ asset('assets/img/places-logo-dark.png') }}" alt="Dyafa App" class="w-16 h-16 rounded-xl">
+                <img src="{{ asset('assets/img/places-logo-dark.webp') }}" alt="Dyafa App" loading="lazy" class="w-16 h-16 rounded-xl">
             </div>
  
             <!-- Text Content -->
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="flex items-center justify-between">
     <div>
       <a href="{{ route('home')}}">
-        <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="{{ __('site.logo') }}" style="max-height: 35px" />
+        <img src="{{ asset('assets/img/places-logo-dark.webp') }}" width="180" height="35" alt="{{ __('site.logo') }}" style="max-height: 35px" />
       </a>
     </div>
     <ul class="menu absolute flex items-center">
@@ -153,11 +153,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div class="logo absolute">
           <a href="{{ route('home')}}">
-              <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" alt="{{ config('app.name') }}" />
+              <img class="h-7 w-auto" src="{{ asset('assets/img/places-logo-dark.webp') }}" width="144" height="28" alt="{{ config('app.name') }}" />
           </a>
       </div>
       <button type="button" class="cursor-pointer float-right py-1 menu-button">
-          <img src="{{ asset('assets/img/menu.svg') }}" />
+          <img src="{{ asset('assets/img/menu.svg') }}" alt="{{ __('site.menu') }}" />
       </button>
       <div class="clear-both"></div>
   </div>
@@ -166,19 +166,19 @@ document.addEventListener('DOMContentLoaded', function() {
           <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
-      <h6 class="font-semibold text-xl text-black mb-2">
+      <h2 class="font-semibold text-xl text-black mb-2">
         @lang('site.menu')
-      </h6>
+      </h2>
       <ul>
           @include('common.parts.nav-links', ['liClass' => 'mb-5'])
       </ul>
       <div class="mt-2">
-          <h6 class="font-semibold text-xl text-black"> @lang('site.contact')</h6>
+          <h2 class="font-semibold text-xl text-black"> @lang('site.contact')</h2>
           <ul class="mt-4 lg:mt-10">
-            <li><a href="mailto:{{ Config::get('settings.email') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" />   {{Config::get('settings.email')}}</a></li>
+            <li><a href="mailto:{{ Config::get('settings.email') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" alt="" />   {{Config::get('settings.email')}}</a></li>
             @php $headerPhone = preg_replace('/^00/', '+', (string) Config::get('settings.phone')); @endphp
-            <li><a href="tel:{{ $headerPhone }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" /> <span dir="ltr" style="direction:ltr; unicode-bidi:isolate; display:inline-block;">{{ $headerPhone }}</span></a></li>
-            <li><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode(Config::get('settings.address_'.app()->getLocale())) }}" target="_blank" rel="noopener noreferrer" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
+            <li><a href="tel:{{ $headerPhone }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" alt="" /> <span dir="ltr" style="direction:ltr; unicode-bidi:isolate; display:inline-block;">{{ $headerPhone }}</span></a></li>
+            <li><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode(Config::get('settings.address_'.app()->getLocale())) }}" target="_blank" rel="noopener noreferrer" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" alt="" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
         </ul>
       </div>
   </div>
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </svg>
       </button>
       @auth('customer')
-        <h6 class="font-semibold text-xl text-black mb-2">@lang('site.profile')</h6>
+        <h2 class="font-semibold text-xl text-black mb-2">@lang('site.profile')</h2>
         <ul>
           
             <li class="mb-5"><a href="{{ route('customer.account') }}"
@@ -203,13 +203,13 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="login text-center relative">
           <ul class="w-full">
             @auth('customer')
-              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" /> @lang('site.logout')</a></li>
+              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="" /> @lang('site.logout')</a></li>
               <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
                 @csrf
               </form>
             @else
-              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" /> @lang('site.login')</a></li>
-              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" /> @lang('site.sign_up_new')</a></li>
+              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" alt="" /> @lang('site.login')</a></li>
+              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="" /> @lang('site.sign_up_new')</a></li>
             @endauth
           </ul>
       </div>

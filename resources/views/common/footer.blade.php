@@ -2,15 +2,15 @@
   <div class="container border-b border-blackopacity pb-6">
     <div class="lg:grid lg:grid-cols-3 lg:gap-8 max-w-full">
       <div>
-        <img src="{{ asset('assets/img/places-logo-dark.png') }}" style="max-height: 35px" alt="{{ __('site.logo') }}" />
+        <img src="{{ asset('assets/img/places-logo-dark.webp') }}" width="180" height="35" loading="lazy" style="max-height: 35px" alt="{{ __('site.logo') }}" />
         <p class="font-normal text-sm lg:text-base text-black mt-8 text-justify">
             {{Config::get('settings.footer_'.app()->getLocale())}}
         </p>
       </div>
       <div class="my-6 lg:my-0">
-        <h6 class="font-semibold text-xl text-black">
+        <h2 class="font-semibold text-xl text-black">
             {{__('site.quick_links')}}
-        </h6> 
+        </h2> 
         <ul class="mt-4 lg:mt-10 grid grid-cols-2 gap-2 max-w-full mx-0">
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('home')}}">{{__('site.home')}}</a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','privacy-policy')}}"> {{__('site.privacy-policy')}}</a></li>
@@ -23,9 +23,9 @@
         </ul>
       </div>
       <div>
-        <h6 class="font-semibold text-xl text-black">
+        <h2 class="font-semibold text-xl text-black">
             {{__('site.contact_us_menu')}}
-        </h6>
+        </h2>
         <ul class="mt-4 lg:mt-10">
           <li>
             <a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300" href="mailto:{{Config::get('settings.email')}}">
@@ -94,16 +94,4 @@
     @include('common.login-part')    
 @endguest
 
-<div>
- <!-- Start of LiveChat (www.livechat.com) code -->
-  <script>
-  window.__lc = window.__lc || {};
-  window.__lc.license = 19004757;
-  window.__lc.integration_name = "manual_onboarding";
-  window.__lc.product_name = "livechat";
-  ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
-</script>  
- 
-</div>
-<!-- End of LiveChat code -->
  

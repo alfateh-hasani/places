@@ -95,6 +95,7 @@ return [
     'filters' => 'Filters',
     'quick_links' => 'Quick Links',
     'menu' => 'Menu',
+    'close' => 'Close',
     'blogs' => 'Blogs',
     'faqs' => 'FAQs',
     'policy' => 'Policies',

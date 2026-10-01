@@ -8,7 +8,9 @@ $locale = app()->getLocale();
   </head>
   <body class="lg:pt-20 pt-16">
     @include('common.header')
+    <main>
         @yield('content')
+    </main>
     @include('common.footer')
     @include('layouts.parts.js')
   </body>
