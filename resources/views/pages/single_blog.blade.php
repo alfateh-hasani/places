@@ -19,25 +19,30 @@
        
 
 
+        @php
+            $shareUrl = urlencode(route('blog', $blog->slug));
+            $shareTitle = urlencode($blog->{'name_'.app()->getLocale()});
+        @endphp
         <ul class="social inline-block">
             <li class="inline-block">
-            <a href=https://www.facebook.com/sharer/sharer.php?u=YOUR_URL" target="_blank" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
-            <img class="absolute" src="https://places.madar-solutions.click/front/assets/img/facebook.svg" alt="facebook">
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ $shareUrl }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
+            <img class="absolute" src="{{ asset('assets/img/facebook.svg') }}" alt="facebook">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="https://twitter.com/share?url=YOUR_URL&text=YOUR_TEXT" target="_blank" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
-            <img class="absolute" src="https://places.madar-solutions.click/front/assets/img/twitter.svg" alt="twitter">
+            <a href="https://twitter.com/share?url={{ $shareUrl }}&text={{ $shareTitle }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
+            <img class="absolute" src="{{ asset('assets/img/twitter.svg') }}" alt="twitter">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="https://www.instagram.com/YOUR_INSTAGRAM_PROFILE/" target="_blank" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
-            <img class="absolute" src="https://places.madar-solutions.click/front/assets/img/instagram.svg" alt="instagram">
+            {{-- Instagram has no web share URL, so this opens the company profile from settings. --}}
+            <a href="{{ Config::get('settings.instagram') ?: 'https://www.instagram.com/' }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
+            <img class="absolute" src="{{ asset('assets/img/instagram.svg') }}" alt="instagram">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="https://www.linkedin.com/shareArticle?url=YOUR_URL&title=YOUR_TITLE" target="_blank" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
-            <img class="absolute" src="https://places.madar-solutions.click/front/assets/img/linkedin.svg" alt="linkedin">
+            <a href="https://www.linkedin.com/shareArticle?url={{ $shareUrl }}&title={{ $shareTitle }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
+            <img class="absolute" src="{{ asset('assets/img/linkedin.svg') }}" alt="linkedin">
             </a>
             </li>
             </ul>
