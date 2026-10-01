@@ -1,7 +1,9 @@
 <section class="app   relative">
     <img
-        src="{{ asset('assets/images/1-01.png') }}"
-        class="absolute bottom-0 left-0 right-0"
+        src="{{ asset('assets/images/1-01.webp') }}"
+        width="1920"
+        height="695"
+        class="absolute bottom-0 left-0 right-0 w-full"
         alt=""
         loading="lazy"
     />
@@ -33,7 +35,9 @@
             </div>
             <div class="text-right rtl:text-left mt-10 lg:mt-0">
                 <img
-                    src="{{ asset('assets/images/appsback2.png') }}?v=1"
+                    src="{{ asset('assets/images/appsback2.webp') }}"
+                    width="1200"
+                    height="970"
                     class="inline"
                     alt=""
                     loading="lazy"

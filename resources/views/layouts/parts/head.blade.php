@@ -22,7 +22,7 @@
 
     @stack('TopCss')
 
-    <link href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('assets/css/style.css')) }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('front/assets/css/style.css')) }}" rel="stylesheet" />
     <link    href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css"  rel="stylesheet"  />
     <link    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"   rel="stylesheet" />
     {{-- Official Saudi Riyal symbol (Unicode U+20C1, SAMA 2025). Registers the
@@ -31,12 +31,11 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg')}}" />
     <link rel="icon" type="image/x-www-form ico" href="{{ asset('favicon.ico') }}" />
     <link rel="apple-touch-icon" href="{{ asset('assets/img/favicon.svg') }}" />
-    <script  type="text/javascript"    src="https://code.jquery.com/jquery-3.7.1.js"  ></script>
-    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
+    <script  type="text/javascript"    src="https://code.jquery.com/jquery-3.7.1.min.js"  ></script>
+    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js"></script>
 
     
     <script type="text/javascript" src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="{{ asset('assets/js/maplace.js') }}?v={{ @filemtime(public_path('assets/js/maplace.js')) }}"></script>
 
 
     <script>
@@ -195,10 +194,10 @@ section.app.relative > div {
 
 
     @if(app()->getLocale() == 'ar')
-      <link    href="{{ asset('assets/css/rtl.css') }}?v={{ @filemtime(public_path('assets/css/rtl.css')) }}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/rtl.css') }}?v={{ @filemtime(public_path('front/assets/css/rtl.css')) }}"   rel="stylesheet" />
     @endif
 
-      <link    href="{{ asset('assets/css/custom.css') }}?v={{ @filemtime(public_path('assets/css/custom.css')) }}"   rel="stylesheet" />
-      <link    href="{{ asset('assets/css/dark.css') }}?v={{ @filemtime(public_path('assets/css/dark.css')) }}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/custom.css') }}?v={{ @filemtime(public_path('front/assets/css/custom.css')) }}"   rel="stylesheet" />
+      <link    href="{{ asset('assets/css/dark.css') }}?v={{ @filemtime(public_path('front/assets/css/dark.css')) }}"   rel="stylesheet" />
 
     @stack('css')

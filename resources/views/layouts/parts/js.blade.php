@@ -11,7 +11,6 @@
   <script type="text/javascript" src="{{ asset('assets/js/main.js?44') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
   <script>
     /* Saudi Riyal symbol helpers for prices built in JavaScript.

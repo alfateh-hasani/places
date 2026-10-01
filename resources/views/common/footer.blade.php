@@ -2,7 +2,7 @@
   <div class="container border-b border-blackopacity pb-6">
     <div class="lg:grid lg:grid-cols-3 lg:gap-8 max-w-full">
       <div>
-        <img src="{{ asset('assets/img/places-logo-dark.png') }}" style="max-height: 35px" alt="{{ __('site.logo') }}" />
+        <img src="{{ asset('assets/img/places-logo-dark.webp') }}" width="180" height="35" loading="lazy" style="max-height: 35px" alt="{{ __('site.logo') }}" />
         <p class="font-normal text-sm lg:text-base text-black mt-8 text-justify">
             {{Config::get('settings.footer_'.app()->getLocale())}}
         </p>

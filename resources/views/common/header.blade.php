@@ -11,7 +11,7 @@
         <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse">
             <!-- App Icon -->
             <div class="flex-shrink-0">
-                <img src="{{ asset('assets/img/places-logo-dark.png') }}" alt="Dyafa App" class="w-16 h-16 rounded-xl">
+                <img src="{{ asset('assets/img/places-logo-dark.webp') }}" alt="Dyafa App" loading="lazy" class="w-16 h-16 rounded-xl">
             </div>
  
             <!-- Text Content -->
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="flex items-center justify-between">
     <div>
       <a href="{{ route('home')}}">
-        <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="{{ __('site.logo') }}" style="max-height: 35px" />
+        <img src="{{ asset('assets/img/places-logo-dark.webp') }}" width="180" height="35" alt="{{ __('site.logo') }}" style="max-height: 35px" />
       </a>
     </div>
     <ul class="menu absolute flex items-center">
@@ -153,11 +153,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div class="logo absolute">
           <a href="{{ route('home')}}">
-              <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" alt="{{ config('app.name') }}" />
+              <img class="h-7 w-auto" src="{{ asset('assets/img/places-logo-dark.webp') }}" width="144" height="28" alt="{{ config('app.name') }}" />
           </a>
       </div>
       <button type="button" class="cursor-pointer float-right py-1 menu-button">
-          <img src="{{ asset('assets/img/menu.svg') }}" />
+          <img src="{{ asset('assets/img/menu.svg') }}" alt="{{ __('site.menu') }}" />
       </button>
       <div class="clear-both"></div>
   </div>
