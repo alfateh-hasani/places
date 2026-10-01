@@ -25,12 +25,12 @@ class GeideaWebhookController extends Controller
     {
         $data = $request->all();
 
-        Log::channel('geidea_webhook')->info('Geidea webhook received', $data);
+        Log::channel('geidea_webhook')->info('Geidea webhook received', GeideaPayment::logSummary($data));
 
         $orderId = $data['orderId'] ?? ($data['order']['orderId'] ?? null);
 
         if (! $orderId) {
-            Log::channel('geidea_webhook')->warning('Geidea webhook missing orderId', $data);
+            Log::channel('geidea_webhook')->warning('Geidea webhook missing orderId', GeideaPayment::logSummary($data));
 
             return response()->json(['status' => 'ignored', 'reason' => 'missing orderId']);
         }
