@@ -38,16 +38,16 @@ class SecurityHeaders
 
         $scriptHosts = 'https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://npmcdn.com https://oss.maxcdn.com '
             .'https://code.jquery.com https://www.google.com https://www.gstatic.com https://maps.googleapis.com '
-            .'https://static.cloudflareinsights.com';
+            .'https://static.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com';
 
         $directives = [
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' {$scriptHosts}",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://npmcdn.com https://fonts.googleapis.com",
-            "img-src 'self' data: blob: {$media} https://maps.gstatic.com https://maps.googleapis.com https://www.google.com https://www.gstatic.com",
+            "img-src 'self' data: blob: {$media} https://maps.gstatic.com https://maps.googleapis.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://*.google-analytics.com",
             "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com",
-            "connect-src 'self' https://www.google.com https://maps.googleapis.com https://cloudflareinsights.com",
-            'frame-src https://www.google.com https://www.youtube.com',
+            "connect-src 'self' https://www.google.com https://maps.googleapis.com https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com",
+            'frame-src https://www.google.com https://www.youtube.com https://www.googletagmanager.com',
             "form-action 'self' https://www.ksamerchant.geidea.net",
             "frame-ancestors 'self'",
             "base-uri 'self'",
