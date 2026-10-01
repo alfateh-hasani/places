@@ -6,20 +6,23 @@ use App\Actions\UnitTransfers\ProcessUnitTransferRefund;
 use App\Enums\BookingStatus;
 use App\Enums\TransferDirection;
 use App\Enums\UnitTransferStatus;
+use App\Exceptions\OwnerRez\OwnerRezApiException;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\BookingUnitTransfer;
 use App\Services\BookingService;
+use App\Services\DateChangeService;
 use App\Services\Locks\LockAccessService;
 use App\Services\OwnerRez\OwnerRezBlockParkingService;
 use App\Services\OwnerRez\OwnerRezSyncService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Orchestrates moving a booking to a different apartment (same dates), staff-initiated with
- * customer confirmation. Sibling of {@see \App\Services\DateChangeService}, but the pivot is
+ * customer confirmation. Sibling of {@see DateChangeService}, but the pivot is
  * the apartment instead of the dates.
  *
  * Flow:
@@ -97,7 +100,7 @@ class BookingUnitTransferService
      * Passcode move runs best-effort after commit.
      *
      * @throws ValidationException when the destination is no longer usable (transfer is rejected)
-     * @throws \Throwable          when applying fails for a retryable reason (transfer is failed)
+     * @throws \Throwable when applying fails for a retryable reason (transfer is failed)
      */
     public function confirmByCustomer(BookingUnitTransfer $transfer): Booking
     {
@@ -106,6 +109,12 @@ class BookingUnitTransferService
         }
 
         $booking = $transfer->booking;
+
+        // A booking that was canceled (or is awaiting a cancellation refund) can't be moved.
+        if (! in_array($booking->status, [BookingStatus::Approved->value, BookingStatus::Booked->value], true)) {
+            throw ValidationException::withMessages(['transfer' => __('api.unit_transfer_not_pending')]);
+        }
+
         $oldApartment = $booking->apartment; // capture BEFORE the move (needed for the old lock's credentials)
         $oldOwnerRezBookingId = $booking->ownerrez_booking_id;
         $oldPropertyId = $oldApartment?->ownerrezMapping?->ownerrez_property_id;
@@ -368,7 +377,7 @@ class BookingUnitTransferService
      */
     private function describeThrowable(\Throwable $e): string
     {
-        if ($e instanceof \App\Exceptions\OwnerRez\OwnerRezApiException) {
+        if ($e instanceof OwnerRezApiException) {
             $body = $e->getResponseData();
 
             $detail = data_get($body, 'message')
@@ -382,7 +391,7 @@ class BookingUnitTransferService
 
             $detail = $detail !== null && $detail !== '' ? (string) $detail : $e->getMessage();
 
-            return 'OwnerRez ['.$e->getStatusCode().']: '.\Illuminate\Support\Str::limit($detail, 500);
+            return 'OwnerRez ['.$e->getStatusCode().']: '.Str::limit($detail, 500);
         }
 
         return $e->getMessage();

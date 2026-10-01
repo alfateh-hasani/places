@@ -2,23 +2,31 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\ApartmentRequest;
+use App\Models\Customer;
+use App\Models\Transaction;
+use App\Support\Riyal;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Carbon\Carbon;
 
 /**
  * Class ApartmentController
- * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ *
+ * @property-read CrudPanel $crud
  */
 class TransactionController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use CreateOperation;
+    use DeleteOperation;
+    use ListOperation;
+    use ShowOperation;
+    use UpdateOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -27,22 +35,21 @@ class TransactionController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Transaction::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/transaction');
+        CRUD::setModel(Transaction::class);
+        CRUD::setRoute(config('backpack.base.route_prefix').'/transaction');
         CRUD::setEntityNameStrings(__('cms.transaction'), __('cms.transaction'));
         CRUD::denyAccess(['create', 'delete', 'update']);
 
-
-        if (!backpack_user()->can('transaction.list')) {
+        if (! backpack_user()->can('transaction.list')) {
             abort(403, 'Unauthorized Access - List');
         }
     }
-
 
     /**
      * Define what happens when the List operation is loaded.
      *
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
+     *
      * @return void
      */
     protected function setupListOperation()
@@ -53,17 +60,17 @@ class TransactionController extends CrudController
         CRUD::addColumn([
             'name' => 'customer_id',
             'type' => 'select',
-            'label' => __('cms.customer') . ' <i class="la la-user"></i>',
+            'label' => __('cms.customer').' <i class="la la-user"></i>',
             'entity' => 'customer',
             'attribute' => 'first_name',
-            'model' => \App\Models\Customer::class,
+            'model' => Customer::class,
         ]);
 
         // Booking ID with icon
         CRUD::addColumn([
             'name' => 'booking_id',
             'type' => 'text',
-            'label' => __('cms.booking') . ' <i class="la la-book"></i>',
+            'label' => __('cms.booking').' <i class="la la-book"></i>',
             'value' => function ($entry) {
                 return $entry->booking?->number_of_booking;
             },
@@ -73,36 +80,37 @@ class TransactionController extends CrudController
         CRUD::addColumn([
             'name' => 'transaction_reference',
             'type' => 'text',
-            'label' =>  __('cms.reference') . ' <i class="la la-hashtag"></i>',
+            'label' => __('cms.reference').' <i class="la la-hashtag"></i>',
         ]);
 
         // Amount with formatted currency
         CRUD::addColumn([
             'name' => 'amount',
             'type' => 'custom_html',
-            'label' =>  __('cms.amount') . '(SAR) <i class="la la-money"></i>',
+            'label' => __('cms.amount').'(SAR) <i class="la la-money"></i>',
             'value' => function ($entry) {
-                return '<span class="text-primary font-weight-bold">' . number_format($entry->amount, 2) . ' ' . \App\Support\Riyal::svg() . '</span>';
-            }
+                return '<span class="text-primary font-weight-bold">'.number_format($entry->amount, 2).' '.Riyal::svg().'</span>';
+            },
         ]);
 
         // Type with colored badges
         CRUD::addColumn([
             'name' => 'type',
             'type' => 'custom_html',
-            'label' => __('cms.type') . ' <i class="la la-exchange"></i>',
+            'label' => __('cms.type').' <i class="la la-exchange"></i>',
             'value' => function ($entry) {
                 $color = $entry->type === 'deposit' ? 'success' : 'danger';
                 $typeLabel = $entry->type === 'deposit' ? __('cms.type_deposit') : __('cms.type_withdrawal');
-                return "<span class='badge badge-{$color}'>" . ucfirst($typeLabel) . "</span>";
-            }
+
+                return "<span class='badge badge-{$color}'>".ucfirst($typeLabel).'</span>';
+            },
         ]);
 
         // Status with colored badges
         CRUD::addColumn([
             'name' => 'status',
             'type' => 'custom_html',
-            'label' => __('cms.status') . ' <i class="la la-info-circle"></i>',
+            'label' => __('cms.status').' <i class="la la-info-circle"></i>',
             'value' => function ($entry) {
                 $statusColors = [
                     'pending' => 'warning',
@@ -116,77 +124,81 @@ class TransactionController extends CrudController
                 ];
                 $color = $statusColors[$entry->status] ?? 'secondary';
                 $label = $statusLabels[$entry->status] ?? ucfirst($entry->status);
+
                 return "<span class='badge badge-{$color}'>{$label}</span>";
-            }
+            },
         ]);
 
         // Payment Gateway with icons
         CRUD::addColumn([
             'name' => 'payment_gateway',
             'type' => 'enum',
-            'label' => __('cms.payment_gateway') . ' <i class="la la-credit-card"></i>',
+            'label' => __('cms.payment_gateway').' <i class="la la-credit-card"></i>',
             'value' => function ($entry) {
-                return __('cms.' . $entry->payment_gateway);
-            }
+                return __('cms.'.$entry->payment_gateway);
+            },
         ]);
 
         // Created At with date formatting
         CRUD::addColumn([
             'name' => 'created_at',
             'type' => 'custom_html',
-            'label' => __('cms.created_at') . ' <i class="la la-calendar"></i>',
+            'label' => __('cms.created_at').' <i class="la la-calendar"></i>',
             'value' => function ($entry) {
-                return '<span class="badge badge-info">' . \Carbon\Carbon::parse($entry->created_at)->format('d M Y') . '</span>';
-            }
+                return '<span class="badge badge-info">'.Carbon::parse($entry->created_at)->format('d M Y').'</span>';
+            },
         ]);
 
-
         $this->crud->addFilter([
-            'name'  => 'status',
-            'type'  => 'dropdown',
+            'name' => 'status',
+            'type' => 'dropdown',
             'label' => __('cms.status'),
         ], [
-            'pending'   => __('cms.status_pending'),
+            'pending' => __('cms.status_pending'),
             'completed' => __('cms.status_completed'),
-            'failed'    => __('cms.status_failed'),
+            'failed' => __('cms.status_failed'),
         ], function ($value) {
             $this->crud->addClause('where', 'status', $value);
         });
 
-
         $this->crud->addFilter(
             [
-                'type'  => 'date_range',
-                'name'  => 'from_to',
+                'type' => 'date_range',
+                'name' => 'from_to',
                 'label' => __('cms.date_range'),
             ],
             false,
             function ($value) {
 
                 // تحقق أولًا إذا كان $value موجود وصالح
-                if (empty($value)) return;
+                if (empty($value)) {
+                    return;
+                }
 
                 $dates = json_decode($value);
 
-                if (!isset($dates->from) || !isset($dates->to)) return;
+                if (! isset($dates->from) || ! isset($dates->to)) {
+                    return;
+                }
 
                 // تحويل الأرقام العربية إلى إنجليزية
                 $mapping = ['٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9'];
                 $from = preg_replace_callback('/[٠-٩]/u', function ($m) use ($mapping) {
                     return $mapping[$m[0]];
                 }, $dates->from);
-                $to   = preg_replace_callback('/[٠-٩]/u', function ($m) use ($mapping) {
+                $to = preg_replace_callback('/[٠-٩]/u', function ($m) use ($mapping) {
                     return $mapping[$m[0]];
                 }, $dates->to);
 
                 try {
                     $from = Carbon::parse($from)->startOfDay()->format('Y-m-d H:i:s');
-                    $to   = Carbon::parse($to)->endOfDay()->format('Y-m-d H:i:s');
+                    $to = Carbon::parse($to)->endOfDay()->format('Y-m-d H:i:s');
 
                     $this->crud->query = $this->crud->query->whereBetween('created_at', [$from, $to]);
                 } catch (\Exception $e) {
                     // لا تفشل العملية إذا كان التاريخ غير صالح
-                    \Log::warning('Invalid date range filter: ' . $value);
+                    \Log::warning('Invalid date range filter: '.$value);
+
                     return;
                 }
             }
@@ -203,34 +215,34 @@ class TransactionController extends CrudController
             'type' => 'custom_html',
             'value' => function ($entry) {
                 return '
-                    <h5><strong>' . __('cms.transaction_details') . '</strong></h5>
+                    <h5><strong>'.__('cms.transaction_details').'</strong></h5>
                     <table class="table table-bordered">
                         <tr>
-                            <th>' . __('cms.customer') . ' <i class="la la-user"></i></th>
-                            <td>' . optional($entry->customer)?->first_name . '</td>
+                            <th>'.__('cms.customer').' <i class="la la-user"></i></th>
+                            <td>'.e(optional($entry->customer)?->first_name).'</td>
                         </tr>
                         <tr>
-                            <th>' . __('cms.number_of_booking') . ' <i class="la la-book"></i></th>
-                            <td>' . $entry->booking?->number_of_booking . '</td>
+                            <th>'.__('cms.number_of_booking').' <i class="la la-book"></i></th>
+                            <td>'.$entry->booking?->number_of_booking.'</td>
                         </tr>
                         <tr>
-                            <th>' . __('cms.reference') . ' <i class="la la-hashtag"></i></th>
-                            <td>' . $entry->transaction_reference . '</td>
+                            <th>'.__('cms.reference').' <i class="la la-hashtag"></i></th>
+                            <td>'.$entry->transaction_reference.'</td>
                         </tr>
                         <tr>
-                            <th>' . __('cms.amount') . ' <i class="la la-money"></i></th>
-                            <td><span class="text-primary font-weight-bold">' . number_format($entry->amount, 2) . ' ' . ($entry->currency === 'SAR' ? \App\Support\Riyal::svg() : e($entry->currency)) . '</span></td>
+                            <th>'.__('cms.amount').' <i class="la la-money"></i></th>
+                            <td><span class="text-primary font-weight-bold">'.number_format($entry->amount, 2).' '.($entry->currency === 'SAR' ? Riyal::svg() : e($entry->currency)).'</span></td>
                         </tr>
                         <tr>
-                            <th>' . __('cms.status') . ' <i class="la la-info-circle"></i></th>
-                            <td>' . $this->getStatusBadge($entry->status) . '</td>
+                            <th>'.__('cms.status').' <i class="la la-info-circle"></i></th>
+                            <td>'.$this->getStatusBadge($entry->status).'</td>
                         </tr>
                         <tr>
-                            <th>' . __('cms.payment_gateway') . ' <i class="la la-credit-card"></i></th>
-                            <td>' . __('cms.' . $entry->payment_gateway) . '</td>
+                            <th>'.__('cms.payment_gateway').' <i class="la la-credit-card"></i></th>
+                            <td>'.__('cms.'.$entry->payment_gateway).'</td>
                         </tr>
                     </table>';
-            }
+            },
         ]);
     }
 
@@ -248,6 +260,7 @@ class TransactionController extends CrudController
         ];
         $color = $statusColors[$status] ?? 'info';
         $label = $statusLabels[$status] ?? ucfirst($status);
+
         return "<span class='badge badge-{$color}'>{$label}</span>";
     }
 }

@@ -52,6 +52,7 @@ return [
     'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
     'otp_blocked' => 'You have requested too many verification codes. Please try again after :hours hours or contact customer service.',
     'otp_invalid' => 'The verification code is incorrect.',
+    'max_stay_exceeded' => 'A stay can be at most :nights nights.',
     'otp_too_many_attempts' => 'Too many incorrect attempts. Please request a new verification code.',
     'something_went_wrong' => 'Something went wrong, please try again.',
     'recaptcha_failed' => 'We could not verify your request. Please refresh the page and try again.',
