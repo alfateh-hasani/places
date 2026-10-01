@@ -39,25 +39,15 @@ class ApartmentController extends Controller
 
     public function index(Request $request)
     {
-        // تاريخي افتراضي للحجز لحساب التسعير (يمكنّ تعديلهما عبر الريكوست لو رغبت لاحقاً)
-        $checkIn = Carbon::today();
-        $checkOut = Carbon::tomorrow();
+        // /apartments is an entry point (favorites empty-state CTA, sitemap). Send it
+        // to the filter/listing page defaulted to Riyadh with no date window, so it
+        // shows every bookable unit there instead of a bare, date-scoped list.
+        $riyadhId = City::query()
+            ->where('name_ar', 'الرياض')
+            ->orWhere('name_en', 'Riyadh')
+            ->value('id');
 
-        $apartments = Apartment::bookable()
-            ->paginate(12);
-
-        // دمج أسعار الفترة في كل كائن
-        $apartments->getCollection()->transform(function (Apartment $apt) use ($checkIn, $checkOut) {
-            $apt->priceInfo = $this->pricing->calculate($apt, $checkIn, $checkOut);
-
-            return $apt;
-        });
-
-        $seo_title = __('site.apartments_list').' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = Config::get('settings.seo_description_'.app()->getLocale());
-        $this->generateSeo($seo_title, $seo_description, route('apartments.index'));
-
-        return view('apartment.index', compact('apartments'));
+        return redirect()->route('apartments.search', array_filter(['city_id' => $riyadhId]));
     }
 
     public function show(Request $request, $slug)
@@ -161,6 +151,11 @@ class ApartmentController extends Controller
             $checkOut = $checkIn->copy()->addDay();
         }
 
+        // Only filter by date availability when the customer actually picked a window.
+        // With no dates, return every bookable unit (the today→tomorrow window above is
+        // still used to price the cards); dates only narrow results once chosen.
+        $datesRequested = $request->filled('check_in') && $request->filled('check_out');
+
         // Price is filtered in PHP against the same per-night price shown on the
         // card (dynamic day/seasonal pricing), so the raw `price` column isn't used.
         $priceMin = is_numeric($request->price_min) ? (float) $request->price_min : null;
@@ -181,13 +176,15 @@ class ApartmentController extends Controller
 
         $query = $this->apartment::query()->bookable();
 
-        // Always show only units available for the requested window (defaults to
-        // today→tomorrow), so booked units don't appear. Canceled bookings don't block.
-        $query->whereDoesntHave('bookings', function ($q) use ($checkIn, $checkOut) {
-            $q->where('check_in', '<', $checkOut->format('Y-m-d'))
-                ->where('check_out', '>', $checkIn->format('Y-m-d'))
-                ->whereNotIn('status', [BookingStatus::Canceled->value]);
-        });
+        // When a date window is requested, hide units booked for it so only available
+        // ones show. Canceled bookings don't block. With no dates, skip this entirely.
+        if ($datesRequested) {
+            $query->whereDoesntHave('bookings', function ($q) use ($checkIn, $checkOut) {
+                $q->where('check_in', '<', $checkOut->format('Y-m-d'))
+                    ->where('check_out', '>', $checkIn->format('Y-m-d'))
+                    ->whereNotIn('status', [\App\Enums\BookingStatus::Canceled->value]);
+            });
+        }
 
         foreach ($filters as $key => $val) {
             if ($key === 'city_id') {
@@ -246,7 +243,7 @@ class ApartmentController extends Controller
             $this->pricing->calculate($apt, $checkIn, $checkOut)
         ));
 
-        if (config('ownerrez.availability.enabled')) {
+        if ($datesRequested && config('ownerrez.availability.enabled')) {
             $ci = $checkIn->format('Y-m-d');
             $co = $checkOut->format('Y-m-d');
             $matched = $matched->reject(function (Apartment $apt) use ($ci, $co) {

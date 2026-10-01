@@ -4,7 +4,9 @@
 <link rel="stylesheet" href="{{asset('assets/plugin/HoldOn.min.css')}}" />
 
 <style>
-    .bg-white {
+    /* Scope the dark override to this page's own section so it does not repaint
+       global white surfaces (header menus, login popup, SweetAlert) black. */
+    .profile .bg-white {
         background-color: #0f0c0c;
     }
 </style>

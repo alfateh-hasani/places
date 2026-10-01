@@ -23,11 +23,14 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
 
+    // Must be declared BEFORE the {slug} catch-all below, otherwise GET /apartments
+    // is captured as a CMS page slug and 404s. It redirects to the filter page.
+    Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
+
     Route::get('{slug}', [PageController::class, 'index'])->name('page');
     Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
     Route::get('city/{slug}/apartments', [HomeController::class, 'getApartmentsByCity'])->name('by-city');
     Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
-    Route::get('/apartments', [ApartmentController::class, 'index'])->name('apartments.index');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
     Route::post('/apartments/{apartmentId}/calculate-price', [ApartmentController::class, 'calculatePrice'])->name('apartments.calculate-price')->middleware('throttle:30,1');
     Route::get('/apartments/{id}/blocked-dates', [ApartmentController::class, 'blockedDates'])->name('apartments.blocked-dates');

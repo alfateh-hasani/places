@@ -15,12 +15,9 @@
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('home')}}">{{__('site.home')}}</a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','privacy-policy')}}"> {{__('site.privacy-policy')}}</a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','terms-and-conditions')}}"> {{__('site.terms')}}  </a></li>
-          <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','contact')}}">{{__('site.blogs')}}</a></li>
+          <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','blog')}}">{{__('site.blogs')}}</a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','contact')}}">
-            {{__('site.contact')}}  
-          </a></li>
-          <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','contact')}}">
-            {{__('site.contact_us_menu')}}  
+            {{__('site.contact')}}
           </a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','faq')}}">    {{__('site.faqs')}}  </a></li>
         </ul>
@@ -80,7 +77,7 @@
         @foreach($array as $key => $value)
             @if($value)
                 <li class="inline-block">
-                    <a href="{{$value}}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-blackopacity rounded-lg relative hover:bg-price ease-in-out duration-300">
+                    <a href="{{$value}}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-price rounded-lg relative hover:opacity-80 ease-in-out duration-300">
                         <img class="absolute" src="{{ asset('assets/img/'.$key.'.svg') }}" alt="{{$key}}" />
                     </a>
                 </li>

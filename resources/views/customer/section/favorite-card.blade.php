@@ -1,8 +1,21 @@
+@php
+    // A unit is available only when it is active AND its building is active
+    // (mirrors Apartment::scopeBookable). Unavailable favorites are shown here but
+    // clearly flagged instead of being hidden.
+    $isAvailable = $apartment->is_active && ($apartment->building?->is_active ?? false);
+@endphp
 <div class="rounded-xl overflow-hidden border border-border" data-wishlist-card>
     <div class="relative">
-        <div class="slider slider-checkout">
+        @unless ($isAvailable)
+            <span
+                class="absolute z-10 top-4 right-4 rtl:left-4 rtl:right-auto bg-black/70 text-white text-xs font-semibold px-3 py-1 rounded-full"
+                title="@lang('apartment.unavailable_hint')">
+                @lang('apartment.unavailable')
+            </span>
+        @endunless
+        <div class="slider slider-checkout {{ $isAvailable ? '' : 'opacity-50' }}">
             @forelse ($apartment->getMedia('image') as $image)
-                <a href="{{$apartment->link}}">
+                <a href="{{ $isAvailable ? $apartment->link : '#' }}" @unless($isAvailable) class="pointer-events-none" tabindex="-1" aria-disabled="true" @endunless>
                     <img
                         class="object-cover w-full aspect-[364/300]"
                         src="{{ $image->getUrl('grid') ?: $image->getUrl() }}"
@@ -12,7 +25,7 @@
                 </a>
             @empty
                 {{-- No photos yet: show a clean placeholder image (keeps the card shape). --}}
-                <a href="{{$apartment->link}}">
+                <a href="{{ $isAvailable ? $apartment->link : '#' }}" @unless($isAvailable) class="pointer-events-none" tabindex="-1" aria-disabled="true" @endunless>
                     <img
                         class="w-full aspect-[364/300]"
                         src="{{ url('img/placeholder.svg') }}"
@@ -32,7 +45,7 @@
         </button>
     </div>
 
-    <a href="{{$apartment->link}}" class="pt-3 px-4 pb-4 block">
+    <a href="{{ $isAvailable ? $apartment->link : '#' }}" class="pt-3 px-4 pb-4 block {{ $isAvailable ? '' : 'pointer-events-none' }}" @unless($isAvailable) tabindex="-1" aria-disabled="true" @endunless>
         <div class="flex items-center">
             <img src="{{ asset('assets/img/star.svg') }}" class="mr-2 rtl:ml-2 rtl:mr-0 h-4" />
             <p class="font-normal text-xs text-reviews">

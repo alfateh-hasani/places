@@ -68,12 +68,8 @@ span.flatpickr-day.selected{
         background-color: #f5d7d1;  
         color: #a8a8a8;  
         cursor: not-allowed; 
-        opacity: 0.6;  
+        opacity: 0.6;
     }
-    .bg-white {
-    
-    background-color: #0f0c0c;
-}
 /* SweetAlert2 buttons styling */
 .swal2-confirm {
     background-color: #3085d6 !important;

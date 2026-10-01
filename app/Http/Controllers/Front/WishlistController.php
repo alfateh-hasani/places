@@ -22,11 +22,11 @@ class WishlistController extends Controller
     public function index(): View
     {
         $customer = Auth::guard('customer')->user();
-        // Only show favorites that are still bookable (active unit + active building),
-        // so no card links to a deactivated unit. Eager-load what the card renders
-        // (media, reviews, building) to avoid an N+1 query per favorite.
+        // Show ALL saved favorites, including units that became unavailable (inactive
+        // unit or inactive building) — the card flags those with a "غير متاح" badge
+        // instead of hiding them. Eager-load what the card renders (media, reviews,
+        // building) to avoid an N+1 query per favorite.
         $favorites = $customer->favoriteApartments()
-            ->bookable()
             ->with(['media', 'reviews', 'building'])
             ->orderByPivot('created_at', 'desc')
             ->get();

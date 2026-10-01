@@ -29,6 +29,8 @@ return [
     'favorite_removed' => 'Apartment removed from favorites',
     'favorite_failed' => 'Something went wrong. Please try again.',
     'remove_from_favorites' => 'Remove from favorites',
+    'unavailable' => 'Unavailable',
+    'unavailable_hint' => 'This unit is currently unavailable for booking.',
     'no_reviews_yet' => 'No reviews yet',
     'out_of_5' => 'out of 5',
     'specifications' => 'Specifications',

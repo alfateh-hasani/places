@@ -7,6 +7,8 @@ use App\Http\Requests\BlogRequest;
 use App\Http\Requests\PageRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Backpack\CRUD\app\Library\Widget;
+use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 
 /**
  * Class ApartmentController
@@ -91,12 +93,25 @@ class BlogController extends CrudController
     protected function setupCreateOperation()
     {
         CRUD::setValidation(BlogRequest::class);
+        // Blog::getImageAttribute() (used site-wide for the public-facing photo URL) shares
+        // the 'image' name with this field, so Backpack's default value lookup ($entry->image)
+        // resolves through that accessor and hands the cropper field an already-absolute URL.
+        // The field template then prefixes its own disk base URL onto it, doubling the domain
+        // and breaking the preview. Supplying the relative media path explicitly bypasses that.
         CRUD::field('image')
             ->label(__('cms.image'))
             ->type('image')
+            ->value($this->currentImageFieldValue())
             ->withMedia([
                 'collection' => 'image', // will pick the collection definition from your model
             ]);
+
+        // Keep the image field's preview compact and tidy (the default template renders
+        // the uploaded photo at full column width/height). Scoped to the blog form only.
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.blogs.image_field_style',
+        ])->to('after_content');
 
         $this->crud->addField([
             'name' => 'name_ar',
@@ -243,6 +258,30 @@ class BlogController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+    }
+
+    /**
+     * The 'image' field's relative media path (e.g. `public/blogs/4/images/12/file.jpg`),
+     * computed the same way the media library's own uploader does it. See the comment above
+     * the 'image' field definition for why this needs to be supplied explicitly.
+     */
+    private function currentImageFieldValue(): ?string
+    {
+        $entry = $this->crud->getCurrentEntry();
+
+        // On the create page Backpack returns `false` (not `null`), so the nullsafe operator
+        // does not short-circuit — guard explicitly before touching the media relation.
+        if (! $entry) {
+            return null;
+        }
+
+        $media = $entry->getFirstMedia('image');
+
+        if (! $media) {
+            return null;
+        }
+
+        return PathGeneratorFactory::create($media)->getPath($media).$media->file_name;
     }
 
     //show operation

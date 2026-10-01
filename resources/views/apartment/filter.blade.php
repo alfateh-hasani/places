@@ -152,7 +152,7 @@
                             @foreach($filter_keys['rooms_options'] as $roomLabel)
                                 <li>
                                     <div class="flex items-center p-2 rounded hover:bg-gray-100">
-                                        <input name="rooms[]" id="checkbox-room-{{ $roomLabel }}" type="checkbox" value="{{ $roomLabel }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded" {{ in_array((string) $roomLabel, request('rooms', [])) ? 'checked' : '' }}>
+                                        <input name="rooms[]" id="checkbox-room-{{ $roomLabel }}" type="checkbox" value="{{ $roomLabel }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded" {{ in_array((string) $roomLabel, (array) request('rooms', [])) ? 'checked' : '' }}>
                                         <label for="checkbox-room-{{ $roomLabel }}" class="w-full ms-2 text-sm font-medium text-gray-900 rounded">
                                             {{ $roomLabel }}
                                         </label>
@@ -177,7 +177,7 @@
                             @foreach($filter_keys['beds_options'] as $bedsCount)
                                 <li>
                                     <div class="flex items-center p-2 rounded hover:bg-gray-100">
-                                        <input id="checkbox-bed-{{ $bedsCount }}" type="checkbox" name="beds[]" value="{{ $bedsCount }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded" {{ in_array((string) $bedsCount, request('beds', [])) ? 'checked' : '' }}>
+                                        <input id="checkbox-bed-{{ $bedsCount }}" type="checkbox" name="beds[]" value="{{ $bedsCount }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded" {{ in_array((string) $bedsCount, (array) request('beds', [])) ? 'checked' : '' }}>
                                         <label for="checkbox-bed-{{ $bedsCount }}" class="w-full ms-2 text-sm font-medium text-gray-900 rounded">
                                             {{ $bedsCount }}
                                         </label>

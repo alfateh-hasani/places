@@ -23,6 +23,27 @@
         background-color: #e5e7eb;
         color: #374151;
     }
+
+    /* rtl.css forces direction:rtl on every input, which reverses phone digits
+       and the leading +code. Force phone fields left-to-right so the number
+       reads in the correct order. */
+    #customerForm input[type="tel"] {
+        direction: ltr !important;
+        text-align: left !important;
+        unicode-bidi: isolate;
+    }
+
+    /* intl-tel-input (emergency phone): on this RTL page the widget's dial codes
+       render reversed ("966+") and the dropdown misaligns. Force the whole widget
+       LTR and tidy the country list so it reads correctly. */
+    .iti { direction: ltr; width: 100%; }
+    .iti__selected-dial-code { direction: ltr; unicode-bidi: isolate; }
+    .iti__dropdown-content { direction: ltr; text-align: left; }
+    .iti__search-input { direction: ltr; text-align: left; }
+    .iti__country { text-align: left; }
+    .iti__country .iti__dial-code { direction: ltr; unicode-bidi: isolate; color: #6b7280; }
+    /* Keep the flag box on the left and give the selected-country button room. */
+    .iti__selected-country { direction: ltr; }
 </style>
 @endpush
 @section('content')
@@ -114,6 +135,9 @@
         loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
         initialCountry: "SA",
         separateDialCode: true,
+        // Append the dropdown to <body> so it is not clipped/overflowed inside the
+        // card on this RTL page; the library positions it as a fixed overlay.
+        dropdownContainer: document.body,
     });
 
     const changeIcon = (el) => {
