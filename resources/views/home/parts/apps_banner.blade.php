@@ -1,6 +1,8 @@
 <section class="app   relative">
     <img
         src="{{ asset('assets/images/1-01.webp') }}"
+        srcset="{{ asset('assets/images/1-01-480.webp') }} 480w, {{ asset('assets/images/1-01-960.webp') }} 960w, {{ asset('assets/images/1-01.webp') }} 1920w"
+        sizes="100vw"
         width="1920"
         height="695"
         class="absolute bottom-0 left-0 right-0 w-full"
@@ -37,8 +39,8 @@
             <div class="text-right rtl:text-left mt-10 lg:mt-0">
                 <img
                     src="{{ asset('assets/images/appsback2.webp') }}"
-                    srcset="{{ asset('assets/images/appsback2-600.webp') }} 600w, {{ asset('assets/images/appsback2.webp') }} 1200w"
-                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    srcset="{{ asset('assets/images/appsback2-400.webp') }} 400w, {{ asset('assets/images/appsback2-600.webp') }} 600w, {{ asset('assets/images/appsback2-800.webp') }} 800w, {{ asset('assets/images/appsback2.webp') }} 1200w"
+                    sizes="(min-width: 1024px) 640px, calc(100vw - 32px)"
                     width="1200"
                     height="970"
                     class="inline"
