@@ -126,6 +126,7 @@ return [
     'coupon_discount' => 'كوبون الخصم',
     'contact' => 'تواصل معنا',
     'menu' => 'القائمة',
+    'close' => 'إغلاق',
     'download_app' => 'تحميل التطبيق',
     'download_app_desc' => 'استكشف أفضل الشقق الفندقية في المملكة العربية السعودية',
     'download_apple' => 'حمّل من App Store',

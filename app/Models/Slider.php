@@ -35,6 +35,37 @@ class Slider extends Model implements HasMedia
             ->fit(Fit::Crop, 2732, 920)
             ->format('webp')                         // Convert to WebP format
             ->nonQueued();                           // Process synchronously (optional)
+
+        $this->addMediaConversion('hero')
+            ->performOnCollections('image_ar', 'image_en')
+            ->fit(Fit::Max, 1600, 1600)
+            ->quality(80)
+            ->format('webp')
+            ->nonQueued();
+
+        $this->addMediaConversion('hero_mobile')
+            ->performOnCollections('image_mobile_ar', 'image_mobile_en')
+            ->fit(Fit::Max, 900, 1400)
+            ->quality(80)
+            ->format('webp')
+            ->nonQueued();
+    }
+
+    /**
+     * URL of a display-sized conversion, falling back to the original
+     * upload when the conversion has not been generated yet.
+     */
+    public function displayImageUrl(string $collection, string $conversion): string
+    {
+        $media = $this->getFirstMedia($collection);
+
+        if (! $media) {
+            return '';
+        }
+
+        return $media->hasGeneratedConversion($conversion)
+            ? $media->getUrl($conversion)
+            : $media->getUrl();
     }
 
     public function getImageArAttribute()

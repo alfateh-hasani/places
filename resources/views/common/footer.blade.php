@@ -8,9 +8,9 @@
         </p>
       </div>
       <div class="my-6 lg:my-0">
-        <h6 class="font-semibold text-xl text-black">
+        <h2 class="font-semibold text-xl text-black">
             {{__('site.quick_links')}}
-        </h6> 
+        </h2> 
         <ul class="mt-4 lg:mt-10 grid grid-cols-2 gap-2 max-w-full mx-0">
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('home')}}">{{__('site.home')}}</a></li>
           <li><a class="block font-light text-black mb-2 lg:mb-5 hover:text-price ease-in-out duration-300" href="{{route('page','privacy-policy')}}"> {{__('site.privacy-policy')}}</a></li>
@@ -23,9 +23,9 @@
         </ul>
       </div>
       <div>
-        <h6 class="font-semibold text-xl text-black">
+        <h2 class="font-semibold text-xl text-black">
             {{__('site.contact_us_menu')}}
-        </h6>
+        </h2>
         <ul class="mt-4 lg:mt-10">
           <li>
             <a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300" href="mailto:{{Config::get('settings.email')}}">

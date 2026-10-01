@@ -1905,11 +1905,11 @@ section.comments .comment-list:after {
   background: -o-linear-gradient(left, transparent, #fff);
   background: linear-gradient(to right, transparent, #fff); }
 
-section.comments .comment-list ul {
+section.comments .comment-list .comment-slider {
   width: 120vw; }
-  section.comments .comment-list ul li a div img {
+  section.comments .comment-list .comment-slider .comment-card div img {
     display: inline-block !important; }
-  section.comments .comment-list ul.comment-slider-2 {
+  section.comments .comment-list .comment-slider-2 {
     margin-left: -20vw; }
 
 section.filter .buttons {
@@ -2162,7 +2162,7 @@ section.properitirs .slider a ul li + li {
       left: 20px; }
     section.properitirs .slider .slick-arrow.slick-next {
       right: 20px; }
-  section.comments .comment-list ul {
+  section.comments .comment-list .comment-slider {
     width: 100vw;
     margin-left: 0 !important; } }
 

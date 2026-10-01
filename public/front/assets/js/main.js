@@ -4,6 +4,18 @@ AOS.init();
 
 $(document).ready(function () {
 
+    // Slides hidden from assistive tech must not contain tabbable links.
+    $(document).on("init reInit afterChange setPosition", function (event, slick) {
+        if (!slick || !slick.$slider) {
+            return;
+        }
+        var focusable = "a, button, input, select, textarea";
+        $(".slick-slider [aria-hidden='true']").find(focusable).attr("tabindex", "-1");
+        $(".slick-slider [aria-hidden='false']").find(focusable).filter(function () {
+            return !$(this).closest("[aria-hidden='true']").length;
+        }).removeAttr("tabindex");
+    });
+
     $(".select2").select2();
 
     if ($('.js-searchBox').length) {
@@ -85,7 +97,7 @@ $(document).ready(function () {
         $("header .left-menu").removeClass("active");
     });
 
-    $('[dir="ltr"] .comment-list ul.comment-slider-1').slick({
+    $('[dir="ltr"] .comment-list .comment-slider-1').slick({
         centerMode: true,
         slidesToShow: 6,
         slidesToScroll: 1,
@@ -116,7 +128,7 @@ $(document).ready(function () {
         ]
     });
 
-    $('[dir="rtl"] .comment-list ul.comment-slider-1').slick({
+    $('[dir="rtl"] .comment-list .comment-slider-1').slick({
         centerMode: true,
         rtl: true,
         slidesToShow: 6,
@@ -148,7 +160,7 @@ $(document).ready(function () {
         ]
     });
 
-    $('[dir="ltr"] .comment-list ul.comment-slider-2').slick({
+    $('[dir="ltr"] .comment-list .comment-slider-2').slick({
         centerMode: true,
         slidesToShow: 6,
         slidesToScroll: 1,
@@ -179,7 +191,7 @@ $(document).ready(function () {
         ]
     });
 
-    $('[dir="rtl"] .comment-list ul.comment-slider-2').slick({
+    $('[dir="rtl"] .comment-list .comment-slider-2').slick({
         rtl: true,
         centerMode: true,
         slidesToShow: 6,
