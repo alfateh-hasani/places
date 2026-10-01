@@ -52,9 +52,11 @@ class GeideaPayment implements PaymentMethodInterface
 
         Log::channel('geidea')->info('Geidea createSession', [
             'url' => $url,
-            'payload' => $payload,
+            'merchantReferenceId' => $payload['merchantReferenceId'] ?? null,
+            'amount' => $payload['amount'] ?? null,
+            'currency' => $payload['currency'] ?? null,
             'status' => $response->status(),
-            'response' => $response->json(),
+            'response' => self::logSummary($response->json()),
         ]);
 
         if ($response->successful()) {
@@ -76,11 +78,41 @@ class GeideaPayment implements PaymentMethodInterface
         Log::channel('geidea')
             ->info('Geidea retrievePayment', [
                 'orderId' => $orderId,
-                'response' => $response->json(),
+                'response' => self::logSummary($response->json()),
                 'status' => $response->status(),
             ]);
 
         return $response->successful() ? $response->json() : false;
+    }
+
+    /**
+     * The fields needed to trace a payment, without the customer's name, email, phone or
+     * card details that Geidea echoes back — logs must not become a copy of customer data.
+     *
+     * @param  array<string, mixed>|null  $body  A Geidea request/response/webhook body
+     * @return array<string, mixed>
+     */
+    public static function logSummary(?array $body): array
+    {
+        if (! $body) {
+            return [];
+        }
+
+        $order = is_array($body['order'] ?? null) ? $body['order'] : [];
+
+        return array_filter([
+            'responseCode' => $body['responseCode'] ?? null,
+            'detailedResponseCode' => $body['detailedResponseCode'] ?? null,
+            'detailedResponseMessage' => $body['detailedResponseMessage'] ?? null,
+            'sessionId' => $body['session']['id'] ?? null,
+            'orderId' => $order['orderId'] ?? $body['orderId'] ?? null,
+            'merchantReferenceId' => $order['merchantReferenceId'] ?? $body['merchantReferenceId'] ?? null,
+            'amount' => $order['amount'] ?? $body['amount'] ?? null,
+            'currency' => $order['currency'] ?? $body['currency'] ?? null,
+            'status' => $order['status'] ?? $body['status'] ?? null,
+            'detailedStatus' => $order['detailedStatus'] ?? $body['detailedStatus'] ?? null,
+            'totalRefundedAmount' => $order['totalRefundedAmount'] ?? null,
+        ], fn ($value) => $value !== null);
     }
 
     /**
@@ -283,7 +315,7 @@ class GeideaPayment implements PaymentMethodInterface
         Log::channel('geidea')->info('Geidea Refund', [
             'orderId' => $orderId,
             'amount' => $amount,
-            'response' => $response->json(),
+            'response' => self::logSummary($response->json()),
             'status' => $response->status(),
         ]);
 
