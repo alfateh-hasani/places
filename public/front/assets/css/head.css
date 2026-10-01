@@ -1,0 +1,125 @@
+/* Site-wide overrides formerly inlined in layouts/parts/head.blade.php. */
+.datepicker-cell {
+        color: #787e8b !important;
+      }
+      .focused {
+        color: black !important;
+      }
+      .select2-selection {
+        border: none !important;
+      }
+      .select2-container--default
+        .select2-selection--single
+        .select2-selection__rendered {
+        color: inherit !important;
+      }
+      .view-switch,
+      .prev-btn > svg,
+      .next-btn > svg {
+        color: #000 !important;
+      }
+      .range-start {
+        color: white !important;
+      }
+
+      /* Guarantee a consistent side gutter on every device: overrides
+         Tailwind's zero-padding .container (tailwind.css is loaded last in the
+         head), which otherwise makes content touch the screen edge.
+         Uses inner padding (border-box) instead of a calc() max-width so the
+         gutter is identical on every device and never collapses to zero. */
+      .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+      @media (min-width: 768px) {
+        .container {
+          padding-left: 24px !important;
+          padding-right: 24px !important;
+        }
+      }
+      @media (min-width: 1280px) {
+        .container {
+          padding-left: 32px !important;
+          padding-right: 32px !important;
+        }
+      }
+
+      /* Scroll position indicator (thumb) stays visible while the scrollbar
+         track/gutter is fully transparent. The page scrollbar runs over both
+         the dark header/sections and the light content, so the thumb uses the
+         brand accent (#f7bb8e) — it reads clearly on light AND dark and looks
+         intentional. A transparent border padded via background-clip keeps the
+         pill slim with breathing room from the edge. */
+      * {
+        scrollbar-width: thin;                        /* Firefox */
+        scrollbar-color: #f7bb8e transparent;         /* thumb, track */
+      }
+      *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+        background: transparent;
+      }
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      *::-webkit-scrollbar-thumb {
+        background-color: #f7bb8e;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        border-radius: 999px;
+      }
+      *::-webkit-scrollbar-thumb:hover {
+        background-color: #f0a86e;
+      }
+
+      section.app {
+
+    background: #171515 !important;
+}
+
+@media (max-width: 768px) {
+  section.app.relative img {
+    margin: auto;
+    text-align: center;
+}
+section.app.relative a {
+    margin-right: 10px !important;
+    margin-left: 10px !important;
+    display: inline-block;
+}
+
+section.app.relative > div {
+    text-align: center;
+}
+}
+
+      /* Reviews strip: the left/right fade masks are 100px each, which on a
+         phone cover most of a ~375px-wide card and hide the review text.
+         Shrink them on small screens so the review stays readable. */
+      @media (max-width: 768px) {
+        section.comments .comment-list:before,
+        section.comments .comment-list:after {
+          width: 24px;
+        }
+      }
+
+      /* Saudi Riyal symbol (U+20C1). Rendered by the x-riyal component and
+         window.formatSAR(). Uses the "saudi_riyal" webfont loaded in the page
+         head; inherits color/size from the surrounding text and is nudged to sit
+         on the baseline. When OS fonts ship the glyph natively, append a system
+         font to this stack and the CDN font can be dropped. */
+      .sar-symbol {
+        font-family: 'saudi_riyal', sans-serif;
+        font-style: normal;
+        font-weight: inherit;
+        line-height: 1;
+        display: inline-block;
+        vertical-align: -0.075em;
+      }
+      .sar-symbol--bold {
+        font-family: 'saudi_riyal_bold', sans-serif;
+      }

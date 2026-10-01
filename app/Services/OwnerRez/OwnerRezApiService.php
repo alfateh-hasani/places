@@ -479,13 +479,22 @@ class OwnerRezApiService
         ?int $statusCode,
         ?int $durationMs
     ): void {
-        OwnerRezApiLog::logRequest(
-            $endpoint,
-            $method,
-            $requestData,
-            $responseData,
-            $statusCode,
-            $durationMs
-        );
+        // Logging is diagnostic only — a logging failure must never fail the API call itself
+        // (a missing ownerrez_api_logs table once broke every inbound webhook).
+        try {
+            OwnerRezApiLog::logRequest(
+                $endpoint,
+                $method,
+                $requestData,
+                $responseData,
+                $statusCode,
+                $durationMs
+            );
+        } catch (\Throwable $e) {
+            Log::warning('OwnerRez API request could not be logged', [
+                'endpoint' => $endpoint,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

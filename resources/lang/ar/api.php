@@ -63,6 +63,7 @@ return [
 
     // نقل الوحدة
     'apartment_not_available' => 'الشقة غير متاحة.',
+    'too_many_pending_bookings' => 'لديك حجوزات غير مكتملة بانتظار الدفع. أكملها أو ألغها أولاً.',
     'booking_cannot_be_transferred' => 'لا يمكن نقل هذا الحجز.',
     'unit_transfer_resolve_date_change_first' => 'يجب حل طلب تعديل التواريخ المفتوح قبل نقل الوحدة.',
     'unit_transfer_already_pending' => 'يوجد طلب نقل وحدة قيد الانتظار لهذا الحجز بالفعل.',

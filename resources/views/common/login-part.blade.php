@@ -44,7 +44,7 @@
       <div class="px-5 text-left rtl:text-right pt-8">
           <p class="font-semibold text-xl mb-6">
               @lang('site.welcome_back')
-              <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" />
+              <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="" />
           </p>
           <p class="text-sm mb-4">
               @lang('site.enter_code_sms') <span dir="ltr" id="phone-number" style="direction:ltr; unicode-bidi:isolate; display:inline-block;"></span>:
@@ -106,7 +106,7 @@
       <div class="px-5 text-left rtl:text-right pt-8">
           <p class="font-semibold text-xl mb-6 rtl:mb-4">
               @lang('site.welcome_to_dyafa') 
-              <img class="h-8 inline-block rtl:ml-2" src="{{ asset('assets/img/goodbye.png') }}" />
+              <img class="h-8 inline-block rtl:ml-2" src="{{ asset('assets/img/goodbye.png') }}" alt="" />
           </p>
 
           <form>

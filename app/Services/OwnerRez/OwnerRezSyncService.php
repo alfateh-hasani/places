@@ -2,9 +2,12 @@
 
 namespace App\Services\OwnerRez;
 
+use App\Enums\BookingStatus;
 use App\Enums\CustomerSource;
 use App\Exceptions\OwnerRez\BookingConflictException;
 use App\Exceptions\OwnerRez\OwnerRezApiException;
+use App\Jobs\OwnerRez\RefreshCalendarCacheJob;
+use App\Mail\BlockedCustomerBookingSynced;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\BookingChannelConflict;
@@ -12,7 +15,6 @@ use App\Models\Customer;
 use App\Models\OwnerRezBooking;
 use App\Models\OwnerRezPropertyMapping;
 use App\Models\User;
-use App\Mail\BlockedCustomerBookingSynced;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -32,7 +34,7 @@ class OwnerRezSyncService
      */
     /**
      * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
-     *                                                      (used when re-checking a booking's own new range).
+     *                                                     (used when re-checking a booking's own new range).
      * @param  bool  $liveCheck  Skip the 5-minute cache and query OwnerRez fresh (single attempt,
      *                           no retry — fails fast rather than extending how long the apartment
      *                           lock is held). Reserved for the authoritative check at the moment a
@@ -131,7 +133,7 @@ class OwnerRezSyncService
      */
     /**
      * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
-     *                                                      (filtered post-cache so the cache stays shared).
+     *                                                     (filtered post-cache so the cache stays shared).
      * @param  bool  $liveCheck  Bypass the cache and fetch fresh from OwnerRez, then refresh the
      *                           cache with the result so other/subsequent cached readers benefit
      *                           too. No retry on failure — this runs while the apartment row lock
@@ -214,6 +216,20 @@ class OwnerRezSyncService
             $bookingData['id'] = $webhookData['entity_id'];
         }
 
+        // The webhook is authenticated only by a shared Basic-auth secret, so its body is
+        // never trusted: every action is re-read from the OwnerRez API and only that state
+        // is applied. A forged create/update can't invent a booking (and a lock passcode),
+        // and a forged delete can't cancel a booking that is still live in OwnerRez.
+        if (in_array($action, ['entity_create', 'entity_update', 'entity_delete'], true)) {
+            $verifiedData = $this->fetchVerifiedWebhookBooking($action, $webhookData['entity_id'] ?? $bookingData['id'] ?? null);
+
+            if ($verifiedData === null) {
+                return;
+            }
+
+            $bookingData = $verifiedData;
+        }
+
         Log::channel('ownerrez_webhook')->info('OwnerRez webhook processing started', [
             'action' => $action,
             'entity_id' => $webhookData['entity_id'] ?? null,
@@ -234,6 +250,59 @@ class OwnerRezSyncService
         if (isset($bookingData['property_id'])) {
             $this->invalidatePropertyCache($bookingData['property_id']);
         }
+    }
+
+    /**
+     * The OwnerRez API's view of the webhook's booking, or null when the webhook must be
+     * ignored: the id is missing, the booking doesn't exist (create/update), or a delete
+     * arrives for a booking OwnerRez still reports as live. API/network failures are
+     * rethrown so the queued job retries instead of falling back to the webhook body.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function fetchVerifiedWebhookBooking(string $action, int|string|null $entityId): ?array
+    {
+        $logger = Log::channel('ownerrez_webhook');
+
+        if (! $entityId || ! is_numeric($entityId)) {
+            $logger->warning('OwnerRez webhook ignored - missing entity id', ['action' => $action]);
+
+            return null;
+        }
+
+        try {
+            $apiBooking = $this->apiService->getBooking((int) $entityId);
+        } catch (OwnerRezApiException $e) {
+            if ($e->getStatusCode() !== 404) {
+                throw $e;
+            }
+
+            if ($action === 'entity_delete') {
+                return ['id' => $entityId];
+            }
+
+            $logger->warning('OwnerRez webhook ignored - booking not found via API', [
+                'action' => $action,
+                'entity_id' => $entityId,
+            ]);
+
+            return null;
+        }
+
+        if (empty($apiBooking)) {
+            throw new \RuntimeException("OwnerRez API returned an empty booking for {$entityId}");
+        }
+
+        if ($action === 'entity_delete' && ($apiBooking['status'] ?? null) !== 'canceled') {
+            $logger->warning('OwnerRez delete webhook ignored - booking is still live in OwnerRez', [
+                'entity_id' => $entityId,
+                'api_status' => $apiBooking['status'] ?? null,
+            ]);
+
+            return null;
+        }
+
+        return array_merge($apiBooking, ['id' => $entityId]);
     }
 
     /**
@@ -321,24 +390,7 @@ class OwnerRezSyncService
             return;
         }
 
-        // Fetch full booking data from API before creating
-        try {
-            $fullBookingData = $this->apiService->getBooking($ownerrezBookingId);
-            Log::info('Full booking data from API', ['full_booking_data' => $fullBookingData]);
-            if (! empty($fullBookingData)) {
-                // Merge API data with webhook data (API takes precedence)
-                $bookingData = $fullBookingData;
-                Log::info('F full booking data from API', [
-                    'booking_id' => $ownerrezBookingId,
-                    'booking_data' => $bookingData,
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::warning('Failed to fetch full booking before creation, using webhook data', [
-                'booking_id' => $ownerrezBookingId,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // $bookingData already comes from the OwnerRez API (see fetchVerifiedWebhookBooking).
 
         // Create local booking
         $storageStage = 'transaction_not_started';
@@ -679,12 +731,12 @@ class OwnerRezSyncService
         // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد خطوة منفصلة يُنفّذها الموظف من زر
         // "إدارة الإلغاء" على الحجز بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
         // refund_status يبقى كما هو (pending لطلبات العملاء) لتظهر خطوة الاسترداد.
-        if ($booking->status === \App\Enums\BookingStatus::Canceled->value) {
+        if ($booking->status === BookingStatus::Canceled->value) {
             return;
         }
 
         $booking->update([
-            'status' => \App\Enums\BookingStatus::Canceled->value,
+            'status' => BookingStatus::Canceled->value,
         ]);
 
         // حرّرت الوحدة — امسح كاش التقويم وأعد تسخينه ليظهر التوفّر مباشرةً.
@@ -979,8 +1031,8 @@ class OwnerRezSyncService
         }
 
         // Calculate number of nights
-        $checkIn = \Carbon\Carbon::parse($data['arrival']);
-        $checkOut = \Carbon\Carbon::parse($data['departure']);
+        $checkIn = Carbon::parse($data['arrival']);
+        $checkOut = Carbon::parse($data['departure']);
         $numberOfNights = $checkIn->diffInDays($checkOut);
 
         // Calculate one night price
@@ -1255,6 +1307,6 @@ class OwnerRezSyncService
         // مسح كاش الـ availability (blocks + bookings) بحيث يُعاد جلبها
         Cache::forget("ownerrez:calendar:v1:{$propertyId}");
 
-        \App\Jobs\OwnerRez\RefreshCalendarCacheJob::dispatch($propertyId);
+        RefreshCalendarCacheJob::dispatch($propertyId);
     }
 }

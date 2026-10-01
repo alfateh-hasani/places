@@ -57,6 +57,7 @@ return [
 
     // Unit transfer
     'apartment_not_available' => 'The apartment is not available.',
+    'too_many_pending_bookings' => 'You have unfinished bookings awaiting payment. Complete or cancel them first.',
     'booking_cannot_be_transferred' => 'This booking cannot be transferred.',
     'unit_transfer_resolve_date_change_first' => 'Resolve the open date-change request before transferring the unit.',
     'unit_transfer_already_pending' => 'There is already a pending unit transfer for this booking.',

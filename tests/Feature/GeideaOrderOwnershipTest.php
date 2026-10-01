@@ -78,4 +78,27 @@ class GeideaOrderOwnershipTest extends TestCase
     {
         $this->assertFalse((new GeideaPayment)->isPaidForTransaction(false, $this->transaction()));
     }
+
+    public function test_log_summary_drops_customer_details(): void
+    {
+        $summary = GeideaPayment::logSummary([
+            'responseCode' => '000',
+            'order' => [
+                'orderId' => 'order-1',
+                'merchantReferenceId' => 'ref-2026-000501',
+                'amount' => 450.00,
+                'currency' => 'SAR',
+                'detailedStatus' => 'Paid',
+                'customer' => ['email' => 'guest@example.com', 'phoneNumber' => '+966500000000', 'firstName' => 'Guest'],
+                'paymentMethod' => ['maskedCardNumber' => '411111******1111', 'cardholderName' => 'GUEST'],
+            ],
+        ]);
+
+        $this->assertSame('ref-2026-000501', $summary['merchantReferenceId']);
+        $this->assertSame('Paid', $summary['detailedStatus']);
+        $encoded = json_encode($summary);
+        foreach (['guest@example.com', '+966500000000', 'Guest', '411111', 'GUEST'] as $personalData) {
+            $this->assertStringNotContainsString($personalData, $encoded);
+        }
+    }
 }

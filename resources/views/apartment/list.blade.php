@@ -6,7 +6,7 @@
 <h1 class="sr-only">{{ __('site.search_results') }}</h1>
 <section class="container py-6 lg:hidden cursor-pointer search-button">
     <div class="flex items-center gap-3 px-5 py-4 bg-white shadow-xl rounded-full border border-border">
-        <img src="{{asset('assets/img/search-black.svg')}}" class="w-5 shrink-0" />
+        <img src="{{asset('assets/img/search-black.svg')}}" class="w-5 shrink-0" width="16" height="16" />
         <p class="text-sm text-gray-500 truncate">{{ __('site.search_mobile_desc') }}</p>
     </div>
 </section>

@@ -20,8 +20,8 @@
 
 
         @php
-            $shareUrl = urlencode(Request::fullUrl());
-            $shareText = urlencode($blog->{'name_'.app()->getLocale()});
+            $shareUrl = urlencode(route('blog', $blog->slug));
+            $shareTitle = urlencode($blog->{'name_'.app()->getLocale()});
         @endphp
         <ul class="social inline-block">
             <li class="inline-block">
@@ -30,17 +30,18 @@
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="https://twitter.com/share?url={{ $shareUrl }}&text={{ $shareText }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
+            <a href="https://twitter.com/share?url={{ $shareUrl }}&text={{ $shareTitle }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
             <img class="w-4 h-4 object-contain" src="{{ asset('assets/img/twitter.svg') }}" alt="twitter">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="{{ Config::get('settings.instagram') ?: '#' }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
+            {{-- Instagram has no web share URL, so this opens the company profile from settings. --}}
+            <a href="{{ Config::get('settings.instagram') ?: 'https://www.instagram.com/' }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
             <img class="w-4 h-4 object-contain" src="{{ asset('assets/img/instagram.svg') }}" alt="instagram">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="https://www.linkedin.com/shareArticle?url={{ $shareUrl }}&title={{ $shareText }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
+            <a href="https://www.linkedin.com/shareArticle?url={{ $shareUrl }}&title={{ $shareTitle }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
             <img class="w-4 h-4 object-contain" src="{{ asset('assets/img/linkedin.svg') }}" alt="linkedin">
             </a>
             </li>

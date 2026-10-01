@@ -1,9 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap");
-@import url("https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css");
-@import url("https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css");
-@import url("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css");
-@import url("https://unpkg.com/aos@2.3.1/dist/aos.css");
-@import url("https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css");
 @charest "utf-8";
 /*!
  * Hamburgers
@@ -1905,11 +1899,11 @@ section.comments .comment-list:after {
   background: -o-linear-gradient(left, transparent, #fff);
   background: linear-gradient(to right, transparent, #fff); }
 
-section.comments .comment-list ul {
+section.comments .comment-list .comment-slider {
   width: 120vw; }
-  section.comments .comment-list ul li a div img {
+  section.comments .comment-list .comment-slider .comment-card div img {
     display: inline-block !important; }
-  section.comments .comment-list ul.comment-slider-2 {
+  section.comments .comment-list .comment-slider-2 {
     margin-left: -20vw; }
 
 section.filter .buttons {
@@ -2162,7 +2156,7 @@ section.properitirs .slider a ul li + li {
       left: 20px; }
     section.properitirs .slider .slick-arrow.slick-next {
       right: 20px; }
-  section.comments .comment-list ul {
+  section.comments .comment-list .comment-slider {
     width: 100vw;
     margin-left: 0 !important; } }
 

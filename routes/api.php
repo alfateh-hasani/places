@@ -46,11 +46,11 @@ Route::middleware('appSecret')->group(function () {
             Route::get('login-apartment', 'loginApartment');
             Route::get('entry-apartment', 'entryApartment');
             Route::post('cancel-booking', 'cancelBooking'); // إلغاء الحجز من العميل
-            Route::post('add-booking', 'addBooking');
+            Route::post('add-booking', 'addBooking')->middleware('throttle:30,1');
             Route::get('get-booking-via-customer', 'getBookingViaCustomer');
-            Route::post('determine-booking', 'determineBookingStatus');
-            Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
-            Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon');
+            Route::post('determine-booking', 'determineBookingStatus')->middleware('throttle:30,1');
+            Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon')->middleware('throttle:30,1');
+            Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon')->middleware('throttle:30,1');
             Route::get('get-services', 'getServices');
             Route::post('add-services-to-booking', 'addServicesToBooking');
             Route::post('booking-services', 'bookingServices');

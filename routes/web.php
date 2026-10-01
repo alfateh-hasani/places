@@ -2,18 +2,26 @@
 
 use App\Http\Controllers\Front\ApartmentController;
 use App\Http\Controllers\Front\ApartmentsICSController;
+use App\Http\Controllers\Front\Auth\LoginController;
 use App\Http\Controllers\Front\BookingController;
+use App\Http\Controllers\Front\CspReportController;
 use App\Http\Controllers\Front\CustomerAccountController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\PageController;
 use App\Http\Controllers\Front\RobotsController;
 use App\Http\Controllers\Front\SitemapController;
 use App\Http\Controllers\Front\WishlistController;
+use App\Http\Controllers\PushSubscriptionController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/apartments/{apartment}/unit.ics', [ApartmentsICSController::class, 'generateICS'])->name('apartments.ics');
 Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('robots.txt', [RobotsController::class, 'index'])->name('robots');
+Route::post('csp-report', CspReportController::class)
+    ->middleware('throttle:30,1')
+    ->withoutMiddleware(ValidateCsrfToken::class)
+    ->name('csp-report');
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     Route::get('apartments-filter', [ApartmentController::class, 'search'])->name('apartments.search');
@@ -30,7 +38,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     Route::get('city/{slug}/apartments', [HomeController::class, 'getApartmentsByCity'])->name('by-city');
     Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
-    Route::post('/apartments/{apartmentId}/calculate-price', [ApartmentController::class, 'calculatePrice'])->name('apartments.calculate-price');
+    Route::post('/apartments/{apartmentId}/calculate-price', [ApartmentController::class, 'calculatePrice'])->name('apartments.calculate-price')->middleware('throttle:30,1');
     Route::get('/apartments/{id}/blocked-dates', [ApartmentController::class, 'blockedDates'])->name('apartments.blocked-dates');
     // NOTE: named `building.details` (not `building.show`) on purpose — Backpack's
     // Route::crud('building', ...) auto-generates an admin route named `building.show`,
@@ -40,22 +48,22 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     Route::get('building/{slug}', [ApartmentController::class, 'getApartmentBuliding'])->name('building.details');
     // Old, misspelled URL — kept as a permanent redirect so previously indexed/shared links keep working.
     // TODO:: remove this after month today is 14/septemper 9 / 2026
-    Route::get('buliding/{slug}', fn($slug) => redirect()->route('building.details', ['slug' => $slug], 301));
+    Route::get('buliding/{slug}', fn ($slug) => redirect()->route('building.details', ['slug' => $slug], 301));
     // search
 
     Route::middleware('guest:customer')->group(function () {
-        Route::post('/request-otp', [\App\Http\Controllers\Front\Auth\LoginController::class, 'requestOtp'])->name('login.step1');
-        Route::post('/resend-otp', [\App\Http\Controllers\Front\Auth\LoginController::class, 'resendOtp'])->name('login.resend_otp');
-        Route::post('/verify-otp', [\App\Http\Controllers\Front\Auth\LoginController::class, 'verifyOtp'])->name('login.step2');
-        Route::post('/register', [\App\Http\Controllers\Front\Auth\LoginController::class, 'registerUser'])->name('login.register');
+        Route::post('/request-otp', [LoginController::class, 'requestOtp'])->name('login.step1');
+        Route::post('/resend-otp', [LoginController::class, 'resendOtp'])->name('login.resend_otp');
+        Route::post('/verify-otp', [LoginController::class, 'verifyOtp'])->name('login.step2');
+        Route::post('/register', [LoginController::class, 'registerUser'])->name('login.register');
     });
 
     Route::middleware(['auth:customer', 'customer.not_blocked'])->group(function () {
-        Route::post('/logout', [\App\Http\Controllers\Front\Auth\LoginController::class, 'logout'])->name('customer.logout');
+        Route::post('/logout', [LoginController::class, 'logout'])->name('customer.logout');
 
         // Browser Web Push subscription for the logged-in web customer.
-        Route::post('/push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])->name('customer.push.subscribe');
-        Route::delete('/push/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'unsubscribe'])->name('customer.push.unsubscribe');
+        Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe'])->name('customer.push.subscribe');
+        Route::delete('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe'])->name('customer.push.unsubscribe');
         Route::controller(CustomerAccountController::class)->name('customer.')->prefix('customer')->group(function () {
             Route::get('account', 'profile')->name('account');
             Route::post('account-update', 'update')->name('profile-update');
@@ -73,7 +81,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
             Route::post('toggle-favorite', 'toggle')->name('toggle.favorite');
         });
         Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
-            Route::post('start-booking/{apartment_id}', 'determineBookingStatus')->name('determine');
+            Route::post('start-booking/{apartment_id}', 'determineBookingStatus')->name('determine')->middleware('throttle:30,1');
             Route::get('confirm-booking/{uuid}', 'confirmBooking')->name('confirm-booking');
             Route::post('start-payment/{uuid}', 'startPayment')->name('add');
             // Graceful fallback: a GET on the POST-only payment route (browser back / direct visit)
@@ -81,7 +89,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
             Route::get('start-payment/{uuid}', fn ($uuid) => redirect()->route('web-booking.confirm-booking', ['uuid' => $uuid]))->name('add.get');
             Route::get('{code}/callback/{transaction_id}', 'paymentMethodCallBack')->name('paymentMethodCallBack');
             Route::get('login-apartment', 'loginApartment')->name('login');
-            Route::post('coupons-verify/{uuid}', 'couponsVerify')->name('coupons.verify');
+            Route::post('coupons-verify/{uuid}', 'couponsVerify')->name('coupons.verify')->middleware('throttle:30,1');
             Route::post('remove-coupon/{uuid}', [BookingController::class, 'removeCoupon'])->name('coupons.remove');
 
             Route::post('cancel-booking', 'cancelBooking')->name('cancel');

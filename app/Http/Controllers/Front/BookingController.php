@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Enums\BookingStatus;
 use App\Enums\DateChangeStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\BookingCanceled;
@@ -13,6 +14,7 @@ use App\Models\Building;
 use App\Models\DateChangeRequest;
 use App\Models\Policy;
 use App\Models\User;
+use App\Rules\MaxStay;
 use App\Services\Bookings\BookingCancellationService;
 use App\Services\BookingService;
 use App\Services\BookingUnitTransfer\BookingUnitTransferService;
@@ -46,12 +48,16 @@ class BookingController extends Controller
     public function startPayment(Request $request, $uuid)
     {
 
-        $booking = Booking::where('uuid', $uuid)->first();
+        // Only the owner may pay, and only for a booking that is still awaiting payment —
+        // paying again for a canceled booking would otherwise revive it.
+        $booking = Booking::where('uuid', $uuid)
+            ->where('customer_id', auth('customer')->id())
+            ->where('status', BookingStatus::Pending->value)
+            ->where('payment_status', '!=', 'paid')
+            ->first();
         if (! $booking) {
             abort(404);
         }
-
-        // dd($request->all());
 
         $validatedData = $request->validate([
             // 'coupon_code' => 'nullable|exists:coupons,code',
@@ -153,7 +159,14 @@ class BookingController extends Controller
         ]);
 
         // جلب الحجز مع معلومات الشقة
-        $booking = Booking::where('uuid', $uuid)->with('apartment')->firstOrFail();
+        // Coupons can only change the price of the caller's own booking while it is unpaid;
+        // re-pricing a paid booking would inflate the refund staff see on cancellation.
+        $booking = Booking::where('uuid', $uuid)
+            ->where('customer_id', auth('customer')->id())
+            ->where('status', BookingStatus::Pending->value)
+            ->where('payment_status', '!=', 'paid')
+            ->with('apartment')
+            ->firstOrFail();
         $apartment = $booking->apartment;
 
         // التحقق من صحة الكوبون
@@ -183,7 +196,11 @@ class BookingController extends Controller
     {
 
         $customer = auth()->user();
-        $booking = Booking::where('uuid', $uuid)->where('customer_id', $customer->id)->firstOrFail();
+        $booking = Booking::where('uuid', $uuid)
+            ->where('customer_id', $customer->id)
+            ->where('status', BookingStatus::Pending->value)
+            ->where('payment_status', '!=', 'paid')
+            ->firstOrFail();
 
         $apartment = $booking->apartment;
 
@@ -215,14 +232,14 @@ class BookingController extends Controller
     {
         $validatedData = $request->validate([
             'checkin' => ['required', 'date', 'after_or_equal:today'],
-            'checkout' => ['required', 'date', 'after:checkin'],
+            'checkout' => ['required', 'date', 'after:checkin', new MaxStay('checkin')],
             'number_of_adults' => ['required', 'integer', 'min:1', 'max:10'],
             'number_of_children' => ['required', 'integer', 'min:0', 'max:10'],
             'coupon_code' => ['nullable', 'string'],
         ], __('validation.custom'));
 
-        // جلب بيانات الشقة المطلوبة
-        $apartment = Apartment::findOrFail($apartment_id);
+        // جلب بيانات الشقة المطلوبة (المعروضة للحجز فقط — شقة مفعّلة في مبنى مفعّل)
+        $apartment = Apartment::bookable()->findOrFail($apartment_id);
 
         try {
             // فحص مبكر (سريع الفشل) — الفحص الحاسم الفعلي يُعاد تحت قفل الشقة داخل reserveApartment()
@@ -231,6 +248,7 @@ class BookingController extends Controller
 
             // التحقق من عدد الضيوف
             $this->bookingService->validateGuestsCount($apartment, $validatedData['number_of_adults'], $validatedData['number_of_children']);
+            $this->bookingService->assertCanHoldAnotherPendingBooking(auth('customer')->id());
 
             // تحويل التواريخ إلى Carbon
             $checkInDate = Carbon::parse($validatedData['checkin']);

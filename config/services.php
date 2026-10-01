@@ -74,4 +74,12 @@ return [
         'enabled' => (bool) env('ICS_FEED_ENABLED', false),
     ],
 
+    /*
+    | Google Tag Manager container for the public website (layouts.master).
+    | Leave GOOGLE_TAG_MANAGER_ID empty to disable it (e.g. locally).
+    */
+    'google_tag_manager' => [
+        'id' => env('GOOGLE_TAG_MANAGER_ID'),
+    ],
+
 ];

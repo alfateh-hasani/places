@@ -1,7 +1,7 @@
 <div id="download-app-banner" class="fixed bottom-0 left-0 right-0  shadow-[0_-8px_25px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 ease-in-out md:hidden z-50">
     <div class="relative px-4 py-3">
         <!-- Close Button -->
-        <button id="close-banner" class="absolute top-1 left-2 rtl:right-2 rtl:left-auto text-gray-400 hover:text-gray-600 p-2">
+        <button type="button" id="close-banner" aria-label="{{ __('site.close') }}" class="absolute top-1 left-2 rtl:right-2 rtl:left-auto text-gray-400 hover:text-gray-600 p-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
@@ -11,7 +11,7 @@
         <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse">
             <!-- App Icon -->
             <div class="flex-shrink-0">
-                <img src="{{ asset('assets/img/places-logo-dark.png') }}" alt="Dyafa App" class="w-16 h-16 rounded-xl">
+                <img src="{{ asset('assets/img/favicon.svg') }}" alt="Dyafa App" width="64" height="64" loading="lazy" class="w-16 h-16 rounded-xl">
             </div>
  
             <!-- Text Content -->
@@ -24,11 +24,11 @@
             <div class="flex flex-col space-y-2">
                 <a href="https://apps.apple.com/us/app/dyafa-%D8%B6%D9%8A%D8%A7%D9%81%D8%A9/id6711337244"
                    class="block w-32" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ asset('img/AppStore.svg') }}" alt="App Store" class="w-full">
+                    <img src="{{ asset('img/AppStore.svg') }}" alt="App Store" class="w-full" width="128" height="37">
                 </a>
                 <a href="https://play.google.com/store/apps/details?id=co.Placess.app"
                    class="block w-32" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ asset('img/GooglePlay.svg') }}" alt="Google Play" class="w-full">
+                    <img src="{{ asset('img/GooglePlay.svg') }}" alt="Google Play" class="w-full" width="128" height="37">
                 </a>
             </div>
         </div>
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="flex items-center justify-between">
     <div>
       <a href="{{ route('home')}}">
-        <img src="{{ asset('assets/img/places-logo-dark.png') }}?1" alt="{{ __('site.logo') }}" style="max-height: 35px" />
+        <img src="{{ asset('assets/img/places-logo-dark.webp') }}" width="180" height="35" alt="{{ __('site.logo') }}" style="max-height: 35px" />
       </a>
     </div>
     <ul class="menu absolute flex items-center">
@@ -146,29 +146,29 @@ document.addEventListener('DOMContentLoaded', function() {
 <header class="fixed w-full py-4  top-0 z-50 border border-blackopacity lg:hidden" data-aos="zoom-in">
   <div class="container">
    
-    <button type="button" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-center font-normal text-xs text-white uppercase flex items-center justify-center login-button">
+    <button type="button" aria-label="{{ auth('customer')->check() ? __('site.profile') : __('site.login') }}" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-center font-normal text-xs text-white uppercase flex items-center justify-center login-button">
       @auth('customer') {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}    @endauth
     </button>
     
 
       <div class="logo absolute">
           <a href="{{ route('home')}}">
-              <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" alt="{{ config('app.name') }}" />
+              <img class="h-7 w-auto" src="{{ asset('assets/img/places-logo-dark.webp') }}" width="144" height="28" alt="{{ config('app.name') }}" />
           </a>
       </div>
       <button type="button" class="cursor-pointer float-right p-2 menu-button">
-          <img class="w-6 h-6" src="{{ asset('assets/img/menu.svg') }}" />
+          <img class="w-6 h-6" src="{{ asset('assets/img/menu.svg') }}" alt="{{ __('site.menu') }}" width="28" height="19" />
       </button>
       <div class="clear-both"></div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 pb-20 overflow-y-auto right-menu">
-      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
+      <button type="button" aria-label="{{ __('site.close') }}" class="absolute ltr:right-5 rtl:left-5 top-5">
           <svg style="fill: #f7bb8e;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
-      <h6 class="font-semibold text-xl text-black mb-2">
+      <h2 class="font-semibold text-xl text-black mb-2">
         @lang('site.menu')
-      </h6>
+      </h2>
       <ul>
           @include('common.parts.nav-links', ['liClass' => 'mb-5'])
       </ul>
@@ -182,22 +182,22 @@ document.addEventListener('DOMContentLoaded', function() {
           @endforeach
       </div>
       <div class="mt-2">
-          <h6 class="font-semibold text-xl text-black"> @lang('site.contact')</h6>
+          <h2 class="font-semibold text-xl text-black"> @lang('site.contact')</h2>
           <ul class="mt-4 lg:mt-10">
-            <li><a href="mailto:{{ Config::get('settings.email') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" />   {{Config::get('settings.email')}}</a></li>
+            <li><a href="mailto:{{ Config::get('settings.email') }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/mail.svg') }}" alt="" />   {{Config::get('settings.email')}}</a></li>
             @php $headerPhone = preg_replace('/^00/', '+', (string) Config::get('settings.phone')); @endphp
-            <li><a href="tel:{{ $headerPhone }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" /> <span dir="ltr" style="direction:ltr; unicode-bidi:isolate; display:inline-block;">{{ $headerPhone }}</span></a></li>
-            <li><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode(Config::get('settings.address_'.app()->getLocale())) }}" target="_blank" rel="noopener noreferrer" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
+            <li><a href="tel:{{ $headerPhone }}" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/tel.svg') }}" alt="" /> <span dir="ltr" style="direction:ltr; unicode-bidi:isolate; display:inline-block;">{{ $headerPhone }}</span></a></li>
+            <li><a href="https://www.google.com/maps/search/?api=1&query={{ urlencode(Config::get('settings.address_'.app()->getLocale())) }}" target="_blank" rel="noopener noreferrer" class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300"><img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" alt="" />          {{Config::get('settings.address_'.app()->getLocale())}}</a></li>
         </ul>
       </div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 pb-20 overflow-y-auto left-menu">
-      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
+      <button type="button" aria-label="{{ __('site.close') }}" class="absolute ltr:right-5 rtl:left-5 top-5">
           <svg style="fill: #f7bb8e;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
       @auth('customer')
-        <h6 class="font-semibold text-xl text-black mb-2">@lang('site.profile')</h6>
+        <h2 class="font-semibold text-xl text-black mb-2">@lang('site.profile')</h2>
         <ul>
           
             <li class="mb-5"><a href="{{ route('customer.account') }}"
@@ -217,8 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 @csrf
               </form>
             @else
-              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" /> @lang('site.login')</a></li>
-              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" /> @lang('site.sign_up_new')</a></li>
+              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" alt="" width="20" height="20" /> @lang('site.login')</a></li>
+              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="" width="20" height="20" /> @lang('site.sign_up_new')</a></li>
             @endauth
           </ul>
       </div>

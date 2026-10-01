@@ -375,14 +375,12 @@ section {
                 right: 0;
                 @include gradient(transparent, #fff)
             }
-            ul {
+            .comment-slider {
                 width: 120vw;
-                li {
-                    a {
-                        div {
-                            img {
-                                display: inline-block !important
-                            }
+                .comment-card {
+                    div {
+                        img {
+                            display: inline-block !important
                         }
                     }
                 }

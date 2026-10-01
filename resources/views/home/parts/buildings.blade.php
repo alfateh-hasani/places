@@ -13,7 +13,11 @@
                     @foreach ($city->buildings as $building)
                         <a href="{{route('building.details',$building->slug)}}" class="relative block px-1 overflow-hidden">
                             <img
-                                src="{{ $building->image_grid }}"
+                                src="{{ $building->image_card }}"
+                                srcset="{{ $building->image_card_srcset }}"
+                                sizes="(min-width: 768px) 25vw, calc(100vw - 40px)"
+                                width="600"
+                                height="600"
                                 class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
                                 alt="{{ $building->ml('name') }}"
                                 loading="lazy"

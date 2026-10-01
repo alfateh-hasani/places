@@ -5,13 +5,16 @@ namespace App\Models;
 use App\Enums\BookingStatus;
 use App\Enums\CancelSource;
 use App\Enums\DateChangeStatus;
+use App\Enums\UnitTransferStatus;
 use App\Events\BookingApproved;
 use App\Events\BookingCancelled;
 use App\Jobs\SendBookingConfirmedNotification;
 use App\Jobs\SendNewBookingStaffNotification;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -54,7 +57,7 @@ class Booking extends Model
         ];
     }
 
-    public function refunds(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function refunds(): HasMany
     {
         return $this->hasMany(Refund::class);
     }
@@ -239,7 +242,7 @@ class Booking extends Model
     }
 
     // Date-change requests
-    public function dateChangeRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function dateChangeRequests(): HasMany
     {
         return $this->hasMany(DateChangeRequest::class);
     }
@@ -252,7 +255,7 @@ class Booking extends Model
     }
 
     // Unit-transfer requests (move the booking to another apartment)
-    public function unitTransfers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function unitTransfers(): HasMany
     {
         return $this->hasMany(BookingUnitTransfer::class);
     }
@@ -261,7 +264,7 @@ class Booking extends Model
     public function openUnitTransfer(): ?BookingUnitTransfer
     {
         return $this->unitTransfers()
-            ->whereIn('status', \App\Enums\UnitTransferStatus::openValues())
+            ->whereIn('status', UnitTransferStatus::openValues())
             ->latest()
             ->first();
     }
@@ -269,7 +272,7 @@ class Booking extends Model
     public function hasOpenUnitTransfer(): bool
     {
         return $this->unitTransfers()
-            ->whereIn('status', \App\Enums\UnitTransferStatus::openValues())
+            ->whereIn('status', UnitTransferStatus::openValues())
             ->exists();
     }
 
@@ -419,6 +422,16 @@ class Booking extends Model
         return $this->cancel_source ? CancelSource::tryFrom((string) $this->cancel_source) : null;
     }
 
+    /**
+     * Bookings this customer may review: their own, confirmed, and already checked out.
+     */
+    public function scopeReviewableBy(Builder $query, int $customerId): Builder
+    {
+        return $query->where('customer_id', $customerId)
+            ->whereIn('status', [BookingStatus::Approved->value, BookingStatus::Booked->value])
+            ->where('check_out', '<', now());
+    }
+
     public function canBeCanceled(): bool
     {
         // التحقق من أن الحجز في حالة approved و paid
@@ -429,6 +442,12 @@ class Booking extends Model
         // لا يمكن إلغاء حجز له طلب تعديل تواريخ مفتوح (بانتظار دفع/مراجعة/تطبيق) —
         // يجب حل الطلب (رفضه/سحبه) أولاً حتى لا يبقى طلب "يتيم" على حجز أُلغي.
         if ($this->hasOpenDateChangeRequest()) {
+            return false;
+        }
+
+        // Same for an open unit transfer: confirming it after cancelling would re-issue a
+        // door code on the destination unit for a booking that is being refunded.
+        if ($this->openUnitTransfer()) {
             return false;
         }
 

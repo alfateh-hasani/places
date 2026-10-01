@@ -1,6 +1,6 @@
 <section class="container py-8 lg:hidden cursor-pointer search-button -translate-y-[50%]">
     <div class="flex items-center px-6 py-3 bg-white shadow-xl rounded-full border border-border">
-        <img src="{{ asset('assets/img/search-black.svg') }}" class="w-4 me-5 py-2" />
+        <img src="{{ asset('assets/img/search-black.svg') }}" class="w-4 me-5 py-2" alt="" width="16" height="16" />
         <div>
             <p class="font-semibold text-xs">
                 {{ __('site.search_mobile') }}
@@ -21,7 +21,7 @@
             <p class="font-semibold">
                 {{ __('site.search_mobile') }}
             </p>
-            <button type="button" class="close-button"><img src="{{ asset('assets/img/close.svg') }}" /></button>
+            <button type="button" class="close-button"><img src="{{ asset('assets/img/close.svg') }}" alt="{{ __('site.close') }}" /></button>
         </div>
         <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_city_id') }}</p>
@@ -113,7 +113,7 @@
         <div class="lg:col-span-1 col-span-2">
             <button
                 class="bg-price  w-full h-11 text-center rounded-lg lg:rounded-full hover:bg-black ease-in-out duration-200">
-                <img class="inline-block -translate-y-0.5 me-2" src="{{ asset('assets/img/search2.svg') }}" />{{ __('site.search') }}
+                <img class="inline-block -translate-y-0.5 me-2" src="{{ asset('assets/img/search2.svg') }}" alt="" />{{ __('site.search') }}
             </button>
         </div>
     </form>
