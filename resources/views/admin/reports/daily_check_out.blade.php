@@ -228,6 +228,24 @@
 
 @push('after_scripts')
 <script>
+    // OwnerRez data (guest names, notes, channel names) is external input — escape every
+    // string before the row builders concatenate it into HTML.
+    function escapeDeep(value) {
+        if (typeof value === 'string') {
+            return value.replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+        if (Array.isArray(value)) {
+            return value.map(escapeDeep);
+        }
+        if (value && typeof value === 'object') {
+            var copy = {};
+            Object.keys(value).forEach(function (key) { copy[key] = escapeDeep(value[key]); });
+            return copy;
+        }
+        return value;
+    }
 (function () {
     var loaded           = false;
     var activeXhr        = null;
@@ -329,7 +347,7 @@
                 }
 
                 if (data.bookings && data.bookings.length > 0) {
-                    $('#ownerrez-tbody').append(buildRows(data.bookings));
+                    $('#ownerrez-tbody').append(buildRows(escapeDeep(data.bookings)));
                     $('#ownerrez-content').show();
                 }
 
@@ -487,7 +505,7 @@
                 }
 
                 if (data.blocks && data.blocks.length > 0) {
-                    $('#maintenance-tbody').append(buildRows(data.blocks));
+                    $('#maintenance-tbody').append(buildRows(escapeDeep(data.blocks)));
                     $('#maintenance-content').show();
                 }
 

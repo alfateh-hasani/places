@@ -2,15 +2,22 @@
 
 namespace App\Services;
 
+use App\Enums\BookingStatus;
+use App\Enums\DateChangeStatus;
+use App\Enums\UnitTransferStatus;
+use App\Exceptions\OwnerRez\OwnerRezApiException;
 use App\Models\Apartment;
 use App\Models\Booking;
+use App\Models\BookingUnitTransfer;
 use App\Models\Building;
 use App\Models\Coupon;
+use App\Models\DateChangeRequest;
 use App\Models\Service;
 use App\Models\ServiceBooking;
 use App\Models\Transaction;
 use App\Services\Coupons\CouponUsageGuard;
 use App\Services\Locks\LockAccessService;
+use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\Pricing\PricingService;
 use Carbon\Carbon;
 use Closure;
@@ -82,7 +89,7 @@ class BookingService
 
     /**
      * @param  int|null  $excludeBookingId  Ignore this booking when checking overlaps
-     *                                       (used when re-checking a booking's own new date range).
+     *                                      (used when re-checking a booking's own new date range).
      * @param  bool  $liveCheck  Bypass OwnerRez's 5-minute availability cache and query it fresh
      *                           (single attempt, fails fast). Only the authoritative check at the
      *                           moment a booking is committed should set this — see
@@ -117,7 +124,7 @@ class BookingService
 
         // 1. التحقق من الحجوزات المحلية
         // ملاحظة: customer_canceled = "طلب إلغاء قيد المراجعة" يبقى حاجزاً للوحدة حتى يُقبل الإلغاء نهائياً (يصبح canceled)
-        $activeStatuses = \App\Enums\BookingStatus::occupying();
+        $activeStatuses = BookingStatus::occupying();
 
         $overlapExists = Booking::where('apartment_id', $apartment->id)
             ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId))
@@ -133,8 +140,8 @@ class BookingService
         }
 
         // 1b. حجب النوافذ المحجوزة بطلبات تعديل تواريخ مفتوحة (لوحدات أخرى) لتفادي تسابق نافذتين على نفس المدى
-        $requestedOverlap = \App\Models\DateChangeRequest::query()
-            ->whereIn('status', \App\Enums\DateChangeStatus::openValues())
+        $requestedOverlap = DateChangeRequest::query()
+            ->whereIn('status', DateChangeStatus::openValues())
             ->whereHas('booking', fn ($q) => $q->where('apartment_id', $apartment->id))
             ->when($excludeBookingId, fn ($q) => $q->where('booking_id', '!=', $excludeBookingId))
             ->where('new_check_in', '<', $checkOutDate)
@@ -149,8 +156,8 @@ class BookingService
 
         // 1c. حجب الوحدة الوجهة المحجوزة بطلب نقل وحدة مفتوح (بانتظار تأكيد العميل) —
         // يمنع حجزاً/نقلاً آخر من أخذ الوحدة أثناء انتظار العميل لتأكيد النقل إليها.
-        $transferHoldExists = \App\Models\BookingUnitTransfer::query()
-            ->where('status', \App\Enums\UnitTransferStatus::PendingCustomer->value)
+        $transferHoldExists = BookingUnitTransfer::query()
+            ->where('status', UnitTransferStatus::PendingCustomer->value)
             ->where('to_apartment_id', $apartment->id)
             ->when($excludeBookingId, fn ($q) => $q->where('booking_id', '!=', $excludeBookingId))
             ->where('check_in', '<', $checkOutDate)
@@ -172,7 +179,7 @@ class BookingService
                     ? Booking::where('id', $excludeBookingId)->value('ownerrez_booking_id')
                     : null;
 
-                $ownerRezService = app(\App\Services\OwnerRez\OwnerRezSyncService::class);
+                $ownerRezService = app(OwnerRezSyncService::class);
                 $isAvailable = $ownerRezService->checkAvailability(
                     $mapping->ownerrez_property_id,
                     $checkInDate->format('Y-m-d'),
@@ -186,7 +193,7 @@ class BookingService
                         'apartment_id' => __('api.apartment_not_available_external'),
                     ]);
                 }
-            } catch (\App\Exceptions\OwnerRez\OwnerRezApiException $e) {
+            } catch (OwnerRezApiException $e) {
                 // إذا فشل الاتصال بـ OwnerRez
                 Log::error('OwnerRez availability check failed', [
                     'apartment_id' => $apartment->id,
@@ -305,6 +312,10 @@ class BookingService
         // استخدام نظام التسعير الجديد
         $prices = $this->calculatePricesWithDates($apartment, $validatedData['check_in'], $validatedData['check_out'], $coupon);
 
+        // Link the coupon by id: CouponUsageGuard counts redemptions through coupon_id, so a
+        // booking that only carries coupon_code would never count against the coupon's limits.
+        $validatedData['coupon_id'] = $coupon?->id;
+
         $transaction = $this->paymentService->addTransaction($validatedData, $prices, $customer, $plaform);
         $this->createBooking($transaction->id, null);
 
@@ -404,7 +415,7 @@ class BookingService
 
         // استخدام نظام التسعير الجديد
         $prices = $this->calculatePricesWithDates($apartment, $check_in, $check_out, $coupon);
-        \Log::info('prices', $prices);
+        Log::info('prices', $prices);
         // حساب متوسط سعر الليلة من السعر الكلي (مع الضريبة) - قبل الخصم
         $avgPricePerNight = $numberOfNights > 0
             ? floatval($prices['total_price']) / $numberOfNights
@@ -419,6 +430,23 @@ class BookingService
             'vat' => $prices['vat'],
         ];
 
+    }
+
+    /**
+     * Each unpaid pending booking holds its dates until cleanup runs, so cap how many a
+     * customer may have open at once — otherwise a script can keep every unit "booked".
+     */
+    public function assertCanHoldAnotherPendingBooking(int $customerId): void
+    {
+        $openPending = Booking::where('customer_id', $customerId)
+            ->where('status', BookingStatus::Pending->value)
+            ->count();
+
+        if ($openPending >= (int) config('booking.max_open_pending_per_customer', 3)) {
+            throw ValidationException::withMessages([
+                'booking' => __('api.too_many_pending_bookings'),
+            ]);
+        }
     }
 
     public function validateGuestsCount($apartment, $number_of_adults, $number_of_children): void
@@ -465,7 +493,29 @@ class BookingService
             }
 
             // تحديث حالة الحجز والدفع
-            $booking = $transaction->booking;
+            $booking = Booking::whereKey($transaction->booking_id)->lockForUpdate()->first();
+
+            if ($booking->status === BookingStatus::Approved->value && $booking->payment_status === 'paid') {
+                DB::commit();
+
+                return ['success' => true, 'message' => ''];
+            }
+
+            // Only an unpaid pending booking may become approved. Paying again for a canceled
+            // (or cancellation-requested) booking must not revive it onto dates that may have
+            // been resold, nor issue a lock passcode; the payment needs a manual refund instead.
+            if ($booking->status !== BookingStatus::Pending->value) {
+                DB::commit();
+                Log::critical('Payment received for a booking that is not pending — not approved, refund manually', [
+                    'booking_id' => $booking->id,
+                    'booking_status' => $booking->status,
+                    'transaction_id' => $transaction->id,
+                    'amount' => $transaction->amount,
+                ]);
+
+                return ['success' => false, 'message' => __('api.booking_not_found')];
+            }
+
             $booking->update([
                 'payment_status' => 'paid',
                 'status' => 'approved',
@@ -553,7 +603,7 @@ class BookingService
     private function sendServiceRequestNotifications($booking, $serviceIds)
     {
         try {
-            $adminNotificationService = app(\App\Services\AdminNotificationService::class);
+            $adminNotificationService = app(AdminNotificationService::class);
 
             // Get the created service bookings
             $serviceBookings = ServiceBooking::where('booking_id', $booking->id)
@@ -565,7 +615,7 @@ class BookingService
                 $adminNotificationService->sendServiceRequestNotification($serviceBooking);
             }
         } catch (\Exception $e) {
-            \Log::error('Failed to send service request notifications: '.$e->getMessage());
+            Log::error('Failed to send service request notifications: '.$e->getMessage());
         }
     }
 

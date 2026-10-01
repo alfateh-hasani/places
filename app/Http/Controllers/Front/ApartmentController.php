@@ -11,6 +11,7 @@ use App\Models\Building;
 use App\Models\City;
 use App\Models\DateChangeRequest;
 use App\Models\SlugRedirect;
+use App\Rules\MaxStay;
 use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\Pricing\PricingService;
 use Artesaos\SEOTools\Facades\SEOTools;
@@ -484,7 +485,7 @@ class ApartmentController extends Controller
     {
         $request->validate([
             'check_in' => 'required|date',
-            'check_out' => 'required|date|after:check_in',
+            'check_out' => ['required', 'date', 'after:check_in', new MaxStay],
         ]);
 
         $apartment = Apartment::findOrFail($apartmentId);

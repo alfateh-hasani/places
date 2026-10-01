@@ -2,6 +2,7 @@
 
 namespace App\Services\Locks;
 
+use App\Enums\BookingStatus;
 use App\Exceptions\Locks\LockOperationException;
 use App\Models\Apartment;
 use App\Models\Booking;
@@ -49,6 +50,20 @@ class LockAccessService
             $booking->refresh();
 
             if ($booking->smartLockPasscodes()->exists()) {
+                return;
+            }
+
+            // Last line of defense for physical access: never issue a door code for a booking
+            // that isn't live (pending payment, canceled, cancellation requested) — whichever
+            // path (payment, retry job, unit transfer) asked for it. Payment status is not
+            // checked because channel bookings synced from OwnerRez may be approved while
+            // the channel still holds the payout.
+            if (! in_array($booking->status, [BookingStatus::Approved->value, BookingStatus::Booked->value], true)) {
+                Log::warning('Smart-lock provisioning refused for a booking that is not live', [
+                    'booking_id' => $booking->id,
+                    'status' => $booking->status,
+                ]);
+
                 return;
             }
 
