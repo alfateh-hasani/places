@@ -46,10 +46,15 @@ return [
     ],
 
     'sciener' => [
-        'client_id' => '2c959287a856409ca8b572090a4ba040',
-        'client_secret' => 'dfa43b3b37160a8ef3042121c66a0dd4',
-        'username' => 'abdoshahen2013@gmail.com',
-        'password' => 'AZay2025',
+        'client_id' => env('SCIENER_CLIENT_ID'),
+        'client_secret' => env('SCIENER_CLIENT_SECRET'),
+        'username' => env('SCIENER_USERNAME'),
+        'password' => env('SCIENER_PASSWORD'),
+    ],
+
+    'taqnyat' => [
+        'token' => env('TAQNYAT_TOKEN'),
+        'sender' => env('TAQNYAT_SENDER', 'Ad.Dyafa'),
     ],
 
     'guesty' => [
@@ -59,6 +64,22 @@ return [
         'token_url' => env('GUESTY_TOKEN_URL', 'https://open-api.guesty.com/oauth2/token'),
         'timeout' => (int) env('GUESTY_TIMEOUT', 10),
         'token_cache_key' => env('GUESTY_TOKEN_CACHE_KEY', 'guesty:access-token'),
+    ],
+
+    /*
+    | Per-apartment booking calendar feed (/apartments/{id}/unit.ics) that external
+    | channels such as Airbnb can import. Off while OwnerRez handles channel sync.
+    */
+    'ics_feed' => [
+        'enabled' => (bool) env('ICS_FEED_ENABLED', false),
+    ],
+
+    /*
+    | Google Tag Manager container for the public website (layouts.master).
+    | Leave GOOGLE_TAG_MANAGER_ID empty to disable it (e.g. locally).
+    */
+    'google_tag_manager' => [
+        'id' => env('GOOGLE_TAG_MANAGER_ID'),
     ],
 
 ];

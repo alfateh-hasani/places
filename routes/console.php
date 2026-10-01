@@ -13,11 +13,18 @@ Schedule::call(function () {
     app(BookingService::class)->deleteUnpaidBookings();
 })->everyTenMinutes();
 
-// Retry failed passcode generation attempts every 20 minutes
+// إعادة محاولة عمليات كود الدخول الفاشلة (توليد أو إلغاء) كل 10 دقائق
 Schedule::command('passcode:retry-failed')->cron('*/10 * * * *');
 
-// Check for bookings that need passcode generation every 30 minutes
+// كشف الحجوزات المعتمدة بدون كود دخول كل 10 دقائق
 Schedule::command('booking:check-missing-passcodes')->cron('*/10 * * * *');
+
+// إعادة مصادقة حسابات Sciener التي انتهت صلاحية التوكن الخاص بها أو ستنتهي قريباً —
+// يكتشف تدهور بيانات الاعتماد بشكل دوري بدل انتظار فشل حجز حقيقي
+Schedule::command('sciener:refresh-tokens')->daily();
+
+// Drop mobile-app tokens past config('sanctum.expiration') so stolen/abandoned tokens don't linger.
+Schedule::command('sanctum:prune-expired --hours=24')->daily();
 
 // Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
 // Schedule::command('ownerrez:sync-bookings')->everyFiveMinutes();
@@ -44,3 +51,9 @@ Schedule::command('date-changes:reconcile-awaiting-payment')->everyTenMinutes();
 
 // تحرير طلبات تعديل التواريخ العالقة بانتظار الدفع (يحرّر النافذة المحجوزة)
 Schedule::command('date-changes:expire-unpaid')->everyTenMinutes();
+
+// تحرير طلبات نقل الوحدة العالقة بانتظار تأكيد العميل (يحرّر الوحدة الوجهة المحجوزة)
+Schedule::command('unit-transfers:expire-stale')->everyTenMinutes();
+
+// حذف سجلات الحجوزات "المركونة" في OwnerRez بعد حذفها يدوياً من واجهة OwnerRez (عند 404 فقط)
+Schedule::command('ownerrez:purge-parked-bookings')->dailyAt('03:40')->runInBackground()->withoutOverlapping();

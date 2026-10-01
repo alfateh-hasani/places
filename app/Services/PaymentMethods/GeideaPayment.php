@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentMethods;
 
+use App\Models\Customer;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -51,9 +52,11 @@ class GeideaPayment implements PaymentMethodInterface
 
         Log::channel('geidea')->info('Geidea createSession', [
             'url' => $url,
-            'payload' => $payload,
+            'merchantReferenceId' => $payload['merchantReferenceId'] ?? null,
+            'amount' => $payload['amount'] ?? null,
+            'currency' => $payload['currency'] ?? null,
             'status' => $response->status(),
-            'response' => $response->json(),
+            'response' => self::logSummary($response->json()),
         ]);
 
         if ($response->successful()) {
@@ -75,11 +78,78 @@ class GeideaPayment implements PaymentMethodInterface
         Log::channel('geidea')
             ->info('Geidea retrievePayment', [
                 'orderId' => $orderId,
-                'response' => $response->json(),
+                'response' => self::logSummary($response->json()),
                 'status' => $response->status(),
             ]);
 
         return $response->successful() ? $response->json() : false;
+    }
+
+    /**
+     * The fields needed to trace a payment, without the customer's name, email, phone or
+     * card details that Geidea echoes back — logs must not become a copy of customer data.
+     *
+     * @param  array<string, mixed>|null  $body  A Geidea request/response/webhook body
+     * @return array<string, mixed>
+     */
+    public static function logSummary(?array $body): array
+    {
+        if (! $body) {
+            return [];
+        }
+
+        $order = is_array($body['order'] ?? null) ? $body['order'] : [];
+
+        return array_filter([
+            'responseCode' => $body['responseCode'] ?? null,
+            'detailedResponseCode' => $body['detailedResponseCode'] ?? null,
+            'detailedResponseMessage' => $body['detailedResponseMessage'] ?? null,
+            'sessionId' => $body['session']['id'] ?? null,
+            'orderId' => $order['orderId'] ?? $body['orderId'] ?? null,
+            'merchantReferenceId' => $order['merchantReferenceId'] ?? $body['merchantReferenceId'] ?? null,
+            'amount' => $order['amount'] ?? $body['amount'] ?? null,
+            'currency' => $order['currency'] ?? $body['currency'] ?? null,
+            'status' => $order['status'] ?? $body['status'] ?? null,
+            'detailedStatus' => $order['detailedStatus'] ?? $body['detailedStatus'] ?? null,
+            'totalRefundedAmount' => $order['totalRefundedAmount'] ?? null,
+        ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * True only when Geidea reports the order as paid AND that order was created for this
+     * transaction: same merchant reference, amount and currency, and the orderId isn't
+     * already attached to another transaction. Without this ownership check a single paid
+     * orderId could be replayed to confirm any other booking.
+     *
+     * @param  array<string, mixed>|false|null  $orderData  Response of verifyPayment()
+     */
+    public function isPaidForTransaction(array|false|null $orderData, Transaction $transaction): bool
+    {
+        $order = is_array($orderData) ? ($orderData['order'] ?? []) : [];
+        $orderId = $order['orderId'] ?? null;
+
+        $failure = match (true) {
+            ($order['detailedStatus'] ?? null) !== 'Paid' => 'not_paid',
+            ($order['merchantReferenceId'] ?? null) !== $transaction->transaction_reference => 'reference_mismatch',
+            isset($order['amount']) && abs((float) $order['amount'] - (float) $transaction->amount) >= 0.01 => 'amount_mismatch',
+            isset($order['currency']) && strcasecmp($order['currency'], (string) $transaction->currency) !== 0 => 'currency_mismatch',
+            $orderId && Transaction::where('order_id', $orderId)->whereKeyNot($transaction->getKey())->exists() => 'order_already_used',
+            default => null,
+        };
+
+        if ($failure === null) {
+            return true;
+        }
+
+        if ($failure !== 'not_paid') {
+            Log::channel('geidea')->warning('Geidea order rejected for transaction', [
+                'reason' => $failure,
+                'transaction_id' => $transaction->id,
+                'order_id' => $orderId,
+            ]);
+        }
+
+        return false;
     }
 
     /* -----------------------------------------------------------------
@@ -115,7 +185,12 @@ class GeideaPayment implements PaymentMethodInterface
             'callbackUrl' => $webhookUrl,
             'returnUrl' => $returnUrl,
             'customer' => [
-                'email' => $transaction->customer?->email,
+                // Geidea rejects the whole session with "Invalid email address"
+                // (responseCode 110) for a malformed email but accepts an empty one,
+                // so fall back to '' for any address the gateway would refuse.
+                'email' => Customer::isGatewayValidEmail($transaction->customer?->email)
+                    ? $transaction->customer->email
+                    : '',
                 'phoneNumber' => $transaction->customer?->phone,
                 'phonecountrycode' => '+966',
                 'firstName' => $transaction->customer?->first_name,
@@ -165,15 +240,22 @@ class GeideaPayment implements PaymentMethodInterface
             return ['status' => false, 'message' => 'Transaction not found'];
         }
 
+        // A settled transaction is final: a replayed callback must neither flip it to
+        // "failed" nor re-run booking completion (which would revive a cancelled booking).
+        if ($transaction->status === 'completed') {
+            return ['status' => false, 'message' => 'Transaction already processed', 'transaction_id' => $transaction->id];
+        }
+
         $callbackSuccess = ($data['responseCode'] ?? null) === '000';
         $orderId = $data['orderId'] ?? null;
         $isSuccess = false;
+        $orderData = null;
 
         // التحقق من حالة الدفع الفعلية من Geidea API
         if ($callbackSuccess && $orderId) {
             $orderData = $this->verifyPayment($orderId);
 
-            if ($orderData && ($orderData['order']['detailedStatus'] ?? null) === 'Paid') {
+            if ($this->isPaidForTransaction($orderData, $transaction)) {
                 $isSuccess = true;
             } else {
                 Log::channel('geidea')->warning('Geidea payment verification failed', [
@@ -188,7 +270,13 @@ class GeideaPayment implements PaymentMethodInterface
         $transaction->status = $isSuccess ? 'completed' : 'failed';
         $transaction->payment_gateway_response = json_encode($data);
 
-        if ($orderId) {
+        // Only bind an order Geidea confirms was created for this transaction (it may still be
+        // processing — DeletePendingBookings reconciles it later). Storing an unverified orderId
+        // from the query string would route refunds to whatever order the caller supplied.
+        $orderBelongsToTransaction = $isSuccess
+            || (($orderData['order']['merchantReferenceId'] ?? null) === $transaction->transaction_reference);
+
+        if ($orderId && $orderBelongsToTransaction) {
             $transaction->order_id = $orderId;
         }
 
@@ -227,7 +315,7 @@ class GeideaPayment implements PaymentMethodInterface
         Log::channel('geidea')->info('Geidea Refund', [
             'orderId' => $orderId,
             'amount' => $amount,
-            'response' => $response->json(),
+            'response' => self::logSummary($response->json()),
             'status' => $response->status(),
         ]);
 

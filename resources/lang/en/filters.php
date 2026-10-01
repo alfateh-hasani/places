@@ -16,5 +16,11 @@ return [
     'beds_label' => 'Beds',
     'bathrooms_label' => 'Bathrooms',
     'beds' => 'Beds',
+    'building' => 'Building',
     'apply_filters' => 'Apply Filters',
+    'clear_filters' => 'Clear filters',
+    'rate_and_up' => '& up',
+    'star' => 'Star',
+    'room_unit' => 'Room',
+    'bed_unit' => 'Bed',
 ];

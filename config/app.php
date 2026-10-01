@@ -17,6 +17,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Saudi Riyal Symbol URL (for emails)
+    |--------------------------------------------------------------------------
+    | Absolute, publicly reachable URL of the Riyal symbol PNG used in emails.
+    | Leave null in local/dev to fall back to a public CDN; in production set
+    | RIYAL_SYMBOL_URL to your self-hosted copy (public/front/img/sar-symbol.png).
+    */
+    'riyal_symbol_url' => env('RIYAL_SYMBOL_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

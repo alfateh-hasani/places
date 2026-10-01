@@ -3,8 +3,8 @@
 <!-- SweetAlert2 CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <!-- Flatpickr — نفس تحميلات صفحة الحجز (base + dark theme) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
 
 <style>
 /* نفس ستايل تقويم صفحة الحجز (apartment/show.blade.php) */
@@ -68,12 +68,8 @@ span.flatpickr-day.selected{
         background-color: #f5d7d1;  
         color: #a8a8a8;  
         cursor: not-allowed; 
-        opacity: 0.6;  
+        opacity: 0.6;
     }
-    .bg-white {
-    
-    background-color: #0f0c0c;
-}
 /* SweetAlert2 buttons styling */
 .swal2-confirm {
     background-color: #3085d6 !important;
@@ -134,25 +130,26 @@ span.flatpickr-day.selected{
 @endif
 <section class="profile py-5 lg:py-16    min-h-screen lg:min-h-min text-white">
     <div class="container">
-        <div>
-            <div class="inline-block w-8 h-8 rounded-full bg-filteritem relative">
+        <div class="flex items-center justify-between gap-3">
+            <h1 class="font-semibold text-2xl">
+                # {{$booking->number_of_booking }}
+            </h1>
+            <a href="{{ route('customer.booking') }}" aria-label="{{ __('site.back') }}" class="block w-8 h-8 rounded-full bg-filteritem relative shrink-0">
                 <svg class="absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4" xmlns="http://www.w3.org/2000/svg" width="10.939" height="10.748" viewBox="0 0 10.939 10.748">
                   <path id="Path_843" data-name="Path 843" d="M5.843,11.343H16.116m-5.7,4.844L6.178,11.95a.856.856,0,0,1,0-1.211L10.416,6.5" transform="translate(-5.177 -5.97)" fill="none" stroke="#000" stroke-width="1.5"/>
                 </svg>
-            </div>
-            <p class="inline-block font-semibold text-2xl ml-4 -translate-y-2">
-                # {{$booking->number_of_booking }}
-            </p>
+            </a>
         </div>
         <div class="py-8 px-6   rounded-2xl mt-6" style="background-color: #000;">
             <div class="border-b border-border pb-8 mb-8">
-               <a href="{{route('apartments.show',$booking->apartment?->slug)}}" > 
-                    <p class="font-semibold text-lg float-left  rtl:float-right py-2.5">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+               <a href="{{route('apartments.show',$booking->apartment?->slug)}}" >
+                    <h2 class="font-semibold text-lg py-2.5">
                         {{$booking->apartment->{'name_'.app()->getLocale()} }}
-                    </p>
+                    </h2>
                </a>
-                <div class="float-right rtl:float-left">
-                    <a class="py-3 px-4 inline-block rounded-md bg-gri text-white ml-2" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
+                <div class="grid grid-cols-2 gap-2 w-full sm:flex-1 sm:flex sm:flex-wrap sm:justify-end">
+                    <a class="py-3 px-4 rounded-md bg-gri text-white flex items-center justify-center gap-2 text-sm" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
                         <svg class="inline-block" id="fi_2891455" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                             <path d="m21.5 18h-3c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h3c.827 0 1.5-.673 1.5-1.5v-7c0-.827-.673-1.5-1.5-1.5h-19c-.827 0-1.5.673-1.5 1.5v7c0 .827.673 1.5 1.5 1.5h3c.276 0 .5.224.5.5s-.224.5-.5.5h-3c-1.379 0-2.5-1.122-2.5-2.5v-7c0-1.378 1.121-2.5 2.5-2.5h19c1.379 0 2.5 1.122 2.5 2.5v7c0 1.378-1.121 2.5-2.5 2.5z"></path>
                             <path d="m14.5 21h-6c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h6c.276 0 .5.224.5.5s-.224.5-.5.5z"></path>
@@ -161,17 +158,15 @@ span.flatpickr-day.selected{
                             <path d="m18.5 7c-.276 0-.5-.224-.5-.5v-4c0-.827-.673-1.5-1.5-1.5h-9c-.827 0-1.5.673-1.5 1.5v4c0 .276-.224.5-.5.5s-.5-.224-.5-.5v-4c0-1.378 1.121-2.5 2.5-2.5h9c1.379 0 2.5 1.122 2.5 2.5v4c0 .276-.224.5-.5.5z"></path>
                             <path d="m16.5 24h-9c-1.379 0-2.5-1.122-2.5-2.5v-8c0-.276.224-.5.5-.5h13c.276 0 .5.224.5.5v8c0 1.378-1.121 2.5-2.5 2.5zm-10.5-10v7.5c0 .827.673 1.5 1.5 1.5h9c.827 0 1.5-.673 1.5-1.5v-7.5z"></path>
                         </svg>
-                        <span class="inline-block ml-2 text-sm">   
-                            {{__('booking.print')}}
-                        </span>
+                        <span>{{__('booking.print')}}</span>
                     </a>
-                    
+
                     @if($booking->status !== 'customer_canceled' && $booking->status !== 'canceled')
-                    <div class="relative group inline-block">
+                    <div class="relative group">
                         <button {{ $can_cancel ? '' : 'disabled' }}
-                            class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}" 
+                            class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#fdeee9] text-price text-sm cancel-booking-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
                             data-booking-id="{{ $booking->id }}">
-                            <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }}</span>
+                            <span>{{ __('booking.cancel') }}</span>
                         </button>
                     
                         <!-- Tooltip -->
@@ -183,13 +178,13 @@ span.flatpickr-day.selected{
                         @endif
                     </div>
 
-                    <div class="relative group inline-block">
+                    <div class="relative group">
                         <button {{ $can_cancel ? '' : 'disabled' }}
-                            class="py-3 px-4 inline-block rounded-md bg-[#eaf3ff] text-price ml-2 edit-dates-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
+                            class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#eaf3ff] text-price text-sm edit-dates-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
                             data-booking-id="{{ $booking->id }}"
                             data-check-in="{{ $booking->check_in->format('Y-m-d') }}"
                             data-check-out="{{ $booking->check_out->format('Y-m-d') }}">
-                            <span class="inline-block ml-2 text-sm">{{ __('تعديل التواريخ') }}</span>
+                            <span>{{ __('booking.edit_dates') }}</span>
                         </button>
                         @if(!$can_cancel)
                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 translate-y-2 px-3 py-2 mb-3
@@ -199,67 +194,103 @@ span.flatpickr-day.selected{
                         @endif
                     </div>
                     @elseif($booking->status === 'customer_canceled')
-                    <div class="py-3 px-4 inline-block rounded-md bg-gray-200 text-gray-600 ml-2 cursor-not-allowed">
-                        <span class="inline-block ml-2 text-sm">{{ __('إلغاء الحجز') }} - {{ __('api.booking_status_customer_canceled') }}</span>
+                    @if(! $booking->cancellationStartedByStaff() && $booking->refund_status === 'pending')
+                    {{-- The customer opened this cancellation request themselves and the refund
+                         isn't processed yet: let them withdraw it and reinstate the booking. --}}
+                    <button class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#fdeee9] text-price text-sm withdraw-cancel-btn"
+                        data-booking-id="{{ $booking->id }}">
+                        <span>{{ __('booking.withdraw_cancellation') }}</span>
+                    </button>
+                    @else
+                    <div class="py-3 px-4 col-span-2 text-center rounded-md bg-gray-200 text-gray-600 text-sm cursor-not-allowed">
+                        <span>{{ __('booking.cancel') }} - {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}</span>
                     </div>
+                    @endif
                     @endif
                     
 
-                    @if (!$has_review and $booking->status == 'finished')
-                        <button data-src="#popup-2" data-fancybox type="button" 
-                                class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
-                            <!-- Replace the comment below with the SVG icon -->
+                    @php
+                        $stayCompleted = $booking->status === \App\Enums\BookingStatus::Approved->value
+                            && $booking->payment_status === 'paid'
+                            && $booking->check_out->isPast();
+                    @endphp
+
+                    @if (!$has_review && $stayCompleted)
+                        <button data-src="#popup-2" data-fancybox type="button"
+                                class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#fdeee9] text-price flex items-center justify-center gap-2 text-sm">
                             <svg class="inline-block" fill="currentColor" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Example SVG path, replace with your actual SVG code -->
                                 <circle cx="10" cy="10" r="8"></circle>
                             </svg>
-                            <span class="inline-block ml-2 text-sm">
-                                {{ __('booking.review') }}
-                            </span>
+                            <span>{{ __('booking.review') }}</span>
                         </button>
                     @endif
                    
                 
 
                     
-                     <a class="py-2.5 px-4 inline-block rounded-md ml-2 border border-price text-center text-price">
+                     <a href="{{ route('page','contact') }}" title="{{ __('site.contact') }}" class="py-3 px-4 w-full sm:w-auto rounded-md border border-price flex items-center justify-center gap-2 text-price text-sm">
                          <svg class="inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="fi_5728913" data-name="Layer 1" viewBox="0 0 512 512" width="20" height="20"><path d="M489.417,279v-1.182c0-62.1-24.349-120.646-68.56-164.857S318.1,44.4,256,44.4,135.354,68.749,91.143,112.96s-68.56,102.758-68.56,164.856V279A27.578,27.578,0,0,0,0,306.081V397.1a27.571,27.571,0,0,0,27.538,27.539H44.556v3.934A39.075,39.075,0,0,0,83.586,467.6H98.705a23.94,23.94,0,0,0,23.912-23.913v-184.2a23.94,23.94,0,0,0-23.912-23.913H83.586a39.074,39.074,0,0,0-39.03,39.03v3.935H38.583v-.727C38.583,157.933,136.116,60.4,256,60.4s217.417,97.533,217.417,217.416v.727h-5.973v-3.935a39.074,39.074,0,0,0-39.03-39.03H413.3a23.94,23.94,0,0,0-23.912,23.913v184.2A23.94,23.94,0,0,0,413.3,467.6h15.119a39.075,39.075,0,0,0,39.03-39.031v-3.934h17.018A27.571,27.571,0,0,0,512,397.1V306.081A27.578,27.578,0,0,0,489.417,279Zm-428.861-4.39a23.056,23.056,0,0,1,23.03-23.03H98.705a7.921,7.921,0,0,1,7.912,7.913v184.2a7.921,7.921,0,0,1-7.912,7.913H83.586a23.056,23.056,0,0,1-23.03-23.031Zm-16,134.027H27.538A11.552,11.552,0,0,1,16,397.1V306.081a11.551,11.551,0,0,1,11.538-11.538H44.556Zm406.888,19.934a23.056,23.056,0,0,1-23.03,23.031H413.3a7.921,7.921,0,0,1-7.912-7.913v-184.2a7.921,7.921,0,0,1,7.912-7.913h15.119a23.056,23.056,0,0,1,23.03,23.03ZM496,397.1a11.552,11.552,0,0,1-11.538,11.539H467.444V294.543h17.018A11.551,11.551,0,0,1,496,306.081Z"></path></svg>
+                         <span>{{ __('site.contact') }}</span>
                      </a>
                 </div>
+              </div>
 
                 @if(!empty($date_change_request))
                     @php($dc = $date_change_request)
                     <div class="clear-both"></div>
                     <div class="mt-4 p-4 rounded-lg" style="background-color:#111; border:1px solid #333;">
                         <p class="text-sm mb-2">
-                            {{ __('طلب تعديل التواريخ') }}:
+                            {{ __('booking.date_change_request') }}:
                             <bdo dir="ltr" style="display:inline-block; font-weight:bold;">{{ $dc->new_check_out->format('Y-m-d') }} ← {{ $dc->new_check_in->format('Y-m-d') }}</bdo>
                         </p>
                         @if($dc->status === 'awaiting_payment')
                             <p class="text-xs mb-3" style="color:#f0ad4e;">
-                                {{ __('بانتظار دفع الفرق لإتمام التعديل') }}
+                                {{ __('booking.awaiting_difference_payment') }}
                                 @if((float) $dc->price_delta > 0)
-                                    (<b style="color:#e74c3c;">+{{ number_format(abs((float) $dc->price_delta), 2) }} SAR</b>)
+                                    (<b style="color:#e74c3c;">+<x-riyal :amount="abs((float) $dc->price_delta)" /></b>)
                                 @endif
                             </p>
                             <button class="dc-retry-pay-btn py-2 px-4 rounded-md text-white ml-2" style="background:#3085d6;" data-request-id="{{ $dc->id }}">
-                                {{ __('إكمال الدفع') }}
+                                {{ __('booking.complete_payment') }}
                             </button>
                             <button class="dc-cancel-req-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-request-id="{{ $dc->id }}">
-                                {{ __('إلغاء طلب التعديل') }}
+                                {{ __('booking.cancel_change_request') }}
                             </button>
                         @elseif($dc->status === 'pending_review')
-                            <p class="text-xs mb-3" style="color:#3498db;">{{ __('طلبك قيد المراجعة — سيتم استرداد الفرق بعد الموافقة') }}</p>
+                            <p class="text-xs mb-3" style="color:#3498db;">{{ __('booking.change_request_under_review') }}</p>
                             <button class="dc-cancel-req-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-request-id="{{ $dc->id }}">
-                                {{ __('إلغاء طلب التعديل') }}
+                                {{ __('booking.cancel_change_request') }}
                             </button>
                         @endif
                     </div>
                 @endif
+
+                @if(!empty($unit_transfer))
+                    @php($ut = $unit_transfer)
+                    <div class="clear-both"></div>
+                    <div class="mt-4 p-4 rounded-lg" style="background-color:#111; border:1px solid #333;">
+                        <p class="text-sm mb-2">
+                            {{ __('booking.unit_transfer_offer') }}:
+                            <b>{{ optional($ut->toApartment)->name_ar ?? optional($ut->toApartment)->name_en }}</b>
+                        </p>
+                        @if($ut->direction === \App\Enums\TransferDirection::Refund)
+                            <p class="text-xs mb-3" style="color:#5cb85c;">{{ __('booking.unit_transfer_refund_note', ['new_price' => number_format((float) $ut->new_price, 2), 'amount' => number_format((float) $ut->refund_amount, 2)]) }}</p>
+                        @else
+                            <p class="text-xs mb-3" style="color:#f0ad4e;">{{ __('booking.unit_transfer_no_extra_charge') }}</p>
+                        @endif
+                        <button class="ut-confirm-btn py-2 px-4 rounded-md text-white ml-2" style="background:#28a745;" data-transfer-id="{{ $ut->id }}">
+                            {{ __('booking.unit_transfer_confirm') }}
+                        </button>
+                        <button class="ut-decline-btn py-2 px-4 rounded-md text-white" style="background:#d33;" data-transfer-id="{{ $ut->id }}">
+                            {{ __('booking.unit_transfer_decline') }}
+                        </button>
+                    </div>
+                @endif
+
                 <div class="clear-both"></div>
             </div>
-            <div class="grid lg:grid-cols-5 gap-6 max-w-full">
-                <div class="col-span-3">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-full">
+                <div class="lg:col-span-3">
                     <img src="{{getImage($booking->apartment,'image')}}" class="w-full h-80 object-cover rounded-lg mb-4" />
                     <ul>
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
@@ -269,7 +300,7 @@ span.flatpickr-day.selected{
                             <p class="text-gri float-left rtl:float-right">{{__('booking.status')}} :</p>
                             <p class="float-right rtl:float-left {{ $booking->status === 'customer_canceled' ? 'text-red-600' : ($booking->status === 'approved' ? 'text-[#10C13F]' : 'text-gray-600') }}">
                                 @if($booking->status === 'customer_canceled')
-                                    {{__('api.booking_status_customer_canceled')}}
+                                    {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}
                                     @if($booking->refund_status === 'pending')
                                         <span class="block text-xs mt-1 text-orange-600">({{__('cms.refund_status_pending')}})</span>
                                     @elseif($booking->refund_status === 'approved')
@@ -310,7 +341,7 @@ span.flatpickr-day.selected{
                             @endif
                     </ul>
                 </div>
-                <div class=" border border-feature-border rounded-lg py-5 col-span-2">
+                <div class=" border border-feature-border rounded-lg py-5 lg:col-span-2">
                     <div class="border-b border-feature-border pb-5 mb-5 px-5">
                         <p class="float-left rtl:float-right font-semibold">   {{__('booking.info')}} </p>
                         <svg class="float-right rtl:float-left text-price" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21">
@@ -323,23 +354,16 @@ span.flatpickr-day.selected{
                         </svg>
                         <div class="clear-both"></div>
                     </div>
-                    <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 px-4 py-3">
-                        <p class="float-left rtl:float-right text-xs">{{__('booking.check_in_time')}} <span class="block font-semibold text-sm">
-                            {{Config::get('settings.check_in_time')}}    
-                        </span></p>
-                        <p class="float-right rtl:float-left text-xs w-2/4 border-l border-feature-border text-right">{{__('booking.check_out_time')}}  <span class="block font-semibold text-sm">
-                            {{Config::get('settings.check_out_time')}}    
-                        </span></p>
-                        <div class="clear-both"></div>
+                    <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 px-4 py-3 flex items-stretch">
+                        <div class="flex-1 pe-4">
+                            <p class="text-xs text-gri">{{__('booking.check_in_time')}}</p>
+                            <p class="font-semibold text-sm mt-1" dir="ltr">{{Config::get('settings.check_in_time')}}</p>
+                        </div>
+                        <div class="flex-1 ps-4 border-s border-feature-border">
+                            <p class="text-xs text-gri">{{__('booking.check_out_time')}}</p>
+                            <p class="font-semibold text-sm mt-1" dir="ltr">{{Config::get('settings.check_out_time')}}</p>
+                        </div>
                     </div>
-                    {{-- <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 p-4">
-                        <p class="float-left rtl:float-right text-sm">{{__('booking.link')}}   :</p>
-                        <a class="float-right rtl:float-left text-sm underline decoration-solid">
-                            {{__('booking.go_to_link')}}
-                        </a>
-                        <div class="clear-both"></div>
-                    </div> --}}
-
                     @if($booking->status == 'approved')
                     <div class="border border-price bg-[#fdeee9] rounded-lg mx-5 px-3 py-5 relative pin text-price">
                         <svg class="float-left rtl:float-right" fill="currentColor" id="fi_16916738" height="32" viewBox="0 0 24 24" width="32" xmlns="http://www.w3.org/2000/svg">
@@ -348,29 +372,14 @@ span.flatpickr-day.selected{
                         <p class="absolute font-semibold text-black">{{__('booking.passcode')}}</p>
                         <p class="float-right rtl:float-left tracking-wider py-1">
                             {{ $active_passcode?->keyboard_pwd ?? __('booking.no_passcode') }}
+                            @if($active_passcode)
+                                @include('customer.section.copy-passcode-button', ['code' => $active_passcode->keyboard_pwd])
+                            @endif
                         </p>
                         <div class="clear-both"></div>
                     </div>
                     @endif
-                    <p class="font-semibold py-4 mx-5">
-                        {{__('booking.summary')}}
-                    </p>
-                    <p class="text-title mx-5">  {{__('booking.night_price')}} <span class="float-right rtl:float-left font-semibold">{{$booking->total_price/$booking->number_of_nights }} SAR</span></p>
-                    @if($booking->coupon_code != null)
-                        <p class="text-title mx-5">  {{__('booking.copon').' ( ' .$booking->coupon_code.' ) '}} <span class="float-right rtl:float-left font-semibold">{{$booking->discount}} SAR</span></p>
-                    @endif
-                    <div class="bg-feature border border-feature-border rounded-lg mx-5 mt-4 p-3">
-                    
-                        <p>         {{__('booking.summary')}} (    {{$booking->number_of_nights   .' '.__('booking.nights')}})
-
-                            <span class="font-normal text-base text-reviews">
-                                ({{__('apartment.price_tax') }})
-                            </span>
-                        </p>
-                        <p class="font-semibold text-lg">
-                            {{$booking->final_price}}
-                            SAR</p>
-                    </div>
+                    @include('booking.partials.summary', ['booking' => $booking, 'showTax' => true])
                 </div>
             </div>
         </div>
@@ -485,7 +494,7 @@ $('#closeMe').on('click',function(){
 <!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- Flatpickr (same date picker as the booking flow) — default English LTR for guaranteed header/day alignment -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
 @include('customer.section.script-form')
 <script>
 
@@ -510,7 +519,12 @@ $(document).ready(function() {
             buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                HoldOn.open();
+                Swal.fire({
+                    title: "{{ __('booking.processing') }}",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: function () { Swal.showLoading(); }
+                });
                 $.ajax({
                     url: "{{ route('web-booking.cancel') }}",
                     type: "POST",
@@ -521,7 +535,6 @@ $(document).ready(function() {
                         booking_id: bookingId
                     },
                     success: function(response) {
-                        HoldOn.close();
                         Swal.fire({
                             icon: 'success',
                             title: "{{__('booking.success')}}",
@@ -534,19 +547,74 @@ $(document).ready(function() {
                         });
                     },
                     error: function(xhr) {
-                    HoldOn.close();
-                    let errorMessage = "{{ __('booking.error_message') }}"; 
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message; 
+                        let errorMessage = "{{ __('booking.error_message') }}";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{ __('booking.error') }}",
+                            text: errorMessage,
+                        });
                     }
-                    Swal.fire({
-                        icon: 'error',
-                        title: "{{ __('booking.error') }}",
-                        text: errorMessage,
-                        button: true,
-                    });
-                }
+                });
+            }
+        });
+    });
 
+    // ===== التراجع عن طلب الإلغاء (يُعيد تفعيل الحجز) =====
+    $(".withdraw-cancel-btn").click(function() {
+        var bookingId = $(this).data("booking-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('booking.withdraw_cancellation_confirmation') }}",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '{{ __("booking.yes") }}',
+            cancelButtonText: '{{ __("booking.no") }}',
+            buttonsStyling: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: "{{ __('booking.processing') }}",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: function () { Swal.showLoading(); }
+                });
+                $.ajax({
+                    url: "{{ route('web-booking.withdraw-cancellation') }}",
+                    type: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                    },
+                    data: {
+                        booking_id: bookingId
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: "{{__('booking.success')}}",
+                            text: "{{__('api.cancellation_withdrawn')}}",
+                            confirmButtonText: "{{__('booking.ok')}}",
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.reload();
+                            }
+                        });
+                    },
+                    error: function(xhr) {
+                        let errorMessage = "{{ __('booking.error_message') }}";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{ __('booking.error') }}",
+                            text: errorMessage,
+                        });
+                    }
                 });
             }
         });
@@ -573,9 +641,32 @@ $(document).ready(function() {
         return dates;
     }
 
-    function dcOpenModal(bookingId, curIn, curOut, disabledDates) {
+    // قائمة تعطيل تاريخ المغادرة — تطابق منطق صفحة الحجز (apartment/js.blade.php):
+    // نفس الليالي المشغولة لكن نسمح بيوم وصول أي حجز كتاريخ مغادرة (يوم التسليم/الاستلام).
+    function dcBuildCheckoutDisabled(bookings, ownIn, ownOut) {
+        var checkInDays = new Set((bookings || []).map(function (b) {
+            return new Date(b.check_in).toISOString().split('T')[0];
+        }));
+        return dcBuildDisabled(bookings, ownIn, ownOut).filter(function (d) {
+            return !checkInDays.has(d);
+        });
+    }
+
+    // أول ليلة مشغولة بعد تاريخ الوصول المختار — حدّ أقصى لتاريخ المغادرة حتى لا يقفز فوق حجز قائم
+    // (مثال: وصول 27 وليلة 28 محجوزة ⇒ المغادرة القصوى 28، فلا يُختار 29/30 التي تتجاوز الليلة المشغولة).
+    function dcFirstOccupiedNightAfter(checkinDate, occupied) {
+        var checkinTime = checkinDate.getTime();
+        var result = null;
+        (occupied || []).forEach(function (s) {
+            var d = new Date(s + 'T00:00:00');
+            if (d.getTime() > checkinTime && (result === null || d < result)) { result = d; }
+        });
+        return result;
+    }
+
+    function dcOpenModal(bookingId, curIn, curOut, disabledDates, checkoutDisabledDates) {
         Swal.fire({
-            title: "{{ __('تعديل التواريخ') }}",
+            title: "{{ __('booking.edit_dates') }}",
             html:
                 // نفس تخطيط حقول التواريخ في صفحة الحجز (apartment/show.blade.php)
                 '<div class="flex flex-wrap -mx-2">' +
@@ -600,11 +691,16 @@ $(document).ready(function() {
                 // position=auto (الافتراضي): يفتح أسفل الحقل وينقلب فوقه فقط عند عدم وجود مساحة.
                 // نعرض التقويم LTR افتراضياً (بلا locale عربي) لضمان تطابق رؤوس الأيام مع أرقامها؛
                 // الـ RTL داخل مودال SweetAlert كان يفكّ المحاذاة. التقويم للاختيار فقط والتواريخ رقمية.
+                // ضمان أن قائمة التعطيل مصفوفة دائماً — تمرير undefined إلى flatpickr يُعطّل
+                // التهيئة ويُرجِع الحقل إلى مُنتقي المتصفح الأصلي (كل التواريخ متاحة).
+                var checkinDisable = Array.isArray(disabledDates) ? disabledDates : [];
+                var checkoutDisable = Array.isArray(checkoutDisabledDates) ? checkoutDisabledDates : checkinDisable;
+
                 var commonOptions = {
                     dateFormat: "Y-m-d",
                     minDate: "today",
                     allowInput: false,
-                    disable: disabledDates,
+                    disable: checkinDisable,
                     time_24hr: true,
                     weekNumbers: false,
                     static: false,
@@ -616,7 +712,7 @@ $(document).ready(function() {
                 // فيُرفَض تاريخ المغادرة الافتراضي (منتصف الليل المحلي) ويُفرّغ الحقل.
                 var minOut = new Date(curIn + 'T00:00:00'); minOut.setDate(minOut.getDate() + 1);
 
-                window._dcOut = flatpickr("#dc-out", Object.assign({}, commonOptions, { defaultDate: curOut, minDate: minOut }));
+                window._dcOut = flatpickr("#dc-out", Object.assign({}, commonOptions, { disable: checkoutDisable, defaultDate: curOut, minDate: minOut }));
                 window._dcIn = flatpickr("#dc-in", Object.assign({}, commonOptions, {
                     defaultDate: curIn,
                     onChange: function (selectedDates) {
@@ -626,12 +722,20 @@ $(document).ready(function() {
                             minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
 
                             window._dcOut.set('minDate', minCheckoutDate);
-                            if (!window._dcOut.selectedDates.length || window._dcOut.selectedDates[0] <= checkinDate) {
+
+                            var maxCheckout = dcFirstOccupiedNightAfter(checkinDate, checkinDisable);
+                            window._dcOut.set('maxDate', maxCheckout || null);
+
+                            var curCo = window._dcOut.selectedDates[0];
+                            if (!curCo || curCo <= checkinDate || (maxCheckout && curCo > maxCheckout)) {
                                 window._dcOut.setDate(minCheckoutDate, true);
                             }
                         }
                     }
                 }));
+
+                // الحد الأقصى الابتدائي لتاريخ المغادرة بناءً على تاريخ الوصول الحالي للحجز.
+                window._dcOut.set('maxDate', dcFirstOccupiedNightAfter(new Date(curIn + 'T00:00:00'), checkinDisable) || null);
 
                 // نضمن إبراز التاريخ المختار (خلفية برتقالية) في كلا الحقلين — بعض حالات type=date
                 // لا تُعلّم defaultDate كـ selected، فنفرضه يدوياً.
@@ -691,11 +795,11 @@ $(document).ready(function() {
             var delta = parseFloat(q.price_delta);
             var summary;
             if (delta > 0.001) {
-                summary = "{{ __('سيتم تحصيل فرق قدره') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('لأجل تأكيد التعديل') }}";
+                summary = "{{ __('booking.difference_will_be_charged') }} <b style='color:#e74c3c;'>+" + Math.abs(delta).toFixed(2) + " " + window.SAR_SYMBOL + "</b> {{ __('booking.to_confirm_change') }}";
             } else if (delta < -0.001) {
-                summary = "{{ __('سيتم استرداد فرق قدره') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " SAR</b> {{ __('بعد مراجعة الإدارة.') }}";
+                summary = "{{ __('booking.difference_will_be_refunded') }} <b style='color:#28a745;'>-" + Math.abs(delta).toFixed(2) + " " + window.SAR_SYMBOL + "</b> {{ __('booking.after_admin_review') }}";
             } else {
-                summary = "<span style='color:#6c757d;'>{{ __('لا يوجد فرق في السعر — سيتم تطبيق التواريخ مباشرة.') }}</span>";
+                summary = "<span style='color:#6c757d;'>{{ __('booking.no_price_difference') }}</span>";
             }
 
             // زر التأكيد: "دفع" عند وجود فرق مستحق (زيادة)، و"طلب" عدا ذلك.
@@ -705,7 +809,7 @@ $(document).ready(function() {
                 title: "{{ __('booking.date_change_confirmation') }}",
                 html: "<div style='text-align:center;'>" +
                     "<bdo dir='ltr' style='display:inline-block;'>" + q.new_check_out + " ← " + q.new_check_in + "</bdo><br><br>" +
-                    "{{ __('السعر الجديد') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " SAR</b><br>" + summary + "</div>",
+                    "{{ __('booking.new_price') }}: <b>" + parseFloat(q.new_price).toFixed(2) + " " + window.SAR_SYMBOL + "</b><br>" + summary + "</div>",
                 icon: 'question',
                 showDenyButton: true,
                 denyButtonText: "{{ __('booking.previous') }}",
@@ -716,7 +820,7 @@ $(document).ready(function() {
             }).then(function (confirm) {
                 // "السابق" → أعِد فتح مُنتقي التواريخ محتفظاً بالتواريخ المُختارة، بنفس القيود.
                 if (confirm.isDenied) {
-                    dcOpenModal(bookingId, result.value.newIn, result.value.newOut, disabledDates);
+                    dcOpenModal(bookingId, result.value.newIn, result.value.newOut, disabledDates, checkoutDisabledDates);
                     return;
                 }
                 if (!confirm.isConfirmed) { return; }
@@ -757,16 +861,31 @@ $(document).ready(function() {
         var bookingId = $(this).data("booking-id");
         var curIn = $(this).data("check-in");
         var curOut = $(this).data("check-out");
+        var blockedUrl = "{{ route('apartments.blocked-dates', $booking->apartment_id) }}";
 
+        function dcOpenWith(bookedDays) {
+            HoldOn.close();
+            dcOpenModal(bookingId, curIn, curOut,
+                dcBuildDisabled(bookedDays, curIn, curOut),
+                dcBuildCheckoutDisabled(bookedDays, curIn, curOut));
+        }
+
+        // فتح المودال بقائمة فارغة عند فشل الطلب يُظهر كل التواريخ متاحة (بما فيها المحجوزة)
+        // ويسمح باختيار تاريخ سيُرفض لاحقاً — لذا نعيد المحاولة مرة، وإن فشلت نُظهر خطأ بدل تقويم مضلِّل.
         HoldOn.open();
-        $.getJSON("{{ route('apartments.blocked-dates', $booking->apartment_id) }}")
-            .done(function (resp) {
-                HoldOn.close();
-                dcOpenModal(bookingId, curIn, curOut, dcBuildDisabled(resp.booked_days || [], curIn, curOut));
-            })
+        $.getJSON(blockedUrl)
+            .done(function (resp) { dcOpenWith(resp.booked_days || []); })
             .fail(function () {
-                HoldOn.close();
-                dcOpenModal(bookingId, curIn, curOut, dcBuildDisabled([], curIn, curOut));
+                $.getJSON(blockedUrl)
+                    .done(function (resp) { dcOpenWith(resp.booked_days || []); })
+                    .fail(function () {
+                        HoldOn.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: "{{ __('booking.error') }}",
+                            text: "{{ __('booking.error_message') }}"
+                        });
+                    });
             });
     });
 
@@ -775,7 +894,10 @@ $(document).ready(function() {
         var checkinVal = $('#dc-in').val();
         var checkoutVal = $(this).val();
         if (checkinVal && checkoutVal && new Date(checkoutVal) <= new Date(checkinVal)) {
-            alert("{{ __('apartment.checkout_greater_than') }}");
+            Swal.fire({
+                icon: 'warning',
+                title: "{{ __('apartment.checkout_greater_than') }}",
+            });
             $(this).val('');
         }
     });
@@ -817,7 +939,7 @@ $(document).ready(function() {
         var requestId = $(this).data("request-id");
         Swal.fire({
             title: "{{ __('booking.are_you_sure') }}",
-            text: "{{ __('سيتم إلغاء طلب تعديل التواريخ.') }}",
+            text: "{{ __('booking.cancel_date_change_request_confirm') }}",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -849,6 +971,83 @@ $(document).ready(function() {
                     });
                 }
             });
+        });
+    });
+
+    // معالجة نقل الوحدة من العميل (تأكيد/رفض): نافذة تقدّم غير قابلة للإغلاق تمنع أي ضغط،
+    // وحارس يمنع الإرسال المزدوج، وإعادة تحميل دائمة (نجاحاً أو فشلاً) لمزامنة حالة الأزرار.
+    function utProcess(transferId, action) {
+        if (window._utBusy) { return; }
+        window._utBusy = true;
+
+        Swal.fire({
+            title: "{{ __('booking.unit_transfer_processing') }}",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: function () { Swal.showLoading(); }
+        });
+
+        $.ajax({
+            url: "{{ url('web-booking/unit-transfer') }}/" + transferId + "/" + action,
+            type: "POST",
+            headers: { "X-CSRF-TOKEN": dcCsrf },
+            success: function (res) {
+                Swal.fire({
+                    icon: 'success',
+                    title: "{{ __('booking.success') }}",
+                    text: res.message,
+                    allowOutsideClick: false,
+                    confirmButtonText: "{{ __('booking.ok') }}"
+                }).then(function () { window.location.reload(); });
+            },
+            error: function (xhr) {
+                // Reload on error too: the request state changed (failed/rejected/no longer
+                // pending), so re-sync the page instead of leaving stale buttons.
+                Swal.fire({
+                    icon: 'error',
+                    title: "{{ __('booking.error') }}",
+                    text: (xhr.responseJSON && xhr.responseJSON.message) || "{{ __('booking.error_message') }}",
+                    allowOutsideClick: false,
+                    confirmButtonText: "{{ __('booking.ok') }}"
+                }).then(function () { window.location.reload(); });
+            }
+        });
+    }
+
+    // تأكيد نقل الوحدة من العميل → يحرّر الوحدة القديمة ويحجز الجديدة
+    $(document).on('click', '.ut-confirm-btn', function () {
+        var transferId = $(this).data("transfer-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('booking.unit_transfer_confirm_text') }}",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "{{ __('booking.yes') }}",
+            cancelButtonText: "{{ __('booking.no') }}"
+        }).then(function (result) {
+            if (!result.isConfirmed) { return; }
+            utProcess(transferId, 'confirm');
+        });
+    });
+
+    // رفض نقل الوحدة من العميل → يحرّر الوحدة الوجهة ويبقى الحجز كما هو
+    $(document).on('click', '.ut-decline-btn', function () {
+        var transferId = $(this).data("transfer-id");
+        Swal.fire({
+            title: "{{ __('booking.are_you_sure') }}",
+            text: "{{ __('booking.unit_transfer_decline_text') }}",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "{{ __('booking.yes') }}",
+            cancelButtonText: "{{ __('booking.no') }}"
+        }).then(function (result) {
+            if (!result.isConfirmed) { return; }
+            utProcess(transferId, 'decline');
         });
     });
 });

@@ -1,9 +1,9 @@
 <section class="properitirs pt-10 pb-10 md:pt-20 md:pb-20   bg-properits">
     <div class="container">
   
-        <h3 class="font-semibold text-base md:text-3xl text-black mt-1 md:mt-3 mb-5 md:mb-0 text-center md:text-left rtl:md:text-right">
+        <h2 class="font-semibold text-base md:text-3xl text-black mt-1 md:mt-3 mb-5 md:mb-0 text-center md:text-left rtl:md:text-right">
             @lang('site.explore_more_properties')
-        </h3>
+        </h2>
 
 
        
@@ -11,11 +11,16 @@
                  @foreach ($buildings as $city)
                 <div class="slider px-5 -mx-5" data-title="{{ $city->ml('name') }}">
                     @foreach ($city->buildings as $building)
-                        <a href="{{route('buliding.show',$building->slug)}}" class="relative block px-1 overflow-hidden">
+                        <a href="{{route('building.details',$building->slug)}}" class="relative block px-1 overflow-hidden">
                             <img
-                                src="{{ $building->image_grid }}"
+                                src="{{ $building->image_card }}"
+                                srcset="{{ $building->image_card_srcset }}"
+                                sizes="(min-width: 768px) 25vw, calc(100vw - 40px)"
+                                width="600"
+                                height="600"
                                 class="h-[250px] md:h-[440px] w-full object-cover rounded-xl overflow-hidden"
                                 alt="{{ $building->ml('name') }}"
+                                loading="lazy"
                             />
                             <div class="gradient absolute left-1 top-0 right-1 bottom-0 z-10 rounded-xl overflow-hidden"></div>
                             <h3 class="absolute left-4 sm:left-6 right-4 sm:right-6 z-20 font-normal text-lg text-white mb-5">

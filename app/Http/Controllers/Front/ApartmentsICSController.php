@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
-use App\Http\Controllers\Controller;
 
 class ApartmentsICSController extends Controller
 {
     public function generateICS(Apartment $apartment)
     {
+        abort_unless(config('services.ics_feed.enabled'), 404);
+
         // جلب الحجوزات المؤكدة (booked) لهذه الشقة
         $bookings = Booking::where('apartment_id', $apartment->id)
-            ->wherein('status', ['approved','booked'])
+            ->wherein('status', ['approved', 'booked'])
             ->where('is_airbnb_booking', 0)
             ->get();
 
@@ -36,11 +38,11 @@ class ApartmentsICSController extends Controller
             }
 
             $event = Event::create("booking.{$booking->id}@places.co")
-                ->uniqueIdentifier("#".$booking->id)
+                ->uniqueIdentifier('#'.$booking->id)
                 ->startsAt($startDate)
                 ->endsAt($endDate)
                 ->description("Booking for {$booking->customer_full_name}, Email: {$booking->customer_email}")
-                ->address("Apartment ".$apartment->name_en."");
+                ->address('Apartment '.$apartment->name_en.'');
 
             $calendar->event($event);
         }

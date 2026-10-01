@@ -4,10 +4,9 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Booking;
-use App\Models\SmartLockPasscode;
-use App\Models\PasscodeRetryAttempt;
-use App\Services\BookingService;
+use App\Services\Locks\LockAccessService;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CheckBookingsWithoutPasscodes extends Command
 {
@@ -25,6 +24,11 @@ class CheckBookingsWithoutPasscodes extends Command
      */
     protected $description = 'Check for approved bookings that need passcode generation';
 
+    public function __construct(private readonly LockAccessService $locks)
+    {
+        parent::__construct();
+    }
+
     /**
      * Execute the console command.
      */
@@ -35,6 +39,10 @@ class CheckBookingsWithoutPasscodes extends Command
 
         // البحث عن الحجوزات المعتمدة التي تحتاج إلى باس كود
         $bookingsNeedingPasscodes = Booking::where('status', 'approved')
+            // تخطّي الحجوزات بدون عميل (سجلات قديمة) — تسجيل فشل المحاولة يتطلب customer_id غير فارغ
+            ->whereNotNull('customer_id')
+            // تخطّي الإقامات المنتهية — لا داعي لتوليد كود لإقامة انقضت
+            ->whereDate('check_out', '>=', now())
             ->where(function($query) {
                 $query->where('passcode_status', '!=', 'generated')
                       ->orWhereNull('passcode_status');
@@ -42,7 +50,7 @@ class CheckBookingsWithoutPasscodes extends Command
             ->where('is_airbnb_booking', '!=', 1)
             ->whereDoesntHave('smartLockPasscodes')
             ->whereDoesntHave('retryAttempt', function ($query) {
-                $query->where('status', 'max_attempts_reached');
+                $query->where('operation', 'provision')->where('status', 'max_attempts_reached');
             })
             ->with(['apartment.smartLock'])
             ->get();
@@ -67,26 +75,12 @@ class CheckBookingsWithoutPasscodes extends Command
                 continue;
             }
 
-            // إنشاء محاولة إعادة إذا لم تكن موجودة
-            $retryAttempt = PasscodeRetryAttempt::firstOrCreate(
-                ['booking_id' => $booking->id],
-                [
-                    'apartment_id' => $booking->apartment_id,
-                    'customer_id' => $booking->customer_id,
-                    'attempt_count' => 0,
-                    'max_attempts' => 100,
-                    'status' => 'pending',
-                    'next_attempt_at' => now()->addMinutes(5), // محاولة بعد 5 دقائق
-                ]
-            );
-
-            // محاولة إنشاء الباس كود مباشرة
+            // محاولة إنشاء الباس كود مباشرة (الفشل يُسجَّل تلقائياً في PasscodeRetryAttempt عبر LockAccessService)
             try {
-                $bookingService = app(BookingService::class);
-                $bookingService->addPasscodeToSmartLock($booking);
+                $this->locks->provisionForBooking($booking);
                 $this->info("Successfully created passcode for booking #{$booking->number_of_booking}");
                 $processedCount++;
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 $this->error("Failed to create passcode for booking #{$booking->number_of_booking}: " . $e->getMessage());
                 $processedCount++;
             }

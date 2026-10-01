@@ -1,112 +1,66 @@
     <meta charset="utf-8" />
-    <meta name="author" content="MADAR SOLUTIONS" />
+    @if(config('services.google_tag_manager.id'))
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer',@json(config('services.google_tag_manager.id')));</script>
+    <!-- End Google Tag Manager -->
+    @endif
       {!! SEO::generate() !!}
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
+    <link rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode) }}" />
+    @endforeach
+    <link rel="alternate" hreflang="x-default" href="{{ LaravelLocalization::getLocalizedURL(LaravelLocalization::getDefaultLocale()) }}" />
     <meta   name="viewport"  content="width=device-width, initial-scale=1, shrink-to-fit=no"   />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    @stack('TopCss')
-    
-    <link href="{{ asset('assets/css/style.css?4444')}}" rel="stylesheet" />
-    <link    href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css"  rel="stylesheet"  />
-    <link    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"   rel="stylesheet" />
-    <link rel="icon" href="{{ asset('assets/img/favicon.svg')}}" />
-    <script  type="text/javascript"    src="https://code.jquery.com/jquery-3.7.1.js"  ></script>
-    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
+    <meta name="theme-color" content="#f7bb8e" />
 
-    
-    <script type="text/javascript" src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="{{ asset('assets/js/maplace.js?3')}}"></script>
-
-
-    <script>
-      tailwind.config = {
-          theme: {
-              container: {
-                  center: true,
-              },
-              colors: {
-                  'gri': '#f7bb8e',
-                  'white': '#fff',
-                  'black': '#000',
-                  'border': '#f7bb8e',
-                  'reviews': '#999999',
-                  'title': '#2C2C2C',
-                  'feature': '#343233',
-                  'feature-border': '#E8E8E8',
-                  'price': '#f7bb8e',
-                  'automated-1': 'rgba(239, 85, 44, .2)',
-                  'automated-2': 'rgba(255, 90, 95, .2)',
-                  'automated-3': 'rgba(233, 187, 113, .2)',
-                  'gritext': '#444',
-                  'commentbg': '#F4F6F8',
-                  'commentborder': '#F1F1F1',
-                  'blackopacity': 'rgba(0, 0, 0, .1)',
-                  'properits': '#F8F7FD',
-                  'filterbackground': '#fbfbfb',
-                  'filterborder': '#ececec',
-                  'filteritem': '#ebebe8',
-                  'filterhover': '#f7bb8e',
-                  'sort': '#f6f6f6',
-                  'sortactive': '#f7bb8e',
-                  'blue': '#0068CF',
-                  'footer': '#fcfcfc',
-                  'titletext': '#848484'
-              }
-          }
-      }
-  </script> 
-    <style>
-      .datepicker-cell {
-        color: #787e8b !important;
-      }
-      .focused {
-        color: black !important;
-      }
-      .select2-selection {
-        border: none !important;
-      }
-      .select2-container--default
-        .select2-selection--single
-        .select2-selection__rendered {
-        color: inherit !important;
-      }
-      .view-switch,
-      .prev-btn > svg,
-      .next-btn > svg {
-        color: #000 !important;
-      }
-      .range-start {
-        color: white !important;
-      }
-
-      section.app {
- 
-    background: #171515 !important;
-}
-
-@media (max-width: 768px) {
-  section.app.relative img {
-    margin: auto;
-    text-align: center;
-}
-section.app.relative a {
-    margin-right: 10px !important;
-    margin-left: 10px !important;
-    display: inline-block;
-}
-
-section.app.relative > div {
-    text-align: center;
-}
-}
-    </style>
-
-
-    @if(app()->getLocale() == 'ar')
-      <link    href="{{ asset('assets/css/rtl.css?2')}}"   rel="stylesheet" />
+    {{-- Resource hints: media (slider = LCP image) is served from S3. --}}
+    @php
+        $mediaOrigin = parse_url(\Illuminate\Support\Facades\Storage::disk(config('media-library.disk_name'))->url('media'), PHP_URL_HOST);
+    @endphp
+    @if($mediaOrigin)
+    <link rel="preconnect" href="https://{{ $mediaOrigin }}" />
     @endif
 
-      <link    href="{{ asset('assets/css/custom.css?v2') }}"   rel="stylesheet" />
-      <link    href="{{ asset('assets/css/dark.css?v2') }}"   rel="stylesheet" />
+    @stack('TopCss')
 
-    @stack('css')
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg')}}" />
+    <link rel="icon" type="image/x-www-form ico" href="{{ asset('favicon.ico') }}" />
+    <link rel="apple-touch-icon" href="{{ asset('assets/img/favicon.svg') }}" />
+
+    {{-- Stylesheets (App\Support\CssBundle), in the original cascade order:
+         self-hosted fonts, slick, fancybox, aos-lite, style.css, flowbite, select2,
+         Saudi Riyal font ("saudi_riyal" families for x-riyal), css/head.css,
+         rtl (ar), custom, dark, page @push('css'), then Tailwind last (where
+         the former Play CDN injected it). Pages without their own CSS get it
+         all as a single file. --}}
+    @php
+        $isArabic = app()->getLocale() == 'ar';
+        $pageCss = trim($__env->yieldPushContent('css'));
+        $baseCss = array_merge(
+            ['vendor/google-fonts/sora.css'],
+            $isArabic ? ['vendor/google-fonts/tajawal.css'] : [],
+            [
+                'vendor/slick-1.8.1/slick.css',
+                'vendor/fancybox-3.5.7/jquery.fancybox.min.css',
+                'css/aos-lite.css',
+                'css/style.css',
+                'vendor/flowbite-2.5.1/flowbite.purged.css',
+                'vendor/select2-4.1.0-rc.0/select2.min.css',
+                'vendor/saudi-riyal-font-1.1.0/index.css',
+                'css/head.css',
+            ],
+        );
+        $themeCss = array_merge($isArabic ? ['css/rtl.css'] : [], ['css/custom.css', 'css/dark.css']);
+    @endphp
+    @if($pageCss === '')
+    {{ \App\Support\CssBundle::tags('site-'.app()->getLocale(), array_merge($baseCss, $themeCss, ['css/tailwind.css'])) }}
+    @else
+    {{ \App\Support\CssBundle::tags('base-'.app()->getLocale(), $baseCss) }}
+    {{ \App\Support\CssBundle::tags('theme-'.app()->getLocale(), $themeCss) }}
+    {!! $pageCss !!}
+    {{ \App\Support\CssBundle::tags('tailwind', ['css/tailwind.css']) }}
+    @endif

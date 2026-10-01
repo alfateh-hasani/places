@@ -13,9 +13,8 @@
             <form id="login-form" method="post">
                 @csrf
                 <div id="login-result"></div>
-                <label>
+                <label for="phoneNumber">
                     <p class="text-sm mb-3">{{ __('site.your_mobile_number') }}</p>
-                    
                 </label>
                 <div class="w-full">
                         <input autocomplete="off" type="tel" id="phoneNumber" name="phone" class="w-full border border-border rounded-lg h-12 px-3">
@@ -45,10 +44,10 @@
       <div class="px-5 text-left rtl:text-right pt-8">
           <p class="font-semibold text-xl mb-6">
               @lang('site.welcome_back')
-              <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" />
+              <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="" />
           </p>
           <p class="text-sm mb-4">
-              @lang('site.enter_code_sms') <span dir="ltr" id="phone-number"></span>:
+              @lang('site.enter_code_sms') <span dir="ltr" id="phone-number" style="direction:ltr; unicode-bidi:isolate; display:inline-block;"></span>:
           </p>
 
           <div id="otp-result"></div>
@@ -57,17 +56,19 @@
               <div class="flex mb-2 space-x-2    justify-center items-center" style="    direction: ltr;" dir="ltr">
                   @for ($i = 1; $i <= 4; $i++)
                   <div>
-                      <label for="code-{{ $i }}" class="sr-only">Code {{ $i }}</label>
-                      <input 
-                          type="text" 
-                          maxlength="1" 
-                          id="code-{{ $i }}" 
-                           
-                          class="otp-input block w-12 h-12 text-center text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 rtl:border-gray-500" 
-                          data-focus-input-init 
-                          data-focus-input-next="code-{{ $i+1 }}" 
-                          data-focus-input-prev="code-{{ $i-1 }}" 
-                          required 
+                      <label for="code-{{ $i }}" class="sr-only">@lang('site.code') {{ $i }}</label>
+                      <input
+                          type="text"
+                          inputmode="numeric"
+                          pattern="[0-9]*"
+                          autocomplete="one-time-code"
+                          maxlength="1"
+                          id="code-{{ $i }}"
+                          class="otp-input block w-12 h-12 text-center text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 rtl:border-gray-500"
+                          data-focus-input-init
+                          data-focus-input-next="code-{{ $i+1 }}"
+                          data-focus-input-prev="code-{{ $i-1 }}"
+                          required
                       />
                   </div>
                   @endfor
@@ -75,7 +76,7 @@
               <div class="border-t border-border py-8 -mx-5 px-5 mt-4">
                 <div class="flex justify-between items-center">
                     <p id="resend-timer" class="text-sm text-reviews">
-                        60 : @lang('site.resend')
+                        2:00 : @lang('site.resend')
                     </p>
                     <div class="flex space-x-4 rtl:space-x-reverse">
                         <button type="button" id="resend-button" 
@@ -105,7 +106,7 @@
       <div class="px-5 text-left rtl:text-right pt-8">
           <p class="font-semibold text-xl mb-6 rtl:mb-4">
               @lang('site.welcome_to_dyafa') 
-              <img class="h-8 inline-block rtl:ml-2" src="{{ asset('assets/img/goodbye.png') }}" />
+              <img class="h-8 inline-block rtl:ml-2" src="{{ asset('assets/img/goodbye.png') }}" alt="" />
           </p>
 
           <form>
@@ -249,11 +250,13 @@ function handleAjaxError(xhr,   container) {
     HoldOn.close();  // Close loading animation
     clearInputErrors();  // Clear previous input errors
 
-    if (xhr.status === 422) {
-        // Input validation errors
+    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+        // Field-level validation errors ({errors: {field: [...]}}).
         displayInputErrors(xhr.responseJSON.errors);
     } else {
-        // General error message for other statuses
+        // Flat error responses ({message: '...'}, e.g. an invalid phone from
+        // request-otp) and all other statuses — surface the message to the user
+        // instead of silently doing nothing.
         let message = xhr.responseJSON?.message || '@lang("site.something_went_wrong")';
         showGeneralErrorMessage(container, message);
     }
@@ -262,18 +265,11 @@ function handleAjaxError(xhr,   container) {
 // إعداد حقل الهاتف
 const phoneInput = document.querySelector("#phoneNumber");
 const iti = window.intlTelInput(phoneInput, {
-      //  utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-    initialCountry: "auto",
+    initialCountry: "sa",
     separateDialCode: true,
     formatOnDisplay: true,
     nationalMode: false,
     autoFormat: true,
-    geoIpLookup: function(callback) {
-        fetch("https://ipapi.co/json")
-        .then(res => res.json())
-        .then(data => callback(data.country_code))
-        .catch(() => callback("sa")); // السعودية كدولة افتراضية في حالة الفشل
-    },
     preferredCountries: ["sa", "ae", "kw", "bh", "om", "qa"],
     dropdownContainer: document.getElementById('countriesDropdown'),
 });
@@ -301,6 +297,13 @@ function openRegistrationPopup(token) {
 function showMessage(container, type, message) {
     const html = `<div class="alert alert-${type}">${message}</div>`;
     $(container).html(html).fadeIn().delay(3000).fadeOut();
+}
+
+// A message that stays on screen (no auto fade-out) — for important, long-lived
+// states such as a 24h OTP lockout that the user must act on (contact support).
+function showPersistentMessage(container, type, message) {
+    const html = `<div class="alert alert-${type}">${message}</div>`;
+    $(container).stop(true, true).html(html).show();
 }
 
 // Clear Input Errors
@@ -331,7 +334,8 @@ $('#popup-7 form').validate({
             success: function(response) {
                 HoldOn.close();
                 showMessage('#registration-result', 'success', '{{ __('site.created_in_successfully')}}');
-                window.location.href = response.redirect;
+                // Stay on the current page after registering (modal-based flow).
+                window.location.reload();
             },
             error: function(xhr) {
                 handleAjaxError(xhr,   '#registration-result');
@@ -342,7 +346,10 @@ $('#popup-7 form').validate({
 });
 
 // Switch to OTP Popup
-function switchToOtpPopup() {
+function switchToOtpPopup(seconds) {
+    // Fresh OTP session: clear any stale messages/state (e.g. a previous lockout
+    // that was lifted by support) so a newly-sent code isn't hidden behind them.
+    resetOtpUi();
     $.fancybox.close('#popup-5');
     $.fancybox.open({
         src: '#popup-6',
@@ -354,26 +361,52 @@ function switchToOtpPopup() {
             $('#code-1').focus();
         }
     });
-    startCountdown();
+    startCountdown(seconds);
+}
+
+// Clear leftover result messages and reset the resend allowance/state.
+function resetOtpUi() {
+    $('#otp-result').stop(true, true).empty().show();
+    $('#login-result').stop(true, true).empty().show();
+    resendCount = 5;
+    $('#resend-button').prop('disabled', true);
+    $('.otp-input').val('');
+    $('#otp-submit-button').prop('disabled', true);
 }
 
 // OTP Countdown
 let resendCount = 5;
-let otpTimeout = 60;
+let otpTimeout = 120;
 let otpInterval;
 
-function startCountdown() {
-    let timeLeft = otpTimeout;
+// Format remaining seconds as a m:ss clock (e.g. 120 -> "2:00", 59 -> "0:59").
+function formatCountdown(totalSeconds) {
+    let minutes = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function startCountdown(seconds) {
+    clearInterval(otpInterval);
+
+    let timeLeft = parseInt(seconds, 10);
+    if (isNaN(timeLeft) || timeLeft <= 0) {
+        timeLeft = otpTimeout;
+    }
+
+    $('#resend-button').prop('disabled', true);
+    $('#resend-timer').text(`${formatCountdown(timeLeft)} : @lang('site.resend')`);
+
     otpInterval = setInterval(() => {
         timeLeft--;
-        $('#resend-timer').text(`${timeLeft} : @lang('site.resend')`);
+        $('#resend-timer').text(`${formatCountdown(timeLeft)} : @lang('site.resend')`);
 
         if (timeLeft <= 0) {
             clearInterval(otpInterval);
             $('#resend-button').prop('disabled', resendCount <= 0);
             $('#resend-timer').text(
-                resendCount > 0 
-                    ? '@lang("site.resend_available")' 
+                resendCount > 0
+                    ? '@lang("site.resend_available")'
                     : '@lang("site.resend_limit_reached")'
             );
         }
@@ -382,11 +415,11 @@ function startCountdown() {
 
 // Login Form Validation and Submission
 $('#login-form').validate({
-    rules: { 
-        phone: { 
-            required: true, 
-             
-        } 
+    rules: {
+        phone: {
+            required: true,
+            validPhone: true
+        }
     },
     messages: {
         phone: {
@@ -395,28 +428,50 @@ $('#login-form').validate({
         }
     },
     submitHandler: function(form) {
+        // Drop any stale message (e.g. a lockout that support has since lifted).
+        $('#login-result').stop(true, true).empty().show();
+
         const phoneNumber = iti.getNumber();
         const formData = new FormData(form);
         formData.set('phone', phoneNumber);
 
         HoldOn.open({ theme: "sk-rect" });
 
-        $.ajax({
-            url: "{{ route('login.step1') }}",
-            type: "POST",
-            data: formData,
-            contentType: false,
-            processData: false,
-            headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
-            success: function(response) {
-                HoldOn.close();
-                $('#phone-number').text(response.phone);
-                switchToOtpPopup();
-                if (!response.has_account) $('#otp-form').data('registerRequired', true);
-            },
-            error: function(xhr) {
-                handleAjaxError(xhr, '#login-result');
-            }
+        window.recaptchaToken('login').then(function(token) {
+            formData.set('g-recaptcha-response', token);
+
+            $.ajax({
+                url: "{{ route('login.step1') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                success: function(response) {
+                    HoldOn.close();
+                    $('#phone-number').text(response.phone);
+                    switchToOtpPopup(response.retry_after);
+                    if (!response.has_account) $('#otp-form').data('registerRequired', true);
+                },
+                error: function(xhr) {
+                    HoldOn.close();
+                    if (xhr.status === 429 && xhr.responseJSON) {
+                        if (xhr.responseJSON.reason === 'otp_blocked') {
+                            // Long lockout — no short countdown to resume; keep the notice visible.
+                            showPersistentMessage('#login-result', 'danger', xhr.responseJSON.message);
+                            return;
+                        }
+                        // A code was already sent recently: move to the OTP step and
+                        // resume the server-driven cooldown instead of resending.
+                        $('#phone-number').text(xhr.responseJSON.phone);
+                        switchToOtpPopup(xhr.responseJSON.retry_after);
+                        if (!xhr.responseJSON.has_account) $('#otp-form').data('registerRequired', true);
+                        showMessage('#otp-result', 'warning', xhr.responseJSON.message);
+                        return;
+                    }
+                    handleAjaxError(xhr, '#login-result');
+                }
+            });
         });
     }
 });
@@ -424,9 +479,14 @@ $('#login-form').validate({
 // OTP Form Submission
 $('#otp-form').on('submit', function (e) {
         e.preventDefault();
-        HoldOn.open({ theme: "sk-rect" });
 
         let otpCode = $('.otp-input').map((_, el) => $(el).val()).get().join('');
+        // Ignore incomplete codes (e.g. pressing Enter before all 4 digits are entered).
+        if (otpCode.length !== 4) {
+            return;
+        }
+
+        HoldOn.open({ theme: "sk-rect" });
 
         $.ajax({
             url: "{{ route('login.step2') }}",
@@ -443,7 +503,9 @@ $('#otp-form').on('submit', function (e) {
                     openRegistrationPopup(response.token);
                 } else {
                     showMessage('#otp-result', 'success', '{{ __('site.logged_in_successfully')}}');
-                    window.location.href = response.redirect || '/';
+                    // Login happens in a modal on the current page — return the user to
+                    // where they were (e.g. the apartment they were viewing), not home.
+                    window.location.reload();
                 }
             },
             error: function (xhr) {
@@ -497,42 +559,55 @@ $('.otp-input').on('paste', function (e) {
 
 // OTP Resend Button Handler
 $('#resend-button').on('click', function() {
-    if (resendCount > 0) {
-        resendCount--;
-        startCountdown();
-        $(this).prop('disabled', true);
+    if (resendCount <= 0) {
+        showMessage('#otp-result', 'warning', '@lang("site.resend_limit_reached_message")');
+        return;
+    }
 
+    $(this).prop('disabled', true);
+
+    window.recaptchaToken('login').then(function(token) {
         $.ajax({
             url: "{{ route('login.resend_otp') }}",
             type: "POST",
-            data: { phone: $('#phone-number').text() },
-            success: function() {
-                showMessage('#otp-result', 'success', '@lang("site.otp_sent")');
+            data: { phone: $('#phone-number').text(), _token: "{{ csrf_token() }}", 'g-recaptcha-response': token },
+            success: function(response) {
+                resendCount--; // only a successful send counts against the attempt limit
+                startCountdown(response.retry_after);
+                showMessage('#otp-result', 'success', response.message || '@lang("site.otp_sent")');
             },
-            error: function() {
-                showMessage('#otp-result', 'danger', '@lang("site.resend_failed")');
+            error: function(xhr) {
+                if (xhr.status === 429 && xhr.responseJSON) {
+                    if (xhr.responseJSON.reason === 'otp_blocked') {
+                        // Long lockout: stop the timer, keep resend disabled, and keep the notice visible.
+                        clearInterval(otpInterval);
+                        $('#resend-button').prop('disabled', true);
+                        $('#resend-timer').text('@lang("site.resend_limit_reached")');
+                        showPersistentMessage('#otp-result', 'danger', xhr.responseJSON.message);
+                        return;
+                    }
+                    // Still within the server cooldown window: honor its timer (no attempt consumed).
+                    startCountdown(xhr.responseJSON.retry_after);
+                    showMessage('#otp-result', 'warning', xhr.responseJSON.message);
+                    return;
+                }
+                // Genuine failure: keep the button usable so the user can retry, don't start a
+                // timer, and surface the real reason from the server when available.
+                $('#resend-button').prop('disabled', false);
+                let message = (xhr.responseJSON && xhr.responseJSON.message) || '@lang("site.resend_failed")';
+                showMessage('#otp-result', 'danger', message);
             }
         });
-    } else {
-        showMessage('#otp-result', 'warning', '@lang("site.resend_limit_reached_message")');
-    }
+    });
 });
 
 
  
 var handleChange = function() {
-    let number = phoneInput.value.trim();
-    console.log(number);
-    console.log(iti.getNumber());
-    if (number) {
-        if (iti.isValidNumber()) {
-            console.log('Valid Number:', iti.getNumber());
-            $('#login-submit-button').prop('disabled', false);
-        } else {
-            console.log('Invalid Number');
-            $('#login-submit-button').prop('disabled', true);
-        }
-    }
+    // Keep the button clickable; jQuery Validate's validPhone rule surfaces a clear
+    // "invalid number" error instead of silently disabling the button (which left
+    // the user with no feedback for e.g. a number that doesn't match the country).
+    $('#login-submit-button').prop('disabled', false);
 };
 
  

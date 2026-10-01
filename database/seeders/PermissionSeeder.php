@@ -24,6 +24,9 @@ class PermissionSeeder extends Seeder
         // Cancellation / refund requests (CanceledBookings + Refunds tracker)
         'booking.list',
         'booking.changeStatus',
+
+        // Direct (manual bank-transfer) booking from the dashboard
+        'direct-booking.create',
         'refund.list',
         'refund.retry',
 

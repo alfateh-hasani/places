@@ -3,14 +3,65 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css" />
 <link rel="stylesheet" href="{{asset('assets/plugin/HoldOn.min.css')}}" />
 <style>
-    .bg-white {
+    .account-page .bg-white {
         background-color: #0f0c0c !important;
+    }
+
+    #customerForm input {
+        color-scheme: light;
+        background-color: #ffffff;
+        color: #111827;
+        padding-inline: 0.75rem;
+    }
+
+    #customerForm input::placeholder {
+        color: #6b7280;
+    }
+
+    #customerForm input:disabled,
+    #customerForm input[readonly] {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
+
+    /* rtl.css forces direction:rtl on every input, which reverses phone digits
+       and the leading +code. Force phone fields left-to-right so the number
+       reads in the correct order. */
+    #customerForm input[type="tel"] {
+        direction: ltr !important;
+        text-align: left !important;
+        unicode-bidi: isolate;
+    }
+
+    /* intl-tel-input (emergency phone): on this RTL page the widget's dial codes
+       render reversed ("966+") and the dropdown misaligns. Force the whole widget
+       LTR and tidy the country list so it reads correctly. */
+    .iti { direction: ltr; width: 100%; }
+    .iti__selected-dial-code { direction: ltr; unicode-bidi: isolate; }
+    .iti__dropdown-content { direction: ltr; text-align: left; }
+    .iti__search-input { direction: ltr; text-align: left; }
+    .iti__country { text-align: left; }
+    .iti__country .iti__dial-code { direction: ltr; unicode-bidi: isolate; color: #6b7280; }
+    /* Keep the flag box on the left and give the selected-country button room. */
+    .iti__selected-country { direction: ltr; }
+    /* Give the input enough inline-start padding for the flag + separate dial code,
+       so the phone number never renders under/behind the country selector. The
+       widget may not add a --separate-dial-code modifier class in this version,
+       so target the input inside ANY .iti wrapper. */
+    #customerForm .iti input[type="tel"] {
+        padding-left: 5rem !important;
+        padding-right: 0.75rem !important;
+    }
+    /* Vertically center the flag/dial-code button against the h-12 input. */
+    #customerForm .iti__selected-country {
+        inset-inline-start: 0;
+        inset-inline-end: auto;
     }
 </style>
 @endpush
 @section('content')
 
-<section class="profile py-5 lg:py-16  min-h-screen text-white lg:min-h-min">
+<section class="account-page profile py-5 lg:py-16  min-h-screen text-white lg:min-h-min">
     <div class="container">
         <div class="lg:grid lg:grid-cols-4 lg:gap-6 w-full mx-0">
            @include('customer.section.sidebar')
@@ -22,11 +73,9 @@
                         <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
                             <path id="user" fill="currentColor" d="M11,2A10,10,0,1,0,21,12,10.01,10.01,0,0,0,11,2ZM4.955,19.006a7.532,7.532,0,0,1,5.852-2.941c.035,0,.069.01.1.01h.034c.033,0,.062-.009.095-.01a7.522,7.522,0,0,1,5.9,3.025,9.227,9.227,0,0,1-11.989-.084Zm5.962-3.688c-.037,0-.072.006-.109.007a3.311,3.311,0,1,1,.235,0C11,15.325,10.96,15.318,10.917,15.318Zm6.575,3.275a8.271,8.271,0,0,0-4.607-3.034,4.065,4.065,0,1,0-3.918,0,8.283,8.283,0,0,0-4.556,2.95,9.266,9.266,0,1,1,13.081.087Z" transform="translate(-1 -2)"/>
                         </svg>
-                        <p class="inline-block ml-4">
+                        <h1 class="inline-block ms-4">
                             {{__('customer.profile')}}
-                            <span class="font-semibold text-price">
-                                </span>
-                            </p>
+                        </h1>
                     </div>
 
                     <form id="customerForm" class="md:grid md:grid-cols-2 md:gap-4 w-full mx-0">
@@ -66,8 +115,7 @@
                             <p>
                                 {{__('customer.emergency_phone')}}
                             </p>
-                            <!-- <input dir="ltr" type="tel"   id="emergency_phone"  class="w-full border border-border rounded-lg h-12" /> -->
-                            <input dir="ltr"   type="tel"   value="{{$customer->emergency_phone}}" name="emergency_phone" class="w-full border border-border rounded-lg h-12" />
+                            <input dir="ltr" id="emergency_phone" type="tel" value="{{$customer->emergency_phone}}" name="emergency_phone" class="w-full border border-border rounded-lg h-12" />
 
                              
                         </label>
@@ -75,11 +123,9 @@
 
                        
                          
-                        <button class="h-12 bg-price rounded-lg col-span-2 font-semibold text-white">
+                        <button class="h-12 w-full bg-price rounded-lg col-span-2 mt-4 md:mt-2 font-semibold text-white">
                             {{__('customer.save')}}
                         </button>
-                        {!!  GoogleReCaptchaV3::render(['contact_us_id'=>'contact_us']) !!}
-                        {!!  GoogleReCaptchaV3::init() !!}
                     </form>
 
                 </div>
@@ -96,18 +142,15 @@
 
 @include('customer.section.script-form')
 <script>
-    new WOW().init();   
-    // const phoneInput = document.querySelector("#phone");
+    new WOW().init();
     const emergencyPhoneInput = document.querySelector("#emergency_phone");
-    // window.intlTelInput(phoneInput, {
-    //     loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
-    //     initialCountry: "SA",
-    //     separateDialCode: true,
-    // });
     window.intlTelInput(emergencyPhoneInput, {
         loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
         initialCountry: "SA",
         separateDialCode: true,
+        // Append the dropdown to <body> so it is not clipped/overflowed inside the
+        // card on this RTL page; the library positions it as a fixed overlay.
+        dropdownContainer: document.body,
     });
 
     const changeIcon = (el) => {
@@ -138,7 +181,6 @@
                     email: "{{__('customer.email_required_email')}}",
                 },
                 emergency_phone: {
-                    digits: "{{ __('customer.emergency_phone_digits')}}",
                     minlength: "{{__('customer.emergency_phone_minlength')}}",
                 }
             },
@@ -149,7 +191,7 @@
                 });
     
                 $.ajax({
-                    url: "{{ route('customer.update') }}",  
+                    url: "{{ route('customer.profile-update') }}",
                     method: "POST",
                     data: $(form).serialize(), 
                     success: function(response) {
@@ -175,7 +217,4 @@
         });
     });
 </script>
-    
-    
-<!-- End Javascript --
 @endpush

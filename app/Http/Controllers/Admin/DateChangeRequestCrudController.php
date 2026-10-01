@@ -138,7 +138,7 @@ class DateChangeRequestCrudController extends CrudController
                 $color = $delta < 0 ? '#28a745' : ($delta > 0 ? '#e74c3c' : '#6c757d');
                 $sign = $delta < 0 ? '-' : ($delta > 0 ? '+' : '');
 
-                return "<span style='color:{$color};font-weight:bold;'>{$sign}".number_format(abs($delta), 2).' SAR</span>';
+                return "<span style='color:{$color};font-weight:bold;'>{$sign}".number_format(abs($delta), 2).' '.\App\Support\Riyal::svg().'</span>';
             },
         ]);
 

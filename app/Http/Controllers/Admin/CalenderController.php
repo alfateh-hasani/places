@@ -128,7 +128,7 @@ class CalenderController extends CrudController
             ->first();
 
         if (! $mapping || ! config('ownerrez.availability.enabled')) {
-            return response()->json([]);
+            return response()->json(['ok' => true, 'events' => []]);
         }
 
         $events = [];
@@ -191,9 +191,13 @@ class CalenderController extends CrudController
                 'apartment_id' => $apartmentId,
                 'error' => $e->getMessage(),
             ]);
+
+            // Signal failure so the UI can show a refresh button instead of silently
+            // treating an OwnerRez outage as "no bookings".
+            return response()->json(['ok' => false, 'events' => []]);
         }
 
-        return response()->json($events);
+        return response()->json(['ok' => true, 'events' => $events]);
     }
 
     /**

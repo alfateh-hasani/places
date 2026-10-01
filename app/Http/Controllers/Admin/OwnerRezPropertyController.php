@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\OwnerRez\OwnerRezApiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class OwnerRezPropertyController
@@ -14,63 +14,15 @@ class OwnerRezPropertyController
      */
     public static function options(): array
     {
-        $user = (string) config('services.ownerrez.webhook_user');
-        $password = (string) config('services.ownerrez.webhook_password');
-        $baseUrl = rtrim((string) config('services.ownerrez.api_url', 'https://api.ownerrez.com'), '/');
-
-        if ($user === '' || $password === '') {
-            Log::warning('ownerrez.properties.no_credentials');
-
-            return [];
-        }
-
         try {
-            $allItems = [];
-            $limit = 100;
-            $offset = 0;
-            $maxPages = 20;
-            $page = 0;
+            $items = app(OwnerRezApiService::class)
+                ->withoutLogging()
+                ->getAllProperties();
 
-            do {
-                $page++;
-                $url = $baseUrl.'/v2/properties';
-
-                $response = Http::withBasicAuth($user, $password)
-                    ->acceptJson()
-                    ->get($url, [
-                        'limit' => $limit,
-                        'offset' => $offset,
-                    ]);
-
-                if ($response->failed()) {
-                    Log::warning('ownerrez.properties.fetch_failed', [
-                        'status' => $response->status(),
-                        'body' => $response->body(),
-                    ]);
-                    break;
-                }
-
-                $data = $response->json() ?? [];
-                $pageItems = $data['items'] ?? [];
-                $pageCount = count($pageItems);
-
-                if ($pageCount === 0) {
-                    break;
-                }
-
-                $allItems = array_merge($allItems, $pageItems);
-                $offset += $pageCount;
-
-                if ($pageCount < $limit) {
-                    break;
-                }
-
-            } while ($page < $maxPages);
-
-            $options = collect($allItems)
+            $options = collect($items)
                 ->filter(fn ($item) => isset($item['id']))
                 ->mapWithKeys(fn ($item) => [
-                    (string) $item['id'] => trim(($item['name'] ?? 'Property').' (#'.($item['id'] ?? '').')'),
+                    (string) $item['id'] => trim(($item['name'] ?? 'Property').' (#'.$item['id'].')'),
                 ])
                 ->all();
 

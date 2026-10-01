@@ -1,6 +1,8 @@
-<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
  
 </style>
@@ -18,7 +20,7 @@ $(document).ready(function() {
 
         if (!checkinVal || !checkoutVal) {
             $('#totalNights').text('0');
-            $('#totalCost').text('0.00 {{ __("apartment.price") }}');
+            $('#totalCost').html(window.formatSAR(0));
             return;
         }
 
@@ -28,7 +30,7 @@ $(document).ready(function() {
 
         if (nights <= 0) {
             $('#totalNights').text('0');
-            $('#totalCost').text('0.00 {{ __("apartment.price") }}');
+            $('#totalCost').html(window.formatSAR(0));
             return;
         }
 
@@ -52,16 +54,16 @@ $(document).ready(function() {
                 if (response.success) {
                     // تحديث جميع عناصر السعر
                     $('#totalNights').text(response.nights + ' ' + "{{ __('apartment.nights') }}");
-                    $('#totalCost').text(response.total.toFixed(2) + ' ' + "{{ __('apartment.price') }}");
+                    $('#totalCost').html(window.formatSAR(response.total));
                     $('#mainPrice').text(response.total.toFixed(2));
-                    $('#nightlyPrice').text(response.one_night_price.toFixed(2) + ' {{ __("apartment.price") }}');
+                    $('#nightlyPrice').html(window.formatSAR(response.one_night_price));
                     
                     // عرض معلومات الخصم إذا وجد
                     if (response.discount > 0) {
                         $('#discountedCost').html(
                             '<span class="text-green-600"><i class="la la-tag"></i> ' +
-                            "{{ __('apartment.long_stay_discount') }}: " + 
-                            response.discount.toFixed(2) + ' {{ __("apartment.price") }}</span>'
+                            "{{ __('apartment.long_stay_discount') }}: " +
+                            response.discount.toFixed(2) + ' ' + window.SAR_SYMBOL + '</span>'
                         );
                     } else {
                         $('#discountedCost').text('');
@@ -71,7 +73,11 @@ $(document).ready(function() {
             error: function(xhr) {
                 console.error('Error calculating price:', xhr);
                 $('#totalCost').text('--');
-                alert("{{ __('apartment.price_calculation_error') }}");
+                Swal.fire({
+                    icon: 'error',
+                    title: "{{ __('apartment.error') }}",
+                    text: "{{ __('apartment.price_calculation_error') }}",
+                });
             },
             complete: function() {
                 isCalculating = false;
@@ -105,12 +111,12 @@ $(document).ready(function() {
                 required: true,
                 greaterThan: "#checkin"
             },
-            adults_count: {
+            number_of_adults: {
                 required: true,
                 min: 1,
                 max: "{{$apartment->adults_count}}"
             },
-            children_count: {
+            number_of_children: {
                 required: true,
                 min: 0,
                 max: {{$apartment->children_count}}
@@ -122,51 +128,38 @@ $(document).ready(function() {
                 required: "{{ __('apartment.checkout_required') }}",
                 greaterThan: "{{ __('apartment.checkout_greater_than') }}"
             },
-            adults_count: {
+            number_of_adults: {
                 required: "{{ __('apartment.adults_count_required') }}",
                 min: "{{ __('apartment.adults_count_min') }}",
                 max: "{{ __('apartment.adults_count_max') }}"
             },
-            children_count: {
+            number_of_children: {
                 required: "{{ __('apartment.children_count_required') }}",
                 min: "{{ __('apartment.children_count_min') }}",
                 max: "{{ __('apartment.children_count_max') }}"
             }
         },
-        submitHandler: function(form) {
+        errorClass: "text-red-600 text-xs mt-1 block",
+        errorElement: "span",
+        errorPlacement: function (error, element) {
+            // Guest counters sit inside the styled ".persons" box; drop their
+            // messages below the whole box so the +/- rows keep their layout.
+            if (element.closest('.persons').length) {
+                error.appendTo(element.closest('.persons'));
+            } else {
+                error.insertAfter(element);
+            }
+        },
+        // determineBookingStatus() answers with a redirect — to the confirm page on
+        // success, or back to this page with validation errors on failure — so the
+        // booking must be a real form POST, NOT an AJAX request. Client-side
+        // validation gates the submit here; the browser then follows the redirect.
+        submitHandler: function (form) {
             HoldOn.open({
                 theme: "sk-cube-grid",
                 message: "{{ __('apartment.loading_message') }}"
             });
-
-            var apartment_id = $('#apartment_id').val();
-            var bookingUrlTemplate = "{{ route('web-booking.determine', ['apartment_id' => $apartment_id ]) }}";
-            var bookingUrl = bookingUrlTemplate.replace('APARTMENT_ID_PLACEHOLDER', apartment_id);
-
-            $.ajax({
-                url: bookingUrl,
-                method: "POST",
-                data: $(form).serialize(), 
-                success: function(response) {
-                    HoldOn.close();
-                    Swal.fire({
-                        icon: 'success',
-                        title: "{{ __('apartment.success') }}",
-                        text: "{{ __('apartment.booking_success_message') }}",
-                        button: true,
-                    });
-                    location.reload();
-                },
-                error: function(xhr) {
-                    HoldOn.close();
-                    Swal.fire({
-                        icon: 'error',
-                        title: "{{ __('apartment.error') }}",
-                        text: "{{ __('apartment.booking_failed_message') }}",
-                        button: true,
-                    });
-                }
-            });
+            form.submit();
         }
     });
 
@@ -186,7 +179,30 @@ $(document).ready(function() {
         return dates;
     }
 
-    const disabledDates = buildDisabledDates(bookedDays);
+    let disabledDates = buildDisabledDates(bookedDays);
+
+    // تواريخ المغادرة: نمنع الليالي المشغولة فقط، لكن نسمح بيوم وصول أي حجز كتاريخ مغادرة
+    // (يوم "التسليم والاستلام" — يبقى معطّلاً كتاريخ وصول، ومتاحاً كتاريخ مغادرة للضيف السابق).
+    function buildCheckoutDisabledDates(bookings) {
+        const checkInDays = new Set(bookings.map(b => new Date(b.check_in).toISOString().split('T')[0]));
+        return buildDisabledDates(bookings).filter(d => !checkInDays.has(d));
+    }
+
+    const checkoutDisabledDates = buildCheckoutDisabledDates(bookedDays);
+
+    // أول ليلة مشغولة بعد تاريخ الوصول المختار — تُستخدم كحد أقصى لتاريخ المغادرة حتى لا يقفز
+    // العميل فوق حجز قائم (مثال: وصول 27 وليلة 28 محجوزة ⇒ المغادرة القصوى 28، فلا يُختار 29/30).
+    function firstOccupiedNightAfter(checkinDate) {
+        const checkinTime = checkinDate.getTime();
+        let result = null;
+        (disabledDates || []).forEach(function (s) {
+            const d = new Date(s + 'T00:00:00');
+            if (d.getTime() > checkinTime && (result === null || d < result)) {
+                result = d;
+            }
+        });
+        return result;
+    }
 
     const commonOptions = {
         dateFormat: "Y-m-d",
@@ -196,7 +212,10 @@ $(document).ready(function() {
         locale: "ar",
         time_24hr: true,
         weekNumbers: false,
-        static: true,
+        // static:false lets flatpickr append the calendar to <body> and
+        // auto-position it within the viewport (so the checkout field near the
+        // screen edge no longer opens off-screen).
+        static: false,
         enableTime: false,
         noCalendar: false,
         inline: false,
@@ -212,7 +231,11 @@ $(document).ready(function() {
 
                 checkoutPicker.set('minDate', minCheckoutDate);
 
-                if (!checkoutPicker.selectedDates.length || checkoutPicker.selectedDates[0] <= checkinDate) {
+                const maxCheckout = firstOccupiedNightAfter(checkinDate);
+                checkoutPicker.set('maxDate', maxCheckout || null);
+
+                const curCheckout = checkoutPicker.selectedDates[0];
+                if (!curCheckout || curCheckout <= checkinDate || (maxCheckout && curCheckout > maxCheckout)) {
                     checkoutPicker.setDate(minCheckoutDate, true);
                 }
 
@@ -223,6 +246,7 @@ $(document).ready(function() {
 
     var checkoutPicker = flatpickr("#checkout", {
         ...commonOptions,
+        disable: checkoutDisabledDates,
         onChange: function(selectedDates, dateStr, instance) {
             calculateNightsAndCost();
         }
@@ -232,9 +256,12 @@ $(document).ready(function() {
     function refreshCalendarBlockedDates() {
         $.getJSON("{{ route('apartments.blocked-dates', $apartment_id) }}", function(response) {
             if (response.booked_days) {
-                const newDisabled = buildDisabledDates(response.booked_days);
-                checkinPicker.set('disable', newDisabled);
-                checkoutPicker.set('disable', newDisabled);
+                disabledDates = buildDisabledDates(response.booked_days);
+                checkinPicker.set('disable', disabledDates);
+                checkoutPicker.set('disable', buildCheckoutDisabledDates(response.booked_days));
+
+                const ci = checkinPicker.selectedDates[0];
+                checkoutPicker.set('maxDate', ci ? (firstOccupiedNightAfter(ci) || null) : null);
             }
         });
     }
@@ -250,7 +277,10 @@ $(document).ready(function() {
         var checkinVal = $('#checkin').val();
         var checkoutVal = $(this).val();
         if (new Date(checkoutVal) <= new Date(checkinVal)) {
-            alert("{{ __('apartment.checkout_greater_than') }}");
+            Swal.fire({
+                icon: 'warning',
+                title: "{{ __('apartment.checkout_greater_than') }}",
+            });
             $(this).val('');
         }
     });

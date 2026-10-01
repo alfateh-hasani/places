@@ -2,92 +2,119 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\CategoryRequest;
+use App\Models\Category;
+use App\Support\Riyal;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
  * Class CategoryCrudController
- * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ *
+ * @property-read CrudPanel $crud
  */
 class CategoryCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use CreateOperation;
+    use DeleteOperation;
+    use ListOperation;
+    use ShowOperation;
+    use UpdateOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
-     * 
+     *
      * @return void
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Category::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/category');
-        CRUD::setEntityNameStrings( 'التصنيف','التصنيفات');
+        CRUD::setModel(Category::class);
+        CRUD::setRoute(config('backpack.base.route_prefix').'/category');
+        CRUD::setEntityNameStrings('التصنيف', 'التصنيفات');
+
+        if (! backpack_user()->can('apartment.list')) {
+            abort(403, 'Unauthorized Access - List');
+        }
+
+        $this->crud->denyAccess(['create', 'update', 'delete']);
+
+        foreach (['create', 'update', 'delete'] as $operation) {
+            if (backpack_user()->can("apartment.{$operation}")) {
+                $this->crud->allowAccess($operation);
+            }
+        }
     }
 
     /**
      * Define what happens when the List operation is loaded.
-     * 
+     *
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
+     *
      * @return void
      */
+    protected function setupShowOperation()
+    {
+        $this->setupListOperation();
+    }
+
     protected function setupListOperation()
     {
         $this->crud->addColumn([
             'name' => 'name',
-            'type' =>  'text',
+            'type' => 'text',
             'label' => __('cms.name'),
         ]);
-        
+
         $this->crud->addColumn([
             'name' => 'price',
-            'type' =>  'number',
-            'label' => __('cms.price') . ' (السعر الأساسي)',
-            'suffix' => ' ر.س',
+            'type' => 'custom_html',
+            'label' => __('cms.price').' (السعر الأساسي)',
+            'value' => fn ($entry) => number_format((float) $entry->price, 2).' '.Riyal::svg(),
         ]);
-        
+
         $this->crud->addColumn([
             'name' => 'weekend_price',
-            'type' => 'number',
+            'type' => 'custom_html',
             'label' => 'سعر نهاية الأسبوع',
-            'suffix' => ' ر.س',
+            'value' => fn ($entry) => $entry->weekend_price ? number_format((float) $entry->weekend_price, 2).' '.Riyal::svg() : '—',
         ]);
-        
+
         $this->crud->addColumn([
             'name' => 'long_stay_discount',
             'type' => 'number',
             'label' => 'خصم الإقامة الطويلة',
             'suffix' => '%',
         ]);
-        
+
         $this->crud->addColumn([
             'name' => 'apartments_count',
             'type' => 'custom_html',
             'label' => 'عدد الشقق',
-            'value' => function($entry) {
+            'value' => function ($entry) {
                 $count = $entry->apartments()->count();
-                return '<span class="badge badge-info">' . $count . ' شقة</span>';
+
+                return '<span class="badge badge-info">'.$count.' شقة</span>';
             },
         ]);
     }
 
     /**
      * Define what happens when the Create operation is loaded.
-     * 
+     *
      * @see https://backpackforlaravel.com/docs/crud-operation-create
+     *
      * @return void
      */
     protected function setupCreateOperation()
     {
         $this->crud->addField([
             'name' => 'name',
-            'type' =>  'text',
+            'type' => 'text',
             'label' => __('cms.name'),
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
@@ -95,8 +122,8 @@ class CategoryCrudController extends CrudController
         ]);
         $this->crud->addField([
             'name' => 'price',
-            'type' =>  'number',
-            'label' => __('cms.price') . ' (السعر الأساسي)',
+            'type' => 'number',
+            'label' => __('cms.price').' (السعر الأساسي)',
             'attributes' => [
                 'step' => '0.01',
                 'min' => '0',
@@ -106,7 +133,7 @@ class CategoryCrudController extends CrudController
             ],
             'hint' => 'عند تغيير هذا السعر، سيتم تحديث السعر الأساسي لجميع الشقق التابعة لهذا التصنيف',
         ]);
-        
+
         $this->crud->addField([
             'name' => 'weekend_price',
             'type' => 'number',
@@ -120,7 +147,7 @@ class CategoryCrudController extends CrudController
             ],
             'hint' => 'السعر المطبق في عطلة نهاية الأسبوع (اختياري)',
         ]);
-        
+
         $this->crud->addField([
             'name' => 'long_stay_discount',
             'type' => 'number',
@@ -135,7 +162,7 @@ class CategoryCrudController extends CrudController
             ],
             'hint' => 'نسبة الخصم للإقامة الطويلة (0-100%)',
         ]);
-        
+
         $this->crud->addField([
             'name' => 'pricing_info',
             'type' => 'custom_html',
@@ -158,8 +185,9 @@ class CategoryCrudController extends CrudController
 
     /**
      * Define what happens when the Update operation is loaded.
-     * 
+     *
      * @see https://backpackforlaravel.com/docs/crud-operation-update
+     *
      * @return void
      */
     protected function setupUpdateOperation()

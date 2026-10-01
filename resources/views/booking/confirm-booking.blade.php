@@ -40,9 +40,9 @@
                         <input type="hidden" name="check_in" value="{{$booking->check_in}}">
                         <input type="hidden" name="check_out" value="{{$booking->check_out}}">
                         @csrf
-                        <h1 class="font-semibold text-2xl text-title border-t border-blackopacity ">
+                        <h2 class="font-semibold text-2xl text-title border-t border-blackopacity ">
                             {{__('booking.payment_method')}}
-                        </h1>
+                        </h2>
                         <ul class="pb-8 border-b border-blackopacity">
                             @foreach ($payment_details as $key => $item)
                                 <li>
@@ -68,16 +68,10 @@
                
                 </div>
                 <div class="py-2 xl:py-7 detail-description border-b border-blackopacity mb-8">
-                    <h5 class="font-semibold text-xl text-filterhover mb-6">
+                    <h2 class="font-semibold text-xl text-filterhover mb-6">
                         {{$policy_title}}
-                    </h5>
-                    {{-- <ul>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Free Cancellation For 48 Hours</li>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Free Cancellation For 48 Hours</li>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Dive Right In</li>
-                        <li class="inline-block w-4/12 font-semibold text-base text-title mb-2"><img class="inline-block ltr:mr-2 rtl:ml-2" src="assets/img/feature-ok.svg" /> Dive Right In</li>
-                    </ul> --}}
-                  
+                    </h2>
+
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                         {!!$policy_description!!}
                     </div>
@@ -107,9 +101,9 @@
                   
                         <p class="my-4 font-normal text-base text-reviews">
                             <span class="font-bold text-2xl text-black translate-y-0.5 inline-block">
-                                {{$booking->one_night_price}} 
-                            </span> 
-                            {{__('apartment.sar')}}
+                                {{$booking->one_night_price}}
+                            </span>
+                            <x-riyal class="text-black" />
                         </p>
 
                         
@@ -157,7 +151,7 @@
                             <li class="mb-4 font-semibold text-sm text-title">
                                 <span> {{__('booking.one_night')}}  </span>
                                 <span class="float-right rtl:float-left">
-                                    {{$booking->one_night_price .' '. __('apartment.price')}}
+                                    <x-riyal :amount="$booking->one_night_price" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -182,7 +176,7 @@
                                     {{__('booking.subtotal') }}
                                 </span>
                                 <span class="float-right rtl:float-left">
-                                   {{$booking->total_price}} {{  __('apartment.price')}}
+                                   <x-riyal :amount="$booking->total_price" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -192,7 +186,7 @@
                                     {{__('apartment.vat') }}
                                 </span>
                                 <span class="float-right rtl:float-left">
-                                   <span id="tax-row"> {{$booking->tax}} </span> {{  __('apartment.price')}}
+                                   <span id="tax-row"> {{$booking->tax}} </span> <x-riyal />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -204,7 +198,7 @@
                                     {{__('apartment.coupon_discount') }}
                                 </span>
                                 <span class="float-right rtl:float-left">
-                                   -{{$booking->discount .' '. __('apartment.price')}}
+                                   -<x-riyal :amount="$booking->discount" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -218,7 +212,7 @@
                                     {{__('booking.final_price') }}
                                 </span>
                                 <span class="float-right rtl:float-left">
-                                   {{$booking->final_price}} {{  __('apartment.price')}}
+                                   <x-riyal :amount="$booking->final_price" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -234,7 +228,7 @@
                                 ({{__('apartment.price_tax') }})
                             </span>
                             <span id="total_price" class="float-right rtl:float-left">
-                                {{  $booking->final_price .' '.__('apartment.price') }} 
+                                <x-riyal :amount="$booking->final_price" :format="false" />
                             </span>
                         </p>
                     <ul>
@@ -249,20 +243,20 @@
                         
                          
                     </ul>
-                    <div class="flex flex-row items-center">
-                        <input type="text" id="coupon_code" name="coupon_code" 
+                    <div class="flex flex-row flex-wrap items-center gap-2">
+                        <input type="text" id="coupon_code" name="coupon_code"
                         @if($booking->coupon_code)
                             value="{{ $booking->coupon_code }}"
                         @endif
-                        placeholder="@lang('apartment.coupon_code')" 
-                        class="border border-gray-300 rounded-lg h-12 px-3 flex-1">
-                    
-                        <button type="button" id="verify_coupon" class="mr-4 bg-price rounded-lg h-12 px-4 font-semibold text-white">
+                        placeholder="@lang('apartment.coupon_code')"
+                        class="border border-gray-300 rounded-lg h-12 px-3 w-full sm:flex-1">
+
+                        <button type="button" id="verify_coupon" class="bg-price rounded-lg h-12 px-4 font-semibold text-white">
                             @lang('apartment.verify_coupon')
                         </button>
-                    
-                        <button type="button" id="remove_coupon" 
-                            class="mr-4  bg-red-500 rounded-lg h-12 px-4 font-semibold text-white"
+
+                        <button type="button" id="remove_coupon"
+                            class="bg-red-500 rounded-lg h-12 px-4 font-semibold text-white"
                             @if(!$booking->coupon_code) style="display: none;" @endif>
                             @lang('apartment.remove_coupon')
                         </button>
@@ -326,13 +320,13 @@
                 _token: '{{ csrf_token() }}'
             },
             success: function(response) {
-                let discountText = response.type === "percentage" ? "%" : "{{ __('apartment.price_unit') }}";
-                let discountValue = response.type === "percentage" ? (response.discount + "%") : (response.discount + " {{ __('apartment.price_unit') }}");
+                let discountText = response.type === "percentage" ? "%" : window.SAR_SYMBOL;
+                let discountValue = response.type === "percentage" ? (response.discount + "%") : (response.discount + " " + window.SAR_SYMBOL);
 
-                let taxValue = response.vat; 
-                
-                $('#coupon_message').text("{{ __('apartment.coupon_applied') }}: " + discountValue);
-                $('#total_price').text(response.final_price + ' {{ __("apartment.price") }}');
+                let taxValue = response.vat;
+
+                $('#coupon_message').html("{{ __('apartment.coupon_applied') }}: " + discountValue);
+                $('#total_price').html(window.formatSAR(response.final_price));
 
                 // إزالة أي خصم سابق لمنع التكرار
                 $('#discount_row').remove();
@@ -371,7 +365,7 @@
                 $('#coupon_code').val(""); // مسح الكود
                 $('#coupon_message').text("{{ __('apartment.coupon_removed') }}");
                 $('#discount_row').remove(); // إزالة الخصم
-                $('#total_price').text(response.final_price + ' {{ __("apartment.price") }}');
+                $('#total_price').html(window.formatSAR(response.final_price));
 
                 // إخفاء زر حذف الكوبون
                 $('#remove_coupon').hide();

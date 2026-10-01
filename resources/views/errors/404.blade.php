@@ -10,8 +10,8 @@
         </h1>
         <ul>
             <li class="inline-block"><a href="{{route('home')}}" class="px-5">{{__('site.home')}}</a></li>
-            <li class="inline-block"><a class="px-5"> 
-                Page Not Found!
+            <li class="inline-block"><a class="px-5">
+                {{ __('site.page_not_found') }}
             </a></li>
         </ul>
     </div>
@@ -25,7 +25,7 @@
                     404
                 </p>
                 <p class="font-semibold text-3xl sm:text-5xl mb-6">
-                   The Page Requested Is Not defined!
+                   {{ __('site.page_not_found_desc') }}
                 </p>
                 <p class="font-light text-base text-gri mb-12"> 
                    

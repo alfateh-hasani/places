@@ -2,22 +2,38 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Services\ScienerLockService;
+use App\Enums\BookingStatus;
+use App\Models\Apartment;
+use App\Models\Booking;
+use App\Models\Building;
+use App\Models\Customer;
+use App\Models\PasscodeRetryAttempt;
+use App\Services\Bookings\BookingCancellationService;
+use App\Services\DirectBookingService;
+use App\Services\Locks\LockAccessService;
+use App\Services\Locks\LockErrorPresenter;
+use App\Support\Riyal;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use Illuminate\Support\Facades\DB;
+use Backpack\CRUD\app\Library\Widget;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 /**
  * Class ApartmentController
  *
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class BookingController extends CrudController
 {
     // use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use DeleteOperation;
+    use ListOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -26,7 +42,7 @@ class BookingController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Booking::class);
+        CRUD::setModel(Booking::class);
         CRUD::setRoute(config('backpack.base.route_prefix').'/booking');
         CRUD::setEntityNameStrings(__('cms.booking_management'), __('cms.booking_management'));
         CRUD::denyAccess(['create', 'delete', 'update']);
@@ -41,11 +57,21 @@ class BookingController extends CrudController
             $this->crud->allowAccess('create');
         }
         if (backpack_user()->can('booking.update')) {
-            $this->crud->allowAccess('update');
+            // حجوزات Airbnb المستوردة سجلات وهمية تُحذف وتُعاد تلقائياً مع كل مزامنة —
+            // تبقى بلا زر تعديل حتى لمن يملك الصلاحية، ويُعرض لها زر "عرض" فقط.
+            $this->crud->set('update.access', function ($entry) {
+                return ! $entry || ! $entry->is_airbnb_booking;
+            });
         }
-        if (backpack_user()->can('booking.delete')) {
-            $this->crud->allowAccess('delete');
-        }
+        // معطّل مؤقتاً لكل المستخدمين (بمن فيهم من يملك صلاحية booking.delete):
+        // حذف الحجز نهائياً لا يُلغي كود الدخول على القفل الذكي ولا يحذف سجل Transaction المرتبط،
+        // ما يترك كوداً فعّالاً على القفل الحقيقي بلا حجز يدل عليه. أعد التفعيل فقط بعد معالجة ذلك.
+        // كما لا يظهر أبداً لحجوزات Airbnb المستوردة حتى لو أُعيد تفعيله لاحقاً.
+        // if (backpack_user()->can('booking.delete')) {
+        //     $this->crud->set('delete.access', function ($entry) {
+        //         return ! $entry || ! $entry->is_airbnb_booking;
+        //     });
+        // }
         if (backpack_user()->hasRole('supervisor')) {
             $this->crud->query->whereHas('apartment', function ($query) {
                 $query->whereHas('building', function ($query) {
@@ -65,16 +91,66 @@ class BookingController extends CrudController
     protected function setupListOperation()
     {
         $this->crud->enableExportButtons();
-        // إخفاء حجوزات Airbnb من صفحة الحجوزات العادية
-        $this->crud->query->where('is_airbnb_booking', '!=', 1);
+
+        // لا نحفظ حالة الجدول (الفلاتر/البحث/الصفحة) بين الزيارات، حتى لا تُفتح صفحة
+        // الحجوزات على فلتر "الإلغاءات بحاجة إجراء" تلقائياً — يبقى تطبيقه يدوياً بالضغط عليه.
+        $this->crud->setOperationSetting('persistentTable', false);
+
+        // إخفاء حجوزات Airbnb افتراضياً (بما في ذلك البحث)؛ تظهر فقط عند تفعيل
+        // فلتر "حجوزات Airbnb" أدناه — راجع addAirbnbFilter().
+        if (! request()->boolean('show_airbnb')) {
+            $this->crud->query->where('is_airbnb_booking', '!=', 1);
+        }
+
+        // زر "حجز مباشر" أعلى الجدول (تحويل بنكي) — يظهر لمن يملك الصلاحية فقط
+        if (backpack_user()->can('direct-booking.create')) {
+            CRUD::addButtonFromView('top', 'direct_booking', 'direct_booking', 'end');
+        }
+
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.copy_passcode_script',
+        ])->to('after_content');
+
+        // يمنع اقتصاص قائمة "تغيير الحالة" بجعلها position:fixed عند الفتح (دون لمس overflow الجدول)
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.fix_status_dropdown_clip',
+        ])->to('after_content');
+
+        // تمييز فلتر "الإلغاءات بحاجة إجراء" بلون واضح (بدل الأبيض) في شريط الفلاتر
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.cancellation_filter_style',
+        ])->to('after_content');
 
         $this->addBuildingFilter();
         $this->addStatusFilter();
         $this->addPaymentStatusFilter();
         $this->addBookingSourceFilter();
+        $this->addCancellationActionFilter();
+        $this->addAirbnbFilter();
 
         if (backpack_user()->can('booking.changeStatus')) {
             CRUD::addButtonFromModelFunction('line', 'changeStatus', 'getChangeStatusButton', 'end');
+
+            // زر "إدارة الإلغاء" — يظهر فقط للحجوزات التي تحتاج إجراء إلغاء/استرداد،
+            // ويفتح نافذة موجّهة (إلغاء عبر OwnerRez / إلغاء محلي / رفض / استرداد).
+            CRUD::addButtonFromView('line', 'manage_cancellation', 'manage_cancellation', 'end');
+
+            $this->addCancellationWidgets();
+
+            // نافذة "تأكيد الحجز" (تحقّق Geidea أولاً وإلا تحويل بنكي)
+            Widget::add([
+                'type' => 'view',
+                'view' => 'admin.booking.confirm_modal',
+            ])->to('before_content');
+
+            // نافذة تأكيد "الإلغاء" (بدل confirm() الأصلية)
+            Widget::add([
+                'type' => 'view',
+                'view' => 'admin.booking.cancel_modal',
+            ])->to('before_content');
         }
         // if (backpack_user()->can('booking.changePaymentStatus')) {
         //     CRUD::addButtonFromModelFunction('line', 'changePaymentStatus', 'getChangePaymentStatusButton', 'end');
@@ -84,6 +160,11 @@ class BookingController extends CrudController
         if (backpack_user()->can('booking.changeStatus')) {
             CRUD::addButtonFromView('line', 'edit_check_in_time', 'edit_check_in_time', 'end');
         }
+
+        // زر "نقل الوحدة" — بلا صلاحية خاصة: متاح لكل من يستطيع عرض الحجوزات. يظهر فقط
+        // للحجوزات المؤهلة (مؤكدة/مدفوعة/قبل الموعد بلا طلب مفتوح) عبر Booking::canBeTransferred().
+        CRUD::addButtonFromView('line', 'transfer_unit', 'transfer_unit', 'end');
+
         // Customer column
         CRUD::addColumn([
             'name' => 'customer_id',
@@ -91,7 +172,7 @@ class BookingController extends CrudController
             'label' => __('cms.customer').' <i class="la la-user"></i>',
             'entity' => 'customer',
             'attribute' => 'first_name',
-            'model' => \App\Models\Customer::class,
+            'model' => Customer::class,
         ]);
         // Status with badge
         CRUD::addColumn([
@@ -99,7 +180,7 @@ class BookingController extends CrudController
             'label' => __('cms.status').' <i class="la la-info-circle"></i>',
             'type' => 'custom_html',
             'value' => function ($entry) {
-                return $this->getStatusBadge($entry->status);
+                return $this->getStatusBadge($entry->status, $entry);
             },
         ]);
 
@@ -120,7 +201,7 @@ class BookingController extends CrudController
             'label' => __('cms.building').' <i class="la la-building"></i>',
             'entity' => 'building',
             'attribute' => 'name_ar',
-            'model' => \App\Models\Building::class,
+            'model' => Building::class,
         ]);
 
         // Apartment column
@@ -130,7 +211,7 @@ class BookingController extends CrudController
             'label' => __('cms.apartment').' <i class="la la-building"></i>',
             'entity' => 'apartment',
             'attribute' => 'name_ar',
-            'model' => \App\Models\Apartment::class,
+            'model' => Apartment::class,
         ]);
 
         // Number of Booking
@@ -164,6 +245,7 @@ class BookingController extends CrudController
                     'airbnb' => '<i class="la la-home"></i>',
                     'booking_com' => '<i class="la la-bed"></i>',
                     'guesty' => '<i class="la la-building"></i>',
+                    'dashboard' => '<i class="la la-plus-circle"></i>',
                     'other' => '<i class="la la-question-circle"></i>',
                 ];
 
@@ -175,6 +257,7 @@ class BookingController extends CrudController
                     'airbnb' => 'Airbnb',
                     'booking_com' => 'Booking',
                     'guesty' => 'Guesty',
+                    'dashboard' => 'حجز مباشر',
                     'other' => 'أخرى',
                 ];
 
@@ -186,6 +269,7 @@ class BookingController extends CrudController
                     'airbnb' => 'danger',
                     'booking_com' => 'primary',
                     'guesty' => 'warning',
+                    'dashboard' => 'success',
                     'other' => 'secondary',
                 ];
 
@@ -204,7 +288,7 @@ class BookingController extends CrudController
             'type' => 'custom_html',
             'label' => __('cms.booking_date').' <i class="la la-calendar-plus"></i>',
             'value' => function ($entry) {
-                return '<span class="text-info font-weight-bold">'.\Carbon\Carbon::parse($entry->created_at)->format('Y-m-d H:i').'</span>';
+                return '<span class="text-info font-weight-bold">'.Carbon::parse($entry->created_at)->format('Y-m-d H:i').'</span>';
             },
         ]);
 
@@ -214,7 +298,7 @@ class BookingController extends CrudController
             'type' => 'custom_html',
             'label' => __('cms.check_in').' <i class="la la-calendar-check"></i>',
             'value' => function ($entry) {
-                return '<span class="text-success font-weight-bold">'.\Carbon\Carbon::parse($entry->check_in)->format('Y-m-d').'</span>';
+                return '<span class="text-success font-weight-bold">'.Carbon::parse($entry->check_in)->format('Y-m-d').'</span>';
             },
         ]);
 
@@ -224,7 +308,7 @@ class BookingController extends CrudController
             'type' => 'custom_html',
             'label' => __('cms.check_out').' <i class="la la-calendar-times"></i>',
             'value' => function ($entry) {
-                return '<span class="text-danger font-weight-bold">'.\Carbon\Carbon::parse($entry->check_out)->format('Y-m-d').'</span>';
+                return '<span class="text-danger font-weight-bold">'.Carbon::parse($entry->check_out)->format('Y-m-d').'</span>';
             },
         ]);
 
@@ -244,7 +328,7 @@ class BookingController extends CrudController
         //     'type' => 'custom_html',
         //     'label' => __('cms.total_price') . ' (SAR) <i class="la la-money"></i>',
         //     'value' => function($entry) {
-        //         return '<span class="text-primary font-weight-bold">' . number_format($entry->total_price, 2) . ' SAR</span>';
+        //         return '<span class="text-primary font-weight-bold">' . number_format($entry->total_price, 2) . ' '.\App\Support\Riyal::svg().'</span>';
         //     }
         // ]);
 
@@ -254,7 +338,7 @@ class BookingController extends CrudController
             'type' => 'custom_html',
             'label' => 'المبلغ النهائية شامل الضريبة'.' (SAR) <i class="la la-money-bill"></i>',
             'value' => function ($entry) {
-                return '<span class="text-success font-weight-bold">'.number_format($entry->final_price, 2).' SAR</span>';
+                return '<span class="text-success font-weight-bold">'.number_format($entry->final_price, 2).' '.Riyal::svg().'</span>';
             },
         ]);
 
@@ -263,8 +347,60 @@ class BookingController extends CrudController
         // Payment Method
         CRUD::addColumn([
             'name' => 'payment_method_code',
-            'type' => 'enum',
+            'type' => 'custom_html',
             'label' => __('cms.payment_method_code').' <i class="la la-wallet"></i>',
+            'value' => function ($entry) {
+                $labels = [
+                    'tap' => 'Tap',
+                    'tabby' => 'Tabby',
+                    'geidea' => 'جيديا',
+                    'airbnb' => 'Airbnb',
+                    'bank_transfer' => 'تحويل بنكي',
+                ];
+                $code = $entry->payment_method_code;
+
+                return $code ? ($labels[$code] ?? $code) : '<span class="text-muted">—</span>';
+            },
+        ]);
+
+        // Passcode + copy button
+        CRUD::addColumn([
+            'name' => 'passcode',
+            'type' => 'custom_html',
+            'label' => __('cms.passcode').' <i class="la la-key"></i>',
+            'value' => function ($entry) {
+                // The code is revealed only during the stay (check-in → check-out).
+                $active = $entry->getActivePasscode();
+
+                if ($active) {
+                    $code = e($active->keyboard_pwd);
+
+                    return "<span class='badge badge-info' style='font-size:.85rem;letter-spacing:1px;'>{$code}</span> "
+                        ."<button type='button' class='btn btn-link btn-sm p-0 ms-1' style='vertical-align:baseline;' "
+                        ."onclick=\"copyPasscodeToClipboard('{$code}', this)\" title='".__('cms.copy_passcode')."'>"
+                        .'<i class="la la-copy"></i></button>';
+                }
+
+                // Passcode generation failed (e.g. smart-lock vendor rejected the request) —
+                // surface it clearly with a one-click regenerate. A failed provision ends up
+                // as 'retry_scheduled' (an auto-retry is queued), so treat both as "failed".
+                if (in_array($entry->passcode_status, ['failed', 'retry_scheduled'], true)) {
+                    return $this->passcodeFailedCell($entry);
+                }
+
+                // Code generated but the stay hasn't started yet — keep it hidden, but reassure
+                // staff it's ready and will appear automatically at check-in.
+                $upcoming = $entry->smartLockPasscodes()
+                    ->where('start_date', '>', now())
+                    ->exists();
+
+                if ($upcoming) {
+                    return "<span class='badge badge-success' title='".e(__('cms.passcode_ready_tooltip'))."' "
+                        ."style='cursor:help;'><i class='la la-lock'></i> ".__('cms.passcode_ready').'</span>';
+                }
+
+                return '<span class="text-muted">—</span>';
+            },
         ]);
 
         CRUD::addFilter(
@@ -299,8 +435,8 @@ class BookingController extends CrudController
                 }, $dates->to);
 
                 try {
-                    $from = \Carbon\Carbon::parse($from)->startOfDay()->format('Y-m-d H:i:s');
-                    $to = \Carbon\Carbon::parse($to)->endOfDay()->format('Y-m-d H:i:s');
+                    $from = Carbon::parse($from)->startOfDay()->format('Y-m-d H:i:s');
+                    $to = Carbon::parse($to)->endOfDay()->format('Y-m-d H:i:s');
 
                     $this->crud->query = $this->crud->query->whereBetween('created_at', [$from, $to]);
                 } catch (\Exception $e) {
@@ -339,6 +475,44 @@ class BookingController extends CrudController
     {
         CRUD::set('show.setFromDb', false); // تعطيل التوليد التلقائي من قاعدة البيانات
 
+        // نفس دالة نسخ الكود المستخدمة في الجدول
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.copy_passcode_script',
+        ])->to('after_content');
+
+        // لوحة "نقل الوحدة" في صفحة التفاصيل: حالة الطلب، إلغاء طلب معلّق، رابط إلغاء حجز
+        // OwnerRez القديم يدوياً، وزر استرداد فرق الوحدة الأرخص. تظهر لكل من يعرض الحجوزات.
+        $transferBooking = $this->crud->getCurrentEntry();
+        if ($transferBooking) {
+            $transfers = $transferBooking->unitTransfers()
+                ->with(['fromApartment', 'toApartment', 'initiatedBy'])
+                ->latest()
+                ->get();
+            if ($transfers->isNotEmpty()) {
+                Widget::add([
+                    'type' => 'view',
+                    'view' => 'admin.booking.unit_transfer_panel',
+                    'booking' => $transferBooking,
+                    'transfer' => $transfers->first(),
+                    'transfers' => $transfers,
+                ])->to('before_content');
+            }
+        }
+
+        // زر "إدارة الإلغاء" + النوافذ في صفحة التفاصيل (لمن يملك صلاحية تغيير الحالة)
+        if (backpack_user()->can('booking.changeStatus')) {
+            $currentBooking = $this->crud->getCurrentEntry();
+            if ($currentBooking) {
+                Widget::add([
+                    'type' => 'view',
+                    'view' => 'admin.booking.cancellation_show_action',
+                    'booking' => $currentBooking,
+                ])->to('before_content');
+            }
+            $this->addCancellationWidgets();
+        }
+
         // جدول معلومات العميل والشقة
         CRUD::addColumn([
             'name' => 'معلومات&nbsp; العميل',
@@ -367,6 +541,47 @@ class BookingController extends CrudController
             },
         ]);
 
+        // كود الدخول + زر النسخ (نفس سلوك الجدول)
+        CRUD::addColumn([
+            'name' => 'كود&nbsp;الدخول',
+            'type' => 'custom_html',
+            'value' => function ($entry) {
+                // Mirror the list column: reveal the code only during the stay; before it
+                // starts, show only the "ready — appears at check-in" badge.
+                $active = $entry->getActivePasscode();
+
+                if ($active) {
+                    $code = e($active->keyboard_pwd);
+                    $cell = "<span class='badge badge-info' style='font-size:.95rem;letter-spacing:1px;'>{$code}</span> "
+                        ."<button type='button' class='btn btn-link btn-sm p-0 ms-1' style='vertical-align:baseline;' "
+                        ."onclick=\"copyPasscodeToClipboard('{$code}', this)\" title='".__('cms.copy_passcode')."'>"
+                        .'<i class="la la-copy"></i></button>';
+                } elseif (in_array($entry->passcode_status, ['failed', 'retry_scheduled'], true)) {
+                    $cell = $this->passcodeFailedCell($entry, true);
+                } else {
+                    $upcoming = $entry->smartLockPasscodes()
+                        ->where('start_date', '>', now())
+                        ->exists();
+
+                    if (! $upcoming) {
+                        return '';
+                    }
+
+                    $cell = "<span class='badge badge-success' title='".e(__('cms.passcode_ready_tooltip'))."' "
+                        ."style='cursor:help;'><i class='la la-lock'></i> ".__('cms.passcode_ready').'</span>';
+                }
+
+                return '
+                    <h5><strong>'.__('cms.passcode').'</strong></h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>'.__('cms.passcode').' <i class="la la-key"></i></th>
+                            <td>'.$cell.'</td>
+                        </tr>
+                    </table>';
+            },
+        ]);
+
         // جدول التواريخ وعدد الليالي
         CRUD::addColumn([
             'name' => '   تفاصيل&nbsp;  الحجز',
@@ -381,6 +596,7 @@ class BookingController extends CrudController
                     'airbnb' => '<i class="la la-home text-danger"></i>',
                     'booking_com' => '<i class="la la-bed text-primary"></i>',
                     'guesty' => '<i class="la la-building text-warning"></i>',
+                    'dashboard' => '<i class="la la-plus-circle text-success"></i>',
                     'other' => '<i class="la la-question-circle text-secondary"></i>',
                 ];
 
@@ -392,6 +608,7 @@ class BookingController extends CrudController
                     'airbnb' => 'Airbnb',
                     'booking_com' => 'Booking.com',
                     'guesty' => 'Guesty',
+                    'dashboard' => 'حجز مباشر (لوحة التحكم)',
                     'other' => 'أخرى',
                 ];
 
@@ -405,21 +622,21 @@ class BookingController extends CrudController
                     $ownerrezInfo .= '
                         <tr>
                             <th>رقم حجز OwnerRez <i class="la la-link"></i></th>
-                            <td><span class="badge badge-secondary">'.$entry->ownerrez_booking_id.'</span></td>
+                            <td><span class="badge badge-secondary">'.e($entry->ownerrez_booking_id).'</span></td>
                         </tr>';
                 }
                 if ($entry->channel_name) {
                     $ownerrezInfo .= '
                         <tr>
                             <th>اسم القناة <i class="la la-tag"></i></th>
-                            <td><span class="badge badge-warning">'.$entry->channel_name.'</span></td>
+                            <td><span class="badge badge-warning">'.e($entry->channel_name).'</span></td>
                         </tr>';
                 }
                 if ($entry->external_reference) {
                     $ownerrezInfo .= '
                         <tr>
                             <th>المرجع الخارجي <i class="la la-code"></i></th>
-                            <td><span class="badge badge-light">'.$entry->external_reference.'</span></td>
+                            <td><span class="badge badge-light">'.e($entry->external_reference).'</span></td>
                         </tr>';
                 }
 
@@ -437,11 +654,11 @@ class BookingController extends CrudController
                         '.$ownerrezInfo.'
                         <tr>
                             <th>'.__('cms.check_in').' <i class="la la-calendar-check"></i></th>
-                            <td><span class="badge badge-success">'.\Carbon\Carbon::parse($entry->check_in)->format('d F Y').'</span></td>
+                            <td><span class="badge badge-success">'.Carbon::parse($entry->check_in)->format('d F Y').'</span></td>
                         </tr>
                         <tr>
                             <th>'.__('cms.check_out').' <i class="la la-calendar-times"></i></th>
-                            <td><span class="badge badge-danger">'.\Carbon\Carbon::parse($entry->check_out)->format('d F Y').'</span></td>
+                            <td><span class="badge badge-danger">'.Carbon::parse($entry->check_out)->format('d F Y').'</span></td>
                         </tr>
                         <tr>
                             <th>'.__('cms.number_of_nights').' <i class="la la-moon"></i></th>
@@ -449,7 +666,7 @@ class BookingController extends CrudController
                         </tr>
                         <tr>
                             <th>'.__('cms.booking_date').' <i class="la la-calendar-plus"></i></th>
-                            <td><span class="badge badge-primary">'.\Carbon\Carbon::parse($entry->created_at)->format('d F Y H:i').'</span></td>
+                            <td><span class="badge badge-primary">'.Carbon::parse($entry->created_at)->format('d F Y H:i').'</span></td>
                         </tr>
                     </table>';
             },
@@ -465,19 +682,19 @@ class BookingController extends CrudController
                     <table class="table table-bordered">
                         <tr>
                             <th> المبلغ الإجمالي قبل الضريبة (SAR) <i class="la la-money"></i></th>
-                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price_before_tax, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price_before_tax, 2).' '.Riyal::svg().'</span></td>
                         </tr>
                         <tr>
                             <th> الضريبة (SAR) <i class="la la-money"></i></th>
-                            <td><span class="font-weight-bold text-primary">'.number_format($entry->tax, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-primary">'.number_format($entry->tax, 2).' '.Riyal::svg().'</span></td>
                         </tr>
                         <tr>
                             <th> المبلغ الإجمالي شامل الضريبة (SAR) <i class="la la-money"></i></th>
-                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-primary">'.number_format($entry->total_price, 2).' '.Riyal::svg().'</span></td>
                         </tr>
                         '.($entry->discount ? '<tr>
                             <th>'.__('cms.discount').' (SAR)</th>
-                            <td><span class="font-weight-bold text-danger">'.number_format($entry->discount, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-danger">'.number_format($entry->discount, 2).' '.Riyal::svg().'</span></td>
                         </tr>
                         <tr>
                             <th>نسبة الخصم (%)</th>
@@ -489,7 +706,7 @@ class BookingController extends CrudController
                         </tr>' : '').'
                         <tr>
                             <th> المبلغ النهائي شامل الضريبة (SAR) <i class="la la-money-bill"></i></th>
-                            <td><span class="font-weight-bold text-success">'.number_format($entry->final_price, 2).' SAR</span></td>
+                            <td><span class="font-weight-bold text-success">'.number_format($entry->final_price, 2).' '.Riyal::svg().'</span></td>
                         </tr>
                     </table>';
             },
@@ -523,7 +740,7 @@ class BookingController extends CrudController
                         <tr>
                             <th>'.__('cms.refund_status').' <i class="la la-money-bill-wave"></i></th>
                             <td>'.$this->getRefundStatusBadge($entry->refund_status).
-                            ($entry->refund_amount ? ' <span class="text-muted">('.number_format($entry->refund_amount, 2).' SAR)</span>' : '').'</td>
+                            ($entry->refund_amount ? ' <span class="text-muted">('.number_format($entry->refund_amount, 2).' '.Riyal::svg().')</span>' : '').'</td>
                         </tr>' : '';
 
                 return '
@@ -531,7 +748,7 @@ class BookingController extends CrudController
                     <table class="table table-bordered">
                         <tr>
                             <th>'.__('cms.status').' <i class="la la-info-circle"></i></th>
-                            <td>'.$this->getStatusBadge($entry->status).'</td>
+                            <td>'.$this->getStatusBadge($entry->status, $entry).'</td>
                         </tr>
                         <tr>
                             <th>'.__('cms.payment_status').' <i class="la la-credit-card"></i></th>
@@ -560,11 +777,123 @@ class BookingController extends CrudController
                         </tr>
                         <tr>
                             <th>'.__('cms.payment_method_code').' <i class="la la-wallet"></i></th>
-                            <td>'.$entry->payment_method_code.'</td>
+                            <td>'.($entry->payment_method_code === 'bank_transfer' ? 'تحويل بنكي' : ($entry->payment_method_code ?: '—')).'</td>
                         </tr>
                     </table>';
             },
         ]);
+
+        // بيانات التحويل البنكي (للحجوزات المباشرة من لوحة التحكم)
+        CRUD::addColumn([
+            'name' => 'بيانات&nbsp;التحويل',
+            'type' => 'custom_html',
+            'value' => function ($entry) {
+                $tx = $entry->transaction;
+                $receiptUrl = $tx ? $tx->receiptUrl() : '';
+                $transferNumber = $tx->transfer_number ?? null;
+
+                // Only render for manual/bank-transfer bookings that actually carry transfer data.
+                $isBankTransfer = ($entry->payment_method_code === 'bank_transfer')
+                    || ($tx && $tx->payment_gateway === 'bank_transfer');
+                if (! $isBankTransfer && ! $transferNumber && ! $receiptUrl) {
+                    return '';
+                }
+
+                $numberRow = '
+                    <tr>
+                        <th>'.__('cms.transfer_number').' <i class="la la-hashtag"></i></th>
+                        <td dir="ltr">'.($transferNumber ? e($transferNumber) : '<span class="text-muted">—</span>').'</td>
+                    </tr>';
+
+                $receiptRow = '
+                    <tr>
+                        <th>'.__('cms.transfer_receipt').' <i class="la la-image"></i></th>
+                        <td>'.($receiptUrl
+                            ? '<a href="'.e($receiptUrl).'" target="_blank" rel="noopener"><img src="'.e($receiptUrl).'" alt="receipt" style="max-height:120px;max-width:100%;border:1px solid #eee;border-radius:6px;"></a>'
+                            : '<span class="text-muted">—</span>').'</td>
+                    </tr>';
+
+                return '
+                    <h5><strong>'.__('cms.bank_transfer_details').'</strong></h5>
+                    <table class="table table-bordered">'.$numberRow.$receiptRow.'</table>';
+            },
+        ]);
+    }
+
+    /**
+     * "Passcode generation failed" cell + a one-click regenerate button (shown only to
+     * users allowed to manage the lock). The regenerate route already catches failures
+     * and flashes an error, so a still-broken lock won't 500 either.
+     */
+    private function passcodeFailedCell($entry, bool $detailed = false): string
+    {
+        $error = trim((string) ($entry->passcode_error ?? ''));
+
+        $attempt = PasscodeRetryAttempt::where('booking_id', $entry->getKey())
+            ->where('operation', 'provision')
+            ->latest('id')
+            ->first();
+
+        $maxReached = $attempt && $attempt->status === 'max_attempts_reached';
+
+        // One-click regenerate (only for users allowed to manage the lock). The route
+        // catches failures and flashes a detailed error, so a still-broken lock won't 500.
+        $regen = '';
+        if (backpack_user()->can('booking.changeStatus')) {
+            $url = url(config('backpack.base.route_prefix').'/booking/'.$entry->getKey().'/regenerate-passcode');
+            $regen = "<form method='POST' action='{$url}' style='display:inline;' "
+                ."onsubmit=\"return confirm('".e(__('cms.regenerate_passcode_confirm'))."')\">".csrf_field()
+                ."<button type='submit' class='btn btn-xs btn-warning' title='".e(__('cms.regenerate_passcode'))."'>"
+                ."<i class='la la-redo'></i> ".__('cms.regenerate_passcode').'</button></form>';
+        }
+
+        // Compact cell for the list: badge (full reason in tooltip) + short retry line + button.
+        if (! $detailed) {
+            $tooltip = $error !== '' ? $error : __('cms.passcode_failed');
+            $badge = "<span class='badge' title='".e($tooltip)."' "
+                ."style='background-color:#e74c3c;color:#fff;padding:.35em .55em;border-radius:6px;cursor:help;'>"
+                ."<i class='la la-exclamation-triangle'></i> ".__('cms.passcode_failed').'</span>';
+
+            $note = '';
+            if ($maxReached) {
+                $note = "<div style='font-size:.72rem;color:#c0392b;margin-top:2px;'>".__('cms.passcode_permanent_error').'</div>';
+            } elseif ($attempt && $attempt->next_attempt_at) {
+                $note = "<div style='font-size:.72rem;color:#7f8c8d;margin-top:2px;'>"
+                    .__('cms.passcode_attempts').': '.((int) $attempt->attempt_count).'/'.((int) $attempt->max_attempts)
+                    .' — '.__('cms.passcode_next_retry').' '.e($attempt->next_attempt_at->format('Y-m-d H:i')).'</div>';
+            }
+
+            return "<div>{$badge} {$regen}{$note}</div>";
+        }
+
+        // Detailed cell for the show page: full reason + attempt breakdown + button.
+        $badge = "<span class='badge' style='background-color:#e74c3c;color:#fff;padding:.35em .55em;border-radius:6px;'>"
+            ."<i class='la la-exclamation-triangle'></i> ".__('cms.passcode_failed').'</span>';
+
+        $rows = '';
+        if ($error !== '') {
+            $rows .= "<tr><th style='width:190px;'>".__('cms.passcode_error_label').'</th>'
+                ."<td style='color:#c0392b;'>".e($error).'</td></tr>';
+        }
+        if ($attempt) {
+            $rows .= '<tr><th>'.__('cms.passcode_attempts').'</th><td>'
+                .((int) $attempt->attempt_count).'/'.((int) $attempt->max_attempts).' — '.e($attempt->status).'</td></tr>';
+
+            if ($maxReached) {
+                $rows .= '<tr><th>'.__('cms.status')."</th><td style='color:#c0392b;'>".__('cms.passcode_permanent_error').'</td></tr>';
+            } elseif ($attempt->next_attempt_at) {
+                $rows .= '<tr><th>'.__('cms.passcode_next_retry').'</th><td>'.e($attempt->next_attempt_at->format('Y-m-d H:i')).'</td></tr>';
+            }
+            if ($attempt->last_attempt_at) {
+                $rows .= '<tr><th>'.__('cms.passcode_last_attempt').'</th><td>'.e($attempt->last_attempt_at->format('Y-m-d H:i')).'</td></tr>';
+            }
+        }
+
+        $detail = $rows !== ''
+            ? "<table class='table table-bordered' style='margin-top:8px;font-size:.85rem;'>{$rows}</table>"
+            : '';
+
+        return "<div>{$badge} {$regen}{$detail}</div>";
     }
 
     // دالة مساعدة لتنسيق حالة الاسترداد كـBadge
@@ -598,41 +927,29 @@ class BookingController extends CrudController
         return "<span class='badge' style='background-color:{$color};color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la {$icon}' style='font-size:1.05rem;vertical-align:-2px;'></i> {$label}</span>";
     }
 
-    // دالة مساعدة لتنسيق الحالة كـBadge
-    protected function getStatusBadge($status)
+    // دالة مساعدة لتنسيق الحالة كـBadge — تعتمد على BookingStatus (مصدر واحد للحقيقة).
+    // عند تمرير الحجز، تُظهر حالة "طلب الإلغاء" وصفاً حسب المصدر (عميل/إدارة).
+    protected function getStatusBadge($status, $booking = null)
     {
-        $statusLabels = [
-            'pending' => __('cms.status_pending'),
-            'approved' => __('cms.status_approved'),
-            'rejected' => __('cms.status_rejected'),
-            'booked' => __('cms.status_booked'),
-            'finished' => __('cms.status_finished'),
-            'canceled' => __('cms.status_canceled'),
-            'customer_canceled' => __('cms.status_customer_canceled'),
-        ];
-        $statusColors = [
-            'pending' => '#6c757d',
-            'approved' => '#28a745',
-            'rejected' => '#b02a37',
-            'booked' => '#007bff',
-            'finished' => '#343a40',
-            'canceled' => '#dc3545',
-            'customer_canceled' => '#fd7e14',
-        ];
-        $statusIcons = [
-            'pending' => 'la-clock',
-            'approved' => 'la-check-circle',
-            'rejected' => 'la-times-circle',
-            'booked' => 'la-calendar-check',
-            'finished' => 'la-flag-checkered',
-            'canceled' => 'la-ban',
-            'customer_canceled' => 'la-user-times',
-        ];
-        $color = $statusColors[$status] ?? '#17a2b8';
-        $icon = $statusIcons[$status] ?? 'la-info-circle';
-        $label = $statusLabels[$status] ?? ucfirst($status);
+        $enum = BookingStatus::tryFrom((string) $status);
 
-        return "<span class='badge' style='background-color:{$color};color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la {$icon}' style='font-size:1.05rem;vertical-align:-2px;'></i> {$label}</span>";
+        if (! $enum) {
+            return "<span class='badge' style='background-color:#17a2b8;color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la la-info-circle' style='font-size:1.05rem;vertical-align:-2px;'></i> ".e(ucfirst((string) $status)).'</span>';
+        }
+
+        $label = ($enum === BookingStatus::CancellationRequested && $booking)
+            ? $this->cancellationRequestLabel($booking)
+            : null;
+
+        return $enum->badge($label);
+    }
+
+    /** Source-aware label for the cancellation-request state (customer vs. staff). */
+    private function cancellationRequestLabel($booking): string
+    {
+        return $booking->cancellationStartedByStaff()
+            ? __('cms.status_cancellation_requested_staff')
+            : __('cms.status_cancellation_requested_customer');
     }
 
     // دالة مساعدة لتنسيق حالة الدفع كـBadge
@@ -656,42 +973,75 @@ class BookingController extends CrudController
 
     public function changeStatus($id, $status)
     {
-        $booking = \App\Models\Booking::find($id);
-        if ($booking) {
-            $booking->status = $status;
-            $booking->save();
-
-            $booking = \App\Models\Booking::find($id);
-            if (($status == 'canceled' || $status == 'customer_canceled') && $booking->passcode_status == 'generated') {
-
-                $bookingActivePasscode = $booking->smartLockPasscodes()->first();
-
-                \Log::info($bookingActivePasscode);
-                if ($bookingActivePasscode) {
-
-                    DB::beginTransaction();
-                    try {
-                        $lock_id = $bookingActivePasscode->smart_lock_id;
-                        $passcode_id = $bookingActivePasscode->passcode_id;
-                        $bookingActivePasscode->delete();
-
-                        $scienerService = new ScienerLockService(
-                            $booking?->apartment?->building?->ttlock_username,
-                            $booking?->apartment?->building?->ttlock_password
-                        );
-                        $scienerService->deletePasscode($lock_id, $passcode_id);
-                        DB::commit();
-                    } catch (\Throwable $th) {
-                        \Log::error($th);
-                        \Alert::error(__('cms.failed_to_delete_passcode'))->flash();
-                        DB::rollBack();
-                    }
-
-                }
-            }
-            \Alert::success(__('cms.status_changed_successfully'))->flash();
-        } else {
+        $booking = Booking::find($id);
+        if (! $booking) {
             \Alert::error(__('cms.booking_not_found'))->flash();
+
+            return back();
+        }
+
+        // الإلغاء لا يُطبَّق مباشرةً: يمر عبر خدمة الإلغاء الموجّهة. الوحدات المربوطة بـ
+        // OwnerRez تبدأ كـ"طلب إلغاء" (تبقى الوحدة محجوزة) ويُنهيها الإلغاء في OwnerRez
+        // (عبر الويبهوك) أو "الإلغاء القسري" محلياً؛ غير المربوطة تُلغى محلياً فوراً.
+        if ($status === BookingStatus::Canceled->value) {
+            $outcome = app(BookingCancellationService::class)->startStaffCancellation($booking);
+
+            match ($outcome) {
+                'requested_ownerrez' => \Alert::warning(__('cms.cancel_started_ownerrez'))->flash(),
+                'canceled_local' => \Alert::success(__('cms.status_changed_successfully'))->flash(),
+                default => \Alert::info(__('cms.booking_already_canceled'))->flash(),
+            };
+
+            return back();
+        }
+
+        // لم يعد هناك أي تغيير حالة مباشر مسموح عبر هذا المسار: «تأكيد» عبر confirmBooking،
+        // و«طلب إلغاء» عبر نافذة إدارة الإلغاء. بقية الحالات («قيد الانتظار»/«محجوز»/
+        // «منتهي»/«مرفوض») غير متاحة كإجراء يدوي.
+        \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+        return back();
+    }
+
+    /**
+     * Confirm a PENDING booking: verify Geidea first (auto-confirm a real online payment
+     * whose webhook was missed); otherwise record it as a bank transfer (حوالة) with an
+     * optional transfer number + receipt image, mark it paid + approved, and run the side
+     * effects (lock code, OwnerRez sync, notifications).
+     */
+    public function confirmBooking($id, Request $request)
+    {
+        $this->authorizeLockManagement();
+
+        $booking = Booking::findOrFail($id);
+
+        if ($booking->status !== BookingStatus::Pending->value) {
+            \Alert::error(__('cms.invalid_booking_status'))->flash();
+
+            return back();
+        }
+
+        $validated = $request->validate([
+            'transfer_number' => ['nullable', 'string', 'max:255'],
+            'receipt' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [], [
+            'transfer_number' => __('cms.transfer_number'),
+            'receipt' => __('cms.receipt_image'),
+        ]);
+
+        try {
+            $mode = app(DirectBookingService::class)->confirmExistingBooking(
+                $booking,
+                $validated['transfer_number'] ?? null,
+                $request->file('receipt'),
+            );
+
+            \Alert::success($mode === 'geidea'
+                ? __('cms.booking_confirmed_geidea')
+                : __('cms.booking_confirmed_bank_transfer'))->flash();
+        } catch (\Throwable $e) {
+            \Log::error("Failed to confirm booking {$booking->id}: ".$e->getMessage());
+            \Alert::error(__('cms.booking_confirm_failed').': '.$e->getMessage())->flash();
         }
 
         return back();
@@ -699,7 +1049,7 @@ class BookingController extends CrudController
 
     public function changePaymentStatus($id, $status)
     {
-        $booking = \App\Models\Booking::find($id);
+        $booking = Booking::find($id);
         if ($booking) {
             $booking->payment_status = $status;
             $booking->save();
@@ -711,6 +1061,18 @@ class BookingController extends CrudController
         return back();
     }
 
+    /**
+     * Mount the shared cancellation + refund modals (populated per-row via data-*),
+     * used by the "Manage cancellation" / refund buttons on both list and show.
+     */
+    private function addCancellationWidgets(): void
+    {
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.booking.cancellation_modals',
+        ])->to('before_content');
+    }
+
     protected function addBuildingFilter()
     {
         CRUD::addFilter([
@@ -718,7 +1080,7 @@ class BookingController extends CrudController
             'type' => 'dropdown',
             'label' => __('cms.building'),
         ], function () {
-            return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
+            return Building::all()->pluck('name_ar', 'id')->toArray();
         }, function ($value) {
             CRUD::addClause('whereHas', 'apartment', function ($query) use ($value) {
                 $query->where('building_id', $value);
@@ -732,15 +1094,7 @@ class BookingController extends CrudController
             'name' => 'status',
             'type' => 'dropdown',
             'label' => __('cms.status'),
-        ], [
-            'pending' => __('cms.status_pending'),
-            'approved' => __('cms.status_approved'),
-            'rejected' => __('cms.status_rejected'),
-            'booked' => __('cms.status_booked'),
-            'finished' => __('cms.status_finished'),
-            'canceled' => __('cms.status_canceled'),
-            'customer_canceled' => __('cms.status_customer_canceled'),
-        ], function ($value) {
+        ], BookingStatus::options(), function ($value) {
             CRUD::addClause('where', 'status', $value);
         });
     }
@@ -760,6 +1114,39 @@ class BookingController extends CrudController
         });
     }
 
+    /**
+     * On-demand filter (available in the booking list's filters bar, not applied by
+     * default and not linked from the sidebar): cancellations that still need staff
+     * action — a request awaiting finalization, or a finalized cancel awaiting refund.
+     */
+    protected function addCancellationActionFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'cancellation_action',
+            'type' => 'simple',
+            'label' => __('cms.cancellations_needing_action'),
+        ], false, function () {
+            CRUD::addClause('whereIn', 'status', BookingStatus::cancellationWorkflow());
+            CRUD::addClause('where', 'refund_status', 'pending');
+        });
+    }
+
+    /**
+     * On-demand filter: swaps the default "hide Airbnb bookings" query for
+     * "show Airbnb bookings only" — the base exclusion in setupListOperation()
+     * checks the same 'show_airbnb' request flag this filter toggles.
+     */
+    protected function addAirbnbFilter()
+    {
+        CRUD::addFilter([
+            'name' => 'show_airbnb',
+            'type' => 'simple',
+            'label' => 'حجوزات Airbnb فقط',
+        ], false, function () {
+            CRUD::addClause('where', 'is_airbnb_booking', 1);
+        });
+    }
+
     protected function addBookingSourceFilter()
     {
         CRUD::addFilter([
@@ -774,6 +1161,7 @@ class BookingController extends CrudController
             'airbnb' => 'Airbnb',
             'booking_com' => 'Booking.com',
             'guesty' => 'Guesty',
+            'dashboard' => 'حجز مباشر (لوحة التحكم)',
             'other' => 'أخرى',
         ], function ($value) {
             CRUD::addClause('where', 'booking_source', $value);
@@ -785,12 +1173,9 @@ class BookingController extends CrudController
      */
     public function editCheckInTime($id)
     {
-        $booking = \App\Models\Booking::with(['apartment', 'customer'])->findOrFail($id);
+        $this->authorizeLockManagement();
 
-        // التحقق من الصلاحيات
-        if (! backpack_user()->can('booking.changeStatus')) {
-            abort(403, 'Unauthorized Access');
-        }
+        $booking = Booking::with(['apartment', 'customer'])->findOrFail($id);
 
         return view('admin.booking.edit-check-in-time', compact('booking'));
     }
@@ -800,14 +1185,11 @@ class BookingController extends CrudController
      */
     public function updateCheckInTime($id)
     {
+        $this->authorizeLockManagement();
+
         $request = request();
 
-        $booking = \App\Models\Booking::findOrFail($id);
-
-        // التحقق من الصلاحيات
-        if (! backpack_user()->can('booking.changeStatus')) {
-            abort(403, 'Unauthorized Access');
-        }
+        $booking = Booking::findOrFail($id);
 
         // التحقق من صحة البيانات
         $request->validate([
@@ -815,13 +1197,13 @@ class BookingController extends CrudController
         ]);
 
         // دمج تاريخ الوصول مع الوقت الجديد
-        $checkInDate = \Carbon\Carbon::parse($booking->check_in)->format('Y-m-d');
+        $checkInDate = Carbon::parse($booking->check_in)->format('Y-m-d');
         $newTime = $request->check_in_time;
         $newDateTime = $checkInDate.' '.$newTime;
 
         // التحقق من صحة التاريخ والوقت
         try {
-            $parsedDateTime = \Carbon\Carbon::parse($newDateTime);
+            $parsedDateTime = Carbon::parse($newDateTime);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'خطأ في تنسيق التاريخ والوقت');
         }
@@ -831,30 +1213,14 @@ class BookingController extends CrudController
             'check_in_time' => $parsedDateTime,
         ]);
 
-        // إنشاء passcode جديد للغرفة
-        $this->generateNewPasscode($booking);
+        // إعادة إنشاء كود الدخول (إلغاء القديم + توليد جديد) عبر الخدمة المركزية
+        try {
+            app(LockAccessService::class)->rescheduleForBooking($booking);
+        } catch (\Throwable $e) {
+            \Log::error("Failed to reschedule passcode for booking {$booking->id}: ".$e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'تم تحديث وقت الدخول وإنشاء رمز جديد للغرفة بنجاح');
-    }
-
-    /**
-     * إنشاء passcode جديد للغرفة
-     */
-    private function generateNewPasscode($booking)
-    {
-        try {
-            // حذف الـ passcodes القديمة
-            $booking->smartLockPasscodes()->delete();
-
-            // استخدام BookingService لإنشاء passcode جديد
-            $bookingService = app(\App\Services\BookingService::class);
-            $bookingService->addPasscodeToSmartLock($booking);
-
-            \Log::info("New passcode generated for booking {$booking->id} using BookingService");
-
-        } catch (\Exception $e) {
-            \Log::error("Failed to generate new passcode for booking {$booking->id}: ".$e->getMessage());
-        }
     }
 
     /**
@@ -862,26 +1228,39 @@ class BookingController extends CrudController
      */
     public function regeneratePasscode($id)
     {
-        $booking = \App\Models\Booking::findOrFail($id);
+        $this->authorizeLockManagement();
 
-        // التحقق من الصلاحيات
-        if (! backpack_user()->can('booking.changeStatus')) {
-            abort(403, 'Unauthorized Access');
-        }
+        $booking = Booking::findOrFail($id);
 
         try {
-            // إعادة تعيين حالة الباس كود
-            $booking->markPasscodeAsPending();
+            app(LockAccessService::class)->rescheduleForBooking($booking);
 
-            // إنشاء باس كود جديد
-            $this->generateNewPasscode($booking);
-
-            return redirect()->back()->with('success', 'تم إعادة إنشاء الباس كود بنجاح');
-
-        } catch (\Exception $e) {
+            return redirect()->back()->with('success', __('cms.regenerate_passcode_success'));
+        } catch (\Throwable $e) {
             \Log::error("Failed to regenerate passcode for booking {$booking->id}: ".$e->getMessage());
 
-            return redirect()->back()->with('error', 'فشل في إعادة إنشاء الباس كود: '.$e->getMessage());
+            $d = LockErrorPresenter::describe($e);
+
+            $message = __('cms.regenerate_passcode_failed').': '.$d['summary'];
+            if ($d['vendor_code'] !== null) {
+                $message .= ' — '.__('cms.passcode_vendor_code').' '.$d['vendor_code'];
+                if ($d['vendor_desc']) {
+                    $message .= ' ('.$d['vendor_desc'].')';
+                }
+            }
+            $message .= '. '.($d['retryable'] ? __('cms.passcode_will_retry') : __('cms.passcode_permanent_error'));
+
+            return redirect()->back()->with('error', $message);
+        }
+    }
+
+    /**
+     * صلاحية موحّدة لكل عمليات إدارة قفل الحجز (وقت الدخول، إعادة إنشاء الكود).
+     */
+    private function authorizeLockManagement(): void
+    {
+        if (! backpack_user()->can('booking.changeStatus')) {
+            abort(403, 'Unauthorized Access');
         }
     }
 }

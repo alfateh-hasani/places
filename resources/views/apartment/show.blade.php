@@ -1,9 +1,10 @@
 @extends('layouts.master')
 @push('css')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{{ asset('assets/plugin/HoldOn.min.css') }}">
 
     <style>
-        iframe{
+        #map iframe{
             width: 100%;
             height: 100% !important;
         }
@@ -18,6 +19,11 @@
             color: #fff !important;
             border-color: #EF552C !important;
         }
+        /* Photo gallery expand/collapse — CSS-driven so it works with lazy images
+           (no JS height measurement, which mis-measures before images load). */
+        .banner-container { overflow: hidden; transition: max-height .4s ease; }
+        .banner-container:not(.active) { max-height: 464px; }
+        .banner-container.active { max-height: 5000px; }
     </style>
 
         
@@ -37,18 +43,24 @@
                 </span>
             </button>
             
-            <a href="javascript:void(0);" onclick="toggleFavorite({{ $apartment->id }})"
-                class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto 
-                lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300">
-                @if (!$apartment->is_favorite)
-                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favoritee.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
-                @else
-                    <img id="favorite-icon-{{ $apartment->id }}" src="{{ asset('assets/img/favorite-active.svg') }}" class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
-                @endif
+            <button type="button"
+                data-wishlist-toggle
+                data-apartment-id="{{ $apartment->id }}"
+                aria-pressed="{{ $apartment->is_favorite ? 'true' : 'false' }}"
+                aria-label="@lang('apartment.favorite')"
+                class="bg-blackopacity inline-block py-1 ml-1 lg:py-2 px-0 w-8 h-8 lg:w-auto
+                lg:h-auto lg:px-4 bg-sort rounded-full text-center lg:rounded-md hover:bg-filteritem ease-in-out duration-300 {{ $apartment->is_favorite ? 'favorite-active' : '' }}">
+                <img
+                    data-wishlist-icon
+                    data-icon-active="{{ asset('assets/img/favorite-active.svg') }}"
+                    data-icon-inactive="{{ asset('assets/img/favoritee.svg') }}"
+                    src="{{ $apartment->is_favorite ? asset('assets/img/favorite-active.svg') : asset('assets/img/favoritee.svg') }}"
+                    alt=""
+                    class="inline-block rtl:ml-0 rtl:lg:ml-2 mr-0 lg:mr-2 h-4" />
                 <span class="hidden lg:inline">
                     {{ __('apartment.favorite') }}
                 </span>
-            </a>
+            </button>
             
             
         </div>
@@ -63,7 +75,7 @@
         <div class="banner-container">
             <div class="new-detail-banner">
                 @foreach ($apartment->getMedia('image') as $key=> $photo)
-                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}"><img src="{{ $photo->getUrl() }}" /></a>
+                    <a data-fancybox="banner" href="{{ $photo->getUrl() }}"><img src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
                 @endforeach
 
 
@@ -72,7 +84,6 @@
             </div>
 
             <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
-                {{-- <button class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer video-button"><img class="inline-block mr-2" src="assets/img/video.svg" /> Show All Videos</button> --}}
                 <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" /> 
                     <span>{{__('apartment.show_all_photos')}}</span>
                 </button>
@@ -81,21 +92,12 @@
         
     </div>
 
-    <script>
-        $('#allphotos').click(function () {
-            if ($(".banner-container").hasClass("active")) {
-                $('#allphotos span').text("عرض جميع الصور");
-            } else {
-                $('#allphotos span').text("عرض بعض الصور");
-            }
-        });
-    </script>
  
     <div class="relative">
         <div class="block sm:hidden photos banner-side ease-in-out duration-300">
             @foreach ($apartment->getMedia('image') as $key=> $photo)
                 <div>
-                    <a data-fancybox="telbanner" href="{{ $photo->getUrl() }}"><img class="h-[256px] w-full object-cover" src="{{ $photo->getUrl() }}" /></a>
+                    <a data-fancybox="telbanner" href="{{ $photo->getUrl() }}"><img class="h-[256px] w-full object-cover" src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
                 </div>
                     
                 @endforeach
@@ -168,9 +170,9 @@
                     <div class="clear-both"></div>
                 </div>
                 <div class="py-2 xl:py-7 detail-description border-b border-blackopacity mb-8">
-                    <h4 class="font-semibold text-xl text-title">   
+                    <h2 class="font-semibold text-xl text-title">
                         {{__('apartment.description')}}
-                    </h4>
+                    </h2>
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[92px] overflow-hidden desctext">
                         {!! $apartment->ml('description') !!}
 
@@ -180,9 +182,9 @@
                     </button> 
                 </div>
                 <div class="tabs" id="tabs">
-                    <ul class="buttons w-[210vw] xl:w-auto">
+                    <ul class="buttons whitespace-nowrap overflow-x-auto xl:overflow-visible">
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block bg-price" href="#tabs-1">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block bg-price" href="#tabs-1">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" id="building" xmlns="http://www.w3.org/2000/svg" width="17.371" height="18.707" viewBox="0 0 17.371 18.707">
                                     <path id="Path_1364" data-name="Path 1364" d="M15.354,4H8A2,2,0,0,0,6,6V20.7a2,2,0,0,0,2,2H21.367a2,2,0,0,0,2-2V13.354a2,2,0,0,0-2-2H17.358V6A2,2,0,0,0,15.354,4ZM6.668,20.7V6A1.336,1.336,0,0,1,8,4.668h7.349A1.336,1.336,0,0,1,16.69,6V22.039H14.017V17.7a.334.334,0,0,0-.334-.334H9.675a.334.334,0,0,0-.334.334v4.343H8A1.336,1.336,0,0,1,6.668,20.7Zm3.341,1.336V18.031h3.341v4.009ZM21.367,12.017A1.336,1.336,0,0,1,22.7,13.354V20.7a1.336,1.336,0,0,1-1.336,1.336H17.358V12.017Z" transform="translate(-6 -4)" fill="currentColor"/>
                                     <path id="Path_1365" data-name="Path 1365" d="M12.334,12H13.67A.334.334,0,0,0,14,11.67V10.334A.334.334,0,0,0,13.67,10H12.334a.334.334,0,0,0-.334.334V11.67A.334.334,0,0,0,12.334,12Zm.334-1.336h.668v.668h-.668Zm-.334,4.677H13.67A.334.334,0,0,0,14,15.011V13.675a.334.334,0,0,0-.334-.334H12.334a.334.334,0,0,0-.334.334v1.336A.334.334,0,0,0,12.334,15.345Zm.334-1.336h.668v.668h-.668Zm1,4.677A.334.334,0,0,0,14,18.352V17.015a.334.334,0,0,0-.334-.334H12.334a.334.334,0,0,0-.334.334v1.336a.334.334,0,0,0,.334.334Zm-1-1.336h.668v.668h-.668ZM17.679,12h1.336a.334.334,0,0,0,.334-.334V10.334A.334.334,0,0,0,19.015,10H17.679a.334.334,0,0,0-.334.334V11.67A.334.334,0,0,0,17.679,12Zm.334-1.336h.668v.668h-.668Zm-.334,4.677h1.336a.334.334,0,0,0,.334-.334V13.675a.334.334,0,0,0-.334-.334H17.679a.334.334,0,0,0-.334.334v1.336A.334.334,0,0,0,17.679,15.345Zm.334-1.336h.668v.668h-.668Zm-.334,4.677h1.336a.334.334,0,0,0,.334-.334V17.015a.334.334,0,0,0-.334-.334H17.679a.334.334,0,0,0-.334.334v1.336A.334.334,0,0,0,17.679,18.686Zm.334-1.336h.668v.668h-.668Zm5.679,2h1.336a.334.334,0,0,0,.334-.334V17.683a.334.334,0,0,0-.334-.334H23.692a.334.334,0,0,0-.334.334V19.02A.334.334,0,0,0,23.692,19.354Zm.334-1.336h.668v.668h-.668Zm-.334,4.677h1.336a.334.334,0,0,0,.334-.334V21.024a.334.334,0,0,0-.334-.334H23.692a.334.334,0,0,0-.334.334V22.36A.334.334,0,0,0,23.692,22.694Zm.334-1.336h.668v.668h-.668Z" transform="translate(-9.996 -7.996)" fill="currentColor"/>
@@ -193,7 +195,7 @@
                             </a>
                         </li>
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-2">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-2">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" xmlns="http://www.w3.org/2000/svg" width="20.671" height="19.707" viewBox="0 0 20.671 19.707">
                                     <path id="Icon_feather-star" data-name="Icon feather-star" d="M12.836,3l3.039,6.157,6.8.993-4.918,4.79,1.161,6.767-6.078-3.2-6.078,3.2L7.918,14.94,3,10.151l6.8-.993Z" transform="translate(-2.5 -2.5)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
                                 </svg>
@@ -203,7 +205,7 @@
                             </a>
                         </li>
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-3">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-3">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" xmlns="http://www.w3.org/2000/svg" width="16.306" height="19.707" viewBox="0 0 16.306 19.707">
                                     <g id="Icon_feather-map-pin" data-name="Icon feather-map-pin" transform="translate(0.5 0.5)">
                                         <path id="Path_1362" data-name="Path 1362" d="M19.806,9.153c0,5.952-7.653,11.054-7.653,11.054S4.5,15.105,4.5,9.153a7.653,7.653,0,1,1,15.306,0Z" transform="translate(-4.5 -1.5)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
@@ -216,7 +218,7 @@
                             </a>
                         </li>
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-4">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-4">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" xmlns="http://www.w3.org/2000/svg" width="16.734" height="18" viewBox="0 0 16.734 18">
                                     <path fill="currentColor" d="M40.372,2.813h6.715a.264.264,0,0,0,0-.527H40.372a.264.264,0,0,0,0,.527Zm0,3.164h6.715a.264.264,0,1,0,0-.527H40.372a.264.264,0,0,0,0,.527Zm0-1.582h6.715a.264.264,0,1,0,0-.527H40.372a.264.264,0,0,0,0,.527ZM52.5,3.4l-.373-.373a.791.791,0,0,0-1.119,0l-1.23,1.23V1.318A1.32,1.32,0,0,0,48.458,0H39a1.32,1.32,0,0,0-1.318,1.318V15.012H36.259a.264.264,0,0,0-.264.264v1.406A1.32,1.32,0,0,0,37.313,18h11.18l.029,0a1.32,1.32,0,0,0,1.255-1.317V7.237L52.5,4.515a.792.792,0,0,0,0-1.119ZM37.313,17.473a.792.792,0,0,1-.791-.791V15.539H47.034v1.09a1.364,1.364,0,0,0,.292.844Zm11.936-2.2s0,0,0,0v1.354a.844.844,0,1,1-1.687,0V15.275a.264.264,0,0,0-.264-.264H38.21V1.318A.792.792,0,0,1,39,.527h9.457a.792.792,0,0,1,.791.791V4.781L44.362,9.668h-3.99a.264.264,0,0,0,0,.527h3.463L42.8,11.227l-.019.022H40.372a.264.264,0,0,0,0,.527H42.59l-.352,1.055H40.372a.264.264,0,0,0,0,.527h1.969a.264.264,0,0,0,.057-.006.255.255,0,0,0,.116-.011l1.678-.559.005,0a.263.263,0,0,0,.045-.021l.007,0,.018-.012.006,0,.022-.019.941-.941h1.851a.264.264,0,0,0,0-.527H45.763l3.486-3.486ZM43.1,11.9l.515.515-.773.258Zm1,.258-.746-.746L49.7,5.077h0l.689-.689.746.746Zm8.017-8.017-.617.617-.746-.746.617-.617a.264.264,0,0,1,.373,0l.373.373a.264.264,0,0,1,0,.373Z" transform="translate(-35.995)"/>
                                 </svg>
@@ -228,9 +230,9 @@
                     </ul>
                     <div class="sections">
                         <div class="pt-8" id="tabs-1">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.specifications_title')}}
-                            </h5>
+                            </h2>
                             <ul>
                                 @foreach ($apartment->features as $item)
                                     <li class="inline-block mb-6 w-full xl:w-4/12 hover:text-price ease-in-out duration-300 cursor-pointer">
@@ -244,23 +246,20 @@
                                 
                                 
                             </ul>
-                            {{-- <button class="show-specifications font-semibold text-base border border-black rounded-full py-2 px-6">
-                                Show All 30 Amenities
-                            </button> --}}
                         </div>
                         <div class="pt-8" id="tabs-2">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.reviews_title')}}
-                            </h5>
+                            </h2>
                             <ul>
                                 @forelse ($apartment->reviews as $item)
                                     <li class="bg-sort border border-filteritem rounded-lg p-5 mb-4">
                                         <div>
                                             <div class="w-10 h-10 rounded-full rtl:ml-4 mr-4 float-left rtl:float-right inline-block" 
                                                  style="background-image: url({{asset('assets/img/slider.png')}}"></div>
-                                            <h5 class="font-normal text-base">  
+                                            <h3 class="font-normal text-base">
                                                 {{$item->customer->first_name.' '.$item->customer->last_name}}
-                                            </h5>
+                                            </h3>
                                             <p class="font-normal text-xs text-filterhover"></p>
                                         </div>
                                         <div class="my-3">
@@ -284,22 +283,48 @@
                             
                         </div>
                         <div class="pt-8" id="tabs-3">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6">    
+                            <h2 class="font-semibold text-xl text-filterhover mb-6">
                                 {{__('apartment.where_us')}}
-                            </h5>
+                            </h2>
                              
-                            <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map">
-                                {!! $apartment->building?->map !!}
+                            @php
+                                // Prefer the building's stored coordinates for a keyless embed (a
+                                // short maps.app.goo.gl link can't be iframed). Fall back to an
+                                // <iframe> embed or @lat,lng inside the map field, else a safe link.
+                                $aptMap = $apartment->building?->map;
+                                $bLat = $apartment->building?->latitude;
+                                $bLng = $apartment->building?->longitude;
+                                $aptMapEmbedSrc = null;
+                                if (is_numeric($bLat) && is_numeric($bLng)) {
+                                    $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$bLat.','.$bLng.'&z=16&hl='.app()->getLocale().'&output=embed';
+                                } elseif (! empty($aptMap) && ! str_contains($aptMap, '<iframe') && preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $aptMap, $aptMapCoords)) {
+                                    $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$aptMapCoords[1].','.$aptMapCoords[2].'&z=16&hl='.app()->getLocale().'&output=embed';
+                                }
+                            @endphp
+                            <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map" aria-label="{{ __('apartment.where_us') }}">
+                                @if(! empty($aptMap) && str_contains($aptMap, '<iframe'))
+                                    {!! $aptMap !!}
+                                @elseif($aptMapEmbedSrc)
+                                    <iframe src="{{ $aptMapEmbedSrc }}" width="100%" height="100%" style="border:0;"
+                                            loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                                            title="{{ __('apartment.where_us') }}"></iframe>
+                                @elseif(! empty($aptMap))
+                                    <a href="{{ $aptMap }}" target="_blank" rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-2 font-semibold text-price hover:underline">
+                                        <img class="w-5 h-5" src="{{ asset('assets/img/location-check.svg') }}" alt="" />
+                                        {{ __('apartment.where_us') }}
+                                    </a>
+                                @endif
                             </div>
                         </div>
                         <div class="pt-8" id="tabs-4">
-                            <h5 class="font-semibold text-xl text-filterhover mb-6 text-white">
+                            <h2 class="font-semibold text-xl text-filterhover mb-6 text-white">
                                 {{__('apartment.terms_policies_title')}}
-                            </h5>
+                            </h2>
                            
-                            <h6 class="mt-8 text-white">
+                            <h3 class="mt-8 text-white">
                                 {{$apartment->policy?->{'name_'.app()->getLocale()} }}
-                            </h6>
+                            </h3>
                             <div class="font-light text-white text-base mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                                 {!! $apartment->policy?->{'description_'.app()->getLocale()} !!}              
                             </div>
@@ -307,15 +332,16 @@
                     </div>
                 </div>
             </div>
-            <div class=" xl:block xl:basis-4/12 xl:ps-5">
+            <div class="mt-8 xl:mt-0 xl:block xl:basis-4/12 xl:ps-5">
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
                     <p class="font-normal text-base text-reviews">
                         <span class="font-bold text-2xl text-black translate-y-0.5 inline-block" id="mainPrice">
-                            {{ $priceInfo['total'] }} 
-                        </span> 
-                        {{__('apartment.sar2')}}
+                            {{ $priceInfo['total'] }}
+                        </span>
+                        <x-riyal class="text-black" />
+
                     </p>
-                    <form action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="POST">
+                    <form id="booking" action="{{ route('web-booking.determine',$apartment->id) }}" class="mb-9 space-y-4" method="POST">
              
                         @csrf
 
@@ -342,8 +368,8 @@
                             <ul class="   bg-white p-4 border border-border rounded-lg">
                                 <li class="border-b border-blackopacity pb-4 mb-4 flex justify-between items-center">
                                     <p class="text-lg">
-                                        الكبار
-                                        <span class="block text-xs opacity-50">أعلى من 12 سنة</span>
+                                        {{ __('apartment.adults') }}
+                                        <span class="block text-xs opacity-50">{{ __('apartment.adults_age_hint') }}</span>
                                     </p>
                                     <div class="flex items-center space-x-2 rtl:space-x-reverse">
                                         <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="adults_count">
@@ -362,8 +388,8 @@
                                 
                                 <li class="  flex justify-between items-center">
                                     <p class="text-lg">
-                                        الأطفال
-                                        <span class="block text-xs opacity-50">أقل من 12 سنة</span>
+                                        {{ __('apartment.children') }}
+                                        <span class="block text-xs opacity-50">{{ __('apartment.children_age_hint') }}</span>
                                     </p>
                                     <div class="flex items-center space-x-2 rtl:space-x-reverse">
                                         <button type="button" class="counter-button decrement flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title" data-target="children_count">
@@ -401,7 +427,7 @@
                                     {{__('apartment.one_night')}}
                                 </span>
                                 <span class="float-right rtl:float-left" id="nightlyPrice">
-                                    {{ $priceInfo['total'] . ' ' . __('apartment.price')}} 
+                                    <x-riyal :amount="$priceInfo['total']" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -415,8 +441,8 @@
                                 <span class="font-normal text-base text-reviews">
                                     ({{__('apartment.price_tax') }})
                                 </span>
-                                <span class="float-right rtl:float-left" id="totalCost"> 
-                                    {{ $priceInfo['total'] .' '.__('apartment.price') }} 
+                                <span class="float-right rtl:float-left" id="totalCost">
+                                    <x-riyal :amount="$priceInfo['total']" :format="false" />
                                 </span>
                                 <div class="clear-both"></div>
                             </li>
@@ -426,7 +452,7 @@
                         </ul>
                         @if ($errors->any())
                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                            <strong class="font-bold">حدث خطأ!</strong>
+                            <strong class="font-bold">{{ __('apartment.error_occurred') }}</strong>
                             <span class="block sm:inline">
                                 @foreach ($errors->all() as $error)
                                     {{ $error }}
@@ -513,9 +539,27 @@
         </div>
     </div>
 </div>
-{{-- @dd($apartment->booked_days($apartment->bookings)); --}}
 @endsection
 @push('js')
+<script>
+    // Override the submodule's height-measured toggle with a CSS max-height
+    // expand (reliable with lazy images). Runs on window load so it supersedes
+    // main.js's document-ready handler.
+    $(window).on('load', function () {
+        var $btn = $('#allphotos');
+        if (! $btn.length) return;
+        $btn.off('click');
+        $('.banner-container').css('height', '');
+        $btn.on('click', function () {
+            var active = $('.banner-container').toggleClass('active').hasClass('active');
+            $('#allphotos span').text(active
+                ? @json(__('apartment.show_some_photos'))
+                : @json(__('apartment.show_all_photos')));
+        });
+    });
+</script>
+{{-- jQuery UI is only needed here, for the #tabs widget initialised in main.js. --}}
+<script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js"></script>
 @include('customer.section.script-form')
 @include('apartment.js')
 
@@ -543,9 +587,10 @@
 
     
 
-    // alert($('.desctext').text().trim().split(/\s+/).length);
+    var descHtml = $('.desctext').html();
+    var descWordCount = descHtml && descHtml.trim() ? descHtml.trim().split(/\s+/).length : 0;
 
-    if ($('.desctext').html().trim().split(/\s+/).length < 50) {
+    if (descWordCount < 50) {
         $(".showmoreApartment").hide();
     }
 

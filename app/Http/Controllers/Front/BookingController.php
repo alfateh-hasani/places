@@ -2,14 +2,22 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Enums\BookingStatus;
 use App\Enums\DateChangeStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\BookingCanceled;
+use App\Mail\ReservationDetails;
 use App\Models\Apartment;
 use App\Models\Booking;
+use App\Models\BookingUnitTransfer;
 use App\Models\Building;
 use App\Models\DateChangeRequest;
 use App\Models\Policy;
+use App\Models\User;
+use App\Rules\MaxStay;
+use App\Services\Bookings\BookingCancellationService;
 use App\Services\BookingService;
+use App\Services\BookingUnitTransfer\BookingUnitTransferService;
 use App\Services\DateChangeService;
 use App\Services\Pricing\PricingService;
 use App\Services\ProcessPaymentService;
@@ -40,12 +48,16 @@ class BookingController extends Controller
     public function startPayment(Request $request, $uuid)
     {
 
-        $booking = Booking::where('uuid', $uuid)->first();
+        // Only the owner may pay, and only for a booking that is still awaiting payment —
+        // paying again for a canceled booking would otherwise revive it.
+        $booking = Booking::where('uuid', $uuid)
+            ->where('customer_id', auth('customer')->id())
+            ->where('status', BookingStatus::Pending->value)
+            ->where('payment_status', '!=', 'paid')
+            ->first();
         if (! $booking) {
             abort(404);
         }
-
-        // dd($request->all());
 
         $validatedData = $request->validate([
             // 'coupon_code' => 'nullable|exists:coupons,code',
@@ -63,7 +75,7 @@ class BookingController extends Controller
             } else {
                 return redirect()->back()->with('error', $paymentResponse);
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             //  dd($exception->getMessage());
             return redirect()->back()->with('error', $exception->getMessage());
         }
@@ -75,7 +87,9 @@ class BookingController extends Controller
             return redirect()->back()->with('error', __('api.payment_method_not_supported'));
         }
 
-        $booking = $this->booking->where('transaction_id', $transaction_id)->first();
+        $booking = $this->booking->where('transaction_id', $transaction_id)
+            ->where('customer_id', auth()->id())
+            ->first();
 
         if (! $booking) {
             return redirect()->back()->with('error', __('api.booking_not_found'));
@@ -111,18 +125,18 @@ class BookingController extends Controller
         try {
 
             if ($booking->customer_email) {
-                Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+                Mail::to($booking->customer_email)->send(new ReservationDetails($booking));
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // dd($e->getMessage());
         }
 
         $building = Building::where('id', $booking?->apartment?->building_id)->first();
         if ($building) {
-            $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+            $superVisor = User::where('id', $building->supervisor_id)->first();
             $superVisorEmail = $superVisor->email;
             if ($superVisorEmail) {
-                Mail::to($superVisorEmail)->send(new \App\Mail\ReservationDetails($booking));
+                Mail::to($superVisorEmail)->send(new ReservationDetails($booking));
             }
 
         }
@@ -145,7 +159,14 @@ class BookingController extends Controller
         ]);
 
         // جلب الحجز مع معلومات الشقة
-        $booking = Booking::where('uuid', $uuid)->with('apartment')->firstOrFail();
+        // Coupons can only change the price of the caller's own booking while it is unpaid;
+        // re-pricing a paid booking would inflate the refund staff see on cancellation.
+        $booking = Booking::where('uuid', $uuid)
+            ->where('customer_id', auth('customer')->id())
+            ->where('status', BookingStatus::Pending->value)
+            ->where('payment_status', '!=', 'paid')
+            ->with('apartment')
+            ->firstOrFail();
         $apartment = $booking->apartment;
 
         // التحقق من صحة الكوبون
@@ -175,7 +196,11 @@ class BookingController extends Controller
     {
 
         $customer = auth()->user();
-        $booking = Booking::where('uuid', $uuid)->where('customer_id', $customer->id)->firstOrFail();
+        $booking = Booking::where('uuid', $uuid)
+            ->where('customer_id', $customer->id)
+            ->where('status', BookingStatus::Pending->value)
+            ->where('payment_status', '!=', 'paid')
+            ->firstOrFail();
 
         $apartment = $booking->apartment;
 
@@ -207,14 +232,14 @@ class BookingController extends Controller
     {
         $validatedData = $request->validate([
             'checkin' => ['required', 'date', 'after_or_equal:today'],
-            'checkout' => ['required', 'date', 'after:checkin'],
+            'checkout' => ['required', 'date', 'after:checkin', new MaxStay('checkin')],
             'number_of_adults' => ['required', 'integer', 'min:1', 'max:10'],
             'number_of_children' => ['required', 'integer', 'min:0', 'max:10'],
             'coupon_code' => ['nullable', 'string'],
         ], __('validation.custom'));
 
-        // جلب بيانات الشقة المطلوبة
-        $apartment = Apartment::findOrFail($apartment_id);
+        // جلب بيانات الشقة المطلوبة (المعروضة للحجز فقط — شقة مفعّلة في مبنى مفعّل)
+        $apartment = Apartment::bookable()->findOrFail($apartment_id);
 
         try {
             // فحص مبكر (سريع الفشل) — الفحص الحاسم الفعلي يُعاد تحت قفل الشقة داخل reserveApartment()
@@ -223,6 +248,7 @@ class BookingController extends Controller
 
             // التحقق من عدد الضيوف
             $this->bookingService->validateGuestsCount($apartment, $validatedData['number_of_adults'], $validatedData['number_of_children']);
+            $this->bookingService->assertCanHoldAnotherPendingBooking(auth('customer')->id());
 
             // تحويل التواريخ إلى Carbon
             $checkInDate = Carbon::parse($validatedData['checkin']);
@@ -377,18 +403,46 @@ class BookingController extends Controller
         try {
             $building = Building::where('id', $booking?->apartment?->building_id)->first();
             if ($building) {
-                $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $superVisor = User::where('id', $building->supervisor_id)->first();
                 $superVisorEmail = $superVisor?->email;
                 if ($superVisorEmail) {
-                    Mail::to($superVisorEmail)->send(new \App\Mail\BookingCanceled($booking));
+                    Mail::to($superVisorEmail)->send(new BookingCanceled($booking));
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // تجاهل أخطاء الإيميل لتجنب فشل عملية الإلغاء
             \Log::error('فشل في إرسال إيميل الإلغاء للمشرف: '.$e->getMessage());
         }
 
         return redirect()->back()->with('success', __('api.booking_canceled_successfully'));
+    }
+
+    /**
+     * Withdraw a cancellation request the customer themselves opened, reinstating the
+     * booking. Allowed only for a CUSTOMER-initiated request whose refund hasn't been
+     * processed yet — a staff-initiated cancellation can't be undone by the customer.
+     * Reuses the same reinstate path as the staff "reject" action.
+     */
+    public function withdrawCancellation(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+
+        $booking = $this->customerBooking($request->booking_id);
+        if (! $booking) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        if (! $booking->isCancellationRequested()
+            || $booking->cancellationStartedByStaff()
+            || $booking->refund_status !== 'pending') {
+            return response()->json(['success' => false, 'message' => __('api.cannot_withdraw_cancellation')], 422);
+        }
+
+        app(BookingCancellationService::class)->reject($booking);
+
+        return response()->json(['success' => true, 'message' => __('api.cancellation_withdrawn')]);
     }
 
     /**
@@ -468,6 +522,7 @@ class BookingController extends Controller
 
         $dateChangeRequest = DateChangeRequest::with('booking')
             ->where('id', $requestId)
+            ->where('transaction_id', $transactionId)
             ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
             ->first();
 
@@ -563,6 +618,60 @@ class BookingController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => __('api.date_change_request_canceled')]);
+    }
+
+    /**
+     * Customer confirms a staff-initiated unit transfer → the move is applied: the old unit is
+     * freed and the booking is re-created on the new unit (with a new OwnerRez booking).
+     */
+    public function confirmUnitTransfer(Request $request, BookingUnitTransferService $service, $transferId)
+    {
+        $transfer = $this->customerUnitTransfer($transferId);
+        if (! $transfer) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $service->confirmByCustomer($transfer);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Unit transfer confirmation failed: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => __('api.something_went_wrong')], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => __('api.unit_transfer_confirmed')]);
+    }
+
+    /**
+     * Customer declines a pending unit transfer → the request is withdrawn and the held
+     * destination unit is released. The booking stays on its original unit.
+     */
+    public function declineUnitTransfer(Request $request, BookingUnitTransferService $service, $transferId)
+    {
+        $transfer = $this->customerUnitTransfer($transferId);
+        if (! $transfer) {
+            return response()->json(['success' => false, 'message' => __('api.booking_not_found')], 404);
+        }
+
+        try {
+            $service->cancel($transfer);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
+        }
+
+        return response()->json(['success' => true, 'message' => __('api.unit_transfer_declined')]);
+    }
+
+    private function customerUnitTransfer($transferId): ?BookingUnitTransfer
+    {
+        $customer = auth()->user();
+
+        return BookingUnitTransfer::with('booking')
+            ->where('id', $transferId)
+            ->whereHas('booking', fn ($q) => $q->where('customer_id', $customer->id))
+            ->first();
     }
 
     private function customerBooking($bookingId): ?Booking

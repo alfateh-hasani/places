@@ -5,15 +5,20 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApartmentResource;
 use App\Http\Resources\BookingResource;
+use App\Mail\BookingCanceled;
 use App\Models\Apartment;
 use App\Models\Booking;
+use App\Models\Building;
 use App\Models\Policy;
 use App\Models\Service;
+use App\Models\User;
+use App\Rules\MaxStay;
 use App\Services\BookingService;
 use App\Services\Pricing\PricingService;
 use App\Services\ProcessPaymentService;
 use Auth;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Mail;
 
 class BookingController extends Controller
@@ -85,19 +90,21 @@ class BookingController extends Controller
 
         $validatedData = $request->validate([
             'apartment_id' => 'required|exists:apartments,id',
-            'check_in' => 'required|date',
-            'check_out' => 'required|date',
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => ['required', 'date', 'after:check_in', new MaxStay],
             'adults_count' => 'required|integer|min:1',
             'children_count' => 'required|integer|min:0',
             'coupon_code' => 'nullable|exists:coupons,code',
             'notes' => 'nullable|string',
             'booking_source' => 'nullable|in:web,android,ios',
-            'payment_method_code' => 'required',
+            'payment_method_code' => ['required', Rule::in(array_keys(config('payments.gateways')))],
         ]);
         try {
             $customer = Auth::guard('api')->user();
-            $apartment = Apartment::findOrFail($validatedData['apartment_id']);
+            $apartment = Apartment::bookable()->findOrFail($validatedData['apartment_id']);
             $this->bookingService->checkAvailability($apartment, $validatedData['check_in'], $validatedData['check_out']);
+            $this->bookingService->validateGuestsCount($apartment, $validatedData['adults_count'], $validatedData['children_count']);
+            $this->bookingService->assertCanHoldAnotherPendingBooking($customer->id);
             $paymentResponse = $this->bookingService->createPayment($validatedData, $customer, $apartment, 'api');
             if (is_array($paymentResponse) && isset($paymentResponse['transaction']['url'])) {
                 $this->data['callback'] = $paymentResponse['transaction']['url'];
@@ -164,7 +171,7 @@ class BookingController extends Controller
         $request->validate([
             'apartment_id' => 'required|exists:apartments,id',
             'check_in' => 'required|date',
-            'check_out' => 'required|date',
+            'check_out' => ['required', 'date', 'after:check_in', new MaxStay],
             'number_of_adults' => 'required|integer|min:1',
             'number_of_children' => 'required|integer|min:0',
         ]);
@@ -193,7 +200,7 @@ class BookingController extends Controller
             'apartment_id' => 'required|exists:apartments,id',
             'coupon_code' => 'required|exists:coupons,code',
             'check_in' => 'required|date',
-            'check_out' => 'required|date|after:check_in',
+            'check_out' => ['required', 'date', 'after:check_in', new MaxStay],
         ]);
         $apartment = Apartment::findOrFail($request->apartment_id);
         $coupon = $this->bookingService->validateCoupon($apartment, $request->coupon_code);
@@ -211,7 +218,7 @@ class BookingController extends Controller
         $request->validate([
             'apartment_id' => 'required|exists:apartments,id',
             'check_in' => 'required|date',
-            'check_out' => 'required|date|after:check_in',
+            'check_out' => ['required', 'date', 'after:check_in', new MaxStay],
         ]);
         $apartment = Apartment::findOrFail($request->apartment_id);
 
@@ -328,12 +335,12 @@ class BookingController extends Controller
 
         // إرسال إيميل للمشرف عند الإلغاء
         try {
-            $building = \App\Models\Building::where('id', $booking?->apartment?->building_id)->first();
+            $building = Building::where('id', $booking?->apartment?->building_id)->first();
             if ($building) {
-                $superVisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $superVisor = User::where('id', $building->supervisor_id)->first();
                 $superVisorEmail = $superVisor?->email;
                 if ($superVisorEmail) {
-                    Mail::to($superVisorEmail)->send(new \App\Mail\BookingCanceled($booking));
+                    Mail::to($superVisorEmail)->send(new BookingCanceled($booking));
                 }
             }
         } catch (\Exception $e) {

@@ -1,20 +1,20 @@
 <div class="bg-feature border border-feature-border rounded-xl p-4 relative mb-4 reservations">
     <a href="{{route('customer.booking.details',$item->number_of_booking)}}" >
         @if($item->apartment)
-            <img class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover" 
+            <img loading="lazy" class="mb-4 xl:mb-0 ltr:xl:float-left rtl:xl:float-right w-full xl:w-56 h-44 rounded-xl xl:me-4 object-cover"
                 src="{{getImage($item->apartment,'image')}}" />
         @endif
     </a>
-    <div style="    min-width: 30%;" class="ltr:float-right rtl:float-left border-s border-feature-border px-3 py-1">
+    <div class="w-full xl:w-auto xl:min-w-[30%] mb-3 xl:mb-0 ltr:xl:float-right rtl:xl:float-left xl:border-s border-feature-border px-3 py-1">
         <a  href="{{route('customer.booking.details',$item->number_of_booking)}}" >
             <p class="text-sm sm:text-base font-semibold text-lg mb-1">{{__('apartment.booking_summary')}}</p>
         </a>
         <a><p class="text-sm sm:text-sm text-reviews "> {{__('apartment.night_price')}} 
-            <span class="leading-none block font-semibold text-black">{{$item->price_per_night}} SAR</span></p></a>
+            <span class="leading-none block font-semibold text-black"><x-riyal :amount="$item->price_per_night" :format="false" /></span></p></a>
         <a><p class="text-sm sm:text-sm text-reviews "> {{__('apartment.discount')}} 
-            <span class="leading-none block font-semibold text-black">{{$item->discount}} SAR</span></p></a>
+            <span class="leading-none block font-semibold text-black"><x-riyal :amount="$item->discount" :format="false" /></span></p></a>
         <a><p class="text-sm sm:text-sm text-reviews ">{{__('apartment.total_price')}} ({{$item->number_of_nights .' '.__('apartment.nights')}})
-            <span class="leading-none block font-semibold text-black mb-2">{{$item->final_price}} SAR</span></p></a>
+            <span class="leading-none block font-semibold text-black mb-2"><x-riyal :amount="$item->final_price" :format="false" /></span></p></a>
     </div>
     <div>
         <a>
@@ -47,6 +47,12 @@
         <span class="text-[{{ $statusColor }}]">{{ __('api.booking_status_' . $item->status) }}</span>
                 <a><p class="text-sm sm:text-base text-reviews py-2">  {{__('apartment.reservations_date')}} :
             <span class="text-black">{{$item->check_in?->format('Y-m-d')}}</span></p></a>
+        @if($item->status === 'approved' && ($activePasscode = $item->getActivePasscode()))
+            <p class="text-sm sm:text-base text-reviews py-2">{{__('booking.passcode')}} :
+                <span class="text-black tracking-wider">{{ $activePasscode->keyboard_pwd }}</span>
+                @include('customer.section.copy-passcode-button', ['code' => $activePasscode->keyboard_pwd])
+            </p>
+        @endif
     </div>
     {{-- <a class="options-button cursor-pointer z-50 absolute ltr:right-4 rtl:left-4 top-4">
         <svg width="20" height="20" version="1.1" id="fi_512142" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 426.667 426.667" style="enable-background:new 0 0 426.667 426.667;" xml:space="preserve">

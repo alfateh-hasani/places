@@ -4,16 +4,18 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\HasWebNotifications;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-    use CrudTrait, HasRoles, LogsActivity;
+    use CrudTrait, HasPushSubscriptions, HasRoles, HasWebNotifications, LogsActivity;
 
     protected $connection = 'mysql';
 
@@ -90,7 +92,9 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logExcept(['password', 'remember_token'])
+            ->logOnlyDirty();
     }
 
 }

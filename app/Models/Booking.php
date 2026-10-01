@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
+use App\Enums\BookingStatus;
+use App\Enums\CancelSource;
 use App\Enums\DateChangeStatus;
+use App\Enums\UnitTransferStatus;
 use App\Events\BookingApproved;
+use App\Events\BookingCancelled;
 use App\Jobs\SendBookingConfirmedNotification;
+use App\Jobs\SendNewBookingStaffNotification;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -50,7 +57,7 @@ class Booking extends Model
         ];
     }
 
-    public function refunds(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function refunds(): HasMany
     {
         return $this->hasMany(Refund::class);
     }
@@ -71,22 +78,61 @@ class Booking extends Model
             }
         });
 
+        // تسجيل مصدر الإلغاء تلقائياً: أي انتقال إلى "طلب إلغاء" بلا مصدر محدَّد يُعتبر
+        // من العميل (مسارات التطبيق/الموقع). المسار الإداري يعيّن 'staff' صراحةً قبل الحفظ،
+        // فلا يُستبدل. هكذا لا نحتاج تعديل أي متحكم API لضبط المصدر.
+        static::updating(function ($booking) {
+            if ($booking->isDirty('status')
+                && $booking->status === BookingStatus::CancellationRequested->value
+                && empty($booking->cancel_source)) {
+                $booking->cancel_source = CancelSource::Customer->value;
+            }
+        });
+
         // إرسال إشعار تأكيد الحجز عند تغيير الحالة إلى approved
         static::updated(function ($booking) {
-            if ($booking->isDirty('status') && $booking->status === 'approved') {
-                SendBookingConfirmedNotification::dispatch($booking);
+            if ($booking->isDirty('status') && $booking->status === BookingStatus::Approved->value) {
+                // إشعارات "تم التأكيد" تُرسل فقط عند التأكيد الأول (من قيد الانتظار)،
+                // لا عند إعادة التفعيل بعد رفض طلب الإلغاء — حتى لا يصل العميل إشعار مكرر.
+                if ($booking->getOriginal('status') === BookingStatus::Pending->value) {
+                    SendBookingConfirmedNotification::dispatch($booking);
+                    self::notifyStaffOfConfirmedBooking($booking);
+                }
 
-                // إطلاق event للمزامنة مع OwnerRez
+                // BookingApproved يُطلق دائماً: إعادة توليد كود الدخول (يُلغى عند طلب الإلغاء)
+                // ومزامنة OwnerRez (تتخطّى تلقائياً إن كان الحجز مربوطاً مسبقاً).
                 event(new BookingApproved($booking));
+            }
+
+            // إطلاق event لإلغاء كود الدخول عند إلغاء الحجز (من العميل أو الإدارة أو OwnerRez)
+            if ($booking->isDirty('status') && in_array($booking->status, [BookingStatus::Canceled->value, BookingStatus::CancellationRequested->value], true)) {
+                event(new BookingCancelled($booking, $booking->getOriginal('status')));
             }
         });
 
         // إطلاق event للمزامنة مع OwnerRez عند إنشاء حجز بحالة approved مباشرة
         static::created(function ($booking) {
-            if ($booking->status === 'approved' && $booking->payment_status === 'paid') {
+            if ($booking->status === BookingStatus::Approved->value && $booking->payment_status === 'paid') {
+                // A booking created already-paid (e.g. direct dashboard booking) is
+                // confirmed immediately — notify staff here, not on a pending step.
+                self::notifyStaffOfConfirmedBooking($booking);
+
                 event(new BookingApproved($booking));
             }
         });
+    }
+
+    /**
+     * Notify staff of a newly confirmed (paid) customer/direct booking. Imported
+     * OwnerRez/Airbnb reservations are skipped to avoid noise from bulk syncs.
+     */
+    private static function notifyStaffOfConfirmedBooking(self $booking): void
+    {
+        $isImported = $booking->is_airbnb_booking || $booking->booking_source === 'ownerrez';
+
+        if (! $isImported) {
+            SendNewBookingStaffNotification::dispatch($booking);
+        }
     }
 
     // coupon
@@ -104,33 +150,48 @@ class Booking extends Model
 
     public function getChangeStatusButton()
     {
-        $statuses = [
-            'pending' => __('cms.status_pending'),
-            'approved' => __('cms.status_approved'),
-            'canceled' => __('cms.status_canceled'),
-            'customer_canceled' => __('cms.status_customer_canceled'),
-            'rejected' => __('cms.status_rejected'),
-            'finished' => __('cms.status_finished'),
-            'booked' => __('cms.status_booked'),
-        ];
-
-        $button = '<div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            '.__('cms.change_status').'
-                        </button>
-                        <div class="dropdown-menu">';
-
-        foreach ($statuses as $status => $label) {
-            $url = url("admin/booking/{$this->id}/change-status/{$status}");
-            $button .= '<form method="POST" action="'.$url.'" style="display:inline;">
-                            '.csrf_field().'
-                            <button class="dropdown-item" type="submit">'.$label.'</button>
-                        </form>';
+        // حجوزات Airbnb المستوردة سجلات وهمية تُحذف وتُعاد مع كل مزامنة ICS —
+        // لا تُعرض لها أزرار تغيير الحالة، فقط زر "عرض".
+        if ($this->is_airbnb_booking) {
+            return '';
         }
 
-        $button .= '</div></div>';
+        // الإجراءات اليدوية المسموحة تعتمد على الحالة الحالية (مصدر واحد للحقيقة في
+        // BookingStatus::manualActions): قيد الانتظار → تأكيد/رفض، مؤكد → إلغاء/إنهاء.
+        // الحالات النهائية و"طلب الإلغاء" (يُدار عبر زر إدارة الإلغاء) لا تُظهر قائمة.
+        $current = $this->statusEnum();
+        $actions = $current ? $current->manualActions() : [];
 
-        return $button;
+        if (empty($actions)) {
+            return '';
+        }
+
+        $base = url("admin/booking/{$this->id}");
+        $number = e($this->number_of_booking);
+        $items = '';
+
+        foreach ($actions as $action) {
+            $items .= match ($action) {
+                // «تأكيد» يفتح نافذة: تحقّق Geidea أولاً وإلا اعتماد كتحويل بنكي.
+                'confirm' => '<button type="button" class="dropdown-item js-confirm-btn" '
+                    .'data-confirm-url="'.$base.'/confirm" data-number="'.$number.'">'
+                    .'<i class="la la-check-circle"></i> '.__('cms.confirm_booking').'</button>',
+
+                // «إلغاء» — يفتح نافذة تأكيد ثم يمر بمسار الإلغاء/الاسترداد الموجّه (خدمة الإلغاء).
+                'cancel' => '<button type="button" class="dropdown-item js-cancel-btn" '
+                    .'data-cancel-url="'.$base.'/change-status/'.BookingStatus::Canceled->value.'" data-number="'.$number.'">'
+                    .'<i class="la la-ban"></i> '.__('cms.status_canceled').'</button>',
+
+                default => '',
+            };
+        }
+
+        return '<div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown" data-display="static" aria-haspopup="true" aria-expanded="false">
+                            '.__('cms.change_status').'
+                        </button>
+                        <div class="dropdown-menu">'.$items.'</div>
+                    </div>';
     }
 
     public function getChangePaymentStatusButton()
@@ -181,7 +242,7 @@ class Booking extends Model
     }
 
     // Date-change requests
-    public function dateChangeRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function dateChangeRequests(): HasMany
     {
         return $this->hasMany(DateChangeRequest::class);
     }
@@ -191,6 +252,67 @@ class Booking extends Model
         return $this->dateChangeRequests()
             ->whereIn('status', DateChangeStatus::openValues())
             ->exists();
+    }
+
+    // Unit-transfer requests (move the booking to another apartment)
+    public function unitTransfers(): HasMany
+    {
+        return $this->hasMany(BookingUnitTransfer::class);
+    }
+
+    /** The open (awaiting customer confirmation) transfer, if any. */
+    public function openUnitTransfer(): ?BookingUnitTransfer
+    {
+        return $this->unitTransfers()
+            ->whereIn('status', UnitTransferStatus::openValues())
+            ->latest()
+            ->first();
+    }
+
+    public function hasOpenUnitTransfer(): bool
+    {
+        return $this->unitTransfers()
+            ->whereIn('status', UnitTransferStatus::openValues())
+            ->exists();
+    }
+
+    /** Hours before check-in during which a unit transfer is still allowed (settings-driven). */
+    public function transferBeforeHours(): int
+    {
+        $setting = \DB::table('settings')->where('key', 'transfer_before_hours')->first();
+
+        return $setting ? (int) $setting->value : 24;
+    }
+
+    /** True while check-in is still far enough in the future to allow a transfer. */
+    public function isWithinTransferWindow(): bool
+    {
+        $checkInTime = $this->check_in_time?->format('H:i:s') ?: '16:00:00';
+        $checkInDateTime = $this->check_in?->setTimeFromTimeString($checkInTime);
+
+        if (! $checkInDateTime) {
+            return false;
+        }
+
+        return now()->diffInHours($checkInDateTime, false) >= $this->transferBeforeHours();
+    }
+
+    /**
+     * Whether staff may move this booking to another unit right now: it must be a confirmed,
+     * paid, future booking (beyond the transfer cut-off), with no open date-change or transfer
+     * request. Drives both the dashboard button and the service guard.
+     */
+    public function canBeTransferred(): bool
+    {
+        if ($this->status !== BookingStatus::Approved->value || $this->payment_status !== 'paid') {
+            return false;
+        }
+
+        if ($this->hasOpenDateChangeRequest() || $this->hasOpenUnitTransfer()) {
+            return false;
+        }
+
+        return $this->isWithinTransferWindow();
     }
 
     // Get active passcode for this booking
@@ -241,7 +363,7 @@ class Booking extends Model
     // Check if passcode needs to be generated
     public function needsPasscodeGeneration()
     {
-        return $this->status === 'approved' &&
+        return $this->status === BookingStatus::Approved->value &&
                $this->passcode_status !== 'generated' &&
                $this->smartLockPasscodes()->count() === 0;
     }
@@ -260,19 +382,72 @@ class Booking extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logOnlyDirty();
+    }
+
+    /** The booking's status as a typed enum (null if the stored value is unknown). */
+    public function statusEnum(): ?BookingStatus
+    {
+        return BookingStatus::tryFrom((string) $this->status);
+    }
+
+    /** A cancellation has been requested (by customer or staff) and is under review. */
+    public function isCancellationRequested(): bool
+    {
+        return $this->status === BookingStatus::CancellationRequested->value;
+    }
+
+    /** The cancellation is finalized and the unit is freed locally. */
+    public function isCanceled(): bool
+    {
+        return $this->status === BookingStatus::Canceled->value;
+    }
+
+    /** This booking exists in OwnerRez, so it can only be cancelled there (via the UI). */
+    public function isLinkedToOwnerRez(): bool
+    {
+        return ! empty($this->ownerrez_booking_id);
+    }
+
+    /** Whether a staff member (not the customer) started the cancellation. */
+    public function cancellationStartedByStaff(): bool
+    {
+        return $this->cancel_source === CancelSource::Staff->value;
+    }
+
+    /** The cancellation source as a typed enum, if recorded. */
+    public function cancelSourceEnum(): ?CancelSource
+    {
+        return $this->cancel_source ? CancelSource::tryFrom((string) $this->cancel_source) : null;
+    }
+
+    /**
+     * Bookings this customer may review: their own, confirmed, and already checked out.
+     */
+    public function scopeReviewableBy(Builder $query, int $customerId): Builder
+    {
+        return $query->where('customer_id', $customerId)
+            ->whereIn('status', [BookingStatus::Approved->value, BookingStatus::Booked->value])
+            ->where('check_out', '<', now());
     }
 
     public function canBeCanceled(): bool
     {
         // التحقق من أن الحجز في حالة approved و paid
-        if ($this->status !== 'approved' || $this->payment_status !== 'paid') {
+        if ($this->status !== BookingStatus::Approved->value || $this->payment_status !== 'paid') {
             return false;
         }
 
         // لا يمكن إلغاء حجز له طلب تعديل تواريخ مفتوح (بانتظار دفع/مراجعة/تطبيق) —
         // يجب حل الطلب (رفضه/سحبه) أولاً حتى لا يبقى طلب "يتيم" على حجز أُلغي.
         if ($this->hasOpenDateChangeRequest()) {
+            return false;
+        }
+
+        // Same for an open unit transfer: confirming it after cancelling would re-issue a
+        // door code on the destination unit for a booking that is being refunded.
+        if ($this->openUnitTransfer()) {
             return false;
         }
 

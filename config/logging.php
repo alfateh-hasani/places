@@ -63,6 +63,7 @@ return [
             'driver' => 'single',
             'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/laravel.log'),
+            'permission' => 0640,
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
@@ -70,6 +71,7 @@ return [
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
+            'permission' => 0640,
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -79,6 +81,7 @@ return [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/ownerrez.log'),
+            'permission' => 0640,
             'level' => env('LOG_LEVEL_OWNERREZ', 'info'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -88,6 +91,7 @@ return [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/ownerrez-webhook.log'),
+            'permission' => 0640,
             'level' => env('LOG_LEVEL_OWNERREZ', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -97,6 +101,7 @@ return [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/otp.log'),
+            'permission' => 0640,
             'level' => 'debug',
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -106,6 +111,7 @@ return [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/payments.log'),
+            'permission' => 0640,
             'level' => env('LOG_LEVEL_PAYMENTS', 'info'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -115,8 +121,18 @@ return [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/geidea.log'),
+            'permission' => 0640,
             'level' => env('LOG_LEVEL_GEIDEA', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'csp' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/csp.log'),
+            'permission' => 0640,
+            'level' => 'warning',
+            'days' => 30,
             'replace_placeholders' => true,
         ],
 
@@ -124,6 +140,7 @@ return [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],
             'path' => storage_path('logs/geidea-webhook.log'),
+            'permission' => 0640,
             'level' => env('LOG_LEVEL_GEIDEA', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -181,6 +198,7 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+            'permission' => 0640,
         ],
 
     ],

@@ -35,11 +35,11 @@
             <h4><i class="la la-info-circle"></i> إعدادات التسعير الأساسية</h4>
             <div class="pricing-info-item">
                 <span><strong>السعر الأساسي:</strong></span>
-                <span>{{ optional($apartment->pricing)->base_price ?? $apartment->price }} ر.س / ليلة</span>
+                <span>{{ optional($apartment->pricing)->base_price ?? $apartment->price }} <x-riyal-svg /> / ليلة</span>
             </div>
             <div class="pricing-info-item">
                 <span><strong>سعر نهاية الأسبوع:</strong></span>
-                <span>{{ optional($apartment->pricing)->weekend_price ?? 'غير محدد' }} {{ optional($apartment->pricing)->weekend_price ? 'ر.س / ليلة' : '' }}</span>
+                <span>{{ optional($apartment->pricing)->weekend_price ?? 'غير محدد' }} @if(optional($apartment->pricing)->weekend_price)<x-riyal-svg /> / ليلة@endif</span>
             </div>
             <div class="pricing-info-item">
                 <span><strong>خصم الإقامة الطويلة:</strong></span>
@@ -84,7 +84,7 @@
                             <input type="text" class="form-control" id="selectedDateDisplay" readonly>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label"><strong><i class="la la-money"></i> السعر المخصص (ر.س):</strong></label>
+                            <label class="form-label"><strong><i class="la la-money"></i> السعر المخصص (<x-riyal-svg />):</strong></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-lg" id="customPrice" required placeholder="أدخل السعر">
                             <small class="text-muted">هذا السعر سيُستخدم بدلاً من السعر الأساسي لهذا اليوم</small>
                         </div>

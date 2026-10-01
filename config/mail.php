@@ -132,4 +132,25 @@ return [
         'only_user_ids' => array_filter(array_map('intval', explode(',', (string) env('DATE_CHANGE_REVIEW_EMAIL_USER_IDS', '')))),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Blocked-Customer Inbound Booking Alert
+    |--------------------------------------------------------------------------
+    |
+    | Users holding any of these Spatie roles are alerted when an inbound
+    | OwnerRez booking (Airbnb/Booking.com/...) is synced for a customer who
+    | is blocked on our platform. The booking is still created/synced as
+    | normal (OwnerRez remains the source of truth for unit availability) —
+    | this is a review-needed notice only, no automatic action is taken.
+    |
+    | only_user_ids: when non-empty, ONLY these user ids receive the email.
+    | Driven by BLOCKED_CUSTOMER_ALERT_USER_IDS (comma-separated).
+    |
+    */
+
+    'blocked_customer_booking_alert' => [
+        'roles' => ['خدمة عملاء', 'البرمجة', 'Admin'],
+        'only_user_ids' => array_filter(array_map('intval', explode(',', (string) env('BLOCKED_CUSTOMER_ALERT_USER_IDS', '')))),
+    ],
+
 ];

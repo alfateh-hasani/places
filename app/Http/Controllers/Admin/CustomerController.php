@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\Customer;
+use App\Services\Otp\OtpRequestThrottle;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Backpack\CRUD\app\Library\Widget;
+use Illuminate\Http\Request;
 
 /**
  * Class FeatureController
@@ -116,6 +120,62 @@ class CustomerController extends CrudController
             'label' => __('cms.created_at'),
         ]);
 
+        CRUD::addColumn([
+            'name' => 'blocked_at',
+            'type' => 'custom_html',
+            'label' => __('cms.customer_status'),
+            'searchLogic' => false,
+            // Inline style — theme-proof (badge-success/badge-danger depend on the active Backpack
+            // theme's CSS actually defining those classes; inline color can't be lost to a theme gap).
+            'value' => fn ($entry) => empty($entry->blocked_at)
+                ? '<span style="background-color:#28a745;color:#fff;padding:.35em .65em;border-radius:6px;font-weight:bold;">'.__('cms.status_active').'</span>'
+                : '<span style="background-color:#dc3545;color:#fff;padding:.35em .65em;border-radius:6px;font-weight:bold;">'.__('cms.status_blocked').'</span>',
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'block_reason',
+            'type' => 'textarea',
+            'label' => __('cms.block_reason'),
+            'searchLogic' => false,
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'blocked_by',
+            'type' => 'select',
+            'label' => __('cms.blocked_by'),
+            'entity' => 'blockedByUser',
+            'attribute' => 'name',
+            'model' => \App\Models\User::class,
+            'searchLogic' => false,
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'otp_status',
+            'type' => 'custom_html',
+            'label' => __('cms.otp_status'),
+            'searchLogic' => false,
+            'orderable' => false,
+            'value' => fn ($entry) => app(OtpRequestThrottle::class)->isBlocked($entry->phone)
+                ? '<span style="background-color:#dc3545;color:#fff;padding:.35em .65em;border-radius:6px;font-weight:bold;">'.__('cms.otp_status_blocked').'</span>'
+                : '<span style="background-color:#28a745;color:#fff;padding:.35em .65em;border-radius:6px;font-weight:bold;">'.__('cms.otp_status_ok').'</span>',
+        ]);
+
+        CRUD::addButtonFromView('line', 'block_customer', 'block_customer', 'end');
+        CRUD::addButtonFromView('line', 'unblock_customer', 'unblock_customer', 'end');
+        CRUD::addButtonFromView('line', 'reset_otp_customer', 'reset_otp_customer', 'end');
+
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.customers.block_modal',
+        ])->to('before_content');
+
+        Widget::add([
+            'type' => 'view',
+            'view' => 'admin.customers.reset_otp_by_phone',
+        ])->to('before_content');
+
+        // نفس نافذة التأكيد الأنيقة (SweetAlert) المستخدمة في شاشة طلبات تعديل التواريخ — بدل confirm() الافتراضي.
+        Widget::add(['type' => 'view', 'view' => 'admin.date_changes.actions_script'])->to('before_content');
     }
 
     /**
@@ -157,5 +217,117 @@ class CustomerController extends CrudController
             'type' => 'text',
             'label' => 'OwnerRez Guest ID',
         ]);
+    }
+
+    /**
+     * حظر العميل — يمنعه من تسجيل الدخول (API والويب)، بلا أي أثر على بياناته أو حجوزاته.
+     * يقطع الوصول فوراً حتى لجلسة/توكن نشطين مسبقاً: توكنات Sanctum تُبطَل هنا مباشرة، والجلسة على
+     * الويب يُنهيها EnsureCustomerNotBlocked في أول طلب لاحق للعميل (نفس تأثير الحظر لحظياً).
+     */
+    public function block($id, Request $request)
+    {
+        $customer = $this->authorizedCustomer($id);
+
+        $validated = $request->validate([
+            'block_reason' => 'required|string|max:1000',
+        ], [], ['block_reason' => __('cms.block_reason')]);
+
+        $customer->update([
+            'blocked_at' => now(),
+            'block_reason' => $validated['block_reason'],
+            'blocked_by' => backpack_user()->id,
+        ]);
+
+        $customer->tokens()->delete();
+
+        \Alert::success(__('cms.customer_blocked_successfully'))->flash();
+
+        return back();
+    }
+
+    /**
+     * رفع الحظر — يعيد للعميل القدرة على تسجيل الدخول.
+     */
+    public function unblock($id)
+    {
+        $customer = $this->authorizedCustomer($id);
+
+        $customer->update([
+            'blocked_at' => null,
+            'block_reason' => null,
+            'blocked_by' => null,
+        ]);
+
+        \Alert::success(__('cms.customer_unblocked_successfully'))->flash();
+
+        return back();
+    }
+
+    /**
+     * رفع قفل إرسال رمز التحقق — يُستخدم عندما يتواصل العميل مع خدمة العملاء بعد تجاوز الحد
+     * المسموح لطلبات الرمز. يمسح فترة الانتظار والعدّاد والقفل معاً فيتمكن العميل من الطلب فوراً.
+     * منفصل تماماً عن حظر الحساب: لا يمسّ حالة العميل أو بياناته.
+     */
+    public function resetOtp($id, OtpRequestThrottle $throttle)
+    {
+        $customer = $this->authorizedCustomer($id);
+
+        $throttle->reset($customer->phone);
+
+        \Alert::success(__('cms.otp_reset_successfully'))->flash();
+
+        return back();
+    }
+
+    /**
+     * رفع قفل إرسال الرمز برقم الجوال مباشرة — يغطي الأرقام المحظورة التي لا تملك حساباً بعد
+     * (عميل جديد تجاوز الحد أثناء التسجيل، فلا يظهر في قائمة العملاء). يجب إدخال الرقم بنفس
+     * الصيغة الدولية التي أُرسل بها الطلب (مع رمز الدولة).
+     */
+    public function resetOtpByPhone(Request $request, OtpRequestThrottle $throttle)
+    {
+        if (! backpack_user()->can('customer.list')) {
+            abort(403, 'Unauthorized Access');
+        }
+
+        $request->validate(
+            ['phone' => 'required|string|max:20'],
+            ['phone.required' => __('cms.reset_otp_phone_required')],
+            ['phone' => __('cms.phone')],
+        );
+
+        $throttle->reset($this->normalizeOtpPhone((string) $request->input('dial_code'), (string) $request->input('phone')));
+
+        \Alert::success(__('cms.otp_reset_successfully'))->flash();
+
+        return back();
+    }
+
+    /**
+     * Build the E.164 phone the OTP throttle stored (e.g. +966774814450) from a
+     * country dial code + a national number. If staff pasted a full international
+     * number (starts with "+"), it is used as-is (digits only).
+     */
+    private function normalizeOtpPhone(string $dialCode, string $phone): string
+    {
+        $phone = trim((string) convertArabicNumbers($phone));
+
+        if (str_starts_with($phone, '+')) {
+            return '+' . preg_replace('/\D/', '', $phone);
+        }
+
+        $code = preg_replace('/\D/', '', $dialCode) ?: '966';
+        $national = ltrim(preg_replace('/\D/', '', $phone), '0');
+
+        return '+' . $code . $national;
+    }
+
+    private function authorizedCustomer($id): Customer
+    {
+        if (! backpack_user()->can('customer.list')) {
+            abort(403, 'Unauthorized Access');
+        }
+
+        return Customer::findOrFail($id);
     }
 }

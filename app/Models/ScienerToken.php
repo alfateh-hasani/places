@@ -4,10 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class ScienerToken extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected $connection = 'mysql';
 
     protected $table = 'sciener_tokens';
     protected $fillable = [
@@ -28,4 +32,12 @@ class ScienerToken extends Model
     protected $dates = [
         'expires_at',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logExcept(['access_token', 'refresh_token'])
+            ->logOnlyDirty();
+    }
 }

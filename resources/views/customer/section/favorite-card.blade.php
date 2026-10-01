@@ -1,24 +1,51 @@
-<div class="rounded-xl overflow-hidden border border-border">
+@php
+    // A unit is available only when it is active AND its building is active
+    // (mirrors Apartment::scopeBookable). Unavailable favorites are shown here but
+    // clearly flagged instead of being hidden.
+    $isAvailable = $apartment->is_active && ($apartment->building?->is_active ?? false);
+@endphp
+<div class="rounded-xl overflow-hidden border border-border" data-wishlist-card>
     <div class="relative">
-        <div class="slider slider-checkout">
-            @foreach ($apartment->getMedia('image') as $image)
-                <a href="{{$apartment->link}}">
-                    <img 
-                        class="object-cover w-full" 
-                        src="{{ $image->getUrl('grid') }}" 
-                        alt="@lang('apartment.apartment_name_default')"
+        @unless ($isAvailable)
+            <span
+                class="absolute z-10 top-4 right-4 rtl:left-4 rtl:right-auto bg-black/70 text-white text-xs font-semibold px-3 py-1 rounded-full"
+                title="@lang('apartment.unavailable_hint')">
+                @lang('apartment.unavailable')
+            </span>
+        @endunless
+        <div class="slider slider-checkout {{ $isAvailable ? '' : 'opacity-50' }}">
+            @forelse ($apartment->getMedia('image') as $image)
+                <a href="{{ $isAvailable ? $apartment->link : '#' }}" @unless($isAvailable) class="pointer-events-none" tabindex="-1" aria-disabled="true" @endunless>
+                    <img
+                        class="object-cover w-full aspect-[364/300]"
+                        src="{{ $image->getUrl('grid') ?: $image->getUrl() }}"
+                        alt="{{ $apartment->ml('name') }}"
+                        onerror="this.onerror=null;this.src='{{ url('img/placeholder.svg') }}';"
                     />
                 </a>
-            @endforeach
+            @empty
+                {{-- No photos yet: show a clean placeholder image (keeps the card shape). --}}
+                <a href="{{ $isAvailable ? $apartment->link : '#' }}" @unless($isAvailable) class="pointer-events-none" tabindex="-1" aria-disabled="true" @endunless>
+                    <img
+                        class="w-full aspect-[364/300]"
+                        src="{{ url('img/placeholder.svg') }}"
+                        alt="{{ $apartment->ml('name') }}"
+                    />
+                </a>
+            @endforelse
         </div>
 
-        <button 
+        <button
+            type="button"
+            data-wishlist-toggle
+            data-apartment-id="{{ $apartment->id }}"
+            aria-pressed="true"
+            aria-label="@lang('apartment.remove_from_favorites')"
             class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite favorite-active ease-in-out duration-300">
-         
         </button>
     </div>
 
-    <a href="{{$apartment->link}}" class="pt-3 px-4 pb-4 block">
+    <a href="{{ $isAvailable ? $apartment->link : '#' }}" class="pt-3 px-4 pb-4 block {{ $isAvailable ? '' : 'pointer-events-none' }}" @unless($isAvailable) tabindex="-1" aria-disabled="true" @endunless>
         <div class="flex items-center">
             <img src="{{ asset('assets/img/star.svg') }}" class="mr-2 rtl:ml-2 rtl:mr-0 h-4" />
             <p class="font-normal text-xs text-reviews">
@@ -30,7 +57,7 @@
             {{ $apartment->ml('name')   }}
         </h3>
         <h4 class="font-normal text-xs text-reviews">
-            {{ $apartment->building->address }}
+            {{ $apartment->building?->address }}
         </h4>
 
         <ul class="my-2.5 flex gap-2 flex-wrap">
@@ -63,7 +90,7 @@
         <div class="flex items-center">
             
             <p class="font-bold text-sm text-price">
-                {{ $apartment->price }} <span class="currency"> @lang('apartment.currency')</span> /
+                <x-riyal :amount="$apartment->price" :format="false" /> /
             </p>
 
             <p class="font-normal text-sm text-reviews ml-1 rtl:mr-1 rtl:ml-0">@lang('apartment.night')</p>

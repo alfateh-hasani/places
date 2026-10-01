@@ -27,17 +27,23 @@ return [
     'payment_failed' => 'فشلت عملية الدفع',
     'booking_status_canceled' => 'تم الإلغاء',
     'booking_status_customer_canceled' => 'تم الإلغاء من العميل',
+    'booking_status_cancellation_by_staff' => 'جارٍ إلغاء الحجز من قِبل الإدارة',
+    'booking_status_finished' => 'منتهي',
     'transaction_not_exists' => 'العملية غير موجودة',
     'booking_not_found' => 'الحجز غير موجود',
     'booking_cannot_be_canceled' => 'لا يمكن إلغاء هذا الحجز. يجب أن يكون الحجز مؤكداً ومدفوعاً ويتبقى الوقت الكافي قبل موعد الدخول حسب سياسة الإلغاء',
     'booking_canceled_successfully' => 'تم إلغاء الحجز بنجاح وسيتم استرداد المبلغ خلال الأيام القادمة',
+    'cancellation_withdrawn' => 'تم التراجع عن طلب الإلغاء وإعادة تفعيل الحجز.',
+    'cannot_withdraw_cancellation' => 'لا يمكن التراجع عن هذا الطلب؛ فهو ليس طلب إلغاء قمت به أنت أو أنه قيد المعالجة.',
     'services_added' => 'تمت إضافة الخدمات بنجاح',
     'payment_creation_failed' => 'فشل في إنشاء عملية الدفع',
+    'account_blocked' => 'تم إيقاف حسابك. يرجى التواصل مع الدعم.',
+    'otp_too_many_attempts' => 'محاولات خاطئة كثيرة. يرجى طلب رمز تحقق جديد.',
 
     // OwnerRez Integration
     'apartment_not_available_external' => 'الشقة محجوزة عبر منصة أخرى في هذه التواريخ',
     'ownerrez_sync_failed' => 'فشل في المزامنة مع OwnerRez',
-    'ownerrez_service_unavailable' => 'خدمة التحقق من التوفر غير متاحة حالياً، يرجى المحاولة لاحقاً',
+    'ownerrez_service_unavailable' => 'تعذّر التحقق من توفر الوحدة حالياً، يرجى المحاولة مرة أخرى بعد قليل',
 
     // Date change (edit booking dates)
     'something_went_wrong' => 'حدث خطأ ما، يرجى المحاولة لاحقاً',
@@ -50,4 +56,23 @@ return [
     'date_change_not_awaiting_payment' => 'هذا الطلب ليس بانتظار الدفع',
     'date_change_cannot_cancel' => 'لا يمكن إلغاء هذا الطلب في حالته الحالية',
     'date_change_request_canceled' => 'تم إلغاء طلب تعديل التواريخ',
+    'otp_cooldown' => 'يرجى الانتظار :seconds قبل طلب رمز جديد.',
+    'otp_blocked' => 'لقد طلبت عدداً كبيراً من رموز التحقق. يرجى المحاولة بعد :hours ساعة أو التواصل مع خدمة العملاء.',
+    'booking_created_successfully' => 'تم إنشاء الحجز بنجاح',
+    'ownerrez_sync_failed_retry' => 'فشلت المزامنة مع OwnerRez ولم يتم حفظ الحجز. يرجى المحاولة مرة أخرى.',
+
+    // نقل الوحدة
+    'apartment_not_available' => 'الشقة غير متاحة.',
+    'too_many_pending_bookings' => 'لديك حجوزات غير مكتملة بانتظار الدفع. أكملها أو ألغها أولاً.',
+    'booking_cannot_be_transferred' => 'لا يمكن نقل هذا الحجز.',
+    'unit_transfer_resolve_date_change_first' => 'يجب حل طلب تعديل التواريخ المفتوح قبل نقل الوحدة.',
+    'unit_transfer_already_pending' => 'يوجد طلب نقل وحدة قيد الانتظار لهذا الحجز بالفعل.',
+    'unit_transfer_too_late' => 'لا يمكن نقل الوحدة بهذا القرب من موعد الدخول.',
+    'unit_transfer_same_apartment' => 'اختر شقة مختلفة عن الشقة الحالية.',
+    'unit_transfer_not_pending' => 'لم يعد هذا الطلب بانتظار التأكيد.',
+    'unit_transfer_cannot_cancel' => 'لم يعد بالإمكان إلغاء هذا النقل.',
+    'unit_transfer_cannot_retry' => 'لا يمكن إعادة المحاولة إلا لطلب نقل فاشل.',
+    'unit_transfer_no_refund_due' => 'لا يوجد مبلغ مستحق للاسترداد لهذا النقل.',
+    'unit_transfer_confirmed' => 'تم نقل حجزك إلى الوحدة الجديدة.',
+    'unit_transfer_declined' => 'تم رفض طلب النقل.',
 ];

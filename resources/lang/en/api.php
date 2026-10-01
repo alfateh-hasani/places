@@ -1,4 +1,5 @@
 <?php
+
 return [
     'registered' => 'You have successfully registered',
     'logout' => 'You have successfully logged out',
@@ -12,6 +13,8 @@ return [
     'coupon_usage_limit_reached' => 'This coupon has reached its maximum number of uses',
     'coupon_customer_usage_limit_reached' => 'You have already used this coupon the maximum number of times allowed',
     'already_booked' => 'This apartment is already booked for the selected dates',
+    'apartment_not_available_external' => 'This apartment is booked on another platform for these dates',
+    'ownerrez_service_unavailable' => "We couldn't check availability right now — please try again in a moment.",
     'booking_added' => 'Booking completed successfully',
     'max_adults' => 'You have exceeded the maximum number of adults',
     'max_children' => 'You have exceeded the maximum number of children',
@@ -25,10 +28,15 @@ return [
     'booking_status_booked' => 'Booked',
     'payment_failed' => 'Payment failed',
     'booking_status_canceled' => 'Canceled',
+    'booking_status_customer_canceled' => 'Cancelled by customer',
+    'booking_status_cancellation_by_staff' => 'Cancellation in progress by management',
+    'booking_status_finished' => 'Finished',
     'transaction_not_exists' => 'Transaction does not exist',
 
     // Date change (edit booking dates)
     'booking_not_found' => 'Booking not found',
+    'cancellation_withdrawn' => 'Your cancellation request has been withdrawn and the booking is active again.',
+    'cannot_withdraw_cancellation' => 'This request cannot be withdrawn; it is not a cancellation you requested, or it is already being processed.',
     'booking_cannot_be_canceled' => 'This booking cannot be modified',
     'something_went_wrong' => 'Something went wrong, please try again later',
     'date_change_same_dates' => 'The new dates match the current dates',
@@ -40,4 +48,25 @@ return [
     'date_change_not_awaiting_payment' => 'This request is not awaiting payment',
     'date_change_cannot_cancel' => 'This request cannot be canceled in its current state',
     'date_change_request_canceled' => 'Date-change request canceled',
+    'account_blocked' => 'Your account has been blocked. Please contact support.',
+    'otp_too_many_attempts' => 'Too many incorrect attempts. Please request a new verification code.',
+    'otp_cooldown' => 'Please wait :seconds before requesting a new code.',
+    'otp_blocked' => 'You have requested too many verification codes. Please try again after :hours hours or contact customer service.',
+    'booking_created_successfully' => 'Booking created successfully',
+    'ownerrez_sync_failed_retry' => 'OwnerRez sync failed and the booking was not saved. Please try again.',
+
+    // Unit transfer
+    'apartment_not_available' => 'The apartment is not available.',
+    'too_many_pending_bookings' => 'You have unfinished bookings awaiting payment. Complete or cancel them first.',
+    'booking_cannot_be_transferred' => 'This booking cannot be transferred.',
+    'unit_transfer_resolve_date_change_first' => 'Resolve the open date-change request before transferring the unit.',
+    'unit_transfer_already_pending' => 'There is already a pending unit transfer for this booking.',
+    'unit_transfer_too_late' => 'The unit can no longer be transferred this close to check-in.',
+    'unit_transfer_same_apartment' => 'Choose a different apartment than the current one.',
+    'unit_transfer_not_pending' => 'This transfer is no longer awaiting confirmation.',
+    'unit_transfer_cannot_cancel' => 'This transfer can no longer be cancelled.',
+    'unit_transfer_cannot_retry' => 'Only a failed transfer can be retried.',
+    'unit_transfer_no_refund_due' => 'No refund is due for this transfer.',
+    'unit_transfer_confirmed' => 'Your booking has been moved to the new unit.',
+    'unit_transfer_declined' => 'The transfer request has been declined.',
 ];

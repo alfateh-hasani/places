@@ -3,22 +3,37 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ApartmentRequest;
+use App\Models\Apartment;
+use App\Models\ApartmentLabel;
+use App\Models\ApartmentPrice;
+use App\Models\Building;
+use App\Models\Category;
+use App\Models\Feature;
+use App\Models\Policy;
+use App\Models\SmartLock;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Backpack\Pro\Http\Controllers\Operations\DropzoneOperation;
 
 /**
  * Class ApartmentController
  *
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class ApartmentController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\Pro\Http\Controllers\Operations\DropzoneOperation;
+    use CreateOperation;
+    use DeleteOperation;
+    use DropzoneOperation;
+    use ListOperation;
+    use ShowOperation;
+    use UpdateOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -27,7 +42,7 @@ class ApartmentController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Apartment::class);
+        CRUD::setModel(Apartment::class);
         CRUD::setRoute(config('backpack.base.route_prefix').'/apartment');
         CRUD::setEntityNameStrings(__('cms.apartment'), __('cms.apartments'));
         if (! backpack_user()->can('apartment.list')) {
@@ -74,7 +89,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.building'),
             'entity' => 'building',
             'attribute' => 'name_ar',
-            'model' => \App\Models\Building::class,
+            'model' => Building::class,
         ]);
 
         CRUD::addColumn([
@@ -93,7 +108,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.lock'),
             'entity' => 'lock',
             'attribute' => 'lock_id',
-            'model' => \App\Models\SmartLock::class,
+            'model' => SmartLock::class,
         ]);
 
         CRUD::addColumn([
@@ -138,7 +153,9 @@ class ApartmentController extends CrudController
         CRUD::addButtonFromModelFunction('line', 'calendar_button', 'getCalendarButton', 'beginning');
         CRUD::addButtonFromModelFunction('line', 'pricing_button', 'getPricingButton', 'beginning');
         // add button for copy link
-        CRUD::addButtonFromModelFunction('line', 'copy_link_button', 'getCopyLinkButton', 'beginning');
+        if (config('services.ics_feed.enabled')) {
+            CRUD::addButtonFromModelFunction('line', 'copy_link_button', 'getCopyLinkButton', 'beginning');
+        }
         // زر ربط مع OwnerRez
         CRUD::addButtonFromView('line', 'link_to_ownerrez', 'link_to_ownerrez', 'beginning');
 
@@ -147,7 +164,7 @@ class ApartmentController extends CrudController
             ->type('select2')
             ->label('المشروع')
             ->values(function () {
-                return \App\Models\Building::all()->pluck('name_ar', 'id')->toArray();
+                return Building::all()->pluck('name_ar', 'id')->toArray();
             })
             ->whenActive(function ($value) {
                 $this->crud->addClause('where', 'building_id', $value);
@@ -223,7 +240,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.building'),
             'entity' => 'building',
             'attribute' => 'name_ar',
-            'model' => \App\Models\Building::class,
+            'model' => Building::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -236,7 +253,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.lock'),
             'entity' => 'lock',
             'attribute' => 'full_name',
-            'model' => \App\Models\SmartLock::class,
+            'model' => SmartLock::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -347,7 +364,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.features'),
             'entity' => 'features',
             'attribute' => 'name_ar',
-            'model' => \App\Models\Feature::class,
+            'model' => Feature::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -359,7 +376,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.policy'),
             'entity' => 'policy',
             'attribute' => 'name_ar',
-            'model' => \App\Models\Policy::class,
+            'model' => Policy::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -531,7 +548,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.apartment_label'),
             'entity' => 'labels',
             'attribute' => 'name_ar',
-            'model' => \App\Models\ApartmentLabel::class,
+            'model' => ApartmentLabel::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -543,7 +560,7 @@ class ApartmentController extends CrudController
             'label' => __('cms.category_2'),
             'entity' => 'category',
             'attribute' => 'name',
-            'model' => \App\Models\Category::class,
+            'model' => Category::class,
             'wrapperAttributes' => [
                 'class' => 'form-group col-md-6',
             ],
@@ -660,7 +677,7 @@ class ApartmentController extends CrudController
         ];
 
         // تحديث أو إنشاء سجل التسعير
-        \App\Models\ApartmentPrice::updateOrCreate(
+        ApartmentPrice::updateOrCreate(
             ['apartment_id' => $entry->id],
             $pricingData
         );

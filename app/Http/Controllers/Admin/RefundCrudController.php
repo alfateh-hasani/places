@@ -80,7 +80,7 @@ class RefundCrudController extends CrudController
             'name' => 'amount',
             'type' => 'custom_html',
             'label' => __('cms.refund_amount'),
-            'value' => fn ($entry) => '<span class="font-weight-bold">'.number_format((float) $entry->amount, 2).' '.e($entry->currency).'</span>',
+            'value' => fn ($entry) => '<span class="font-weight-bold">'.number_format((float) $entry->amount, 2).' '.($entry->currency === 'SAR' ? \App\Support\Riyal::svg() : e($entry->currency)).'</span>',
             'searchLogic' => function ($query, $column, $searchTerm) {
                 $query->orWhere('amount', 'like', "%{$searchTerm}%");
             },
@@ -166,7 +166,7 @@ class RefundCrudController extends CrudController
             'label' => __('cms.refund_timeline'),
             'value' => fn ($entry) => $this->timeline($entry),
         ]);
-        CRUD::addColumn(['name' => 'amount', 'type' => 'number', 'label' => __('cms.refund_amount'), 'suffix' => ' '.'SAR']);
+        CRUD::addColumn(['name' => 'amount', 'type' => 'custom_html', 'label' => __('cms.refund_amount'), 'value' => fn ($entry) => number_format((float) $entry->amount, 2).' '.\App\Support\Riyal::svg()]);
         CRUD::addColumn(['name' => 'order_id', 'type' => 'text', 'label' => 'Gateway Order ID']);
         CRUD::addColumn(['name' => 'gateway_refund_id', 'type' => 'text', 'label' => 'Gateway Refund ID']);
         CRUD::addColumn(['name' => 'attempts', 'type' => 'number', 'label' => __('cms.refund_attempts')]);
@@ -194,6 +194,12 @@ class RefundCrudController extends CrudController
         $resp = $entry->response_payload;
         if (empty($resp)) {
             return '<span class="text-muted">— '.__('cms.gateway_not_sent').' —</span>';
+        }
+
+        // Manual refund (direct/bank-transfer booking, settled outside the gateway) —
+        // there is no gateway "success" flag, so report it as a manual refund, not a failure.
+        if (data_get($resp, 'manual') === true) {
+            return '<span style="color:#28a745;font-weight:600;"><i class="la la-hand-holding-usd"></i> '.__('cms.refund_manual_result').'</span>';
         }
 
         $success = (bool) data_get($resp, 'success');
@@ -347,38 +353,13 @@ class RefundCrudController extends CrudController
 
     private function bookingStatusBadge(?string $status): string
     {
-        $labels = [
-            'pending' => __('cms.status_pending'),
-            'approved' => __('cms.status_approved'),
-            'booked' => __('cms.status_booked'),
-            'finished' => __('cms.status_finished'),
-            'canceled' => __('cms.status_canceled'),
-            'customer_canceled' => __('cms.status_customer_canceled'),
-            'rejected' => __('cms.status_rejected'),
-        ];
-        $colors = [
-            'pending' => '#6c757d',
-            'approved' => '#28a745',
-            'booked' => '#007bff',
-            'finished' => '#343a40',
-            'canceled' => '#dc3545',
-            'customer_canceled' => '#fd7e14',
-            'rejected' => '#b02a37',
-        ];
-        $icons = [
-            'pending' => 'la-clock',
-            'approved' => 'la-check-circle',
-            'booked' => 'la-calendar-check',
-            'finished' => 'la-flag-checkered',
-            'canceled' => 'la-ban',
-            'customer_canceled' => 'la-user-times',
-            'rejected' => 'la-times-circle',
-        ];
-        $color = $colors[$status] ?? '#6c757d';
-        $icon = $icons[$status] ?? 'la-info-circle';
-        $label = $labels[$status] ?? ucfirst((string) $status);
+        $enum = \App\Enums\BookingStatus::tryFrom((string) $status);
 
-        return "<span class='badge' style='background-color:{$color};color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la {$icon}' style='font-size:1.05rem;vertical-align:-2px;'></i> {$label}</span>";
+        if (! $enum) {
+            return "<span class='badge' style='background-color:#6c757d;color:#fff;padding:.45em .7em;font-size:.82rem;font-weight:600;border-radius:6px;'><i class='la la-info-circle' style='font-size:1.05rem;vertical-align:-2px;'></i> ".e(ucfirst((string) $status)).'</span>';
+        }
+
+        return $enum->badge();
     }
 
     private function timeline(Refund $entry): string

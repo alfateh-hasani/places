@@ -6,10 +6,14 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class ServiceBooking extends Model
 {
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
     protected $guarded = [];
 
     public function apartment()
@@ -30,5 +34,12 @@ class ServiceBooking extends Model
     public function booking()
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
     }
 }

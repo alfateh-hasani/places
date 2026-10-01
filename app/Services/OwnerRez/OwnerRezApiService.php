@@ -426,6 +426,9 @@ class OwnerRezApiService
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
+            // OwnerRez's WAF returns 403 to requests with no User-Agent, so set one
+            // explicitly (the Guzzle-based makeRequest() sends its own default UA).
+            CURLOPT_USERAGENT => 'PlacesApp/1.0 (+https://dyafa.sa)',
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',
@@ -476,13 +479,22 @@ class OwnerRezApiService
         ?int $statusCode,
         ?int $durationMs
     ): void {
-        OwnerRezApiLog::logRequest(
-            $endpoint,
-            $method,
-            $requestData,
-            $responseData,
-            $statusCode,
-            $durationMs
-        );
+        // Logging is diagnostic only — a logging failure must never fail the API call itself
+        // (a missing ownerrez_api_logs table once broke every inbound webhook).
+        try {
+            OwnerRezApiLog::logRequest(
+                $endpoint,
+                $method,
+                $requestData,
+                $responseData,
+                $statusCode,
+                $durationMs
+            );
+        } catch (\Throwable $e) {
+            Log::warning('OwnerRez API request could not be logged', [
+                'endpoint' => $endpoint,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

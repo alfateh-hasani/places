@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\DateChangeStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\ReservationDetails;
 use App\Models\Booking;
 use App\Models\Building;
 use App\Models\DateChangeRequest;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\BookingService;
 use App\Services\DateChangeService;
 use App\Services\PaymentMethods\GeideaPayment;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,16 +21,16 @@ use Illuminate\Support\Facades\Mail;
 
 class GeideaWebhookController extends Controller
 {
-    public function handle(Request $request): \Illuminate\Http\JsonResponse
+    public function handle(Request $request): JsonResponse
     {
         $data = $request->all();
 
-        Log::channel('geidea_webhook')->info('Geidea webhook received', $data);
+        Log::channel('geidea_webhook')->info('Geidea webhook received', GeideaPayment::logSummary($data));
 
         $orderId = $data['orderId'] ?? ($data['order']['orderId'] ?? null);
 
         if (! $orderId) {
-            Log::channel('geidea_webhook')->warning('Geidea webhook missing orderId', $data);
+            Log::channel('geidea_webhook')->warning('Geidea webhook missing orderId', GeideaPayment::logSummary($data));
 
             return response()->json(['status' => 'ignored', 'reason' => 'missing orderId']);
         }
@@ -46,17 +49,14 @@ class GeideaWebhookController extends Controller
         }
 
         // الـ critical section: قراءة + تحديث في DB transaction واحدة مع lock
-        $result = DB::transaction(function () use ($orderId, $data) {
-            $transaction = Transaction::where('order_id', $orderId)->lockForUpdate()->first();
+        $result = DB::transaction(function () use ($orderId, $data, $geidea, $orderData) {
+            // Resolve the transaction from Geidea's verified response, never from the posted
+            // body — the body is unauthenticated and could point a paid order at any booking.
+            $merchantRef = $orderData['order']['merchantReferenceId'] ?? null;
 
-            if (! $transaction) {
-                $merchantRef = $data['merchantReferenceId']
-                    ?? ($data['order']['merchantReferenceId'] ?? null);
-
-                if ($merchantRef) {
-                    $transaction = Transaction::where('transaction_reference', $merchantRef)->lockForUpdate()->first();
-                }
-            }
+            $transaction = $merchantRef
+                ? Transaction::where('transaction_reference', $merchantRef)->lockForUpdate()->first()
+                : null;
 
             if (! $transaction) {
                 return ['status' => 'ignored', 'reason' => 'transaction not found'];
@@ -64,6 +64,10 @@ class GeideaWebhookController extends Controller
 
             if ($transaction->status === 'completed') {
                 return ['status' => 'already_processed'];
+            }
+
+            if (! $geidea->isPaidForTransaction($orderData, $transaction)) {
+                return ['status' => 'ignored', 'reason' => 'order does not match transaction'];
             }
 
             $transaction->status = 'completed';
@@ -140,16 +144,16 @@ class GeideaWebhookController extends Controller
     {
         try {
             if ($booking->customer_email) {
-                Mail::to($booking->customer_email)->send(new \App\Mail\ReservationDetails($booking));
+                Mail::to($booking->customer_email)->send(new ReservationDetails($booking));
             }
 
             $building = Building::where('id', $booking->apartment?->building_id)->first();
 
             if ($building) {
-                $supervisor = \App\Models\User::where('id', $building->supervisor_id)->first();
+                $supervisor = User::where('id', $building->supervisor_id)->first();
 
                 if ($supervisor?->email) {
-                    Mail::to($supervisor->email)->send(new \App\Mail\ReservationDetails($booking));
+                    Mail::to($supervisor->email)->send(new ReservationDetails($booking));
                 }
             }
         } catch (\Exception $e) {

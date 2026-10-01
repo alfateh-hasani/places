@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Events\BookingApproved;
+use App\Events\BookingCancelled;
+use App\Listeners\ProvisionSmartLockAccess;
+use App\Listeners\RevokeSmartLockAccess;
 use App\Listeners\SyncBookingToOwnerRez;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -16,6 +19,10 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         BookingApproved::class => [
             SyncBookingToOwnerRez::class,
+            ProvisionSmartLockAccess::class,
+        ],
+        BookingCancelled::class => [
+            RevokeSmartLockAccess::class,
         ],
     ];
 

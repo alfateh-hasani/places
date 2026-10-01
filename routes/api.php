@@ -3,11 +3,11 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\GeideaWebhookController;
 use App\Http\Controllers\Api\GuestyController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\OwnerRezWebhookController;
-use App\Http\Controllers\Api\TestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -46,11 +46,11 @@ Route::middleware('appSecret')->group(function () {
             Route::get('login-apartment', 'loginApartment');
             Route::get('entry-apartment', 'entryApartment');
             Route::post('cancel-booking', 'cancelBooking'); // إلغاء الحجز من العميل
-            Route::post('add-booking', 'addBooking');
+            Route::post('add-booking', 'addBooking')->middleware('throttle:30,1');
             Route::get('get-booking-via-customer', 'getBookingViaCustomer');
-            Route::post('determine-booking', 'determineBookingStatus');
-            Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon');
-            Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon');
+            Route::post('determine-booking', 'determineBookingStatus')->middleware('throttle:30,1');
+            Route::get('calculate-price-with-coupon', 'calculatePriceWithCoupon')->middleware('throttle:30,1');
+            Route::get('calculate-price-withOut-coupon', 'calculatePriceWithOutCoupon')->middleware('throttle:30,1');
             Route::get('get-services', 'getServices');
             Route::post('add-services-to-booking', 'addServicesToBooking');
             Route::post('booking-services', 'bookingServices');
@@ -90,16 +90,11 @@ Route::controller(BookingController::class)->prefix('payment-methods')->group(fu
     Route::get('failed', 'paymentMethodFailed')->name('paymentMethodFailed');
 });
 
-Route::post('geidea/webhook', [\App\Http\Controllers\Api\GeideaWebhookController::class, 'handle'])
+Route::post('geidea/webhook', [GeideaWebhookController::class, 'handle'])
     ->name('geidea.webhook');
 
 Route::controller(OwnerRezWebhookController::class)->group(function () {
     Route::post('ownerrez', 'handle')->name('ownerrez.webhook')->middleware('throttle:60,1');
     Route::get('ownerrez', 'show')->name('ownerrez.webhook.show')->middleware('throttle:10,1');
     Route::get('ownerrez/oauth/callback', 'oauthCallback')->name('ownerrez.oauth.callback');
-});
-
-Route::controller(TestController::class)->group(function () {
-    Route::get('test', 'test')->name('api.test');
-    Route::get('test2', 'test2')->name('api.test2');
 });

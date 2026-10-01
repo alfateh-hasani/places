@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Blog;
+use App\Models\Building;
 use App\Models\City;
 use App\Models\ContactUs;
 use App\Models\Page;
 use App\Models\Review;
 use App\Models\SiteFeature;
 use App\Models\Slider;
+use App\Rules\Recaptcha;
 use App\Services\HomeApartmentOrderingService;
 use App\Services\Pricing\PricingService;
 use Artesaos\SEOTools\Facades\SEOTools;
@@ -43,12 +45,16 @@ class HomeController extends Controller
         });
 
         $data['cities'] = City::orderBy('sort_order', 'asc')->withCount('apartments')->get();
-        $data['buildings'] = City::with('buildings')->orderBy('sort_order', 'asc')->whereHas('buildings')->get();
+        $data['buildings'] = City::with(['buildings' => fn ($q) => $q->active()])
+            ->orderBy('sort_order', 'asc')
+            ->whereHas('buildings', fn ($q) => $q->active())
+            ->get();
 
-        // جلب المباني مع الإحداثيات للخريطة
-        $data['mapBuildings'] = \App\Models\Building::whereNotNull('latitude')
+        // جلب المباني مع الإحداثيات للخريطة — المباني غير المفعّلة تُستبعد من الخريطة
+        $data['mapBuildings'] = Building::active()
+            ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->with(['city', 'media', 'apartments'])
+            ->with(['city', 'media', 'apartments' => fn ($q) => $q->where('is_active', true)])
             ->get()
             ->map(function ($building) {
                 $building->apartments_count = $building->apartments->count();
@@ -106,6 +112,7 @@ class HomeController extends Controller
             'email' => 'required|email',
             'phone' => 'required',
             'message' => 'required',
+            'g-recaptcha-response' => [new Recaptcha('contact_us')],
         ]);
         $data = [
             'name' => $request->name,
@@ -130,7 +137,7 @@ class HomeController extends Controller
         $seo_title = $blog->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
         $seo_description = $blog->ml('seo_description');
         $url = route('blog', $blog->slug);
-        $this->generateSeo($seo_title, $seo_description, $url);
+        $this->generateSeo($seo_title, $seo_description, $url, $blog->image);
 
         $this->data['blog'] = $blog;
         $this->data['blogs'] = Blog::where('id', '!=', $blog->id)->orderBy('id', 'desc')->take(3)->get();
@@ -139,14 +146,18 @@ class HomeController extends Controller
         return view('pages.single_blog', $this->data);
     }
 
-    private function generateSeo($seo_title, $seo_description, $url)
+    private function generateSeo($seo_title, $seo_description, $url, $image = null)
     {
         SEOTools::setTitle($seo_title);
         SEOTools::setDescription($seo_description);
         SEOTools::opengraph()->setUrl($url);
         SEOTools::setCanonical($url);
-        SEOTools::opengraph()->addProperty('type', 'articles');
+        SEOTools::opengraph()->addProperty('type', 'website');
 
+        if (! empty($image)) {
+            SEOTools::opengraph()->addImage($image);
+            SEOTools::twitter()->addImage($image);
+        }
     }
 
     // apartments-by-city
@@ -162,7 +173,7 @@ class HomeController extends Controller
         $url = route('by-city', $city->slug);
         $this->generateSeo($seo_top_title, $seo_description, $url);
         $this->data['city'] = $city;
-        $this->data['apartments'] = $city->apartments()->where('is_active', true)->orderBy('id', 'desc')->paginate(30);
+        $this->data['apartments'] = $city->apartments()->bookable()->orderBy('id', 'desc')->paginate(30);
 
         $checkIn = Carbon::today();
         $checkOut = Carbon::tomorrow();

@@ -1,30 +1,41 @@
 <div class="rounded-xl overflow-hidden border border-border apartment-card card-feading">
     <div class="relative">
         <div class="slider">
-            @foreach ($apartment->getMedia('image') as $image)
+            @forelse ($apartment->getMedia('image') as $image)
                 <a href="{{$apartment->link}}">
-                    <img 
-                        class="object-cover w-full" 
-                        src="{{ $image->getUrl('grid') }}" 
+                    <img
+                        class="object-cover w-full"
+                        src="{{ $image->getUrl('grid') ?: $image->getUrl() }}"
+                        alt="@lang('apartment.apartment_name_default')"
+                        onerror="this.onerror=null;this.src='{{ url('img/placeholder.svg') }}';"
+                    />
+                </a>
+            @empty
+                <a href="{{$apartment->link}}">
+                    <img
+                        class="w-full aspect-[364/300]"
+                        src="{{ url('img/placeholder.svg') }}"
                         alt="@lang('apartment.apartment_name_default')"
                     />
                 </a>
-            @endforeach
+            @endforelse
         </div>
 
-        <button 
-            class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite {{ $apartment->is_favorite ? 'favorite-active' : '' }} ease-in-out duration-300" onclick="toggleFavorite({{ $apartment->id }})">
-         
+        <button
+            type="button"
+            data-wishlist-toggle
+            data-apartment-id="{{ $apartment->id }}"
+            aria-pressed="{{ $apartment->is_favorite ? 'true' : 'false' }}"
+            aria-label="@lang('apartment.favorite')"
+            class="absolute w-6 h-5 top-4 left-4 rtl:right-4 rtl:left-auto bg-contain favorite {{ $apartment->is_favorite ? 'favorite-active' : '' }} ease-in-out duration-300">
         </button>
     </div>
 
     <a href="{{$apartment->link}}" class="pt-3 px-4 pb-4 block">
-        <div class="flex items-center">
-            <img src="{{ asset('assets/img/start-new-2.svg') }}" class="mr-2 rtl:ml-2 rtl:mr-0 h-4" />
-            <p class="font-normal text-xs text-reviews">
-                {{ $apartment->total_ratings }} ({{ $apartment->reviews->count() }}) @lang('apartment.reviews')
-            </p>
-        </div>
+        @include('partials.star-rating', [
+            'rating' => $apartment->total_ratings,
+            'count' => $apartment->reviews->count(),
+        ])
 
         <h3 class="font-semibold text-sm text-title my-2">
             {{ $apartment->ml('name')   }}
@@ -36,19 +47,19 @@
         <ul class="my-2.5 flex gap-2 flex-wrap">
             <li 
                 class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/bed-new.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/apartment.svg') }}"
                 />
-                {{ $apartment->num_rooms }}  
+                {{ $apartment->num_rooms }}
             </li>
             <li 
                 class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/path-new.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/bed-new.svg') }}"
                 />
-                {{ $apartment->num_beds }}  
+                {{ $apartment->num_beds }}
             </li>
             <li 
                 class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
@@ -56,14 +67,23 @@
                     class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
                     src="{{ asset('assets/img/space-new.svg') }}" 
                 />
-                {{ $apartment->area }} @lang('apartment.area')
+                {{ $apartment->area }} @lang('apartment.area_unit')
             </li>
         </ul>
 
+        @php
+            // Search results filter by the per-night price, so the card there must
+            // show that same figure. Everywhere else (home, building pages) keeps the
+            // original total. Callers opt in via ['showNightlyPrice' => true].
+            $displayPrice = ($showNightlyPrice ?? false)
+                ? ($apartment->priceInfo['one_night_price'] ?? $apartment->price)
+                : ($apartment->priceInfo['total'] ?? $apartment->price);
+        @endphp
+
         <div class="flex items-center">
-            
+
             <p class="font-bold text-sm text-price">
-                {{ $apartment->priceInfo['total'] ?? $apartment->price }} <span class="currency"> @lang('apartment.currency')</span> /
+                <x-riyal :amount="$displayPrice" :format="false" /> /
             </p>
 
             <p class="font-normal text-sm text-reviews ml-1 rtl:mr-1 rtl:ml-0">@lang('apartment.night')</p>

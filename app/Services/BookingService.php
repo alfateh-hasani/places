@@ -2,14 +2,22 @@
 
 namespace App\Services;
 
+use App\Enums\BookingStatus;
+use App\Enums\DateChangeStatus;
+use App\Enums\UnitTransferStatus;
+use App\Exceptions\OwnerRez\OwnerRezApiException;
 use App\Models\Apartment;
 use App\Models\Booking;
+use App\Models\BookingUnitTransfer;
 use App\Models\Building;
 use App\Models\Coupon;
+use App\Models\DateChangeRequest;
 use App\Models\Service;
 use App\Models\ServiceBooking;
 use App\Models\Transaction;
 use App\Services\Coupons\CouponUsageGuard;
+use App\Services\Locks\LockAccessService;
+use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\Pricing\PricingService;
 use Carbon\Carbon;
 use Closure;
@@ -26,11 +34,14 @@ class BookingService
 
     protected $couponUsageGuard;
 
-    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService, CouponUsageGuard $couponUsageGuard)
+    protected $lockAccessService;
+
+    public function __construct(ProcessPaymentService $paymentService, PricingService $pricingService, CouponUsageGuard $couponUsageGuard, LockAccessService $lockAccessService)
     {
         $this->paymentService = $paymentService;
         $this->pricingService = $pricingService;
         $this->couponUsageGuard = $couponUsageGuard;
+        $this->lockAccessService = $lockAccessService;
     }
 
     /**
@@ -78,9 +89,14 @@ class BookingService
 
     /**
      * @param  int|null  $excludeBookingId  Ignore this booking when checking overlaps
-     *                                       (used when re-checking a booking's own new date range).
+     *                                      (used when re-checking a booking's own new date range).
+     * @param  bool  $liveCheck  Bypass OwnerRez's 5-minute availability cache and query it fresh
+     *                           (single attempt, fails fast). Only the authoritative check at the
+     *                           moment a booking is committed should set this — see
+     *                           BookingService::reserveApartment(). Leave false for browsing/quote
+     *                           calls; they keep using the cache.
      */
-    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut, ?int $excludeBookingId = null): string
+    public function checkAvailability(Apartment $apartment, $checkIn, $checkOut, ?int $excludeBookingId = null, bool $liveCheck = false): string
     {
         try {
             $checkInDate = Carbon::parse($checkIn);
@@ -97,9 +113,18 @@ class BookingService
             ]);
         }
 
+        // 0. حجب الوحدات التابعة لمبنى غير مفعّل — المبنى غير المفعّل يُخفي جميع وحداته
+        // عن العرض والحجز في الموقع والتطبيق. هذا هو الحاجز المركزي لكل مسارات الحجز
+        // (الويب والـ API) لضمان عدم حجز وحدة عبر معرّف قديم بعد تعطيل المبنى.
+        if ($apartment->building && ! $apartment->building->is_active) {
+            throw ValidationException::withMessages([
+                'apartment_id' => __('api.apartment_not_available'),
+            ]);
+        }
+
         // 1. التحقق من الحجوزات المحلية
         // ملاحظة: customer_canceled = "طلب إلغاء قيد المراجعة" يبقى حاجزاً للوحدة حتى يُقبل الإلغاء نهائياً (يصبح canceled)
-        $activeStatuses = ['pending', 'approved', 'booked', 'customer_canceled'];
+        $activeStatuses = BookingStatus::occupying();
 
         $overlapExists = Booking::where('apartment_id', $apartment->id)
             ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId))
@@ -115,8 +140,8 @@ class BookingService
         }
 
         // 1b. حجب النوافذ المحجوزة بطلبات تعديل تواريخ مفتوحة (لوحدات أخرى) لتفادي تسابق نافذتين على نفس المدى
-        $requestedOverlap = \App\Models\DateChangeRequest::query()
-            ->whereIn('status', \App\Enums\DateChangeStatus::openValues())
+        $requestedOverlap = DateChangeRequest::query()
+            ->whereIn('status', DateChangeStatus::openValues())
             ->whereHas('booking', fn ($q) => $q->where('apartment_id', $apartment->id))
             ->when($excludeBookingId, fn ($q) => $q->where('booking_id', '!=', $excludeBookingId))
             ->where('new_check_in', '<', $checkOutDate)
@@ -124,6 +149,22 @@ class BookingService
             ->exists();
 
         if ($requestedOverlap) {
+            throw ValidationException::withMessages([
+                'apartment_id' => __('api.already_booked'),
+            ]);
+        }
+
+        // 1c. حجب الوحدة الوجهة المحجوزة بطلب نقل وحدة مفتوح (بانتظار تأكيد العميل) —
+        // يمنع حجزاً/نقلاً آخر من أخذ الوحدة أثناء انتظار العميل لتأكيد النقل إليها.
+        $transferHoldExists = BookingUnitTransfer::query()
+            ->where('status', UnitTransferStatus::PendingCustomer->value)
+            ->where('to_apartment_id', $apartment->id)
+            ->when($excludeBookingId, fn ($q) => $q->where('booking_id', '!=', $excludeBookingId))
+            ->where('check_in', '<', $checkOutDate)
+            ->where('check_out', '>', $checkInDate)
+            ->exists();
+
+        if ($transferHoldExists) {
             throw ValidationException::withMessages([
                 'apartment_id' => __('api.already_booked'),
             ]);
@@ -138,12 +179,13 @@ class BookingService
                     ? Booking::where('id', $excludeBookingId)->value('ownerrez_booking_id')
                     : null;
 
-                $ownerRezService = app(\App\Services\OwnerRez\OwnerRezSyncService::class);
+                $ownerRezService = app(OwnerRezSyncService::class);
                 $isAvailable = $ownerRezService->checkAvailability(
                     $mapping->ownerrez_property_id,
                     $checkInDate->format('Y-m-d'),
                     $checkOutDate->format('Y-m-d'),
-                    $excludeOwnerRezBookingId
+                    $excludeOwnerRezBookingId,
+                    $liveCheck
                 );
 
                 if (! $isAvailable) {
@@ -151,7 +193,7 @@ class BookingService
                         'apartment_id' => __('api.apartment_not_available_external'),
                     ]);
                 }
-            } catch (\App\Exceptions\OwnerRez\OwnerRezApiException $e) {
+            } catch (OwnerRezApiException $e) {
                 // إذا فشل الاتصال بـ OwnerRez
                 Log::error('OwnerRez availability check failed', [
                     'apartment_id' => $apartment->id,
@@ -270,6 +312,10 @@ class BookingService
         // استخدام نظام التسعير الجديد
         $prices = $this->calculatePricesWithDates($apartment, $validatedData['check_in'], $validatedData['check_out'], $coupon);
 
+        // Link the coupon by id: CouponUsageGuard counts redemptions through coupon_id, so a
+        // booking that only carries coupon_code would never count against the coupon's limits.
+        $validatedData['coupon_id'] = $coupon?->id;
+
         $transaction = $this->paymentService->addTransaction($validatedData, $prices, $customer, $plaform);
         $this->createBooking($transaction->id, null);
 
@@ -298,7 +344,9 @@ class BookingService
         return DB::transaction(function () use ($apartmentId, $checkIn, $checkOut, $excludeBookingId, $create) {
             $apartment = Apartment::whereKey($apartmentId)->lockForUpdate()->firstOrFail();
 
-            $this->checkAvailability($apartment, $checkIn, $checkOut, $excludeBookingId);
+            // Live (uncached) check: this is the actual commit point, scoped to one
+            // apartment/date-range, so a fresh OwnerRez query stays fast.
+            $this->checkAvailability($apartment, $checkIn, $checkOut, $excludeBookingId, liveCheck: true);
 
             return $create($apartment);
         });
@@ -339,6 +387,7 @@ class BookingService
                     'final_price' => $data->final_price,
                     'one_night_price' => $oneNightPrice,
                     'booking_source' => $data->booking_source,
+                    'payment_method_code' => $data->payment_method_code ?? null,
                     'coupon_id' => $data->coupon_id ?? null,
                     'coupon_code' => $data->coupon_code ?? null,
                     'status' => 'pending',
@@ -366,7 +415,7 @@ class BookingService
 
         // استخدام نظام التسعير الجديد
         $prices = $this->calculatePricesWithDates($apartment, $check_in, $check_out, $coupon);
-        \Log::info('prices', $prices);
+        Log::info('prices', $prices);
         // حساب متوسط سعر الليلة من السعر الكلي (مع الضريبة) - قبل الخصم
         $avgPricePerNight = $numberOfNights > 0
             ? floatval($prices['total_price']) / $numberOfNights
@@ -381,6 +430,23 @@ class BookingService
             'vat' => $prices['vat'],
         ];
 
+    }
+
+    /**
+     * Each unpaid pending booking holds its dates until cleanup runs, so cap how many a
+     * customer may have open at once — otherwise a script can keep every unit "booked".
+     */
+    public function assertCanHoldAnotherPendingBooking(int $customerId): void
+    {
+        $openPending = Booking::where('customer_id', $customerId)
+            ->where('status', BookingStatus::Pending->value)
+            ->count();
+
+        if ($openPending >= (int) config('booking.max_open_pending_per_customer', 3)) {
+            throw ValidationException::withMessages([
+                'booking' => __('api.too_many_pending_bookings'),
+            ]);
+        }
     }
 
     public function validateGuestsCount($apartment, $number_of_adults, $number_of_children): void
@@ -427,7 +493,29 @@ class BookingService
             }
 
             // تحديث حالة الحجز والدفع
-            $booking = $transaction->booking;
+            $booking = Booking::whereKey($transaction->booking_id)->lockForUpdate()->first();
+
+            if ($booking->status === BookingStatus::Approved->value && $booking->payment_status === 'paid') {
+                DB::commit();
+
+                return ['success' => true, 'message' => ''];
+            }
+
+            // Only an unpaid pending booking may become approved. Paying again for a canceled
+            // (or cancellation-requested) booking must not revive it onto dates that may have
+            // been resold, nor issue a lock passcode; the payment needs a manual refund instead.
+            if ($booking->status !== BookingStatus::Pending->value) {
+                DB::commit();
+                Log::critical('Payment received for a booking that is not pending — not approved, refund manually', [
+                    'booking_id' => $booking->id,
+                    'booking_status' => $booking->status,
+                    'transaction_id' => $transaction->id,
+                    'amount' => $transaction->amount,
+                ]);
+
+                return ['success' => false, 'message' => __('api.booking_not_found')];
+            }
+
             $booking->update([
                 'payment_status' => 'paid',
                 'status' => 'approved',
@@ -447,7 +535,7 @@ class BookingService
         DB::beginTransaction();
 
         try {
-            $this->addPasscodeToSmartLock($booking);
+            $this->lockAccessService->provisionForBooking($booking);
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -459,89 +547,6 @@ class BookingService
             'message' => '',
         ];
 
-    }
-
-    public function addPasscodeToSmartLock($booking)
-    {
-        try {
-            $lockData = $this->getLockData($booking->apartment_id);
-
-            $startDate = $booking->check_in->format('Y-m-d').' '.$booking->check_in_time?->format('H:i:s');
-            $endDate = $booking->check_out->format('Y-m-d').' '.$booking->check_out_time?->format('H:i:s');
-
-            $keyboardPwd = $this->generateRandomPasscode();
-            $keyboardPwdName = $booking->id;
-
-            // استدعاء خدمة Sciener
-            $scienerLockService = new ScienerLockService($lockData['ttlock_username'], $lockData['ttlock_password']);
-            $response = $scienerLockService->addCustomPasscode($lockData['lock_id'], $keyboardPwd, $startDate, $endDate, $keyboardPwdName);
-
-            if (! $response) {
-                // تسجيل الفشل في نظام إعادة المحاولة
-                \App\Models\PasscodeRetryAttempt::createOrUpdateForBooking($booking, 'Failed to add passcode via Sciener API');
-                $booking->markPasscodeAsFailed('Failed to add passcode via Sciener API');
-                $booking->markPasscodeAsRetryScheduled();
-                throw new \Exception(__('api.passcode_add_failed'));
-            }
-
-            // تخزين رمز المرور في قاعدة البيانات
-            \App\Models\SmartLockPasscode::create([
-                'smart_lock_id' => $lockData['lock_id'],
-                'passcode_id' => $response['keyboardPwdId'],
-                'apartment_id' => $booking->apartment_id,
-                'customer_id' => $booking->customer_id,
-                'booking_id' => $booking->id,
-                'nickname' => $booking->id,
-                'keyboard_pwd' => $keyboardPwd,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]);
-
-            // إزالة أي محاولة إعادة سابقة إذا نجحت العملية
-            \App\Models\PasscodeRetryAttempt::where('booking_id', $booking->id)->delete();
-            $booking->markPasscodeAsGenerated();
-
-        } catch (\Exception $e) {
-            // تسجيل الفشل في نظام إعادة المحاولة
-            \App\Models\PasscodeRetryAttempt::createOrUpdateForBooking($booking, $e->getMessage());
-            $booking->markPasscodeAsFailed($e->getMessage());
-            $booking->markPasscodeAsRetryScheduled();
-            throw $e;
-        }
-    }
-
-    private function getLockData($apartmentId)
-    {
-
-        $apartment = Apartment::where('id', $apartmentId)->first();
-
-        if (! $apartment || ! $apartment->smart_lock_id) {
-            throw new \Exception("Smart lock ID not found for apartment ID {$apartmentId}");
-        }
-
-        $lock = \App\Models\SmartLock::where('id', $apartment->smart_lock_id)->first();
-
-        if (! $lock) {
-            throw new \Exception("Smart lock not found for ID {$apartment->smart_lock_id}");
-        }
-
-        $building = Building::where('id', $lock->building_id)->first();
-
-        if (! $building) {
-            throw new \Exception("Building not found for ID {$lock->building_id}");
-        }
-
-        return [
-            'lock_id' => $lock->lock_id,
-            'building_id' => $building->id,
-            'ttlock_username' => $building->ttlock_username,
-            'ttlock_password' => $building->ttlock_password,
-        ];
-    }
-
-    private function generateRandomPasscode($length = 6)
-    {
-        return substr(str_shuffle('0123456789'), 0, $length);
     }
 
     // bookingServices
@@ -598,7 +603,7 @@ class BookingService
     private function sendServiceRequestNotifications($booking, $serviceIds)
     {
         try {
-            $adminNotificationService = app(\App\Services\AdminNotificationService::class);
+            $adminNotificationService = app(AdminNotificationService::class);
 
             // Get the created service bookings
             $serviceBookings = ServiceBooking::where('booking_id', $booking->id)
@@ -610,7 +615,7 @@ class BookingService
                 $adminNotificationService->sendServiceRequestNotification($serviceBooking);
             }
         } catch (\Exception $e) {
-            \Log::error('Failed to send service request notifications: '.$e->getMessage());
+            Log::error('Failed to send service request notifications: '.$e->getMessage());
         }
     }
 

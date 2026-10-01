@@ -116,7 +116,7 @@
                     <p id="rowEmail"><strong>البريد الإلكتروني:</strong> <span id="customerEmail"></span></p>
                     <p><strong>المصدر:</strong> <span id="bookingSource"></span></p>
                     <p id="rowStatus"><strong>الحالة:</strong> <span id="bookingStatus"></span></p>
-                    <p id="rowTotal"><strong>الإجمالي:</strong> <span id="totalPrice"></span> ريال</p>
+                    <p id="rowTotal"><strong>الإجمالي:</strong> <span id="totalPrice"></span> <x-riyal-svg /></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
@@ -211,7 +211,8 @@
                     // ===== المرحلة الثانية: حجوزات OwnerRez (بعدين) =====
                     fetch(`/admin/apartment/${apartmentId}/ownerrez-bookings`)
                         .then(r => r.json())
-                        .then(ownerRezEvents => {
+                        .then(res => {
+                            const ownerRezEvents = (res && res.events) ? res.events : [];
                             if (!ownerRezEvents.length) { return; }
 
                             // إضافة الأحداث إلى التقويم
@@ -261,6 +262,9 @@
                     return;
                 }
 
+                // Booking titles/names come from customers and channels — escape before using innerHTML.
+                const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
                 tbody.innerHTML = events.map((e, i) => {
                     const type       = e.extendedProps?.type ?? 'booking';
                     const typeInfo   = typeLabels[type] ?? { label: type, badge: 'secondary' };
@@ -272,15 +276,15 @@
                     return `<tr style="background:${bg}">
                         <td>${i + 1}</td>
                         <td>
-                            <strong>${e.title}</strong>
-                            ${e.extendedProps?.ownerrez_booking_id ? `<br><small class="text-muted">OwnerRez: #${e.extendedProps.ownerrez_booking_id}</small>` : ''}
+                            <strong>${escapeHtml(e.title)}</strong>
+                            ${e.extendedProps?.ownerrez_booking_id ? `<br><small class="text-muted">OwnerRez: #${escapeHtml(e.extendedProps.ownerrez_booking_id)}</small>` : ''}
                         </td>
                         <td>${formatDate(e.start)}</td>
                         <td>${formatDate(e.end)}</td>
-                        <td><span class="badge bg-${typeInfo.badge}">${typeInfo.label}</span><br><small class="text-muted">${source}</small></td>
-                        <td>${type === 'booking' ? `<span class="badge bg-${statusInfo.badge}">${statusInfo.label}</span>` : '-'}</td>
-                        <td>${e.extendedProps?.customer_name ?? '-'}</td>
-                        <td>${e.extendedProps?.total_price ? e.extendedProps.total_price + ' ر.س' : '-'}</td>
+                        <td><span class="badge bg-${typeInfo.badge}">${typeInfo.label}</span><br><small class="text-muted">${escapeHtml(source)}</small></td>
+                        <td>${type === 'booking' ? `<span class="badge bg-${statusInfo.badge}">${escapeHtml(statusInfo.label)}</span>` : '-'}</td>
+                        <td>${escapeHtml(e.extendedProps?.customer_name ?? '-')}</td>
+                        <td>${e.extendedProps?.total_price ? e.extendedProps.total_price + ' ' + @json(\App\Support\Riyal::svg()) : '-'}</td>
                     </tr>`;
                 }).join('');
 

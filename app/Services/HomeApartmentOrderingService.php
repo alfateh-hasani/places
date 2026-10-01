@@ -66,7 +66,7 @@ class HomeApartmentOrderingService
     {
         $orderedApartmentIds = $this->interleaveApartmentIdsByBuilding(
             Apartment::query()
-                ->where('is_active', true)
+                ->bookable()
                 ->orderByDesc('id')
                 ->get(['id', 'building_id'])
         );
@@ -96,7 +96,7 @@ class HomeApartmentOrderingService
             ->select('apartments.*')
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY building_id ORDER BY id DESC) as building_position')
             ->selectRaw('MAX(id) OVER (PARTITION BY building_id) as building_priority')
-            ->where('is_active', true);
+            ->bookable();
 
         return Apartment::query()
             ->fromSub($rankedApartments, 'apartments')

@@ -1,0 +1,39 @@
+
+body , h1 ,h2 ,h3 ,h3 ,h4 ,h5 ,h6 , p , div , section , input , button , textarea , a  , ul , li , span{
+    font-family: 'Tajawal', sans-serif !important;
+    direction: rtl;
+}
+section.properitirs .category .slick-dots {
+  
+    right: unset;
+    left: 0;
+}
+section.properitirs .category .slick-dots li {
+    float: right;
+   
+}
+
+.fancybox-close-small {
+ 
+    left: 10px !important;
+    right: unset !important;
+}
+
+
+label.error {
+    font-family: 'Montserrat Arabic' !important;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+[dir="rtl"] .text-left { text-align: right; }
+/* [dir="rtl"] .float-left { float: right; } */
+[dir="rtl"] .ml-1 { margin-right: 0.25rem; }
+[dir="rtl"] .mr-1 { margin-left: 0.25rem; }
+[dir="rtl"] .lg\:ml-4 { margin-left: 0; margin-right: 1rem; }
+[dir="rtl"] .lg\:float-left { float: right; }
+
+.numInputWrapper span {
+    right:0 !important;
+    left: unset !important;
+}

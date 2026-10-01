@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class Onboarding extends Model implements HasMedia
 {
-    use HasFactory, CrudTrait, InteractsWithMedia, LogsActivity;
+    use CrudTrait, HasFactory, InteractsWithMedia, LogsActivity;
 
     protected $connection = 'mysql';
 
@@ -22,7 +22,7 @@ class Onboarding extends Model implements HasMedia
         'title_en',
         'description_ar',
         'description_en',
-        'order'
+        'order',
     ];
 
     protected $casts = [
@@ -66,7 +66,7 @@ class Onboarding extends Model implements HasMedia
     /**
      * Register media conversions
      */
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
             ->width(300)
@@ -86,6 +86,7 @@ class Onboarding extends Model implements HasMedia
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll();
+            ->logAll()
+            ->logOnlyDirty();
     }
 }

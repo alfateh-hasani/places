@@ -5,10 +5,14 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class OwnerRezBooking extends Model
 {
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
+
+    protected $connection = 'mysql';
 
     protected $table = 'ownerrez_bookings';
 
@@ -67,5 +71,12 @@ class OwnerRezBooking extends Model
     public function scopeFailed($query)
     {
         return $query->where('sync_status', 'failed');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
     }
 }

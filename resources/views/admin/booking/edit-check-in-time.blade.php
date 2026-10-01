@@ -20,10 +20,14 @@
                     <div class="alert alert-success">
                         <i class="la la-check"></i> {{ session('success') }}
                         @if($booking->smartLockPasscodes()->latest()->first())
-                            <br><strong>الرمز الجديد للغرفة:</strong> 
+                            @php($latestPasscode = $booking->smartLockPasscodes()->latest()->first()->keyboard_pwd)
+                            <br><strong>الرمز الجديد للغرفة:</strong>
                             <span class="badge badge-primary" style="font-size: 16px; padding: 8px;">
-                                {{ $booking->smartLockPasscodes()->latest()->first()->keyboard_pwd }}
+                                {{ $latestPasscode }}
                             </span>
+                            <button type="button" class="btn btn-link btn-sm p-0" onclick="copyPasscodeToClipboard('{{ $latestPasscode }}', this)" title="{{ __('cms.copy_passcode') }}">
+                                <i class="la la-copy"></i>
+                            </button>
                         @endif
                     </div>
                 @endif
@@ -70,9 +74,13 @@
                                 <p><strong>تاريخ الوصول:</strong> {{ $booking->check_in->format('Y-m-d')     }}</p>
                                 <p><strong>تاريخ المغادرة:</strong> {{ $booking->check_out->format('Y-m-d') }}</p>
                                 <p><strong>وقت الدخول الحالي:</strong> {{ $booking->check_in_time ? $booking->check_in_time->format('H:i') : 'غير محدد' }}</p>
-                                <p><strong>رمز الغرفة الحالي:</strong> 
+                                <p><strong>رمز الغرفة الحالي:</strong>
                                     @if($booking->smartLockPasscodes()->latest()->first())
-                                        <span class="badge badge-info">{{ $booking->smartLockPasscodes()->latest()->first()->keyboard_pwd }}</span>
+                                        @php($currentPasscode = $booking->smartLockPasscodes()->latest()->first()->keyboard_pwd)
+                                        <span class="badge badge-info">{{ $currentPasscode }}</span>
+                                        <button type="button" class="btn btn-link btn-sm p-0" onclick="copyPasscodeToClipboard('{{ $currentPasscode }}', this)" title="{{ __('cms.copy_passcode') }}">
+                                            <i class="la la-copy"></i>
+                                        </button>
                                     @else
                                         <span class="text-muted">غير محدد</span>
                                     @endif
@@ -142,4 +150,5 @@
         </div>
     </div>
 </div>
+@include('admin.booking.copy_passcode_script')
 @endsection

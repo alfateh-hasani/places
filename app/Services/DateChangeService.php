@@ -10,6 +10,7 @@ use App\Models\Coupon;
 use App\Models\DateChangeRequest;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\Locks\LockAccessService;
 use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\PaymentMethods\GeideaPayment;
 use Carbon\Carbon;
@@ -35,6 +36,7 @@ class DateChangeService
 {
     public function __construct(
         private readonly BookingService $bookingService,
+        private readonly LockAccessService $lockAccessService,
     ) {}
 
     /**
@@ -142,7 +144,8 @@ class DateChangeService
             $newOut = $request->new_check_out->toDateString();
 
             // Final availability re-check (excluding self) — guards against a race during review.
-            $this->bookingService->checkAvailability($booking->apartment, $newIn, $newOut, $booking->id);
+            // Live OwnerRez check (bypasses the 5-minute cache): this is the commit point.
+            $this->bookingService->checkAvailability($booking->apartment, $newIn, $newOut, $booking->id, liveCheck: true);
 
             $nights = Carbon::parse($newIn)->diffInDays(Carbon::parse($newOut));
             $newFinal = round((float) $request->new_price, 2);
@@ -349,7 +352,9 @@ class DateChangeService
             'type' => 'deposit',
             'payment_gateway' => 'geidea',
             'payment_gateway_response' => null,
-            'platform' => $booking->booking_source ?? 'web',
+            // transactions.platform is ENUM('web','api','dashboard') — map the booking's source
+            // (which can be android/ios/ownerrez/…) to a valid value, else the insert truncates.
+            'platform' => $this->resolveTransactionPlatform($booking->booking_source),
         ]);
 
         $request->update(['transaction_id' => $transaction->id]);
@@ -362,6 +367,20 @@ class DateChangeService
         }
 
         throw ValidationException::withMessages(['payment' => __('api.payment_failed')]);
+    }
+
+    /**
+     * Map a booking's source to a value the transactions.platform ENUM('web','api','dashboard')
+     * accepts. Mobile app sources (android/ios) → 'api'; dashboard → 'dashboard'; anything else
+     * (web, ownerrez, airbnb, null, …) → 'web'.
+     */
+    private function resolveTransactionPlatform(?string $source): string
+    {
+        return match ($source) {
+            'android', 'ios', 'api' => 'api',
+            'dashboard' => 'dashboard',
+            default => 'web',
+        };
     }
 
     private function syncOwnerRez(Booking $booking): void
@@ -380,24 +399,7 @@ class DateChangeService
         }
 
         try {
-            foreach ($booking->smartLockPasscodes as $passcode) {
-                try {
-                    $sciener = new ScienerLockService(
-                        $booking->apartment->building->ttlock_username,
-                        $booking->apartment->building->ttlock_password,
-                    );
-                    $sciener->deletePasscode($passcode->smart_lock_id, $passcode->passcode_id);
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to delete old passcode during date change', [
-                        'booking_id' => $booking->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-                $passcode->delete();
-            }
-
-            $booking->markPasscodeAsPending();
-            $this->bookingService->addPasscodeToSmartLock($booking->fresh());
+            $this->lockAccessService->rescheduleForBooking($booking);
         } catch (\Throwable $e) {
             // Never fail the date change on a lock hiccup — the scheduled retry command will recover it.
             Log::error('Passcode regeneration failed during date change', [

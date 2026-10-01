@@ -119,7 +119,7 @@
         </tr>
         <tr>
             <td>المبلغ المدفوع:</td>
-            <td>{{ $reservation->total_price }}</td>
+            <td>{{ $reservation->total_price }} <x-riyal-email /></td>
         </tr>
     </table>
 </body>

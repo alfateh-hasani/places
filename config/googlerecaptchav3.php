@@ -24,7 +24,7 @@ return [
     | Supported: true, false
     |
     */
-    'is_service_enabled' => true,
+    'is_service_enabled' => env('RECAPTCHA_V3_ENABLED', true),
     /*
     |--------------------------------------------------------------------------
     | Host Name
@@ -110,8 +110,13 @@ return [
     'setting' => [
         [
             'action' => 'contact_us',
-            'threshold' => 0,
-            'score_comparison' => false,
+            'threshold' => 0.5,
+            'score_comparison' => true,
+        ],
+        [
+            'action' => 'login',
+            'threshold' => 0.3,
+            'score_comparison' => true,
         ],
     ],
 

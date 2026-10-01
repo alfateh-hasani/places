@@ -1,0 +1,3407 @@
+{
+    "info": {
+        "name": "Places API",
+        "_postman_id": "a1b2c3d4-e5f6-4789-9abc-def012345678",
+        "description": "Complete Postman collection for the **Places** mobile REST API (`routes/api.php`).\n\n## How auth works in this API\n1. **`x-secret-key`** header — required by the `appSecret` middleware on almost every route (must equal the server's `API_SECRET_KEY` env var). This collection injects it automatically via each protected folder's pre-request script, sourced from the `api_secret_key` collection variable — set that variable once and every request in the folder picks it up.\n2. **`x-language`** header (`ar`/`en`) — read by `ApiLocaleKeyMiddleware` on *every* `/api/*` route (in or out of the appSecret group) to set the response locale. Auto-injected collection-wide from the `language` variable.\n3. **Bearer token** (Laravel Sanctum) — required by the *Customer* and *Booking* folders. Obtained by running **Auth > Request OTP -> Verify OTP -> (Register Customer if new)**; the token is auto-captured into the `customer_token` variable by each request's test script. It's applied explicitly on every request in those two folders (not just inherited from the folder) so it can never silently go missing.\n4. **`Accept: application/json`** — injected collection-wide. Important: `bootstrap/app.php` calls `redirectGuestsTo(fn () => route('home'))`, so an unauthenticated request that *doesn't* send `Accept: application/json` gets a `302` redirect to the website homepage instead of a clean `401` JSON — Postman would silently follow it and show you a confusing `200 OK` full of HTML. This header prevents that.\n\n## Response envelope\nMost endpoints return `{ \"success\": bool, \"message\": string, \"data\": any, \"errors\"?: any }` (see `App\\Traits\\ApiResponse`). Exceptions are noted per-endpoint: Guesty proxy endpoints and the Geidea/OwnerRez webhooks return raw/simple JSON instead, and `POST /customer/register` falls back to Laravel's default `{message, errors}` shape on validation failure.\n\n## Suggested end-to-end flow to test\n1. **Auth** folder: Request OTP -> Verify OTP (use the `2020` bypass code to skip real SMS) -> Register Customer if it's a new phone number.\n2. **Home** folder: Home Index / Get Apartment Details to pick a real `apartment_id`.\n3. **Booking** folder: Determine Booking Status -> Calculate Price -> Add Booking -> (complete payment out-of-band or send a synthetic **Geidea Payment Webhook**) -> Cancel Booking.\n4. **Customer** folder: Get All Bookings / Current Bookings to confirm state.\n\n## Known issues documented inline\n- `POST /booking/booking-services` is a **dead route** (controller method doesn't exist) — see its description.\n- `POST /customer/notification/mark-seen/{id}` and `GET /customer/notification/unread-count` have an argument-order bug that can turn a clean 404/422 into a 500 — see their descriptions.\n- `GET /test` and `GET /test2` are completely unauthenticated debug endpoints.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Auth (OTP + Registration)",
+            "description": "Public within the appSecret group — no bearer token needed yet.",
+            "item": [
+                {
+                    "name": "1. Request OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/otp/request",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "otp",
+                                "request"
+                            ]
+                        },
+                        "description": "Sends a 4-digit OTP via SMS to the given phone number.\n\n**Validation:** `phone` required, must pass the `phone` rule (propaganistas/laravel-phone). Arabic-Indic digits are auto-converted to Western digits before validation.\n\n**Status codes:**\n- `200` OTP sent. `data.has_account` tells the client whether to route to login or registration after verify.\n- `400` Validation failed (invalid/missing phone) OR OTP provider failed to send — body: `{success:false, errors:[], message:\"...\"}`.\n- `500` Unexpected exception while sending (e.g. SMS gateway down).\n\n**Tip:** every response also carries `x-app-version` / `x-update-required` headers (from `APP_VERSION` / `UPDATE_REQUIRED` env vars).",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone\": \"+966500000000\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Verify OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/otp/verify",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "otp",
+                                "verify"
+                            ]
+                        },
+                        "description": "Verifies the OTP for a phone number.\n\n**Validation:** `phone` required+phone rule, `otp` required digits:4, `fcm_token` nullable.\n\n**Master bypass code:** submitting `otp = 2020` always succeeds regardless of the real OTP — a QA/testing shortcut baked into `AuthController::verifyOtp()`. Use it to skip real SMS delivery in this collection.\n\n**Branches:**\n- Existing customer -> `200` with `data.customer`, `data.token` (Sanctum bearer token), `data.register_required=false`. The request's test script auto-saves `customer_token`.\n- New phone -> `200` with `data.token` (a short-lived **registration** token cached 10 minutes), `data.register_required=true`. The test script auto-saves it to `verify_token` for the next **Register Customer** call.\n\n**Status codes:**\n- `200` verified (see branches above).\n- `422` wrong/expired OTP or validation exception — body: `{success:false, errors:{...}, message:\"...\"}`.\n- `500` unexpected exception.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone\": \"+966500000000\",\n    \"otp\": \"{{otp_code}}\",\n    \"fcm_token\": \"{{fcm_token}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 422, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 422, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const json = pm.response.json();",
+                                    "    if (json.success && json.data) {",
+                                    "        if (json.data.register_required) {",
+                                    "            pm.collectionVariables.set('verify_token', json.data.token);",
+                                    "            console.log('register_required = true -> verify_token saved for Register Customer request');",
+                                    "        } else if (json.data.token) {",
+                                    "            pm.collectionVariables.set('customer_token', json.data.token);",
+                                    "            console.log('customer_token saved (existing customer logged in)');",
+                                    "        }",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Register Customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "register"
+                            ]
+                        },
+                        "description": "Completes registration for a phone number that was just OTP-verified (`register_required=true`).\n\n**Validation:** `token` required (the `verify_token` from step 2 — looked up via `Cache::pull('verified_api_phone_'.token)`, single-use, ~10 min TTL), `first_name`/`last_name` required, letters (Arabic or Latin) + spaces only via regex, `email` required unique, `fcm_token` nullable.\n\n**Important:** unlike the other Auth endpoints, this action does **not** wrap `$request->validate()` in a try/catch, so validation failures return Laravel's **default** Form Request 422 envelope (`{message, errors}`), not the app's usual `{success, errors, message, data}` shape.\n\n**Status codes:**\n- `200` created — `data.customer`, `data.token` (Sanctum bearer token). Test script auto-saves `customer_token`.\n- `422` Laravel default validation error shape (see note above), OR custom `{success:false}` 422 if the token is missing/expired (`auth.phone_required_or_expired`).\n- `500` unexpected exception (e.g. race on unique email).",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"{{verify_token}}\",\n    \"first_name\": \"Ahmed\",\n    \"last_name\": \"Ali\",\n    \"email\": \"{{customer_email}}\",\n    \"fcm_token\": \"{{fcm_token}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 422, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 422, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const json = pm.response.json();",
+                                    "    if (json.success && json.data && json.data.token) {",
+                                    "        pm.collectionVariables.set('customer_token', json.data.token);",
+                                    "        console.log('customer_token saved (newly registered customer)');",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.request.headers.upsert({ key: 'x-secret-key', value: pm.collectionVariables.get('api_secret_key') });"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Customer (Bearer token required)",
+            "description": "Requires a Sanctum bearer token in addition to x-secret-key. Auth is set BOTH at folder level and explicitly on every request (belt-and-suspenders — see forceBearerAuth()).",
+            "item": [
+                {
+                    "name": "Get My Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/my-profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "my-profile"
+                            ]
+                        },
+                        "description": "Returns the authenticated customer's profile.\n\n**Status codes:** `200` OK. `401` if the bearer token is missing/invalid/revoked.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/update-profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "update-profile"
+                            ]
+                        },
+                        "description": "Updates the authenticated customer's profile. Multipart because `image` is an optional file upload.\n\n**Validation:** `first_name`,`last_name` required strings, `email` required unique (ignoring the current customer's own row), `emergency_phone` required (`phone:SA` rule — must be a valid Saudi number), `job_title` nullable, `image` nullable image max 10MB.\n\n**Status codes:** `200` updated. `422` validation exception (email taken, invalid phone format, etc). `401` unauthenticated.",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "first_name",
+                                    "type": "text",
+                                    "value": "Ahmed"
+                                },
+                                {
+                                    "key": "last_name",
+                                    "type": "text",
+                                    "value": "Ali"
+                                },
+                                {
+                                    "key": "email",
+                                    "type": "text",
+                                    "value": "{{customer_email}}"
+                                },
+                                {
+                                    "key": "emergency_phone",
+                                    "type": "text",
+                                    "value": "0500000001",
+                                    "description": "Must satisfy the phone:SA rule"
+                                },
+                                {
+                                    "key": "job_title",
+                                    "type": "text",
+                                    "value": "Engineer"
+                                },
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": [],
+                                    "description": "Optional. Max 10MB, must be an image."
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete Profile (Soft/Hard Delete Account)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/delete-profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "delete-profile"
+                            ]
+                        },
+                        "description": "Deletes the authenticated customer's account (`Customer::delete()`). **Destructive** — this will invalidate the customer permanently (or soft-delete, depending on the model's trait setup). Use a disposable test account.\n\n**Status codes:** `200` deleted. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "logout"
+                            ]
+                        },
+                        "description": "Revokes **all** Sanctum tokens for the authenticated customer (`$user->tokens()->delete()`), not just the current one.\n\n**Status codes:** `200` logged out. `401` unauthenticated.\n\nAfter this call, `customer_token` in the collection variables is no longer valid — re-run the OTP flow.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Add Review",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/add-review",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "add-review"
+                            ]
+                        },
+                        "description": "Adds a review for a completed booking. One review per (customer, booking) — enforced in-app via `Review::existsForBooking()`.\n\n**Validation:** `rating` required int 1-5, `review_text` required string, `apartment_id` required exists, `booking_id` required exists.\n\n**Status codes:**\n- `200` review created.\n- `400` a review already exists for this booking (`api.review_already_exists`).\n- `422` validation failure.\n- `401` unauthenticated.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"rating\": 5,\n    \"review_text\": \"Great stay, very clean apartment.\",\n    \"apartment_id\": \"{{apartment_id}}\",\n    \"booking_id\": \"{{booking_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "My Favorites",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/my-favorite",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "my-favorite"
+                            ]
+                        },
+                        "description": "Lists the authenticated customer's favorited apartments.\n\n**Status codes:** `200` OK (empty array if none). `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Add Favorite",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/add-favorite",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "add-favorite"
+                            ]
+                        },
+                        "description": "Adds an apartment to favorites (idempotent — `syncWithoutDetaching`, safe to call repeatedly).\n\n**Validation:** `apartment_id` required exists:apartments,id.\n\n**Status codes:** `200` added. `401` unauthenticated. `422` apartment_id missing/invalid.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"apartment_id\": \"{{apartment_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Remove Favorite",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/remove-favorite",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "remove-favorite"
+                            ]
+                        },
+                        "description": "Removes an apartment from favorites (idempotent — no error if it wasn't favorited).\n\n**Validation:** `apartment_id` required exists:apartments,id.\n\n**Status codes:** `200` removed. `401` unauthenticated. `422` apartment_id missing/invalid.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"apartment_id\": \"{{apartment_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Bookings (Past + Upcoming)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/get-all-bookings",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "get-all-bookings"
+                            ]
+                        },
+                        "description": "Returns **all non-pending** bookings for the customer, split into `data.past_bookings` and `data.upcoming_bookings` based on `check_out` (at 12:00) vs now.\n\n**Status codes:** `200` OK. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Current Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/current-bookings",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "current-bookings"
+                            ]
+                        },
+                        "description": "Bookings not yet ended: `status NOT IN (pending, canceled, customer_canceled)` AND `check_out >= now()`.\n\n**Status codes:** `200` OK. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Previous Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/previous-bookings",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "previous-bookings"
+                            ]
+                        },
+                        "description": "Bookings that have ended (`check_out < now()`) OR were cancelled (`status IN (canceled, customer_canceled)`), regardless of date.\n\n**Status codes:** `200` OK. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Update FCM Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/fmc-token",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "fmc-token"
+                            ]
+                        },
+                        "description": "Updates the push-notification FCM token for the authenticated customer.\n\n**Validation:** `token` required.\n\n**Status codes:** `200` updated (note: `data` is the raw Customer model, not wrapped in `CustomerResource`). `401` unauthenticated. `400` validation/exception failure (caught generically, still returns `errorResponse` default status 400).",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"sample-fcm-device-token\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "List Notifications",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/notifications",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "notifications"
+                            ]
+                        },
+                        "description": "Lists notifications targeted at this customer OR broadcast to `type=all`, newest first. Each item includes a localized `title`/`description` (per `x-language`) and `notification_seen: boolean`.\n\n**Status codes:** `200` OK. `500` unexpected exception.\n\nNote: this endpoint works even without a bearer token (falls back to `customer_id = 0`, so only `type=all` notifications show) — but it still sits behind `auth:api` in the route group, so an invalid/missing token yields `401` before reaching the controller.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Notification Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/notification/{{notification_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "notification",
+                                "{{notification_id}}"
+                            ]
+                        },
+                        "description": "Fetches a single notification by id (must belong to the customer or be `type=all`).\n\n**Status codes:** `200` OK. `404` not found / not visible to this customer. `401` unauthenticated. `422`/`500` on exception.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 404, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 404, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Mark Notification Seen",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/notification/mark-seen/{{notification_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "notification",
+                                "mark-seen",
+                                "{{notification_id}}"
+                            ]
+                        },
+                        "description": "Marks a notification as seen for the authenticated customer.\n\n**Status codes:**\n- `200` marked as seen.\n- `404` notification not found.\n- `422` already marked as seen.\n- `401` unauthenticated.\n\n**Known bug:** the not-found and already-seen branches call `errorResponse('message', code, [])` — arguments in the **wrong order** for the trait's `errorResponse($errors, $message, $status)` signature. Passing an array where an int `$status` is expected throws a `TypeError`, so in practice these two branches are likely to surface as a generic **`500`** instead of a clean `404`/`422`. Treat an unexpected 500 here as \"not found\" or \"already seen\" until fixed server-side.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 404, 422, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 404, 422, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Unread Notifications Count",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/customer/notification/unread-count",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "customer",
+                                "notification",
+                                "unread-count"
+                            ]
+                        },
+                        "description": "Returns `data.unread_notifications` (int count of notifications targeted at the customer or `type=all` with no seen record).\n\n**Status codes:** `200` OK. `401` unauthenticated. `500` on exception (see known-bug note on the sibling mark-seen endpoint — this handler has the same argument-order issue in its catch blocks).",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{customer_token}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.request.headers.upsert({ key: 'x-secret-key', value: pm.collectionVariables.get('api_secret_key') });"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Booking (Bearer token required)",
+            "description": "Requires a Sanctum bearer token in addition to x-secret-key. Auth is set BOTH at folder level and explicitly on every request (belt-and-suspenders — see forceBearerAuth()).",
+            "item": [
+                {
+                    "name": "Get Booking",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/get-booking?booking_id={{booking_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "get-booking"
+                            ],
+                            "query": [
+                                {
+                                    "key": "booking_id",
+                                    "value": "{{booking_id}}"
+                                }
+                            ]
+                        },
+                        "description": "Fetches one booking owned by the authenticated customer, plus static customer-service copy strings.\n\n**Validation:** `booking_id` required exists:bookings,id.\n\n**Status codes:** `200` OK. `400` booking not found or not owned by this customer (`api.booking_not_found`, default `errorResponse` status). `401` unauthenticated. `422` validation.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login Apartment (Door Code Info)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/login-apartment?booking_id={{booking_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "login-apartment"
+                            ],
+                            "query": [
+                                {
+                                    "key": "booking_id",
+                                    "value": "{{booking_id}}"
+                                }
+                            ]
+                        },
+                        "description": "Returns the smart-lock passcode + unit info for an **active, not-yet-checked-out** booking (`check_out > now()`).\n\n**Validation:** `booking_id` required exists.\n\n**Status codes:** `200` OK — `data.login_info.passcode` falls back to a localized \"no passcode\" string if none is active. `400` booking not found / not owned / already checked out. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Entry Apartment (Random Demo Flag)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/entry-apartment",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "entry-apartment"
+                            ]
+                        },
+                        "description": "**Placeholder/demo endpoint** — returns `data.entry` as a random `true`/`false` on every call (`random_int(0,1)`), not tied to any real door-entry state. Likely a stub for a future smart-lock \"door opened\" signal.\n\n**Status codes:** `200` always (no validation, no auth-dependent branching beyond the token check). `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Add Booking (Create + Get Payment URL)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/add-booking",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "add-booking"
+                            ]
+                        },
+                        "description": "Creates a **pending** booking + payment transaction, then returns the payment gateway's hosted checkout URL.\n\n**Validation:** `apartment_id` required exists, `check_in`/`check_out` required dates, `adults_count` required int >=1, `children_count` required int >=0, `coupon_code` nullable exists:coupons,code, `notes` nullable, `booking_source` nullable in `web,android,ios`, `payment_method_code` required (currently only `geidea` is configured in `config/payments.php`).\n\n**Flow:** validates availability (local DB overlap + OwnerRez calendar if the apartment is mapped) -> creates a `pending` Booking + Transaction -> calls the payment gateway -> returns `data.callback` (redirect the customer's browser/webview here) and `data.booking_id`.\n\n**Status codes:**\n- `200` payment URL created. Test script saves `booking_id`.\n- `400`/generic `errorResponse` on: overlapping dates, invalid coupon, OwnerRez unavailable, payment gateway failure — message varies (`api.already_booked`, `api.apartment_not_available_external`, `api.payment_creation_failed`, etc).\n- `401` unauthenticated. `422` validation.\n\n**After creating:** open `data.callback` in a browser to complete payment, which will hit the **Payment Method Callback** endpoint in the next folder, or send a Geidea webhook to confirm it server-side.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"apartment_id\": \"{{apartment_id}}\",\n    \"check_in\": \"2026-09-10\",\n    \"check_out\": \"2026-09-13\",\n    \"adults_count\": 2,\n    \"children_count\": 0,\n    \"coupon_code\": \"{{coupon_code}}\",\n    \"notes\": \"Late check-in around 10 PM please.\",\n    \"booking_source\": \"android\",\n    \"payment_method_code\": \"{{payment_method_code}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const json = pm.response.json();",
+                                    "    if (json.success && json.data && json.data.booking_id) {",
+                                    "        pm.collectionVariables.set('booking_id', json.data.booking_id);",
+                                    "        console.log('booking_id saved: ' + json.data.booking_id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancel Pending Booking Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/cancel-booking-payment/{{booking_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "cancel-booking-payment",
+                                "{{booking_id}}"
+                            ]
+                        },
+                        "description": "Hard-deletes a **still-pending** booking owned by the customer (e.g. the customer abandoned checkout). Only works while `status = pending` — once paid/approved, use **Cancel Booking** instead.\n\n**Status codes:** `200` deleted. `400` booking not found / not pending / not owned by this customer. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancel Booking (Approved & Paid)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/cancel-booking",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "cancel-booking"
+                            ]
+                        },
+                        "description": "Customer-initiated cancellation of an **approved & paid** booking. Sets `status = customer_canceled`, `refund_status = pending`, `refund_amount = final_price`, and emails the building supervisor (best-effort; email failure does not fail the request).\n\n**Validation:** `booking_id` required exists:bookings,id.\n\n**Eligibility (`Booking::canBeCanceled()`):**\n- `status` must be `approved` AND `payment_status` must be `paid`.\n- No **open** date-change request on the booking (must be resolved first).\n- Must be cancelled at least `cancel_before_hours` (settings table, default 24) before check-in time (booking's own check-in time, default `16:00` if unset).\n\n**Status codes:**\n- `200` cancelled — returns the refreshed `BookingResource` with `refund_status`/`refund_amount`/`can_cancel=false`.\n- `400` booking not found/not owned (`api.booking_not_found`) OR not cancellable per the rules above (`api.booking_cannot_be_canceled`).\n- `401` unauthenticated. `422` validation.\n\nThis is the primary endpoint for the current `booking-cancellation-and-geidea-refund` feature branch — refund settlement itself happens out-of-band via the admin/Geidea refund flow, not in this call.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"booking_id\": \"{{booking_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Bookings via Customer (All, Unfiltered)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/get-booking-via-customer",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "get-booking-via-customer"
+                            ]
+                        },
+                        "description": "Returns **all** bookings for the authenticated customer, including `pending` ones, newest first — unlike the Customer-folder listing endpoints which exclude/split by status.\n\n**Status codes:** `200` OK. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Determine Booking Status (Pre-Booking Summary)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/determine-booking",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "determine-booking"
+                            ]
+                        },
+                        "description": "Pre-booking summary screen: validates availability + guest count, returns pricing, the booking policy text, apartment details, check-in/out times, and the list of available payment methods (icons/titles) — everything needed to render a \"confirm your booking\" screen before calling **Add Booking**.\n\n**Validation:** `apartment_id` required exists, `check_in`/`check_out` required dates, `number_of_adults` required int >=1, `number_of_children` required int >=0.\n\n**Status codes:** `200` OK. `400`/validation-exception on unavailable dates or guest count exceeding the apartment's capacity. `401` unauthenticated. `422` validation.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"apartment_id\": \"{{apartment_id}}\",\n    \"check_in\": \"2026-09-10\",\n    \"check_out\": \"2026-09-13\",\n    \"number_of_adults\": 2,\n    \"number_of_children\": 0\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Calculate Price (With Coupon)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/calculate-price-with-coupon?apartment_id={{apartment_id}}&coupon_code={{coupon_code}}&check_in=2026-09-10&check_out=2026-09-13",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "calculate-price-with-coupon"
+                            ],
+                            "query": [
+                                {
+                                    "key": "apartment_id",
+                                    "value": "{{apartment_id}}"
+                                },
+                                {
+                                    "key": "coupon_code",
+                                    "value": "{{coupon_code}}"
+                                },
+                                {
+                                    "key": "check_in",
+                                    "value": "2026-09-10"
+                                },
+                                {
+                                    "key": "check_out",
+                                    "value": "2026-09-13"
+                                }
+                            ]
+                        },
+                        "description": "Price breakdown for a date range with a coupon applied (percentage or fixed-amount discount, VAT recalculated on the discounted total).\n\n**Validation:** `apartment_id` required exists, `coupon_code` required exists:coupons,code, `check_in`/`check_out` required dates, `check_out` must be after `check_in`.\n\n**Status codes:** `200` OK — `data.total_price`, `data.discount`, `data.final_price`, `data.vat`, `data.price_breakdown[]` (per-night). `400`/validation-exception if the coupon is invalid/expired/exceeds usage limits. `401` unauthenticated. `422` validation.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Calculate Price (Without Coupon)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/calculate-price-withOut-coupon?apartment_id={{apartment_id}}&check_in=2026-09-10&check_out=2026-09-13",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "calculate-price-withOut-coupon"
+                            ],
+                            "query": [
+                                {
+                                    "key": "apartment_id",
+                                    "value": "{{apartment_id}}"
+                                },
+                                {
+                                    "key": "check_in",
+                                    "value": "2026-09-10"
+                                },
+                                {
+                                    "key": "check_out",
+                                    "value": "2026-09-13"
+                                }
+                            ]
+                        },
+                        "description": "Same price breakdown as the coupon variant, without a coupon.\n\n**Validation:** `apartment_id` required exists, `check_in`/`check_out` required dates, `check_out` after `check_in`.\n\n**Status codes:** `200` OK. `401` unauthenticated. `422` validation.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Extra Services",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/get-services",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "get-services"
+                            ]
+                        },
+                        "description": "Lists purchasable extra services (localized name + price) that can be attached to a booking.\n\n**Status codes:** `200` OK. `401` unauthenticated.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Add Services to Booking",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/add-services-to-booking",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "add-services-to-booking"
+                            ]
+                        },
+                        "description": "Attaches one or more extra services to an existing booking owned by the customer.\n\n**Validation:** `booking_id` required exists, `services` required array, `services.*` required exists:services,id.\n\n**Status codes:** `200` services added. `400` business-rule failure from `BookingService::addServicesToBooking()` (e.g. booking not owned by customer, not in an addable state) — message comes from `$response['message']`. `401` unauthenticated. `422` validation.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"booking_id\": \"{{booking_id}}\",\n    \"services\": [\n        \"{{service_id}}\"\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 400, 401, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 400, 401, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "[BROKEN] Booking Services (dead route)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking/booking-services",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "booking",
+                                "booking-services"
+                            ]
+                        },
+                        "description": "**This route is broken.** `routes/api.php` maps `POST /booking/booking-services` to `BookingController::bookingServices`, but no such method exists on the controller (only `addServicesToBooking` exists, which is the one actually wired to `add-services-to-booking`). Calling this will throw a framework-level \"method does not exist\" error and return an uncaught `500`.\n\n**Included here only for completeness / to document the dead route** — use **Add Services to Booking** instead. Flag this to the backend team for removal or implementation.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"booking_id\": \"{{booking_id}}\",\n    \"services\": [\n        \"{{service_id}}\"\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{customer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{customer_token}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.request.headers.upsert({ key: 'x-secret-key', value: pm.collectionVariables.get('api_secret_key') });"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Payment Callbacks (public, browser-facing)",
+            "description": "Outside the appSecret group — no x-secret-key needed. These are normally hit by a browser/webview redirect from the payment gateway, not called directly by app code.",
+            "item": [
+                {
+                    "name": "Payment Gateway Callback (Redirect)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/payment-methods/{{payment_method_code}}/callback/{{transaction_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment-methods",
+                                "{{payment_method_code}}",
+                                "callback",
+                                "{{transaction_id}}"
+                            ]
+                        },
+                        "description": "Browser-redirect endpoint the payment gateway sends the customer back to after checkout. Not typically called directly from Postman — included for completeness/manual testing.\n\n**Behavior:** if the Geidea webhook already confirmed the booking, redirects straight to **Payment Success**. Otherwise it does a manual `handleCallBack()` check with the gateway; on success it completes the booking and redirects to success, else redirects to **Payment Failed**.\n\n**Status codes:** `302` redirect to success or failed route. `404`/error if `{{payment_method_code}}` isn't a configured gateway (`config('payments.gateways')` — currently only `geidea`).\n\nPostman follows redirects by default; check the final response or disable redirect-following to inspect the `Location` header."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 302, 400",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 302, 400]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Payment Success (Confirmation Page Data)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/payment-methods/success/{{booking_id}}/{{booking_number}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment-methods",
+                                "success",
+                                "{{booking_id}}",
+                                "{{booking_number}}"
+                            ]
+                        },
+                        "description": "Returns the booking id/number pair for rendering a \"payment successful\" confirmation screen. **No ownership check** — anyone who knows/guesses a `booking_id` can hit this (low sensitivity: only echoes id + number back).\n\n**Status codes:** `200` OK. `500`/`404`-ish crash if `booking_id` doesn't exist (`find()` returns null, then `->booking_number` triggers a null-property error) — pass a real id."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Payment Failed",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/payment-methods/failed",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payment-methods",
+                                "failed"
+                            ]
+                        },
+                        "description": "Static \"payment failed\" response, no parameters.\n\n**Status codes:** `400` (via `errorResponse` default status) with message \"Payment Failed\"."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 400",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([400]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "5. Home / Content",
+            "description": "Public content endpoints, still behind x-secret-key (inside the appSecret group). Auth token optional (personalizes Home Index only).",
+            "item": [
+                {
+                    "name": "Home Index",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/index",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "index"
+                            ]
+                        },
+                        "description": "Landing-page aggregate: sliders, cities with buildings, 5 latest active apartments, buildings, filter min/max keys (price/rooms/area/beds), and (if a valid bearer token is passed) the logged-in user's name/avatar/email.\n\n**Auth:** optional — bearer token is read via `Auth::guard('api')->user()` but not required; works fine unauthenticated (personalization fields come back null).\n\n**Status codes:** `200` OK."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Filter Apartments",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/get-filter-apartments",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "get-filter-apartments"
+                            ]
+                        },
+                        "description": "Dynamic apartment search/filter, paginated (30/page). `filters` is an object whose keys are resolved dynamically:\n- `city_id` — apartments in buildings under this city.\n- `building_id` — apartments in this building.\n- `check_in` + `check_out` (both required together) — excludes apartments with an overlapping booking in that range.\n- any other key is routed through `App\\Filters\\FilterFactory::make($key)` — e.g. price range, rooms, beds, area, features — matching whatever filter classes exist under `app/Filters`.\n\n**Status codes:** `200` OK, `data.apartments[]` + `data.pagination`. `500` if an unsupported filter key is passed (`FilterFactory` throws).",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"filters\": {\n        \"city_id\": \"{{city_id}}\",\n        \"check_in\": \"2026-09-10\",\n        \"check_out\": \"2026-09-13\"\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 500",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 500]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Apartment Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/get-apartment?id={{apartment_id}}&withOwnerrez=true",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "get-apartment"
+                            ],
+                            "query": [
+                                {
+                                    "key": "id",
+                                    "value": "{{apartment_id}}",
+                                    "description": "Accepts either the numeric id or the slug"
+                                },
+                                {
+                                    "key": "withOwnerrez",
+                                    "value": "true",
+                                    "description": "Merge OwnerRez-blocked calendar days into booked_days. Defaults to true."
+                                }
+                            ]
+                        },
+                        "description": "Full apartment detail: pricing, images, features, labels, reviews, building/city info, policy text, check-in/out times, and `booked_days[]` (merged from local bookings + OwnerRez calendar if mapped and `ownerrez.availability.enabled`).\n\n**Status codes:** `200` OK. `404` apartment not found / inactive (`api.apartment_not_found`)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 404",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 404]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Reviews for Apartment",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/get-review-for-apartment?id={{apartment_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "get-review-for-apartment"
+                            ],
+                            "query": [
+                                {
+                                    "key": "id",
+                                    "value": "{{apartment_id}}"
+                                }
+                            ]
+                        },
+                        "description": "Lists reviews for an apartment, newest first.\n\n**Validation:** `id` required exists:apartments,id.\n\n**Status codes:** `200` OK. `422` invalid/missing id."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Support Info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/get-support",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "get-support"
+                            ]
+                        },
+                        "description": "Static support contact info (phone/email/whatsapp) — currently **hardcoded placeholder values** in `HomeController::getSupport()`, not pulled from settings/config.\n\n**Status codes:** `200` OK."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Page (CMS)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/get-page?template={{page_template}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "get-page"
+                            ],
+                            "query": [
+                                {
+                                    "key": "template",
+                                    "value": "{{page_template}}",
+                                    "description": "e.g. 'terms', 'privacy', 'about'"
+                                }
+                            ]
+                        },
+                        "description": "Fetches a CMS `Page` by its `template` slug.\n\n**Status codes:** `200` OK (returns `data.page: null`-shaped resource if no page matches that template — no explicit 404 handling)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get FAQ Page",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/get-faq-page",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "get-faq-page"
+                            ]
+                        },
+                        "description": "Shortcut for `get-page?template=faq`.\n\n**Status codes:** `200` OK."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Contact Us",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/home/contact-us",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "home",
+                                "contact-us"
+                            ]
+                        },
+                        "description": "Submits a contact-us message, stored via `ContactUs::create()`.\n\n**Validation:** `name`, `email` (email), `phone`, `message`, `subject` all required.\n\n**Status codes:** `200` submitted. `422` validation.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Ahmed Ali\",\n    \"email\": \"{{customer_email}}\",\n    \"phone\": \"+966500000000\",\n    \"message\": \"I have a question about my booking.\",\n    \"subject\": \"Booking question\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.request.headers.upsert({ key: 'x-secret-key', value: pm.collectionVariables.get('api_secret_key') });"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Onboarding",
+            "description": "Public, behind x-secret-key.",
+            "item": [
+                {
+                    "name": "List Onboarding Slides",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/onboarding/index",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "onboarding",
+                                "index"
+                            ]
+                        },
+                        "description": "Ordered list of app-onboarding slides (title/description/image, falls back to a bundled placeholder image if none set).\n\n**Status codes:** `200` OK (message is hardcoded in Arabic regardless of `x-language`)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.request.headers.upsert({ key: 'x-secret-key', value: pm.collectionVariables.get('api_secret_key') });"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Guesty (proxy)",
+            "description": "Thin proxy over the Guesty Open API, behind x-secret-key. Responses are raw Guesty payloads, not the app envelope.",
+            "item": [
+                {
+                    "name": "Guesty: Get/Refresh Token",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/guesty/token?refresh=false",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "guesty",
+                                "token"
+                            ],
+                            "query": [
+                                {
+                                    "key": "refresh",
+                                    "value": "false",
+                                    "description": "Set to 'true' to force a fresh OAuth token instead of the cached one."
+                                }
+                            ]
+                        },
+                        "description": "Returns the cached (or freshly-fetched) Guesty OAuth access token payload. Response is passed through **as-is** from `GuestyService` — not wrapped in the app's `{success,message,data}` envelope.\n\n**Status codes:** `200` OK. `502` Guesty API/network failure (`Bad Gateway`, or the upstream's own status code if it responded)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 502",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 502]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Guesty: List Listings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/guesty/listings?limit=20&skip=0&cursor=&sort=&query=&status=&fields=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "guesty",
+                                "listings"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "skip",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "cursor",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "query",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "fields",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Proxies Guesty's list-listings endpoint with pass-through query params (`limit`,`skip`,`cursor`,`sort`,`query`,`status`,`fields`).\n\n**Status codes:** `200` OK (raw Guesty payload). `502` upstream/network failure."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 502",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 502]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Guesty: List Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/guesty/reservations?limit=20&skip=0&from=&to=&listingId={{listing_id}}&status=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "guesty",
+                                "reservations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "skip",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "listingId",
+                                    "value": "{{listing_id}}",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Proxies Guesty's list-reservations endpoint with pass-through query params.\n\n**Status codes:** `200` OK (raw Guesty payload). `502` upstream/network failure."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 502",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 502]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Guesty: Show Reservation",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/guesty/reservations/{{reservation_id}}?fields=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "guesty",
+                                "reservations",
+                                "{{reservation_id}}"
+                            ],
+                            "query": [
+                                {
+                                    "key": "fields",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Fetches a single Guesty reservation by id.\n\n**Status codes:** `200` OK. `502` upstream/network failure, or the upstream's own error status (e.g. `404` if Guesty itself doesn't have that reservation id)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 404, 502",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 404, 502]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.request.headers.upsert({ key: 'x-secret-key', value: pm.collectionVariables.get('api_secret_key') });"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Webhooks & OAuth (server-to-server)",
+            "description": "Outside the appSecret group entirely — these use their own auth (Basic Auth for OwnerRez, live API re-verification for Geidea).",
+            "item": [
+                {
+                    "name": "Geidea Payment Webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/geidea/webhook",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "geidea",
+                                "webhook"
+                            ]
+                        },
+                        "description": "Server-to-server webhook Geidea calls after a payment attempt. **Not protected by `x-secret-key`** — instead the handler re-verifies the payment status directly against the Geidea API (`GeideaPayment::verifyPayment()`) before trusting the payload, so a spoofed POST alone can't fake a paid booking.\n\n**Behavior:**\n- Looks up the `Transaction` by `orderId` (or falls back to `merchantReferenceId`), locked `FOR UPDATE` inside a DB transaction to avoid double-processing concurrent webhook deliveries.\n- If the transaction is tied to a **date-change surcharge** request, applies the new dates via `DateChangeService::confirmSurchargePayment()` instead of the normal booking-confirmation path.\n- Otherwise completes the booking (`BookingService::completeBookingAfterPayment()`) and emails the customer + building supervisor.\n\n**Status codes:** always `200`, with a `status` field indicating outcome — `ignored` (no orderId / transaction not found), `not_paid` (Geidea says it isn't Paid yet), `already_processed`, or `ok`. This endpoint intentionally never surfaces errors as non-200 (webhook senders typically retry on non-2xx).\n\n**Testing note:** since the handler re-verifies against the live Geidea API, POSTing a synthetic payload here from Postman will resolve to `not_paid`/`ignored` unless there's a real matching Geidea order — use this mainly to inspect the response contract, not to actually confirm a booking.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"orderId\": \"GEIDEA-ORDER-ID\",\n    \"merchantReferenceId\": \"{{transaction_id}}\",\n    \"order\": {\n        \"orderId\": \"GEIDEA-ORDER-ID\",\n        \"detailedStatus\": \"Paid\"\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "OwnerRez Webhook (Receive Event)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ownerrez",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ownerrez"
+                            ]
+                        },
+                        "description": "OwnerRez calls this on booking/block changes. Protected by **HTTP Basic Auth** (`OWNERREZ_WEBHOOK_USER` / `OWNERREZ_WEBHOOK_PASSWORD` env vars), rate-limited to **60 requests/minute**.\n\n**Dedup:** events are de-duplicated by `id` (cache + persistent `ownerrez_processed_webhooks` table) and by content-hash (entity_id+action+categories+timestamp) to swallow OwnerRez's occasional twin deliveries.\n\n**Status codes:** `200` always (accepted/queued/duplicate-ignored — check the `message` field). `401` if Basic Auth credentials are wrong. `415` if the request isn't JSON. `429` if rate limit exceeded.",
+                        "auth": {
+                            "type": "basic",
+                            "basic": [
+                                {
+                                    "key": "username",
+                                    "value": "{{ownerrez_webhook_user}}",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "{{ownerrez_webhook_password}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id\": \"evt_test_123\",\n    \"entity_type\": \"booking\",\n    \"action\": \"updated\",\n    \"entity_id\": \"999999\",\n    \"categories\": [\n        \"booking\"\n    ],\n    \"entity\": {\n        \"id\": \"999999\",\n        \"arrival\": \"2026-09-10\",\n        \"departure\": \"2026-09-13\",\n        \"status\": \"confirmed\"\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 415, 429",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 415, 429]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "OwnerRez Webhook (Debug: Show Last Payload)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ownerrez",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ownerrez"
+                            ]
+                        },
+                        "description": "Debug-only endpoint returning the last cached webhook payload. **Disabled in production** (`app()->isProduction()` guard) and protected by Basic Auth, rate-limited to **10 requests/minute**.\n\n**Status codes:** `200` last payload found. `403` running in production. `401` bad credentials. `404` no cached payload yet (cache expired or nothing received).",
+                        "auth": {
+                            "type": "basic",
+                            "basic": [
+                                {
+                                    "key": "username",
+                                    "value": "{{ownerrez_webhook_user}}",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "{{ownerrez_webhook_password}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 401, 403, 404",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 401, 403, 404]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "OwnerRez OAuth Callback (Browser Redirect)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ownerrez/oauth/callback?code=&state=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ownerrez",
+                                "oauth",
+                                "callback"
+                            ],
+                            "query": [
+                                {
+                                    "key": "code",
+                                    "value": "",
+                                    "description": "Authorization code from OwnerRez"
+                                },
+                                {
+                                    "key": "state",
+                                    "value": "",
+                                    "description": "CSRF state token — must match the one cached under ownerrez:oauth:state when the OAuth flow was initiated"
+                                }
+                            ]
+                        },
+                        "description": "**Not a JSON API endpoint** — this is a browser redirect target hit by OwnerRez after the admin authorizes the app, and it renders a Blade HTML view (`ownerrez.oauth-success` / `ownerrez.oauth-error`), not JSON. Included for completeness only; not practically testable in isolation from Postman since `state` must match a value cached server-side moments earlier by the OAuth-initiation step (not present in this API — likely triggered from the admin/Backpack panel).\n\n**Status codes:** `200` HTML view (success or a specific error reason: `missing_code`, `invalid_state`, `exchange_failed`, or whatever `error` OwnerRez sent)."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "9. Test / Debug (unauthenticated)",
+            "description": "Outside every middleware group — no x-secret-key, no bearer token. Use with care, especially Test 2 which has side effects.",
+            "item": [
+                {
+                    "name": "Test: Apartment Calendar Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/test?apartment_id={{apartment_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "test"
+                            ],
+                            "query": [
+                                {
+                                    "key": "apartment_id",
+                                    "value": "{{apartment_id}}"
+                                }
+                            ]
+                        },
+                        "description": "Debug/admin-calendar helper: returns FullCalendar-style events for every booking on an apartment (color-coded by source + status). **No authentication or `x-secret-key` at all** — sits outside every middleware group in `routes/api.php`. Treat as an internal debug tool that happens to be publicly reachable; do not expose booking/customer data from it without adding auth.\n\n**Validation:** `apartment_id` required integer exists:apartments,id.\n\n**Status codes:** `200` OK. `422` invalid/missing apartment_id."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Test: Trigger OwnerRez Sync Job",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/test2?apartment_id={{apartment_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "test2"
+                            ],
+                            "query": [
+                                {
+                                    "key": "apartment_id",
+                                    "value": "{{apartment_id}}",
+                                    "description": "Omit both this and 'apartment-id' to sync ALL sync-enabled OwnerRez mappings instead of one."
+                                }
+                            ]
+                        },
+                        "description": "Debug/ops helper that dispatches `SyncPropertyBookingsJob` — either for one apartment (if `apartment_id`/`apartment-id` is given) or for **every** OwnerRez-mapped property with `sync_enabled=true`. **No authentication at all**, and it has a real side effect (queues background sync jobs) — be careful running this against a shared/staging environment, it isn't just a read.\n\n**Status codes:** `200` job(s) dispatched. `404` apartment given but has no OwnerRez mapping. `422` invalid apartment_id."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Documented possible status codes for this endpoint: 200, 404, 422",
+                                    "pm.test('Status code is one of the documented codes', function () {",
+                                    "    pm.expect([200, 404, 422]).to.include(pm.response.code);",
+                                    "});",
+                                    "pm.test('Response time is acceptable', function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+                                    "    pm.test('Response has success/message/data envelope', function () {",
+                                    "        const json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('success');",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "        pm.expect(json).to.have.property('data');",
+                                    "    });",
+                                    "}",
+                                    ""
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "pm.request.headers.upsert({ key: 'x-language', value: pm.collectionVariables.get('language') || 'en' });",
+                    "// Force JSON responses out of Laravel. Without this, Postman's default 'Accept: */*'",
+                    "// makes Laravel treat auth failures as browser navigation: instead of a clean 401 JSON,",
+                    "// bootstrap/app.php's redirectGuestsTo() 302-redirects to the website homepage, which",
+                    "// Postman then silently follows -- you'd see a 200 OK full of HTML instead of the real error.",
+                    "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });"
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "https://places.test",
+            "type": "string",
+            "description": "Root URL of the Laravel app, no trailing slash."
+        },
+        {
+            "key": "api_secret_key",
+            "value": "CHANGE_ME_API_SECRET_KEY",
+            "type": "string",
+            "description": "Must match the server's API_SECRET_KEY env var (see config/app.php: api_secret_key)."
+        },
+        {
+            "key": "language",
+            "value": "en",
+            "type": "string",
+            "description": "'en' or 'ar' — sent as x-language on every request."
+        },
+        {
+            "key": "customer_token",
+            "value": "",
+            "type": "string",
+            "description": "Sanctum bearer token, auto-filled by the Auth folder test scripts."
+        },
+        {
+            "key": "verify_token",
+            "value": "",
+            "type": "string",
+            "description": "Short-lived registration token, auto-filled after Verify OTP when register_required=true."
+        },
+        {
+            "key": "customer_phone",
+            "value": "+966500000000",
+            "type": "string"
+        },
+        {
+            "key": "otp_code",
+            "value": "2020",
+            "type": "string",
+            "description": "'2020' is a built-in master bypass code that always verifies, regardless of the real OTP."
+        },
+        {
+            "key": "fcm_token",
+            "value": "sample-fcm-device-token",
+            "type": "string"
+        },
+        {
+            "key": "customer_email",
+            "value": "test.customer@example.com",
+            "type": "string"
+        },
+        {
+            "key": "apartment_id",
+            "value": "198",
+            "type": "string"
+        },
+        {
+            "key": "booking_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "booking_number",
+            "value": "100001",
+            "type": "string"
+        },
+        {
+            "key": "transaction_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "coupon_code",
+            "value": "SAVE10",
+            "type": "string"
+        },
+        {
+            "key": "service_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "notification_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "payment_method_code",
+            "value": "geidea",
+            "type": "string",
+            "description": "Only gateway currently configured in config/payments.php."
+        },
+        {
+            "key": "city_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "building_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "page_template",
+            "value": "terms",
+            "type": "string"
+        },
+        {
+            "key": "reservation_id",
+            "value": "GUESTY_RESERVATION_ID",
+            "type": "string"
+        },
+        {
+            "key": "listing_id",
+            "value": "GUESTY_LISTING_ID",
+            "type": "string"
+        },
+        {
+            "key": "ownerrez_webhook_user",
+            "value": "CHANGE_ME",
+            "type": "string",
+            "description": "Matches OWNERREZ_WEBHOOK_USER env var."
+        },
+        {
+            "key": "ownerrez_webhook_password",
+            "value": "CHANGE_ME",
+            "type": "string",
+            "description": "Matches OWNERREZ_WEBHOOK_PASSWORD env var."
+        }
+    ]
+}

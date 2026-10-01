@@ -2,19 +2,26 @@
 
 namespace App\Services\OwnerRez;
 
+use App\Enums\BookingStatus;
+use App\Enums\CustomerSource;
 use App\Exceptions\OwnerRez\BookingConflictException;
 use App\Exceptions\OwnerRez\OwnerRezApiException;
+use App\Jobs\OwnerRez\RefreshCalendarCacheJob;
+use App\Mail\BlockedCustomerBookingSynced;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\BookingChannelConflict;
 use App\Models\Customer;
 use App\Models\OwnerRezBooking;
 use App\Models\OwnerRezPropertyMapping;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class OwnerRezSyncService
 {
@@ -27,12 +34,17 @@ class OwnerRezSyncService
      */
     /**
      * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
-     *                                                      (used when re-checking a booking's own new range).
+     *                                                     (used when re-checking a booking's own new range).
+     * @param  bool  $liveCheck  Skip the 5-minute cache and query OwnerRez fresh (single attempt,
+     *                           no retry — fails fast rather than extending how long the apartment
+     *                           lock is held). Reserved for the authoritative check at the moment a
+     *                           booking is actually committed (BookingService::reserveApartment).
+     *                           Browsing/quote checks should leave this false and use the cache.
      */
-    public function checkAvailability(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null): bool
+    public function checkAvailability(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null, bool $liveCheck = false): bool
     {
         try {
-            $bookings = $this->getActiveBookings($propertyId, $from, $to, $excludeOwnerRezBookingId);
+            $bookings = $this->getActiveBookings($propertyId, $from, $to, $excludeOwnerRezBookingId, $liveCheck);
 
             return $bookings->isEmpty();
         } catch (OwnerRezApiException $e) {
@@ -121,14 +133,20 @@ class OwnerRezSyncService
      */
     /**
      * @param  int|string|null  $excludeOwnerRezBookingId  Ignore this OwnerRez reservation
-     *                                                      (filtered post-cache so the cache stays shared).
+     *                                                     (filtered post-cache so the cache stays shared).
+     * @param  bool  $liveCheck  Bypass the cache and fetch fresh from OwnerRez, then refresh the
+     *                           cache with the result so other/subsequent cached readers benefit
+     *                           too. No retry on failure — this runs while the apartment row lock
+     *                           is held, so a slow/failing OwnerRez must fail fast rather than
+     *                           stack extra timeouts onto the lock (and onto anyone else waiting
+     *                           on the same apartment).
      */
-    public function getActiveBookings(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null): Collection
+    public function getActiveBookings(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null, bool $liveCheck = false): Collection
     {
         $cacheKey = "ownerrez:availability:v3:{$propertyId}:{$from}:{$to}";
         $cacheTtl = config('ownerrez.availability.cache_ttl', 300);
 
-        $bookings = Cache::remember($cacheKey, $cacheTtl, function () use ($propertyId, $from, $to) {
+        $fetch = function () use ($propertyId, $from, $to) {
             $response = $this->apiService->getBookings([
                 'property_ids' => $propertyId,
                 'from' => $from,
@@ -140,7 +158,18 @@ class OwnerRezSyncService
             return collect($response['items'] ?? [])->filter(function ($item) {
                 return ! empty($item['is_block']) || strtolower($item['status'] ?? '') === 'active';
             })->values();
-        });
+        };
+
+        if ($liveCheck) {
+            $bookings = $fetch();
+            Cache::put($cacheKey, $bookings->toArray(), $cacheTtl);
+        } else {
+            $bookings = Cache::remember($cacheKey, $cacheTtl, $fetch);
+        }
+
+        // The liveCheck branch caches an array (->toArray()), so a subsequent non-liveCheck
+        // read of the same key returns a plain array. Normalize to a Collection before filtering.
+        $bookings = collect($bookings);
 
         // Filter entries that overlap with requested dates, excluding the booking's own reservation.
         return $bookings->filter(function ($booking) use ($from, $to, $excludeOwnerRezBookingId) {
@@ -187,6 +216,20 @@ class OwnerRezSyncService
             $bookingData['id'] = $webhookData['entity_id'];
         }
 
+        // The webhook is authenticated only by a shared Basic-auth secret, so its body is
+        // never trusted: every action is re-read from the OwnerRez API and only that state
+        // is applied. A forged create/update can't invent a booking (and a lock passcode),
+        // and a forged delete can't cancel a booking that is still live in OwnerRez.
+        if (in_array($action, ['entity_create', 'entity_update', 'entity_delete'], true)) {
+            $verifiedData = $this->fetchVerifiedWebhookBooking($action, $webhookData['entity_id'] ?? $bookingData['id'] ?? null);
+
+            if ($verifiedData === null) {
+                return;
+            }
+
+            $bookingData = $verifiedData;
+        }
+
         Log::channel('ownerrez_webhook')->info('OwnerRez webhook processing started', [
             'action' => $action,
             'entity_id' => $webhookData['entity_id'] ?? null,
@@ -207,6 +250,59 @@ class OwnerRezSyncService
         if (isset($bookingData['property_id'])) {
             $this->invalidatePropertyCache($bookingData['property_id']);
         }
+    }
+
+    /**
+     * The OwnerRez API's view of the webhook's booking, or null when the webhook must be
+     * ignored: the id is missing, the booking doesn't exist (create/update), or a delete
+     * arrives for a booking OwnerRez still reports as live. API/network failures are
+     * rethrown so the queued job retries instead of falling back to the webhook body.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function fetchVerifiedWebhookBooking(string $action, int|string|null $entityId): ?array
+    {
+        $logger = Log::channel('ownerrez_webhook');
+
+        if (! $entityId || ! is_numeric($entityId)) {
+            $logger->warning('OwnerRez webhook ignored - missing entity id', ['action' => $action]);
+
+            return null;
+        }
+
+        try {
+            $apiBooking = $this->apiService->getBooking((int) $entityId);
+        } catch (OwnerRezApiException $e) {
+            if ($e->getStatusCode() !== 404) {
+                throw $e;
+            }
+
+            if ($action === 'entity_delete') {
+                return ['id' => $entityId];
+            }
+
+            $logger->warning('OwnerRez webhook ignored - booking not found via API', [
+                'action' => $action,
+                'entity_id' => $entityId,
+            ]);
+
+            return null;
+        }
+
+        if (empty($apiBooking)) {
+            throw new \RuntimeException("OwnerRez API returned an empty booking for {$entityId}");
+        }
+
+        if ($action === 'entity_delete' && ($apiBooking['status'] ?? null) !== 'canceled') {
+            $logger->warning('OwnerRez delete webhook ignored - booking is still live in OwnerRez', [
+                'entity_id' => $entityId,
+                'api_status' => $apiBooking['status'] ?? null,
+            ]);
+
+            return null;
+        }
+
+        return array_merge($apiBooking, ['id' => $entityId]);
     }
 
     /**
@@ -294,24 +390,7 @@ class OwnerRezSyncService
             return;
         }
 
-        // Fetch full booking data from API before creating
-        try {
-            $fullBookingData = $this->apiService->getBooking($ownerrezBookingId);
-            Log::info('Full booking data from API', ['full_booking_data' => $fullBookingData]);
-            if (! empty($fullBookingData)) {
-                // Merge API data with webhook data (API takes precedence)
-                $bookingData = $fullBookingData;
-                Log::info('F full booking data from API', [
-                    'booking_id' => $ownerrezBookingId,
-                    'booking_data' => $bookingData,
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::warning('Failed to fetch full booking before creation, using webhook data', [
-                'booking_id' => $ownerrezBookingId,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // $bookingData already comes from the OwnerRez API (see fetchVerifiedWebhookBooking).
 
         // Create local booking
         $storageStage = 'transaction_not_started';
@@ -448,7 +527,7 @@ class OwnerRezSyncService
 
             if ($status === 'canceled') {
                 // Always process cancellations, even for locally-created bookings
-                $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
+                $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking, $ownerrezBooking->ownerrez_booking_id);
                 $logger->info('OwnerRez booking canceled via update webhook', [
                     'ownerrez_booking_id' => $ownerrezBookingId,
                     'local_booking_id' => $ownerrezBooking->local_booking_id,
@@ -506,7 +585,7 @@ class OwnerRezSyncService
         }
 
         try {
-            $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking);
+            $this->cancelLocalBookingFromOwnerRez($ownerrezBooking->localBooking, $ownerrezBooking->ownerrez_booking_id);
             $logger->info('OwnerRez booking deleted and canceled locally', [
                 'ownerrez_booking_id' => $ownerrezBookingId,
                 'local_booking_id' => $ownerrezBooking->local_booking_id,
@@ -551,7 +630,62 @@ class OwnerRezSyncService
             );
         }
 
-        return Booking::create($localData);
+        $booking = Booking::create($localData);
+
+        $this->alertIfCustomerBlocked($booking);
+
+        return $booking;
+    }
+
+    /**
+     * عميل محظور عندنا قد يحجز عبر قناة خارجية (Airbnb/Booking.com) لا نتحكم بها — الحجز يُزامَن دائماً
+     * بلا استثناء (OwnerRez يبقى مصدر الحقيقة لتوفر الوحدة)، وهذه مجرد رسالة مراجعة بشرية، بلا أي إجراء آلي.
+     */
+    private function alertIfCustomerBlocked(Booking $booking): void
+    {
+        $customer = $booking->customer;
+
+        if (! $customer || ! $customer->isBlocked()) {
+            return;
+        }
+
+        Log::warning('Inbound OwnerRez booking synced for a blocked customer', [
+            'booking_id' => $booking->id,
+            'customer_id' => $customer->id,
+            'booking_source' => $booking->booking_source,
+        ]);
+
+        try {
+            $recipients = User::query()
+                ->whereHas('roles', fn ($q) => $q->whereIn('name', Config::array('mail.blocked_customer_booking_alert.roles')))
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->orderBy('id')
+                ->get(['id', 'email']);
+
+            $onlyIds = Config::array('mail.blocked_customer_booking_alert.only_user_ids');
+            if (! empty($onlyIds)) {
+                $recipients = $recipients->whereIn('id', $onlyIds);
+            }
+
+            if ($recipients->isEmpty()) {
+                Log::warning('No blocked-customer-booking reviewers resolved — alert email skipped', [
+                    'booking_id' => $booking->id,
+                    'roles' => Config::array('mail.blocked_customer_booking_alert.roles'),
+                ]);
+
+                return;
+            }
+
+            foreach ($recipients as $recipient) {
+                Mail::to($recipient->email)->send(new BlockedCustomerBookingSynced($booking, $customer));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify reviewers of inbound booking for blocked customer', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -576,14 +710,74 @@ class OwnerRezSyncService
     /**
      * Cancel local booking from OwnerRez
      */
-    public function cancelLocalBookingFromOwnerRez(Booking $booking): void
+    public function cancelLocalBookingFromOwnerRez(Booking $booking, ?string $sourceOwnerRezBookingId = null): void
     {
-        // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد أصبح خطوة منفصلة يُنفّذها الموظف يدوياً
-        // من شاشة "الحجوزات الملغاة" بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
+        // حارس أمان لنقل الوحدة: إذا وصل الإلغاء من حجز OwnerRez لم يعُد هو المرتبط بهذا
+        // الحجز المحلي (نُقل الحجز لوحدة جديدة وأُنشئ له حجز OwnerRez جديد)، نتجاهله —
+        // إلغاء الوحدة القديمة يجب ألا يُلغي الحجز النشط المنقول. (الآلية الأساسية هي فكّ
+        // ربط السجل القديم عبر releaseSupersededOwnerRezBooking؛ هذا خط دفاع ثانٍ.)
+        if ($sourceOwnerRezBookingId !== null
+            && ! empty($booking->ownerrez_booking_id)
+            && (string) $booking->ownerrez_booking_id !== (string) $sourceOwnerRezBookingId) {
+            Log::channel('ownerrez_webhook')->info('Ignoring OwnerRez cancel for a superseded (transferred) booking', [
+                'local_booking_id' => $booking->id,
+                'incoming_ownerrez_booking_id' => $sourceOwnerRezBookingId,
+                'current_ownerrez_booking_id' => $booking->ownerrez_booking_id,
+            ]);
+
+            return;
+        }
+
+        // إلغاء محلي فقط (يحرّر الوحدة). الاسترداد خطوة منفصلة يُنفّذها الموظف من زر
+        // "إدارة الإلغاء" على الحجز بعد الإلغاء، مع تحديد المبلغ (كامل أو جزئي).
         // refund_status يبقى كما هو (pending لطلبات العملاء) لتظهر خطوة الاسترداد.
+        if ($booking->status === BookingStatus::Canceled->value) {
+            return;
+        }
+
         $booking->update([
-            'status' => 'canceled',
+            'status' => BookingStatus::Canceled->value,
         ]);
+
+        // حرّرت الوحدة — امسح كاش التقويم وأعد تسخينه ليظهر التوفّر مباشرةً.
+        $this->invalidateCacheForBooking($booking);
+    }
+
+    /**
+     * Detach a superseded OwnerRez booking row from its local booking (used when a booking is
+     * transferred to another unit and re-created under a new OwnerRez booking). Nulling
+     * `local_booking_id` means a later inbound webhook that cancels the OLD OwnerRez booking
+     * finds no linked local booking and safely no-ops — so cancelling the old unit by hand can
+     * never cancel the active, moved booking.
+     */
+    public function releaseSupersededOwnerRezBooking(string $ownerrezBookingId): void
+    {
+        $row = OwnerRezBooking::where('ownerrez_booking_id', $ownerrezBookingId)->first();
+
+        if (! $row) {
+            return;
+        }
+
+        $row->update(['local_booking_id' => null]);
+
+        Log::channel('ownerrez_webhook')->info('Detached superseded OwnerRez booking after unit transfer', [
+            'ownerrez_booking_id' => $ownerrezBookingId,
+            'ownerrez_bookings_row_id' => $row->id,
+        ]);
+    }
+
+    /**
+     * Invalidate + re-warm the OwnerRez calendar cache for a booking's mapped property,
+     * so freed dates show correctly right after a cancellation (webhook / force / local).
+     * No-op for unmapped units (their web calendar reads local bookings live).
+     */
+    public function invalidateCacheForBooking(Booking $booking): void
+    {
+        $propertyId = $booking->apartment?->ownerrezMapping?->ownerrez_property_id;
+
+        if ($propertyId) {
+            $this->invalidatePropertyCache($propertyId);
+        }
     }
 
     /**
@@ -607,11 +801,23 @@ class OwnerRezSyncService
 
         }
 
-        // Create booking in OwnerRez
+        // Create booking in OwnerRez. This POST is the last fallible external call:
+        // OwnerRez cannot delete a booking once created, so anything after it must be
+        // best-effort — otherwise a later failure would roll back the local record and
+        // orphan an OwnerRez booking we can never remove.
         $response = $this->apiService->createBooking($ownerrezData);
 
-        // Set custom field to identify this booking as from our platform
-        $this->ensureBookingCustomField($response['id']);
+        // Set custom field to identify this booking as from our platform (best-effort:
+        // a custom-field failure must not undo the successful booking creation above).
+        try {
+            $this->ensureBookingCustomField($response['id']);
+        } catch (\Throwable $e) {
+            Log::warning('OwnerRez custom field stamp failed after booking create', [
+                'ownerrez_booking_id' => $response['id'] ?? null,
+                'local_booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Update local booking with OwnerRez ID and site
         $booking->update([
@@ -652,9 +858,9 @@ class OwnerRezSyncService
             return (int) $customer->ownerrez_guest_id;
         }
 
-        // Search for existing guest in OwnerRez by email
-
-        $existingGuest = $this->searchOwnerRezGuest($customer->email);
+        // Search for an existing guest by email — only when the customer actually has one
+        // (email is optional for manual/dashboard bookings).
+        $existingGuest = $customer->email ? $this->searchOwnerRezGuest($customer->email) : null;
 
         if ($existingGuest) {
             Log::info('Found existing guest in OwnerRez', [
@@ -668,17 +874,11 @@ class OwnerRezSyncService
             return $existingGuest['id'];
         }
 
-        // Create new guest in OwnerRez
+        // Create new guest in OwnerRez. Only include an email address when present, so a
+        // customer without an email doesn't send a null address to OwnerRez.
         $guestData = [
             'first_name' => $customer->first_name ?? '',
             'last_name' => $customer->last_name ?? '',
-            'email_addresses' => [
-                [
-                    'address' => $customer->email,
-                    'is_default' => true,
-                    'type' => 'home',
-                ],
-            ],
             'phones' => $customer->phone ? [
                 [
                     'number' => $customer->phone,
@@ -687,6 +887,16 @@ class OwnerRezSyncService
                 ],
             ] : [],
         ];
+
+        if ($customer->email) {
+            $guestData['email_addresses'] = [
+                [
+                    'address' => $customer->email,
+                    'is_default' => true,
+                    'type' => 'home',
+                ],
+            ];
+        }
 
         $response = $this->apiService->createGuest($guestData);
         $guestId = $response['id'];
@@ -821,8 +1031,8 @@ class OwnerRezSyncService
         }
 
         // Calculate number of nights
-        $checkIn = \Carbon\Carbon::parse($data['arrival']);
-        $checkOut = \Carbon\Carbon::parse($data['departure']);
+        $checkIn = Carbon::parse($data['arrival']);
+        $checkOut = Carbon::parse($data['departure']);
         $numberOfNights = $checkIn->diffInDays($checkOut);
 
         // Calculate one night price
@@ -979,6 +1189,7 @@ class OwnerRezSyncService
                 'phone' => $phone,
                 'ownerrez_guest_id' => $guestId,
                 'account_verified' => false,
+                'source' => CustomerSource::OwnerRez,
             ]);
 
             $logger->info('Created new customer from OwnerRez guest', [
@@ -1096,6 +1307,6 @@ class OwnerRezSyncService
         // مسح كاش الـ availability (blocks + bookings) بحيث يُعاد جلبها
         Cache::forget("ownerrez:calendar:v1:{$propertyId}");
 
-        \App\Jobs\OwnerRez\RefreshCalendarCacheJob::dispatch($propertyId);
+        RefreshCalendarCacheJob::dispatch($propertyId);
     }
 }
