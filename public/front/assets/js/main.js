@@ -1,17 +1,109 @@
 /*global $, JQuery */
 
-AOS.init();
+revealOnScroll();
+
+/**
+ * Lightweight stand-in for AOS.init() with its defaults (offset 120px, 400ms
+ * "ease", once: false). Like AOS it measures layout offsets (ignoring the
+ * transforms the animations start from): an element animates in once the page
+ * is scrolled past its top + 120px - viewport height, and back out above that.
+ */
+function revealOnScroll() {
+    var elements = Array.prototype.slice.call(document.querySelectorAll("[data-aos]"));
+    if (!elements.length) {
+        return;
+    }
+    document.body.setAttribute("data-aos-easing", "ease");
+    document.body.setAttribute("data-aos-duration", "400");
+    document.body.setAttribute("data-aos-delay", "0");
+
+    var triggerPoints = [];
+    var scheduled = false;
+
+    function offsetTop(element) {
+        var top = 0;
+        while (element) {
+            top += element.offsetTop - (element.tagName !== "BODY" ? element.scrollTop : 0);
+            element = element.offsetParent;
+        }
+        return top;
+    }
+
+    function measure() {
+        triggerPoints = elements.map(function (element) {
+            return offsetTop(element) + 120 - window.innerHeight;
+        });
+        update();
+    }
+
+    function update() {
+        scheduled = false;
+        var scrollTop = window.pageYOffset;
+        elements.forEach(function (element, index) {
+            if (scrollTop > triggerPoints[index]) {
+                element.classList.add("aos-animate");
+            } else {
+                element.classList.remove("aos-animate");
+            }
+        });
+    }
+
+    function scheduleUpdate() {
+        if (!scheduled) {
+            scheduled = true;
+            window.requestAnimationFrame(update);
+        }
+    }
+
+    elements.forEach(function (element) {
+        element.classList.add("aos-init");
+    });
+    measure();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", function () {
+        window.requestAnimationFrame(measure);
+    }, { passive: true });
+    window.addEventListener("load", measure);
+}
+
+/**
+ * Run init() for each matched element once it comes within 300px of the
+ * viewport (all at once where IntersectionObserver is unavailable).
+ */
+function whenNearViewport(selector, init) {
+    var $elements = $(selector);
+    if (!$elements.length) {
+        return;
+    }
+    if (!("IntersectionObserver" in window)) {
+        init($elements);
+        return;
+    }
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                observer.unobserve(entry.target);
+                init($(entry.target));
+            }
+        });
+    }, { rootMargin: "300px 0px" });
+    $elements.each(function () {
+        observer.observe(this);
+    });
+}
+
 
 $(document).ready(function () {
 
     // Keep slick's accessibility state truthful: only visible (.slick-active)
     // slides are exposed, and nothing inside a hidden slide - including a slide
-    // that is itself a link - stays in the tab order.
-    $(document).on("init reInit afterChange setPosition", function (event, slick) {
-        if (!slick || !slick.$slider) {
-            return;
-        }
-        var focusable = "a, button, input, select, textarea";
+    // that is itself a link, or slick's own tabindex="0" - stays in the tab
+    // order. Runs on the next frame because slick re-applies its own ADA
+    // attributes after firing afterChange.
+    var slickA11yScheduled = false;
+    function syncSlickA11y() {
+        slickA11yScheduled = false;
+        var focusable = "a, button, input, select, textarea, [tabindex]";
         $(".slick-slider .slick-slide").each(function () {
             $(this).attr("aria-hidden", $(this).hasClass("slick-active") ? "false" : "true");
         });
@@ -23,6 +115,13 @@ $(document).ready(function () {
                 $element.removeAttr("tabindex");
             }
         });
+    }
+    $(document).on("init reInit afterChange setPosition", function (event, slick) {
+        if (!slick || !slick.$slider || slickA11yScheduled) {
+            return;
+        }
+        slickA11yScheduled = true;
+        window.requestAnimationFrame(syncSlickA11y);
     });
 
     $(".select2").select2();
@@ -106,130 +205,138 @@ $(document).ready(function () {
         $("header .left-menu").removeClass("active");
     });
 
-    $('[dir="ltr"] .comment-list .comment-slider-1').slick({
-        centerMode: true,
-        slidesToShow: 6,
-        slidesToScroll: 1,
-        autoplay: true,
-        autoplaySpeed: 1300,
-        centerPadding: '100px',
-        arrows: false,
-        responsive: [
-            {
-                breakpoint: 1600,
-                settings: {
-                    slidesToShow: 4
+    whenNearViewport('[dir="ltr"] .comment-list .comment-slider-1', function ($slider) {
+        $slider.slick({
+            centerMode: true,
+            slidesToShow: 6,
+            slidesToScroll: 1,
+            autoplay: true,
+            autoplaySpeed: 1300,
+            centerPadding: '100px',
+            arrows: false,
+            responsive: [
+                {
+                    breakpoint: 1600,
+                    settings: {
+                        slidesToShow: 4
+                    }
+                },
+                {
+                    breakpoint: 1200,
+                    settings: {
+                        slidesToShow: 3
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: 1,
+                        centerPadding: '40px'
+                    }
                 }
-            },
-            {
-                breakpoint: 1200,
-                settings: {
-                    slidesToShow: 3
-                }
-            },
-            {
-                breakpoint: 768,
-                settings: {
-                    slidesToShow: 1,
-                    centerPadding: '40px'
-                }
-            }
-        ]
+            ]
+        });
     });
 
-    $('[dir="rtl"] .comment-list .comment-slider-1').slick({
-        centerMode: true,
-        rtl: true,
-        slidesToShow: 6,
-        slidesToScroll: 1,
-        autoplay: true,
-        autoplaySpeed: 1300,
-        centerPadding: '100px',
-        arrows: false,
-        responsive: [
-            {
-                breakpoint: 1600,
-                settings: {
-                    slidesToShow: 4
+    whenNearViewport('[dir="rtl"] .comment-list .comment-slider-1', function ($slider) {
+        $slider.slick({
+            centerMode: true,
+            rtl: true,
+            slidesToShow: 6,
+            slidesToScroll: 1,
+            autoplay: true,
+            autoplaySpeed: 1300,
+            centerPadding: '100px',
+            arrows: false,
+            responsive: [
+                {
+                    breakpoint: 1600,
+                    settings: {
+                        slidesToShow: 4
+                    }
+                },
+                {
+                    breakpoint: 1200,
+                    settings: {
+                        slidesToShow: 3
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: 1,
+                        centerPadding: '40px'
+                    }
                 }
-            },
-            {
-                breakpoint: 1200,
-                settings: {
-                    slidesToShow: 3
-                }
-            },
-            {
-                breakpoint: 768,
-                settings: {
-                    slidesToShow: 1,
-                    centerPadding: '40px'
-                }
-            }
-        ]
+            ]
+        });
     });
 
-    $('[dir="ltr"] .comment-list .comment-slider-2').slick({
-        centerMode: true,
-        slidesToShow: 6,
-        slidesToScroll: 1,
-        autoplay: true,
-        autoplaySpeed: 800,
-        centerPadding: '100px',
-        arrows: false,
-        responsive: [
-            {
-                breakpoint: 1600,
-                settings: {
-                    slidesToShow: 4
+    whenNearViewport('[dir="ltr"] .comment-list .comment-slider-2', function ($slider) {
+        $slider.slick({
+            centerMode: true,
+            slidesToShow: 6,
+            slidesToScroll: 1,
+            autoplay: true,
+            autoplaySpeed: 800,
+            centerPadding: '100px',
+            arrows: false,
+            responsive: [
+                {
+                    breakpoint: 1600,
+                    settings: {
+                        slidesToShow: 4
+                    }
+                },
+                {
+                    breakpoint: 1200,
+                    settings: {
+                        slidesToShow: 3
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: 1,
+                        centerPadding: '40px'
+                    }
                 }
-            },
-            {
-                breakpoint: 1200,
-                settings: {
-                    slidesToShow: 3
-                }
-            },
-            {
-                breakpoint: 768,
-                settings: {
-                    slidesToShow: 1,
-                    centerPadding: '40px'
-                }
-            }
-        ]
+            ]
+        });
     });
 
-    $('[dir="rtl"] .comment-list .comment-slider-2').slick({
-        rtl: true,
-        centerMode: true,
-        slidesToShow: 6,
-        slidesToScroll: 1,
-        autoplay: true,
-        autoplaySpeed: 800,
-        centerPadding: '100px',
-        arrows: false,
-        responsive: [
-            {
-                breakpoint: 1600,
-                settings: {
-                    slidesToShow: 4
+    whenNearViewport('[dir="rtl"] .comment-list .comment-slider-2', function ($slider) {
+        $slider.slick({
+            rtl: true,
+            centerMode: true,
+            slidesToShow: 6,
+            slidesToScroll: 1,
+            autoplay: true,
+            autoplaySpeed: 800,
+            centerPadding: '100px',
+            arrows: false,
+            responsive: [
+                {
+                    breakpoint: 1600,
+                    settings: {
+                        slidesToShow: 4
+                    }
+                },
+                {
+                    breakpoint: 1200,
+                    settings: {
+                        slidesToShow: 3
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: 1,
+                        centerPadding: '40px'
+                    }
                 }
-            },
-            {
-                breakpoint: 1200,
-                settings: {
-                    slidesToShow: 3
-                }
-            },
-            {
-                breakpoint: 768,
-                settings: {
-                    slidesToShow: 1,
-                    centerPadding: '40px'
-                }
-            }
-        ]
+            ]
+        });
     });
 
     $('[dir="ltr"] section.list .slider').slick({

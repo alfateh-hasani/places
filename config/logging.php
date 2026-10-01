@@ -127,6 +127,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'csp' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/csp.log'),
+            'permission' => 0640,
+            'level' => 'warning',
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
         'geidea_webhook' => [
             'driver' => 'daily',
             'tap' => [SanitizeContextTap::class],

@@ -4,6 +4,7 @@ use App\Http\Controllers\Front\ApartmentController;
 use App\Http\Controllers\Front\ApartmentsICSController;
 use App\Http\Controllers\Front\Auth\LoginController;
 use App\Http\Controllers\Front\BookingController;
+use App\Http\Controllers\Front\CspReportController;
 use App\Http\Controllers\Front\CustomerAccountController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\PageController;
@@ -11,11 +12,16 @@ use App\Http\Controllers\Front\RobotsController;
 use App\Http\Controllers\Front\SitemapController;
 use App\Http\Controllers\Front\WishlistController;
 use App\Http\Controllers\PushSubscriptionController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/apartments/{apartment}/unit.ics', [ApartmentsICSController::class, 'generateICS'])->name('apartments.ics');
 Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('robots.txt', [RobotsController::class, 'index'])->name('robots');
+Route::post('csp-report', CspReportController::class)
+    ->middleware('throttle:30,1')
+    ->withoutMiddleware(ValidateCsrfToken::class)
+    ->name('csp-report');
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
     Route::get('apartments-filter', [ApartmentController::class, 'search'])->name('apartments.search');
