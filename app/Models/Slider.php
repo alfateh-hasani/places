@@ -43,6 +43,13 @@ class Slider extends Model implements HasMedia
             ->format('webp')
             ->nonQueued();
 
+        $this->addMediaConversion('hero_small')
+            ->performOnCollections('image_ar', 'image_en')
+            ->fit(Fit::Max, 800, 800)
+            ->quality(80)
+            ->format('webp')
+            ->nonQueued();
+
         $this->addMediaConversion('hero_mobile')
             ->performOnCollections('image_mobile_ar', 'image_mobile_en')
             ->fit(Fit::Max, 900, 1400)
@@ -66,6 +73,23 @@ class Slider extends Model implements HasMedia
         return $media->hasGeneratedConversion($conversion)
             ? $media->getUrl($conversion)
             : $media->getUrl();
+    }
+
+    /**
+     * srcset for the desktop slide: the 800px and 1600px conversions that exist.
+     */
+    public function heroSrcset(string $collection): string
+    {
+        $media = $this->getFirstMedia($collection);
+
+        if (! $media) {
+            return '';
+        }
+
+        return collect(['hero_small' => 800, 'hero' => 1600])
+            ->filter(fn (int $width, string $conversion): bool => $media->hasGeneratedConversion($conversion))
+            ->map(fn (int $width, string $conversion): string => $media->getUrl($conversion).' '.$width.'w')
+            ->implode(', ');
     }
 
     public function getImageArAttribute()

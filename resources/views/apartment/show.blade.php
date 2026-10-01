@@ -92,23 +92,6 @@
         
     </div>
 
-    <script>
-        // Override the submodule's height-measured toggle with a CSS max-height
-        // expand (reliable with lazy images). Runs on window load so it supersedes
-        // main.js's document-ready handler.
-        $(window).on('load', function () {
-            var $btn = $('#allphotos');
-            if (! $btn.length) return;
-            $btn.off('click');
-            $('.banner-container').css('height', '');
-            $btn.on('click', function () {
-                var active = $('.banner-container').toggleClass('active').hasClass('active');
-                $('#allphotos span').text(active
-                    ? @json(__('apartment.show_some_photos'))
-                    : @json(__('apartment.show_all_photos')));
-            });
-        });
-    </script>
  
     <div class="relative">
         <div class="block sm:hidden photos banner-side ease-in-out duration-300">
@@ -558,6 +541,23 @@
 </div>
 @endsection
 @push('js')
+<script>
+    // Override the submodule's height-measured toggle with a CSS max-height
+    // expand (reliable with lazy images). Runs on window load so it supersedes
+    // main.js's document-ready handler.
+    $(window).on('load', function () {
+        var $btn = $('#allphotos');
+        if (! $btn.length) return;
+        $btn.off('click');
+        $('.banner-container').css('height', '');
+        $btn.on('click', function () {
+            var active = $('.banner-container').toggleClass('active').hasClass('active');
+            $('#allphotos span').text(active
+                ? @json(__('apartment.show_some_photos'))
+                : @json(__('apartment.show_all_photos')));
+        });
+    });
+</script>
 {{-- jQuery UI is only needed here, for the #tabs widget initialised in main.js. --}}
 <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js"></script>
 @include('customer.section.script-form')

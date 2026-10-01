@@ -1,6 +1,6 @@
 <section class="container py-8 lg:hidden cursor-pointer search-button -translate-y-[50%]">
     <div class="flex items-center px-6 py-3 bg-white shadow-xl rounded-full border border-border">
-        <img src="{{ asset('assets/img/search-black.svg') }}" class="w-4 me-5 py-2" alt="" />
+        <img src="{{ asset('assets/img/search-black.svg') }}" class="w-4 me-5 py-2" alt="" width="16" height="16" />
         <div>
             <p class="font-semibold text-xs">
                 {{ __('site.search_mobile') }}
@@ -35,14 +35,14 @@
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_check_in') }}</p>
             <input id="datepicker-range-start" name="check_in" type="text"
-                class="cursor-pointer p-0 pt-1 text-black placeholder:text-gritext font-semibold text-sm block w-full border-0"
+                class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
                 placeholder="{{now()->format('Y-m-d')}}" autocomplete="off" />
         </div>
         <div
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_check_out') }}</p>
             <input id="datepicker-range-end" name="check_out" type="text"
-                class="cursor-pointer p-0 pt-1 text-black placeholder:text-gritext font-semibold text-sm block w-full border-0"
+                class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
                 placeholder="{{ now()->addDay()->format('Y-m-d') }}"  autocomplete="off"/>
         </div>
         <div

@@ -408,27 +408,53 @@ section.slider:not(.slick-initialized) > a:not(:first-child),
 section.properitirs .category:not(.slick-initialized) > .slider:not(:first-child) {
     display: none;
 }
-section.properitirs .slider:not(.slick-initialized),
-section.comments .comment-slider:not(.slick-initialized) {
+section.properitirs .slider:not(.slick-initialized) {
     display: flex;
     overflow: hidden;
 }
 section.properitirs .slider:not(.slick-initialized) > a {
     flex: 0 0 100%;
 }
-section.comments .comment-slider:not(.slick-initialized) > div {
-    flex: 0 0 100%;
-}
 @media (min-width: 768px) {
     section.properitirs .slider:not(.slick-initialized) > a {
         flex-basis: 25%;
     }
+}
+
+/* Reviews (centerMode): hidden until slick has positioned the slides, with the
+   same padding (centerPadding) and slide widths as main.js so the height it
+   reserves doesn't change on init. */
+section.comments .comment-slider:not(.slick-initialized) {
+    display: flex;
+    overflow: hidden;
+    visibility: hidden;
+    padding: 0 40px;
+}
+section.comments .comment-slider:not(.slick-initialized) > div {
+    flex: 0 0 calc(100vw - 80px);
+}
+@media (min-width: 768px) {
+    section.comments .comment-slider:not(.slick-initialized) {
+        padding: 0 100px;
+    }
     section.comments .comment-slider:not(.slick-initialized) > div {
-        flex-basis: calc(100vw / 3);
+        flex-basis: calc((120vw - 200px) / 3);
     }
 }
 @media (min-width: 1200px) {
     section.comments .comment-slider:not(.slick-initialized) > div {
-        flex-basis: calc(100vw / 4);
+        flex-basis: calc((120vw - 200px) / 4);
     }
+}
+@media (min-width: 1600px) {
+    section.comments .comment-slider:not(.slick-initialized) > div {
+        flex-basis: calc((120vw - 200px) / 6);
+    }
+}
+
+/* Search dates sit in white inputs (Flowbite form base), but dark.css turns
+   .text-black peach (#f7bb8e), which is unreadable there. */
+#date-range-picker #datepicker-range-start,
+#date-range-picker #datepicker-range-end {
+    color: #171515 !important;
 }

@@ -8,37 +8,35 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="theme-color" content="#f7bb8e" />
 
-    <!-- Resource hints: warm up connections to third-party origins used below -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-    <link rel="preconnect" href="https://code.jquery.com" crossorigin />
-    <link rel="dns-prefetch" href="https://code.jquery.com" />
-    <link rel="preconnect" href="https://unpkg.com" crossorigin />
-    <link rel="dns-prefetch" href="https://unpkg.com" />
+    {{-- Resource hints: media (slider = LCP image) is served from S3. --}}
+    @php($mediaOrigin = parse_url(\Illuminate\Support\Facades\Storage::disk(config('media-library.disk_name'))->url('media'), PHP_URL_HOST))
+    @if($mediaOrigin)
+    <link rel="preconnect" href="https://{{ $mediaOrigin }}" />
+    @endif
 
     @stack('TopCss')
 
-    {{-- Formerly @import-ed from style.css / rtl.css (which chained the requests). Same
-         cascade position as before; select2 + flowbite are linked once, further down. --}}
+    {{-- Fonts + one bundled stylesheet (App\Support\CssBundle) in the original cascade
+         order: slick, fancybox, aos, style.css, flowbite, select2, Saudi Riyal font
+         (the "saudi_riyal" font-families used by the x-riyal component). --}}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap" rel="stylesheet" />
     @if(app()->getLocale() == 'ar')
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet" />
     @endif
-    <link href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" rel="stylesheet" />
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
-    <link href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('front/assets/css/style.css')) }}" rel="stylesheet" />
-    <link    href="{{ asset('assets/vendor/flowbite-2.5.1/flowbite.min.css') }}"  rel="stylesheet"  />
-    <link    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"   rel="stylesheet" />
-    {{-- Official Saudi Riyal symbol (Unicode U+20C1, SAMA 2025). Registers the
-         "saudi_riyal" / "saudi_riyal_bold" font-families used by the x-riyal component. --}}
-    <link    href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css"   rel="stylesheet" />
+    {{ \App\Support\CssBundle::tags('base', [
+        'vendor/slick-1.8.1/slick.css',
+        'vendor/fancybox-3.5.7/jquery.fancybox.min.css',
+        'vendor/aos-2.3.1/aos.css',
+        'css/style.css',
+        'vendor/flowbite-2.5.1/flowbite.min.css',
+        'vendor/select2-4.1.0-rc.0/select2.min.css',
+        'vendor/saudi-riyal-font-1.1.0/index.css',
+    ]) }}
     <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg')}}" />
     <link rel="icon" type="image/x-www-form ico" href="{{ asset('favicon.ico') }}" />
     <link rel="apple-touch-icon" href="{{ asset('assets/img/favicon.svg') }}" />
-    <script  type="text/javascript"    src="https://code.jquery.com/jquery-3.7.1.min.js"  ></script>
 
     
 
@@ -161,12 +159,10 @@ section.app.relative > div {
     </style>
 
 
-    @if(app()->getLocale() == 'ar')
-      <link    href="{{ asset('assets/css/rtl.css') }}?v={{ @filemtime(public_path('front/assets/css/rtl.css')) }}"   rel="stylesheet" />
-    @endif
-
-      <link    href="{{ asset('assets/css/custom.css') }}?v={{ @filemtime(public_path('front/assets/css/custom.css')) }}"   rel="stylesheet" />
-      <link    href="{{ asset('assets/css/dark.css') }}?v={{ @filemtime(public_path('front/assets/css/dark.css')) }}"   rel="stylesheet" />
+    {{ \App\Support\CssBundle::tags('theme-'.app()->getLocale(), array_merge(
+        app()->getLocale() == 'ar' ? ['css/rtl.css'] : [],
+        ['css/custom.css', 'css/dark.css'],
+    )) }}
 
     @stack('css')
 
