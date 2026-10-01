@@ -44,6 +44,19 @@
     .iti__country .iti__dial-code { direction: ltr; unicode-bidi: isolate; color: #6b7280; }
     /* Keep the flag box on the left and give the selected-country button room. */
     .iti__selected-country { direction: ltr; }
+    /* Give the input enough inline-start padding for the flag + separate dial code,
+       so the phone number never renders under/behind the country selector. The
+       widget may not add a --separate-dial-code modifier class in this version,
+       so target the input inside ANY .iti wrapper. */
+    #customerForm .iti input[type="tel"] {
+        padding-left: 5rem !important;
+        padding-right: 0.75rem !important;
+    }
+    /* Vertically center the flag/dial-code button against the h-12 input. */
+    #customerForm .iti__selected-country {
+        inset-inline-start: 0;
+        inset-inline-end: auto;
+    }
 </style>
 @endpush
 @section('content')
@@ -110,7 +123,7 @@
 
                        
                          
-                        <button class="h-12 bg-price rounded-lg col-span-2 font-semibold text-white">
+                        <button class="h-12 w-full bg-price rounded-lg col-span-2 mt-4 md:mt-2 font-semibold text-white">
                             {{__('customer.save')}}
                         </button>
                     </form>

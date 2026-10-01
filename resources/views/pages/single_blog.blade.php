@@ -25,23 +25,23 @@
         @endphp
         <ul class="social inline-block">
             <li class="inline-block">
-            <a href="https://www.facebook.com/sharer/sharer.php?u={{ $shareUrl }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-price rounded-lg relative hover:opacity-80 ease-in-out duration-300">
-            <img class="absolute" src="{{ asset('assets/img/facebook.svg') }}" alt="facebook">
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ $shareUrl }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
+            <img class="w-4 h-4 object-contain" src="{{ asset('assets/img/facebook.svg') }}" alt="facebook">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="https://twitter.com/share?url={{ $shareUrl }}&text={{ $shareText }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-price rounded-lg relative hover:opacity-80 ease-in-out duration-300">
-            <img class="absolute" src="{{ asset('assets/img/twitter.svg') }}" alt="twitter">
+            <a href="https://twitter.com/share?url={{ $shareUrl }}&text={{ $shareText }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
+            <img class="w-4 h-4 object-contain" src="{{ asset('assets/img/twitter.svg') }}" alt="twitter">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="{{ Config::get('settings.instagram') ?: '#' }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-price rounded-lg relative hover:opacity-80 ease-in-out duration-300">
-            <img class="absolute" src="{{ asset('assets/img/instagram.svg') }}" alt="instagram">
+            <a href="{{ Config::get('settings.instagram') ?: '#' }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
+            <img class="w-4 h-4 object-contain" src="{{ asset('assets/img/instagram.svg') }}" alt="instagram">
             </a>
             </li>
                                     <li class="inline-block">
-            <a href="https://www.linkedin.com/shareArticle?url={{ $shareUrl }}&title={{ $shareText }}" target="_blank" rel="noopener noreferrer" class="block w-8 h-8 bg-price rounded-lg relative hover:opacity-80 ease-in-out duration-300">
-            <img class="absolute" src="{{ asset('assets/img/linkedin.svg') }}" alt="linkedin">
+            <a href="https://www.linkedin.com/shareArticle?url={{ $shareUrl }}&title={{ $shareText }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-8 h-8 bg-price rounded-lg hover:opacity-80 ease-in-out duration-300">
+            <img class="w-4 h-4 object-contain" src="{{ asset('assets/img/linkedin.svg') }}" alt="linkedin">
             </a>
             </li>
             </ul>

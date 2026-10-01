@@ -12,11 +12,11 @@
                  margin-top: 80px;
                 margin-bottom: 80px;
                 width: 70%;">
-                <div class="flex items-center">
+                <div class="flex flex-wrap items-center gap-3">
                     <a href="https://apps.apple.com/us/app/dyafa-%D8%B6%D9%8A%D8%A7%D9%81%D8%A9/id6711337244">
                         <img
                             src="{{ asset('assets/img/apple.svg') }}"
-                            class="mr-3 rtl:ml-3 w-40 lg:w-auto"
+                            class="w-32 sm:w-40 lg:w-auto"
                             alt="{{ __('site.download_apple') }}"
                             loading="lazy"
                         />
@@ -24,7 +24,7 @@
                     <a  href="https://play.google.com/store/apps/details?id=co.Placess.app">
                         <img
                             src="{{ asset('assets/img/android.svg') }}"
-                            class="mr-3 rtl:ml-3 w-40 lg:w-auto"
+                            class="w-32 sm:w-40 lg:w-auto"
                             alt="{{ __('site.download_google') }}"
                             loading="lazy"
                         />

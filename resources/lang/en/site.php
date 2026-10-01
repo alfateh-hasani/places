@@ -133,6 +133,8 @@ return [
     'code' => 'Code',
     'logo' => 'Logo',
     'language' => 'Language',
+    'close' => 'Close',
+    'back' => 'Back',
     'mail_icon' => 'Mail Icon',
     'phone_icon' => 'Phone Icon',
     'address_icon' => 'Address Icon',

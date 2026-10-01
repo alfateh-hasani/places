@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <header class="fixed w-full py-4  top-0 z-50 border border-blackopacity lg:hidden" data-aos="zoom-in">
   <div class="container">
    
-    <button type="button" class="cursor-pointer float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5 login-button">
+    <button type="button" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-center font-normal text-xs text-white uppercase flex items-center justify-center login-button">
       @auth('customer') {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}    @endauth
     </button>
     
@@ -156,14 +156,14 @@ document.addEventListener('DOMContentLoaded', function() {
               <img class="h-7" src="{{ asset('assets/img/places-logo-dark.png') }}" alt="{{ config('app.name') }}" />
           </a>
       </div>
-      <button type="button" class="cursor-pointer float-right py-1 menu-button">
-          <img src="{{ asset('assets/img/menu.svg') }}" />
+      <button type="button" class="cursor-pointer float-right p-2 menu-button">
+          <img class="w-6 h-6" src="{{ asset('assets/img/menu.svg') }}" />
       </button>
       <div class="clear-both"></div>
   </div>
-  <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 right-menu">
+  <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 pb-20 overflow-y-auto right-menu">
       <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
-          <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
+          <svg style="fill: #f7bb8e;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
       <h6 class="font-semibold text-xl text-black mb-2">
@@ -172,6 +172,15 @@ document.addEventListener('DOMContentLoaded', function() {
       <ul>
           @include('common.parts.nav-links', ['liClass' => 'mb-5'])
       </ul>
+      <div class="mt-4">
+          @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
+              @continue($localeCode == app()->getLocale())
+              <a href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" class="inline-flex items-center gap-2 font-normal text-base text-black hover:text-price ease-in-out duration-300">
+                  <img src="{{ asset('assets/img/lang.svg') }}" class="inline-block" alt="{{ __('site.language') }}" />
+                  {{ $properties['native'] ?? strtoupper($localeCode) }}
+              </a>
+          @endforeach
+      </div>
       <div class="mt-2">
           <h6 class="font-semibold text-xl text-black"> @lang('site.contact')</h6>
           <ul class="mt-4 lg:mt-10">
@@ -182,9 +191,9 @@ document.addEventListener('DOMContentLoaded', function() {
         </ul>
       </div>
   </div>
-  <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 left-menu">
+  <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 pb-20 overflow-y-auto left-menu">
       <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
-          <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
+          <svg style="fill: #f7bb8e;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
       @auth('customer')
@@ -203,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="login text-center relative">
           <ul class="w-full">
             @auth('customer')
-              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" /> @lang('site.logout')</a></li>
+              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block py-2 px-4 mt-1 rounded-md border border-price text-white font-normal text-base"><svg class="w-5 h-5 inline-block" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="m12 12.75c-3.17 0-5.75-2.58-5.75-5.75s2.58-5.75 5.75-5.75 5.75 2.58 5.75 5.75-2.58 5.75-5.75 5.75zm0-10c-2.34 0-4.25 1.91-4.25 4.25s1.91 4.25 4.25 4.25 4.25-1.91 4.25-4.25-1.91-4.25-4.25-4.25z"/><path d="m20.5901 22.75c-.41 0-.75-.34-.75-.75 0-3.45-3.5199-6.25-7.8399-6.25-4.32005 0-7.84004 2.8-7.84004 6.25 0 .41-.34.75-.75.75s-.75-.34-.75-.75c0-4.27 4.18999-7.75 9.34004-7.75 5.15 0 9.3399 3.48 9.3399 7.75 0 .41-.34.75-.75.75z"/></svg> @lang('site.logout')</a></li>
               <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
                 @csrf
               </form>

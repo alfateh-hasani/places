@@ -33,8 +33,8 @@
                     <ul>
                         <li>
                             <a class="border border-border rounded-xl p-6 mb-2 block">
-                                <button class="float-right"><img src="assets/img/cancel.svg" /></button>
-                                <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
+                                <button type="button" aria-label="{{ __('site.close') }}" class="ltr:float-right rtl:float-left p-2"><img class="w-4 h-4" src="{{ asset('assets/img/cancel.svg') }}" /></button>
+                                <img class="ltr:float-left rtl:float-right me-3" src="{{ asset('assets/img/notification-profile.svg') }}" />
                                 <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
                                 <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>
@@ -42,8 +42,8 @@
                         </li>
                         <li>
                             <a class="border border-border rounded-xl p-6 mb-2 block">
-                                <button class="float-right"><img src="assets/img/cancel.svg" /></button>
-                                <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
+                                <button type="button" aria-label="{{ __('site.close') }}" class="ltr:float-right rtl:float-left p-2"><img class="w-4 h-4" src="{{ asset('assets/img/cancel.svg') }}" /></button>
+                                <img class="ltr:float-left rtl:float-right me-3" src="{{ asset('assets/img/notification-profile.svg') }}" />
                                 <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
                                 <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>
@@ -51,8 +51,8 @@
                         </li>
                         <li>
                             <a class="border border-border rounded-xl p-6 mb-2 block">
-                                <button class="float-right"><img src="assets/img/cancel.svg" /></button>
-                                <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
+                                <button type="button" aria-label="{{ __('site.close') }}" class="ltr:float-right rtl:float-left p-2"><img class="w-4 h-4" src="{{ asset('assets/img/cancel.svg') }}" /></button>
+                                <img class="ltr:float-left rtl:float-right me-3" src="{{ asset('assets/img/notification-profile.svg') }}" />
                                 <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
                                 <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>
@@ -60,8 +60,8 @@
                         </li>
                         <li>
                             <a class="border border-border rounded-xl p-6 mb-2 block">
-                                <button class="float-right"><img src="assets/img/cancel.svg" /></button>
-                                <img class="float-left mr-3" src="assets/img/notification-profile.svg" />
+                                <button type="button" aria-label="{{ __('site.close') }}" class="ltr:float-right rtl:float-left p-2"><img class="w-4 h-4" src="{{ asset('assets/img/cancel.svg') }}" /></button>
+                                <img class="ltr:float-left rtl:float-right me-3" src="{{ asset('assets/img/notification-profile.svg') }}" />
                                 <p class="text-sm">{{ __('customer.notification_confirm_email') }}</p>
                                 <p class="text-xs text-reviews">{{ __('customer.notification_sample_date') }}</p>
                                 <div class="clear-both"></div>

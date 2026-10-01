@@ -4,24 +4,16 @@
 @section('content')
 
 <h1 class="sr-only">{{ __('site.search_results') }}</h1>
-<section class="container py-8 lg:hidden cursor-pointer search-button" data-aos="zoom-in">
-    <div class="px-6 py-3 bg-white shadow-xl rounded-full border border-border">
-        <img src="{{asset('assets/img/search-black.svg')}}" class="float-left rtl:float-right w-4 mr-5 py-2" />
-        <div class="float-left rtl:float-right">
-            <p class="font-semibold text-xs">
-                {{ __('site.search') }}
-            </p>
-            <p class="text-sm">
-                {{ __('site.search_mobile_desc') }}
-            </p>
-        </div>
-        <div class="clear-both"></div>
+<section class="container py-6 lg:hidden cursor-pointer search-button">
+    <div class="flex items-center gap-3 px-5 py-4 bg-white shadow-xl rounded-full border border-border">
+        <img src="{{asset('assets/img/search-black.svg')}}" class="w-5 shrink-0" />
+        <p class="text-sm text-gray-500 truncate">{{ __('site.search_mobile_desc') }}</p>
     </div>
 </section>
 
 
-<section class="search lg:container z-40 xl:px-40 lg:py-16 h-[100vh] lg:h-auto fixed lg:relative rtl:right-0 left-0 bottom-0 right-0 bg-blackopacity lg:bg-[transparent]" data-aos="zoom-out">
-    <form action="{{ route('apartments.search') }}" method="GET" class="absolute lg:relative bottom-0 lg:bottom-auto rtl:right-0 left-0 margin-0 w-full lg:w-auto lg:grid grid-cols-2 lg:grid-cols-5 gap-1 max-w-full py-5 lg:pl-10 pl-5 pr-5 bg-white shadow-xl rounded-xl lg:rounded-full border border-border" id="date-range-picker">
+<section class="search lg:container z-40 xl:px-40 lg:py-16 h-[100vh] lg:h-auto fixed lg:relative rtl:right-0 left-0 bottom-0 right-0 bg-blackopacity lg:bg-[transparent]">
+    <form action="{{ route('apartments.search') }}" method="GET" class="absolute lg:relative bottom-0 lg:bottom-auto rtl:right-0 left-0 margin-0 w-full lg:w-auto max-h-[90vh] overflow-y-auto lg:max-h-none lg:overflow-visible lg:grid grid-cols-2 lg:grid-cols-5 gap-1 max-w-full py-5 lg:pl-10 pl-5 pr-5 bg-white shadow-xl rounded-xl lg:rounded-full border border-border" id="date-range-picker">
       {{-- Preserve the applied filters when re-searching with new dates/city/guests. --}}
       @foreach (['price_min', 'price_max', 'area_min', 'area_max', 'rate'] as $keepKey)
           @if (request()->filled($keepKey))
@@ -119,13 +111,13 @@
             </p>
             <div class="inline-block">
               <div class="relative flex items-center">
-                <button type="button" id="decrement-button" data-input-counter-decrement="counter-input" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <button type="button" id="decrement-button" data-input-counter-decrement="counter-input" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h16" />
                   </svg>
                 </button>
                 <input type="text" id="counter-input" name="adults" data-input-counter class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1" value="{{ old('adults', request('adults', 1)) }}" required />
-                <button type="button" id="increment-button" data-input-counter-increment="counter-input" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <button type="button" id="increment-button" data-input-counter-increment="counter-input" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16" />
                   </svg>
@@ -141,13 +133,13 @@
             </p>
             <div class="inline-block">
               <div class="relative flex items-center">
-                <button type="button" id="decrement-button" data-input-counter-decrement="counter-input1" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <button type="button" id="decrement-button" data-input-counter-decrement="counter-input1" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h16" />
                   </svg>
                 </button>
                 <input type="text" id="counter-input1" name="children" data-input-counter class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1" value="{{ old('children', request('children', 0)) }}" required />
-                <button type="button" id="increment-button" data-input-counter-increment="counter-input1" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <button type="button" id="increment-button" data-input-counter-increment="counter-input1" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16" />
                   </svg>
@@ -158,6 +150,11 @@
         </ul>
       </div>
       
+      {{-- On mobile the filter controls are moved here (into the search form) so search
+           + filters are one panel with one button. See the script below. Desktop keeps
+           the filter bar separate. --}}
+      <div class="col-span-2 lg:hidden" id="mobile-filter-slot"></div>
+
       <!-- زر البحث -->
       <div class="lg:col-span-1 col-span-2">
         <button type="submit" class="bg-price text-white w-full h-11 text-center rounded-lg lg:rounded-full hover:bg-black ease-in-out duration-200">
@@ -294,7 +291,35 @@ $('.grid-container .grid-items').infiniteScroll({
             }
         });
     })();
-</script>    
+</script>
+
+<script>
+    // Mobile only: merge search + filters into one panel. Move the existing filter
+    // controls into the search drawer form (so they submit with the single "بحث"
+    // button) and hide the separate filter bar. Desktop is untouched. Done by moving
+    // the DOM (not duplicating) so there are no duplicate IDs and the Flowbite
+    // dropdowns / range sliders keep their already-attached handlers.
+    (function () {
+        if (window.innerWidth >= 1024) { return; }
+        document.addEventListener('DOMContentLoaded', function () {
+            var filterForm = document.getElementById('apartment-filter-form');
+            var slot = document.getElementById('mobile-filter-slot');
+            if (!filterForm || !slot) { return; }
+            var controls = filterForm.querySelector('.buttons');
+            if (!controls) { return; }
+
+            // Make the controls sit as a full-width block inside the drawer.
+            controls.classList.remove('float-left', 'rtl:float-right', 'mb-2', 'xl:mb-0');
+            controls.classList.add('w-full');
+            slot.appendChild(controls);
+
+            // Hide the now-empty standalone filter bar (incl. its apply button); the
+            // drawer's search button submits everything.
+            var filterSection = filterForm.closest('section.filter');
+            if (filterSection) { filterSection.classList.add('hidden'); }
+        });
+    })();
+</script>
 
 
 @endpush

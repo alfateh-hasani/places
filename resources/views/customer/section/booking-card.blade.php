@@ -1,11 +1,11 @@
 <div class="bg-feature border border-feature-border rounded-xl p-4 relative mb-4 reservations">
     <a href="{{route('customer.booking.details',$item->number_of_booking)}}" >
         @if($item->apartment)
-            <img loading="lazy" class="mb-4 xl:mb-0 ltr:float-left rtl:float-right w-full xl:w-56 h-44 rounded-xl me-4 object-cover"
+            <img loading="lazy" class="mb-4 xl:mb-0 ltr:xl:float-left rtl:xl:float-right w-full xl:w-56 h-44 rounded-xl xl:me-4 object-cover"
                 src="{{getImage($item->apartment,'image')}}" />
         @endif
     </a>
-    <div style="    min-width: 30%;" class="ltr:float-right rtl:float-left border-s border-feature-border px-3 py-1">
+    <div class="w-full xl:w-auto xl:min-w-[30%] mb-3 xl:mb-0 ltr:xl:float-right rtl:xl:float-left xl:border-s border-feature-border px-3 py-1">
         <a  href="{{route('customer.booking.details',$item->number_of_booking)}}" >
             <p class="text-sm sm:text-base font-semibold text-lg mb-1">{{__('apartment.booking_summary')}}</p>
         </a>

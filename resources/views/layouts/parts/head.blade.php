@@ -175,6 +175,16 @@ section.app.relative > div {
 }
 }
 
+      /* Reviews strip: the left/right fade masks are 100px each, which on a
+         phone cover most of a ~375px-wide card and hide the review text.
+         Shrink them on small screens so the review stays readable. */
+      @media (max-width: 768px) {
+        section.comments .comment-list:before,
+        section.comments .comment-list:after {
+          width: 24px;
+        }
+      }
+
       /* Saudi Riyal symbol (U+20C1). Rendered by the x-riyal component and
          window.formatSAR(). Uses the "saudi_riyal" webfont loaded in the page
          head; inherits color/size from the surrounding text and is nudged to sit
