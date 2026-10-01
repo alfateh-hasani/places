@@ -23,7 +23,7 @@
     <link rel="apple-touch-icon" href="{{ asset('assets/img/favicon.svg') }}" />
 
     {{-- Stylesheets (App\Support\CssBundle), in the original cascade order:
-         self-hosted fonts, slick, fancybox, aos, style.css, flowbite, select2,
+         self-hosted fonts, slick, fancybox, aos-lite, style.css, flowbite, select2,
          Saudi Riyal font ("saudi_riyal" families for x-riyal), css/head.css,
          rtl (ar), custom, dark, page @push('css'), then Tailwind last (where
          the former Play CDN injected it). Pages without their own CSS get it
@@ -37,9 +37,9 @@
             [
                 'vendor/slick-1.8.1/slick.css',
                 'vendor/fancybox-3.5.7/jquery.fancybox.min.css',
-                'vendor/aos-2.3.1/aos.css',
+                'css/aos-lite.css',
                 'css/style.css',
-                'vendor/flowbite-2.5.1/flowbite.min.css',
+                'vendor/flowbite-2.5.1/flowbite.purged.css',
                 'vendor/select2-4.1.0-rc.0/select2.min.css',
                 'vendor/saudi-riyal-font-1.1.0/index.css',
                 'css/head.css',

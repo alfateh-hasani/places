@@ -9,7 +9,6 @@
   <script type="text/javascript"  src="{{ asset('assets/vendor/slick-1.8.1/slick.min.js') }}"  ></script>
   <script  type="text/javascript"  src="{{ asset('assets/vendor/fancybox-3.5.7/jquery.fancybox.min.js') }}" ></script>
   <script  type="text/javascript" src="{{ asset('assets/vendor/flowbite-2.5.1/flowbite.min.js') }}"  ></script>
-  <script type="text/javascript" src="{{ asset('assets/vendor/aos-2.3.1/aos.js') }}"></script>
   <script type="text/javascript" src="{{ asset('assets/js/jquery-searchbox.js')}}"></script>
   <script type="text/javascript" src="{{ asset('assets/js/tel.js') }}?v={{ @filemtime(public_path('front/assets/js/tel.js')) }}"></script>
   <script type="text/javascript" src="{{ asset('assets/js/main.js') }}?v={{ @filemtime(public_path('front/assets/js/main.js')) }}"></script>

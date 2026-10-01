@@ -1,6 +1,70 @@
 /*global $, JQuery */
 
-AOS.init();
+revealOnScroll();
+
+/**
+ * Lightweight stand-in for AOS.init() with its defaults (offset 120px, 400ms
+ * "ease", once: false). Like AOS it measures layout offsets (ignoring the
+ * transforms the animations start from): an element animates in once the page
+ * is scrolled past its top + 120px - viewport height, and back out above that.
+ */
+function revealOnScroll() {
+    var elements = Array.prototype.slice.call(document.querySelectorAll("[data-aos]"));
+    if (!elements.length) {
+        return;
+    }
+    document.body.setAttribute("data-aos-easing", "ease");
+    document.body.setAttribute("data-aos-duration", "400");
+    document.body.setAttribute("data-aos-delay", "0");
+
+    var triggerPoints = [];
+    var scheduled = false;
+
+    function offsetTop(element) {
+        var top = 0;
+        while (element) {
+            top += element.offsetTop - (element.tagName !== "BODY" ? element.scrollTop : 0);
+            element = element.offsetParent;
+        }
+        return top;
+    }
+
+    function measure() {
+        triggerPoints = elements.map(function (element) {
+            return offsetTop(element) + 120 - window.innerHeight;
+        });
+        update();
+    }
+
+    function update() {
+        scheduled = false;
+        var scrollTop = window.pageYOffset;
+        elements.forEach(function (element, index) {
+            if (scrollTop > triggerPoints[index]) {
+                element.classList.add("aos-animate");
+            } else {
+                element.classList.remove("aos-animate");
+            }
+        });
+    }
+
+    function scheduleUpdate() {
+        if (!scheduled) {
+            scheduled = true;
+            window.requestAnimationFrame(update);
+        }
+    }
+
+    elements.forEach(function (element) {
+        element.classList.add("aos-init");
+    });
+    measure();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", function () {
+        window.requestAnimationFrame(measure);
+    }, { passive: true });
+    window.addEventListener("load", measure);
+}
 
 /**
  * Run init() for each matched element once it comes within 300px of the
