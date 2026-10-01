@@ -4,7 +4,7 @@
 
   <script type="text/javascript"  src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"  ></script>
   <script  type="text/javascript"  src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
-  <script  type="text/javascript" src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"  ></script>
+  <script  type="text/javascript" src="{{ asset('assets/vendor/flowbite-2.5.1/flowbite.min.js') }}"  ></script>
   <script type="text/javascript" src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script type="text/javascript" src="{{ asset('assets/js/jquery-searchbox.js')}}"></script>
   <script type="text/javascript" src="{{ asset('assets/js/tel.js') }}?v={{ @filemtime(public_path('front/assets/js/tel.js')) }}"></script>
