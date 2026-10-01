@@ -6,7 +6,7 @@
 <h1 class="sr-only">{{ __('site.search_results') }}</h1>
 <section class="container py-8 lg:hidden cursor-pointer search-button" data-aos="zoom-in">
     <div class="px-6 py-3 bg-white shadow-xl rounded-full border border-border">
-        <img src="{{asset('assets/img/search-black.svg')}}" class="float-left rtl:float-right w-4 mr-5 py-2" />
+        <img src="{{asset('assets/img/search-black.svg')}}" class="float-left rtl:float-right w-4 mr-5 py-2" width="16" height="16" />
         <div class="float-left rtl:float-right">
             <p class="font-semibold text-xs">
                 {{ __('site.search') }}

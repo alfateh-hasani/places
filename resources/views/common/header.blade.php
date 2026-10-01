@@ -1,7 +1,7 @@
 <div id="download-app-banner" class="fixed bottom-0 left-0 right-0  shadow-[0_-8px_25px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 ease-in-out md:hidden z-50">
     <div class="relative px-4 py-3">
         <!-- Close Button -->
-        <button id="close-banner" class="absolute top-1 left-2 rtl:right-2 rtl:left-auto text-gray-400 hover:text-gray-600 p-2">
+        <button type="button" id="close-banner" aria-label="{{ __('site.close') }}" class="absolute top-1 left-2 rtl:right-2 rtl:left-auto text-gray-400 hover:text-gray-600 p-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
@@ -11,7 +11,7 @@
         <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse">
             <!-- App Icon -->
             <div class="flex-shrink-0">
-                <img src="{{ asset('assets/img/places-logo-dark.webp') }}" alt="Dyafa App" loading="lazy" class="w-16 h-16 rounded-xl">
+                <img src="{{ asset('assets/img/favicon.svg') }}" alt="Dyafa App" width="64" height="64" loading="lazy" class="w-16 h-16 rounded-xl">
             </div>
  
             <!-- Text Content -->
@@ -24,11 +24,11 @@
             <div class="flex flex-col space-y-2">
                 <a href="https://apps.apple.com/us/app/dyafa-%D8%B6%D9%8A%D8%A7%D9%81%D8%A9/id6711337244"
                    class="block w-32" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ asset('img/AppStore.svg') }}" alt="App Store" class="w-full">
+                    <img src="{{ asset('img/AppStore.svg') }}" alt="App Store" class="w-full" width="128" height="37">
                 </a>
                 <a href="https://play.google.com/store/apps/details?id=co.Placess.app"
                    class="block w-32" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ asset('img/GooglePlay.svg') }}" alt="Google Play" class="w-full">
+                    <img src="{{ asset('img/GooglePlay.svg') }}" alt="Google Play" class="w-full" width="128" height="37">
                 </a>
             </div>
         </div>
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <header class="fixed w-full py-4  top-0 z-50 border border-blackopacity lg:hidden" data-aos="zoom-in">
   <div class="container">
    
-    <button type="button" class="cursor-pointer float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5 login-button">
+    <button type="button" aria-label="{{ auth('customer')->check() ? __('site.profile') : __('site.login') }}" class="cursor-pointer float-left w-7 h-7 bg-gri rounded-full text-center font-normal text-xs text-white uppercase py-1.5 login-button">
       @auth('customer') {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}    @endauth
     </button>
     
@@ -157,12 +157,12 @@ document.addEventListener('DOMContentLoaded', function() {
           </a>
       </div>
       <button type="button" class="cursor-pointer float-right py-1 menu-button">
-          <img src="{{ asset('assets/img/menu.svg') }}" alt="{{ __('site.menu') }}" />
+          <img src="{{ asset('assets/img/menu.svg') }}" alt="{{ __('site.menu') }}" width="28" height="19" />
       </button>
       <div class="clear-both"></div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 right-menu">
-      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
+      <button type="button" aria-label="{{ __('site.close') }}" class="absolute ltr:right-5 rtl:left-5 top-5">
           <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 left-menu">
-      <button type="button" class="absolute ltr:right-5 rtl:left-5 top-5">
+      <button type="button" aria-label="{{ __('site.close') }}" class="absolute ltr:right-5 rtl:left-5 top-5">
           <svg style="fill: #fff;" height="40" viewBox="0 0 32 32" width="40" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 22"><path d="m21 12.46-3.59 3.54 3.59 3.54a1 1 0 0 1 0 1.46 1 1 0 0 1 -.71.29 1 1 0 0 1 -.7-.29l-3.59-3.59-3.54 3.59a1 1 0 0 1 -.7.29 1 1 0 0 1 -.71-.29 1 1 0 0 1 0-1.41l3.54-3.59-3.54-3.54a1 1 0 0 1 1.41-1.41l3.54 3.54 3.54-3.54a1 1 0 0 1 1.46 1.41zm4.9 13.44a14 14 0 1 1 0-19.8 14 14 0 0 1 0 19.8zm-1.41-18.39a12 12 0 1 0 0 17 12 12 0 0 0 0-17z"></path></g>
           </svg>
       </button>
@@ -203,13 +203,13 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="login text-center relative">
           <ul class="w-full">
             @auth('customer')
-              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="" /> @lang('site.logout')</a></li>
+              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="" width="20" height="20" /> @lang('site.logout')</a></li>
               <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
                 @csrf
               </form>
             @else
-              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" alt="" /> @lang('site.login')</a></li>
-              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="" /> @lang('site.sign_up_new')</a></li>
+              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/login.svg') }}" class="w-5 inline-block" alt="" width="20" height="20" /> @lang('site.login')</a></li>
+              <li><a data-src="#popup-5" data-fancybox dont-close-click-outside class="block py-1 px-4 mt-1 rounded-md border border-border font-normal text-base"><img src="{{ asset('assets/img/user.svg') }}" class="w-5 inline-block" alt="" width="20" height="20" /> @lang('site.sign_up_new')</a></li>
             @endauth
           </ul>
       </div>

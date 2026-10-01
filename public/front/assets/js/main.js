@@ -4,16 +4,25 @@ AOS.init();
 
 $(document).ready(function () {
 
-    // Slides hidden from assistive tech must not contain tabbable links.
+    // Keep slick's accessibility state truthful: only visible (.slick-active)
+    // slides are exposed, and nothing inside a hidden slide - including a slide
+    // that is itself a link - stays in the tab order.
     $(document).on("init reInit afterChange setPosition", function (event, slick) {
         if (!slick || !slick.$slider) {
             return;
         }
         var focusable = "a, button, input, select, textarea";
-        $(".slick-slider [aria-hidden='true']").find(focusable).attr("tabindex", "-1");
-        $(".slick-slider [aria-hidden='false']").find(focusable).filter(function () {
-            return !$(this).closest("[aria-hidden='true']").length;
-        }).removeAttr("tabindex");
+        $(".slick-slider .slick-slide").each(function () {
+            $(this).attr("aria-hidden", $(this).hasClass("slick-active") ? "false" : "true");
+        });
+        $(".slick-slider").find(focusable).each(function () {
+            var $element = $(this);
+            if ($element.closest("[aria-hidden='true']").length) {
+                $element.attr("tabindex", "-1");
+            } else if ($element.attr("tabindex") === "-1") {
+                $element.removeAttr("tabindex");
+            }
+        });
     });
 
     $(".select2").select2();

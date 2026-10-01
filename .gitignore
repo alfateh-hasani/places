@@ -25,3 +25,4 @@ artisan
 *firebase-adminsdk*.json
 *-credentials.json
 *service-account*.json
+/public/front/assets/css/bundles/
