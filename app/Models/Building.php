@@ -92,11 +92,31 @@ class Building extends Model implements HasMedia
             ->format('webp')                         // Convert to WebP format
             ->nonQueued();                           // Process synchronously (optional)
 
+        $this->addMediaConversion('card')
+            ->fit(Fit::Crop, 600, desiredHeight: 600)
+            ->quality(75)
+            ->format('webp')
+            ->nonQueued();
     }
 
     public function getImageGridAttribute()
     {
         return $this->getFirstMediaUrl('image', 'grid');
+    }
+
+    /**
+     * Smaller square crop for the website cards; falls back to the grid size
+     * until the conversion has been generated.
+     */
+    public function getImageCardAttribute(): string
+    {
+        $media = $this->getFirstMedia('image');
+
+        if (! $media) {
+            return '';
+        }
+
+        return $media->hasGeneratedConversion('card') ? $media->getUrl('card') : $this->image_grid;
     }
 
     public function getImageAttribute()

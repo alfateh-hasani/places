@@ -558,6 +558,8 @@
 </div>
 @endsection
 @push('js')
+{{-- jQuery UI is only needed here, for the #tabs widget initialised in main.js. --}}
+<script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js"></script>
 @include('customer.section.script-form')
 @include('apartment.js')
 
