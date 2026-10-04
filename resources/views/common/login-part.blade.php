@@ -196,7 +196,7 @@ div#popup-5 .fancybox-content {
 }
 
 #countriesDropdown {
-        
+
     z-index: 99999;
     position: relative;
     overflow: visible;
@@ -207,8 +207,14 @@ div#popup-5 {
     overflow: visible !important;
 }
 .iti__country-list {
-    
+
     left: 0 !important;
+}
+
+/* Cap the list height so it scrolls inside the dropdown instead of expanding to
+   the full country list — which blew the modal/page height on mobile. */
+#countriesDropdown .iti__country-list {
+    max-height: 220px;
 }
 
 .iti.iti--container {
@@ -272,6 +278,10 @@ const iti = window.intlTelInput(phoneInput, {
     autoFormat: true,
     preferredCountries: ["sa", "ae", "kw", "bh", "om", "qa"],
     dropdownContainer: document.getElementById('countriesDropdown'),
+    // Keep the normal inline dropdown on phones too. Without this, intl-tel-input
+    // switches to its fullscreen-popup mode on touch/narrow screens (a grey
+    // rgba(0,0,0,.5) overlay) that broke the modal layout.
+    useFullscreenPopup: false,
 });
 
 // تحديث التحقق من صحة رقم الهاتف

@@ -24,8 +24,14 @@ class ContactUsRequest extends FormRequest
      */
     public function rules()
     {
+        // All `contact_us` columns are NOT NULL, so every field is required —
+        // otherwise a blank field inserts null and the DB rejects it with a 500.
         return [
-            // 'name' => 'required|min:5|max:255'
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:30',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string|max:5000',
         ];
     }
 
@@ -37,7 +43,11 @@ class ContactUsRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'name' => 'الاسم',
+            'email' => 'البريد الإلكتروني',
+            'phone' => 'رقم الهاتف',
+            'subject' => 'الموضوع',
+            'message' => 'الرسالة',
         ];
     }
 

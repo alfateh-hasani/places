@@ -48,6 +48,25 @@
             </a>
         </li>
         <li>
+            @php $unreadNotifications = $customer->unreadWebNotifications()->count(); @endphp
+            <a href="{{route('customer.notifications')}}" class="flex items-center py-4 {{request()->routeIs('customer.notifications') ?'text-price' :''}}">
+                <span class="inline-block w-6">
+                    <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 17.997 19.86">
+                        <g transform="translate(-3.9 -2.4)">
+                            <path d="M18.5,8.6a5.6,5.6,0,1,0-11.2,0c0,6.532-2.8,8.4-2.8,8.4H21.3s-2.8-1.866-2.8-8.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/>
+                            <path d="M18.634,31.5a1.866,1.866,0,0,1-3.229,0" transform="translate(-4.121 -10.77)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/>
+                        </g>
+                    </svg>
+                </span>
+                <p class="ms-4 font-normal text-base">
+                    {{__('site.notifications')}}
+                </p>
+                @if ($unreadNotifications)
+                    <span class="ms-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-price text-white text-xs font-semibold">{{ $unreadNotifications }}</span>
+                @endif
+            </a>
+        </li>
+        <li>
             <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"  class="block py-3 bg-[#fdede9] hover:bg-[#fbdbd1] text-center rounded-lg text-[#ef552c] font-medium ease-in-out duration-300 mt-20">
                 <div class="inline-block w-6">
                     <svg class="inline-block" xmlns="http://www.w3.org/2000/svg" width="17.501" height="17.5" viewBox="0 0 17.501 17.5">
