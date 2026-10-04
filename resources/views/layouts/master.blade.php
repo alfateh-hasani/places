@@ -19,6 +19,6 @@ $locale = app()->getLocale();
     </main>
     @include('common.footer')
     @include('layouts.parts.js')
-    <!-- This site is converting visitors into subscribers and customers with https://respond.io --><script id="respondio__widget" src="https://cdn.respond.io/webchat/widget/widget.js?cId=05e70dbc76441e5ec52377f51a4de7e"></script><!-- https://respond.io -->
+    <!-- This site is converting visitors into subscribers and customers with https://respond.io --><script id="respondio__widget" src="https://cdn.respond.io/webchat/widget/widget.js?cId=f7f68f240328651eb8c2d3d008a9cd4"></script><!-- https://respond.io -->
   </body>
 </html>
