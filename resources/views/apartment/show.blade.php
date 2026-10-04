@@ -184,7 +184,7 @@
                 <div class="tabs" id="tabs">
                     <ul class="buttons whitespace-nowrap overflow-x-auto xl:overflow-visible">
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block bg-price" href="#tabs-1">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block bg-price" href="#tabs-1">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" id="building" xmlns="http://www.w3.org/2000/svg" width="17.371" height="18.707" viewBox="0 0 17.371 18.707">
                                     <path id="Path_1364" data-name="Path 1364" d="M15.354,4H8A2,2,0,0,0,6,6V20.7a2,2,0,0,0,2,2H21.367a2,2,0,0,0,2-2V13.354a2,2,0,0,0-2-2H17.358V6A2,2,0,0,0,15.354,4ZM6.668,20.7V6A1.336,1.336,0,0,1,8,4.668h7.349A1.336,1.336,0,0,1,16.69,6V22.039H14.017V17.7a.334.334,0,0,0-.334-.334H9.675a.334.334,0,0,0-.334.334v4.343H8A1.336,1.336,0,0,1,6.668,20.7Zm3.341,1.336V18.031h3.341v4.009ZM21.367,12.017A1.336,1.336,0,0,1,22.7,13.354V20.7a1.336,1.336,0,0,1-1.336,1.336H17.358V12.017Z" transform="translate(-6 -4)" fill="currentColor"/>
                                     <path id="Path_1365" data-name="Path 1365" d="M12.334,12H13.67A.334.334,0,0,0,14,11.67V10.334A.334.334,0,0,0,13.67,10H12.334a.334.334,0,0,0-.334.334V11.67A.334.334,0,0,0,12.334,12Zm.334-1.336h.668v.668h-.668Zm-.334,4.677H13.67A.334.334,0,0,0,14,15.011V13.675a.334.334,0,0,0-.334-.334H12.334a.334.334,0,0,0-.334.334v1.336A.334.334,0,0,0,12.334,15.345Zm.334-1.336h.668v.668h-.668Zm1,4.677A.334.334,0,0,0,14,18.352V17.015a.334.334,0,0,0-.334-.334H12.334a.334.334,0,0,0-.334.334v1.336a.334.334,0,0,0,.334.334Zm-1-1.336h.668v.668h-.668ZM17.679,12h1.336a.334.334,0,0,0,.334-.334V10.334A.334.334,0,0,0,19.015,10H17.679a.334.334,0,0,0-.334.334V11.67A.334.334,0,0,0,17.679,12Zm.334-1.336h.668v.668h-.668Zm-.334,4.677h1.336a.334.334,0,0,0,.334-.334V13.675a.334.334,0,0,0-.334-.334H17.679a.334.334,0,0,0-.334.334v1.336A.334.334,0,0,0,17.679,15.345Zm.334-1.336h.668v.668h-.668Zm-.334,4.677h1.336a.334.334,0,0,0,.334-.334V17.015a.334.334,0,0,0-.334-.334H17.679a.334.334,0,0,0-.334.334v1.336A.334.334,0,0,0,17.679,18.686Zm.334-1.336h.668v.668h-.668Zm5.679,2h1.336a.334.334,0,0,0,.334-.334V17.683a.334.334,0,0,0-.334-.334H23.692a.334.334,0,0,0-.334.334V19.02A.334.334,0,0,0,23.692,19.354Zm.334-1.336h.668v.668h-.668Zm-.334,4.677h1.336a.334.334,0,0,0,.334-.334V21.024a.334.334,0,0,0-.334-.334H23.692a.334.334,0,0,0-.334.334V22.36A.334.334,0,0,0,23.692,22.694Zm.334-1.336h.668v.668h-.668Z" transform="translate(-9.996 -7.996)" fill="currentColor"/>
@@ -195,7 +195,7 @@
                             </a>
                         </li>
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-2">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-2">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" xmlns="http://www.w3.org/2000/svg" width="20.671" height="19.707" viewBox="0 0 20.671 19.707">
                                     <path id="Icon_feather-star" data-name="Icon feather-star" d="M12.836,3l3.039,6.157,6.8.993-4.918,4.79,1.161,6.767-6.078-3.2-6.078,3.2L7.918,14.94,3,10.151l6.8-.993Z" transform="translate(-2.5 -2.5)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
                                 </svg>
@@ -205,7 +205,7 @@
                             </a>
                         </li>
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-3">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-3">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" xmlns="http://www.w3.org/2000/svg" width="16.306" height="19.707" viewBox="0 0 16.306 19.707">
                                     <g id="Icon_feather-map-pin" data-name="Icon feather-map-pin" transform="translate(0.5 0.5)">
                                         <path id="Path_1362" data-name="Path 1362" d="M19.806,9.153c0,5.952-7.653,11.054-7.653,11.054S4.5,15.105,4.5,9.153a7.653,7.653,0,1,1,15.306,0Z" transform="translate(-4.5 -1.5)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
@@ -218,7 +218,7 @@
                             </a>
                         </li>
                         <li class="inline-block">
-                            <a class="xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-4">
+                            <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-2 block" href="#tabs-4">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" xmlns="http://www.w3.org/2000/svg" width="16.734" height="18" viewBox="0 0 16.734 18">
                                     <path fill="currentColor" d="M40.372,2.813h6.715a.264.264,0,0,0,0-.527H40.372a.264.264,0,0,0,0,.527Zm0,3.164h6.715a.264.264,0,1,0,0-.527H40.372a.264.264,0,0,0,0,.527Zm0-1.582h6.715a.264.264,0,1,0,0-.527H40.372a.264.264,0,0,0,0,.527ZM52.5,3.4l-.373-.373a.791.791,0,0,0-1.119,0l-1.23,1.23V1.318A1.32,1.32,0,0,0,48.458,0H39a1.32,1.32,0,0,0-1.318,1.318V15.012H36.259a.264.264,0,0,0-.264.264v1.406A1.32,1.32,0,0,0,37.313,18h11.18l.029,0a1.32,1.32,0,0,0,1.255-1.317V7.237L52.5,4.515a.792.792,0,0,0,0-1.119ZM37.313,17.473a.792.792,0,0,1-.791-.791V15.539H47.034v1.09a1.364,1.364,0,0,0,.292.844Zm11.936-2.2s0,0,0,0v1.354a.844.844,0,1,1-1.687,0V15.275a.264.264,0,0,0-.264-.264H38.21V1.318A.792.792,0,0,1,39,.527h9.457a.792.792,0,0,1,.791.791V4.781L44.362,9.668h-3.99a.264.264,0,0,0,0,.527h3.463L42.8,11.227l-.019.022H40.372a.264.264,0,0,0,0,.527H42.59l-.352,1.055H40.372a.264.264,0,0,0,0,.527h1.969a.264.264,0,0,0,.057-.006.255.255,0,0,0,.116-.011l1.678-.559.005,0a.263.263,0,0,0,.045-.021l.007,0,.018-.012.006,0,.022-.019.941-.941h1.851a.264.264,0,0,0,0-.527H45.763l3.486-3.486ZM43.1,11.9l.515.515-.773.258Zm1,.258-.746-.746L49.7,5.077h0l.689-.689.746.746Zm8.017-8.017-.617.617-.746-.746.617-.617a.264.264,0,0,1,.373,0l.373.373a.264.264,0,0,1,0,.373Z" transform="translate(-35.995)"/>
                                 </svg>
@@ -332,7 +332,7 @@
                     </div>
                 </div>
             </div>
-            <div class=" xl:block xl:basis-4/12 xl:ps-5">
+            <div class="mt-8 xl:mt-0 xl:block xl:basis-4/12 xl:ps-5">
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
                     <p class="font-normal text-base text-reviews">
                         <span class="font-bold text-2xl text-black translate-y-0.5 inline-block" id="mainPrice">

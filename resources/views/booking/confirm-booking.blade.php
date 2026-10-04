@@ -243,20 +243,20 @@
                         
                          
                     </ul>
-                    <div class="flex flex-row items-center">
-                        <input type="text" id="coupon_code" name="coupon_code" 
+                    <div class="flex flex-row flex-wrap items-center gap-2">
+                        <input type="text" id="coupon_code" name="coupon_code"
                         @if($booking->coupon_code)
                             value="{{ $booking->coupon_code }}"
                         @endif
-                        placeholder="@lang('apartment.coupon_code')" 
-                        class="border border-gray-300 rounded-lg h-12 px-3 flex-1">
-                    
-                        <button type="button" id="verify_coupon" class="me-4 bg-price rounded-lg h-12 px-4 font-semibold text-white">
+                        placeholder="@lang('apartment.coupon_code')"
+                        class="border border-gray-300 rounded-lg h-12 px-3 w-full sm:flex-1">
+
+                        <button type="button" id="verify_coupon" class="bg-price rounded-lg h-12 px-4 font-semibold text-white">
                             @lang('apartment.verify_coupon')
                         </button>
-                    
+
                         <button type="button" id="remove_coupon"
-                            class="me-4  bg-red-500 rounded-lg h-12 px-4 font-semibold text-white"
+                            class="bg-red-500 rounded-lg h-12 px-4 font-semibold text-white"
                             @if(!$booking->coupon_code) style="display: none;" @endif>
                             @lang('apartment.remove_coupon')
                         </button>

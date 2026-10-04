@@ -130,25 +130,26 @@ span.flatpickr-day.selected{
 @endif
 <section class="profile py-5 lg:py-16    min-h-screen lg:min-h-min text-white">
     <div class="container">
-        <div>
-            <div class="inline-block w-8 h-8 rounded-full bg-filteritem relative">
+        <div class="flex items-center justify-between gap-3">
+            <h1 class="font-semibold text-2xl">
+                # {{$booking->number_of_booking }}
+            </h1>
+            <a href="{{ route('customer.booking') }}" aria-label="{{ __('site.back') }}" class="block w-8 h-8 rounded-full bg-filteritem relative shrink-0">
                 <svg class="absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4" xmlns="http://www.w3.org/2000/svg" width="10.939" height="10.748" viewBox="0 0 10.939 10.748">
                   <path id="Path_843" data-name="Path 843" d="M5.843,11.343H16.116m-5.7,4.844L6.178,11.95a.856.856,0,0,1,0-1.211L10.416,6.5" transform="translate(-5.177 -5.97)" fill="none" stroke="#000" stroke-width="1.5"/>
                 </svg>
-            </div>
-            <h1 class="inline-block font-semibold text-2xl ml-4 -translate-y-2">
-                # {{$booking->number_of_booking }}
-            </h1>
+            </a>
         </div>
         <div class="py-8 px-6   rounded-2xl mt-6" style="background-color: #000;">
             <div class="border-b border-border pb-8 mb-8">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                <a href="{{route('apartments.show',$booking->apartment?->slug)}}" >
-                    <h2 class="font-semibold text-lg float-left  rtl:float-right py-2.5">
+                    <h2 class="font-semibold text-lg py-2.5">
                         {{$booking->apartment->{'name_'.app()->getLocale()} }}
                     </h2>
                </a>
-                <div class="float-right rtl:float-left">
-                    <a class="py-3 px-4 inline-block rounded-md bg-gri text-white ml-2" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
+                <div class="grid grid-cols-2 gap-2 w-full sm:flex-1 sm:flex sm:flex-wrap sm:justify-end">
+                    <a class="py-3 px-4 rounded-md bg-gri text-white flex items-center justify-center gap-2 text-sm" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
                         <svg class="inline-block" id="fi_2891455" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                             <path d="m21.5 18h-3c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h3c.827 0 1.5-.673 1.5-1.5v-7c0-.827-.673-1.5-1.5-1.5h-19c-.827 0-1.5.673-1.5 1.5v7c0 .827.673 1.5 1.5 1.5h3c.276 0 .5.224.5.5s-.224.5-.5.5h-3c-1.379 0-2.5-1.122-2.5-2.5v-7c0-1.378 1.121-2.5 2.5-2.5h19c1.379 0 2.5 1.122 2.5 2.5v7c0 1.378-1.121 2.5-2.5 2.5z"></path>
                             <path d="m14.5 21h-6c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h6c.276 0 .5.224.5.5s-.224.5-.5.5z"></path>
@@ -157,17 +158,15 @@ span.flatpickr-day.selected{
                             <path d="m18.5 7c-.276 0-.5-.224-.5-.5v-4c0-.827-.673-1.5-1.5-1.5h-9c-.827 0-1.5.673-1.5 1.5v4c0 .276-.224.5-.5.5s-.5-.224-.5-.5v-4c0-1.378 1.121-2.5 2.5-2.5h9c1.379 0 2.5 1.122 2.5 2.5v4c0 .276-.224.5-.5.5z"></path>
                             <path d="m16.5 24h-9c-1.379 0-2.5-1.122-2.5-2.5v-8c0-.276.224-.5.5-.5h13c.276 0 .5.224.5.5v8c0 1.378-1.121 2.5-2.5 2.5zm-10.5-10v7.5c0 .827.673 1.5 1.5 1.5h9c.827 0 1.5-.673 1.5-1.5v-7.5z"></path>
                         </svg>
-                        <span class="inline-block ml-2 text-sm">   
-                            {{__('booking.print')}}
-                        </span>
+                        <span>{{__('booking.print')}}</span>
                     </a>
-                    
+
                     @if($booking->status !== 'customer_canceled' && $booking->status !== 'canceled')
-                    <div class="relative group inline-block">
+                    <div class="relative group">
                         <button {{ $can_cancel ? '' : 'disabled' }}
-                            class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 cancel-booking-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}" 
+                            class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#fdeee9] text-price text-sm cancel-booking-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
                             data-booking-id="{{ $booking->id }}">
-                            <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }}</span>
+                            <span>{{ __('booking.cancel') }}</span>
                         </button>
                     
                         <!-- Tooltip -->
@@ -179,13 +178,13 @@ span.flatpickr-day.selected{
                         @endif
                     </div>
 
-                    <div class="relative group inline-block">
+                    <div class="relative group">
                         <button {{ $can_cancel ? '' : 'disabled' }}
-                            class="py-3 px-4 inline-block rounded-md bg-[#eaf3ff] text-price ml-2 edit-dates-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
+                            class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#eaf3ff] text-price text-sm edit-dates-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
                             data-booking-id="{{ $booking->id }}"
                             data-check-in="{{ $booking->check_in->format('Y-m-d') }}"
                             data-check-out="{{ $booking->check_out->format('Y-m-d') }}">
-                            <span class="inline-block ml-2 text-sm">{{ __('booking.edit_dates') }}</span>
+                            <span>{{ __('booking.edit_dates') }}</span>
                         </button>
                         @if(!$can_cancel)
                         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 translate-y-2 px-3 py-2 mb-3
@@ -198,13 +197,13 @@ span.flatpickr-day.selected{
                     @if(! $booking->cancellationStartedByStaff() && $booking->refund_status === 'pending')
                     {{-- The customer opened this cancellation request themselves and the refund
                          isn't processed yet: let them withdraw it and reinstate the booking. --}}
-                    <button class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 withdraw-cancel-btn"
+                    <button class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#fdeee9] text-price text-sm withdraw-cancel-btn"
                         data-booking-id="{{ $booking->id }}">
-                        <span class="inline-block ml-2 text-sm">{{ __('booking.withdraw_cancellation') }}</span>
+                        <span>{{ __('booking.withdraw_cancellation') }}</span>
                     </button>
                     @else
-                    <div class="py-3 px-4 inline-block rounded-md bg-gray-200 text-gray-600 ml-2 cursor-not-allowed">
-                        <span class="inline-block ml-2 text-sm">{{ __('booking.cancel') }} - {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}</span>
+                    <div class="py-3 px-4 col-span-2 text-center rounded-md bg-gray-200 text-gray-600 text-sm cursor-not-allowed">
+                        <span>{{ __('booking.cancel') }} - {{ $booking->cancellationStartedByStaff() ? __('api.booking_status_cancellation_by_staff') : __('api.booking_status_customer_canceled') }}</span>
                     </div>
                     @endif
                     @endif
@@ -217,26 +216,24 @@ span.flatpickr-day.selected{
                     @endphp
 
                     @if (!$has_review && $stayCompleted)
-                        <button data-src="#popup-2" data-fancybox type="button" 
-                                class="py-3 px-4 inline-block rounded-md bg-[#fdeee9] text-price ml-2 ">
-                            <!-- Replace the comment below with the SVG icon -->
+                        <button data-src="#popup-2" data-fancybox type="button"
+                                class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#fdeee9] text-price flex items-center justify-center gap-2 text-sm">
                             <svg class="inline-block" fill="currentColor" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Example SVG path, replace with your actual SVG code -->
                                 <circle cx="10" cy="10" r="8"></circle>
                             </svg>
-                            <span class="inline-block ml-2 text-sm">
-                                {{ __('booking.review') }}
-                            </span>
+                            <span>{{ __('booking.review') }}</span>
                         </button>
                     @endif
                    
                 
 
                     
-                     <a class="py-2.5 px-4 inline-block rounded-md ml-2 border border-price text-center text-price">
+                     <a href="{{ route('page','contact') }}" title="{{ __('site.contact') }}" class="py-3 px-4 w-full sm:w-auto rounded-md border border-price flex items-center justify-center gap-2 text-price text-sm">
                          <svg class="inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="fi_5728913" data-name="Layer 1" viewBox="0 0 512 512" width="20" height="20"><path d="M489.417,279v-1.182c0-62.1-24.349-120.646-68.56-164.857S318.1,44.4,256,44.4,135.354,68.749,91.143,112.96s-68.56,102.758-68.56,164.856V279A27.578,27.578,0,0,0,0,306.081V397.1a27.571,27.571,0,0,0,27.538,27.539H44.556v3.934A39.075,39.075,0,0,0,83.586,467.6H98.705a23.94,23.94,0,0,0,23.912-23.913v-184.2a23.94,23.94,0,0,0-23.912-23.913H83.586a39.074,39.074,0,0,0-39.03,39.03v3.935H38.583v-.727C38.583,157.933,136.116,60.4,256,60.4s217.417,97.533,217.417,217.416v.727h-5.973v-3.935a39.074,39.074,0,0,0-39.03-39.03H413.3a23.94,23.94,0,0,0-23.912,23.913v184.2A23.94,23.94,0,0,0,413.3,467.6h15.119a39.075,39.075,0,0,0,39.03-39.031v-3.934h17.018A27.571,27.571,0,0,0,512,397.1V306.081A27.578,27.578,0,0,0,489.417,279Zm-428.861-4.39a23.056,23.056,0,0,1,23.03-23.03H98.705a7.921,7.921,0,0,1,7.912,7.913v184.2a7.921,7.921,0,0,1-7.912,7.913H83.586a23.056,23.056,0,0,1-23.03-23.031Zm-16,134.027H27.538A11.552,11.552,0,0,1,16,397.1V306.081a11.551,11.551,0,0,1,11.538-11.538H44.556Zm406.888,19.934a23.056,23.056,0,0,1-23.03,23.031H413.3a7.921,7.921,0,0,1-7.912-7.913v-184.2a7.921,7.921,0,0,1,7.912-7.913h15.119a23.056,23.056,0,0,1,23.03,23.03ZM496,397.1a11.552,11.552,0,0,1-11.538,11.539H467.444V294.543h17.018A11.551,11.551,0,0,1,496,306.081Z"></path></svg>
+                         <span>{{ __('site.contact') }}</span>
                      </a>
                 </div>
+              </div>
 
                 @if(!empty($date_change_request))
                     @php($dc = $date_change_request)
@@ -292,8 +289,8 @@ span.flatpickr-day.selected{
 
                 <div class="clear-both"></div>
             </div>
-            <div class="grid lg:grid-cols-5 gap-6 max-w-full">
-                <div class="col-span-3">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-full">
+                <div class="lg:col-span-3">
                     <img src="{{getImage($booking->apartment,'image')}}" class="w-full h-80 object-cover rounded-lg mb-4" />
                     <ul>
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
@@ -344,7 +341,7 @@ span.flatpickr-day.selected{
                             @endif
                     </ul>
                 </div>
-                <div class=" border border-feature-border rounded-lg py-5 col-span-2">
+                <div class=" border border-feature-border rounded-lg py-5 lg:col-span-2">
                     <div class="border-b border-feature-border pb-5 mb-5 px-5">
                         <p class="float-left rtl:float-right font-semibold">   {{__('booking.info')}} </p>
                         <svg class="float-right rtl:float-left text-price" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21">
@@ -357,14 +354,15 @@ span.flatpickr-day.selected{
                         </svg>
                         <div class="clear-both"></div>
                     </div>
-                    <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 px-4 py-3">
-                        <p class="float-left rtl:float-right text-xs">{{__('booking.check_in_time')}} <span class="block font-semibold text-sm">
-                            {{Config::get('settings.check_in_time')}}    
-                        </span></p>
-                        <p class="float-right rtl:float-left text-xs w-2/4 border-l border-feature-border text-right">{{__('booking.check_out_time')}}  <span class="block font-semibold text-sm">
-                            {{Config::get('settings.check_out_time')}}    
-                        </span></p>
-                        <div class="clear-both"></div>
+                    <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 px-4 py-3 flex items-stretch">
+                        <div class="flex-1 pe-4">
+                            <p class="text-xs text-gri">{{__('booking.check_in_time')}}</p>
+                            <p class="font-semibold text-sm mt-1" dir="ltr">{{Config::get('settings.check_in_time')}}</p>
+                        </div>
+                        <div class="flex-1 ps-4 border-s border-feature-border">
+                            <p class="text-xs text-gri">{{__('booking.check_out_time')}}</p>
+                            <p class="font-semibold text-sm mt-1" dir="ltr">{{Config::get('settings.check_out_time')}}</p>
+                        </div>
                     </div>
                     @if($booking->status == 'approved')
                     <div class="border border-price bg-[#fdeee9] rounded-lg mx-5 px-3 py-5 relative pin text-price">

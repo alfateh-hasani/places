@@ -21,4 +21,6 @@ return [
     'clear_filters' => 'مسح الفلاتر',
     'rate_and_up' => 'فأعلى',
     'star' => 'نجمة',
+    'room_unit' => 'غرفة',
+    'bed_unit' => 'سرير',
 ];
