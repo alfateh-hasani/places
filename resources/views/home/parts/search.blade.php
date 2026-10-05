@@ -24,8 +24,8 @@
             <button type="button" class="close-button"><img src="{{ asset('assets/img/close.svg') }}" alt="{{ __('site.close') }}" /></button>
         </div>
         <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none ">
-            <p class="font-normal text-xs text-black">{{ __('site.filters_city_id') }}</p>
-            <select name="city_id" aria-label="{{ __('site.filters_city_id') }}" class="select2 w-full border-0 font-semibold text-sm">
+            <label for="city_id" class="font-normal text-xs text-black">{{ __('site.filters_city_id') }}</label>
+            <select name="city_id" id="city_id" aria-label="{{ __('site.filters_city_id') }}" class="select2 w-full border-0 font-semibold text-sm">
               @foreach ($cities as $item)
                 <option value="{{ $item->id }}">{{ $item->ml('name') }}</option>
               @endforeach

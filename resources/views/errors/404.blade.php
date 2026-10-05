@@ -24,9 +24,9 @@
                 <p class="font-normal text-base text-price mb-5">
                     404
                 </p>
-                <p class="font-semibold text-3xl sm:text-5xl mb-6">
+                <h2 class="font-semibold text-3xl sm:text-5xl mb-6">
                    {{ __('site.page_not_found_desc') }}
-                </p>
+                </h2>
                 <a href="{{ route('home') }}" class="inline-block bg-price py-4 px-16 font-normal text-sm text-white rounded-full ease-in-out duration-300">
                     {{ __('site.home') }}
                 </a>

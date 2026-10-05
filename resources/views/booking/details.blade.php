@@ -390,9 +390,9 @@ span.flatpickr-day.selected{
 
 <div class="popup modal" id="popup-1" style="display: none;">
     <div class="popup-contain text-center">
-        <p class="p-5 border-b border-border text-left">
+        <h2 class="p-5 border-b border-border text-left">
             {{__('booking.booking_success')}}
-        </p>
+        </h2>
         <img class="inline-block my-10" src="{{asset('assets/img/success.svg')}}" />
         <p class="font-semibold">
         
@@ -413,9 +413,9 @@ span.flatpickr-day.selected{
 
 <div class="popup modal" id="popup-2">
     <div class="popup-contain text-center">
-        <p class="p-5 border-b border-border text-left">
+        <h2 class="p-5 border-b border-border text-left">
             {{__('booking.review')}}
-        </p>
+        </h2>
         <img class="inline-block mt-8 mb-5" src="{{asset('assets/img/goodbye.png')}}" />
         <p class="font-semibold text-lg mb-4">
             {{__('booking.review_message')}}
