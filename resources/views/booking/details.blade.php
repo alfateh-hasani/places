@@ -400,8 +400,8 @@ span.flatpickr-day.selected{
             <br>
             {{__('booking.number_of_booking')}}: <span class="text-price" dir="ltr">#{{ $booking->number_of_booking }}</span>
         </p>
-        <div class="md:grid md:grid-cols-2 md:gap-5 max-w-full my-10 mx-5">
-            <a href="{{ route('customer.booking.details', $booking->number_of_booking) }}"  class="py-4 rounded-lg bg-price text-white">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-5 max-w-full my-10 mx-5">
+            <a href="{{ route('customer.booking.details', $booking->number_of_booking) }}"  class="block py-4 rounded-lg bg-price text-white">
                 {{__('booking.view_booking')}}
             </a>
             <button id="closeMe"  class="py-4 rounded-lg bg-feature">

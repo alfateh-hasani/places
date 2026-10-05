@@ -1,3 +1,39 @@
+{{-- Mobile-only account navigation. The sidebar below is hidden on mobile
+     (hidden lg:block), so on phones this horizontal, scrollable bar is the only
+     way to move between the account pages. --}}
+<nav class="lg:hidden mb-8 overflow-x-auto" aria-label="{{ __('site.account') }}">
+    <ul class="flex gap-3 whitespace-nowrap pb-2">
+        <li class="shrink-0">
+            <a href="{{route('customer.account')}}" @if(request()->routeIs('customer.account')) aria-current="page" @endif
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-white text-sm {{request()->routeIs('customer.account') ? 'text-price border-price' : 'text-title border-border'}}">
+                {{__('site.profile')}}
+            </a>
+        </li>
+        <li class="shrink-0">
+            <a href="{{route('customer.booking')}}" @if(request()->routeIs('customer.booking*')) aria-current="page" @endif
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-white text-sm {{request()->routeIs('customer.booking*') ? 'text-price border-price' : 'text-title border-border'}}">
+                {{__('site.my_reservations')}}
+            </a>
+        </li>
+        <li class="shrink-0">
+            <a href="{{route('customer.favorite')}}" @if(request()->routeIs('customer.favorite')) aria-current="page" @endif
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-white text-sm {{request()->routeIs('customer.favorite') ? 'text-price border-price' : 'text-title border-border'}}">
+                {{__('site.my_favorate')}}
+            </a>
+        </li>
+        <li class="shrink-0">
+            <a href="{{route('customer.notifications')}}" @if(request()->routeIs('customer.notifications')) aria-current="page" @endif
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-white text-sm {{request()->routeIs('customer.notifications') ? 'text-price border-price' : 'text-title border-border'}}">
+                {{__('site.notifications')}}
+                @php $unreadMobileNotifications = $customer->unreadWebNotifications()->count(); @endphp
+                @if ($unreadMobileNotifications)
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-price text-white text-xs font-semibold">{{ $unreadMobileNotifications }}</span>
+                @endif
+            </a>
+        </li>
+    </ul>
+</nav>
+
 <div class="hidden lg:block bg-white p-7 rounded-2xl">
     <p class="font-semibold text-lg">  
         {{$customer->first_name}} {{$customer->last_name}}
