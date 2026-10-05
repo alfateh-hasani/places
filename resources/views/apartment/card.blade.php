@@ -6,7 +6,7 @@
                     <img
                         class="object-cover w-full"
                         src="{{ $image->getUrl('grid') ?: $image->getUrl() }}"
-                        alt="@lang('apartment.apartment_name_default')"
+                        alt="{{ $apartment->ml('name') ?: __('apartment.apartment_name_default') }}"
                         onerror="this.onerror=null;this.src='{{ url('img/placeholder.svg') }}';"
                     />
                 </a>
@@ -15,7 +15,7 @@
                     <img
                         class="w-full aspect-[364/300]"
                         src="{{ url('img/placeholder.svg') }}"
-                        alt="@lang('apartment.apartment_name_default')"
+                        alt="{{ $apartment->ml('name') ?: __('apartment.apartment_name_default') }}"
                     />
                 </a>
             @endforelse
@@ -50,6 +50,7 @@
                 <img
                     class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
                     src="{{ asset('assets/img/apartment.svg') }}"
+                    alt=""
                 />
                 {{ $apartment->num_rooms }}
             </li>
@@ -58,14 +59,16 @@
                 <img
                     class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
                     src="{{ asset('assets/img/bed-new.svg') }}"
+                    alt=""
                 />
                 {{ $apartment->num_beds }}
             </li>
             <li 
                 class="bg-feature  py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/space-new.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/space-new.svg') }}"
+                    alt=""
                 />
                 {{ $apartment->area }} @lang('apartment.area_unit')
             </li>
