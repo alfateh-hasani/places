@@ -20,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 class ApartmentController extends Controller
 {
@@ -44,12 +45,12 @@ class ApartmentController extends Controller
         // /apartments is an entry point (favorites empty-state CTA, sitemap). Send it
         // to the filter/listing page defaulted to Riyadh with no date window, so it
         // shows every bookable unit there instead of a bare, date-scoped list.
-        $riyadhId = City::query()
+        $riyadh = City::query()
             ->where('name_ar', 'الرياض')
             ->orWhere('name_en', 'Riyadh')
-            ->value('id');
+            ->value('slug');
 
-        return redirect()->route('apartments.search', array_filter(['city_id' => $riyadhId]));
+        return redirect()->route('apartments.search', array_filter(['city' => $riyadh]), 301);
     }
 
     public function show(Request $request, $slug)
@@ -73,6 +74,11 @@ class ApartmentController extends Controller
                 return $redirect;
             }
             abort(404);
+        }
+
+        // MySQL matches slugs case-insensitively; only the canonical spelling may answer 200.
+        if ($slug !== $apartment->slug) {
+            return redirect()->route('apartments.show', $apartment->slug, 301);
         }
 
         // تحديد أول فترة للحجز
@@ -175,9 +181,15 @@ class ApartmentController extends Controller
         $priceMin = is_numeric($request->price_min) ? (float) $request->price_min : null;
         $priceMax = is_numeric($request->price_max) ? (float) $request->price_max : null;
 
+        // Public links use the city slug (?city=riyadh); the form still posts city_id.
+        $cityId = $request->city_id;
+        if (! $cityId && $request->filled('city')) {
+            $cityId = City::where('slug', Str::slug((string) $request->city))->value('id');
+        }
+
         // بناء الفلاتر الأصلي
         $filters = array_filter([
-            'city_id' => $request->city_id,
+            'city_id' => $cityId,
             'adults_count' => $request->adults,
             'children_count' => $request->children,
             'min_area' => $request->area_min,
@@ -465,6 +477,10 @@ class ApartmentController extends Controller
         // landing page 404s rather than showing an empty (or stale) unit list.
         if (! $building->is_active) {
             abort(404);
+        }
+
+        if ($slug !== $building->slug) {
+            return redirect()->route('building.details', $building->slug, 301);
         }
 
         $apartments = Apartment::where('building_id', $building->id)->active()->paginate(12);
