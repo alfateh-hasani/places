@@ -2,21 +2,24 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Traits\HasTranslations;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
+
 class City extends Model implements HasMedia
 {
-    use CrudTrait, HasFactory, InteractsWithMedia, HasTranslations, LogsActivity; 
+    use CrudTrait, HasFactory, HasTranslations, InteractsWithMedia, LogsActivity;
 
     protected $connection = 'mysql';
 
     protected $with = ['media'];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -43,29 +46,40 @@ class City extends Model implements HasMedia
         'sort_order' => 'integer',
     ];
 
-
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('image')->singleFile();
     }
 
-    //getattributeimage
+    /**
+     * Public URLs use lowercase hyphenated slugs; a blank admin value falls back to the English name.
+     */
+    public function setSlugAttribute(?string $value): void
+    {
+        $slug = Str::slug((string) $value);
+
+        if ($slug === '') {
+            $slug = Str::slug((string) ($this->attributes['name_en'] ?? ''));
+        }
+
+        $this->attributes['slug'] = $slug;
+    }
+
+    // getattributeimage
     public function getImageAttribute()
     {
         return $this->getFirstMediaUrl('image');
     }
 
+    // hasMany apartments
 
-    //hasMany apartments
-
-    //belongsTo buildings
+    // belongsTo buildings
     public function buildings()
     {
         return $this->hasMany(Building::class);
     }
 
-
-    //city has many apartments from buildings
+    // city has many apartments from buildings
 
     public function apartments()
     {

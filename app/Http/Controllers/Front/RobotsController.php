@@ -18,6 +18,7 @@ class RobotsController extends Controller
             'Disallow: /en/web-booking/',
             'Disallow: /*/calculate-price',
             'Disallow: /*/blocked-dates',
+            'Disallow: /*/unit.ics',
             '',
             'Sitemap: '.route('sitemap'),
         ];

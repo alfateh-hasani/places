@@ -1,21 +1,19 @@
 <?php
 
 namespace App\Traits;
-use Artesaos\SEOTools\Facades\SEOTools;
+
+use App\Services\Seo\SeoService;
+
+/**
+ * Customer-area pages (account, bookings, favourites) are private, so they get the
+ * standard tags but are kept out of the search index.
+ */
 trait generateSeoTrait
 {
-
-    public function generateSeo($seo_title, $seo_description, $url, $image = null)
+    public function generateSeo(?string $seo_title, ?string $seo_description, string $url, ?string $image = null): void
     {
-        SEOTools::setTitle($seo_title);
-        SEOTools::setDescription($seo_description);
-        SEOTools::opengraph()->setUrl($url);
-        SEOTools::setCanonical($url);
-        SEOTools::opengraph()->addProperty('type', 'website');
-
-        if (! empty($image)) {
-            SEOTools::opengraph()->addImage($image);
-            SEOTools::twitter()->addImage($image);
-        }
+        app(SeoService::class)
+            ->page($seo_title, $seo_description, $url, $image)
+            ->noIndex();
     }
 }

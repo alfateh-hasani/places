@@ -12,14 +12,15 @@ use App\Models\Page;
 use App\Models\Review;
 use App\Models\SiteFeature;
 use App\Models\Slider;
+use App\Models\SlugRedirect;
 use App\Rules\Recaptcha;
 use App\Services\HomeApartmentOrderingService;
 use App\Services\Pricing\PricingService;
-use Artesaos\SEOTools\Facades\SEOTools;
+use App\Services\Seo\SeoService;
 use Carbon\Carbon;
-use Config;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -27,6 +28,7 @@ class HomeController extends Controller
     public function __construct(
         private readonly HomeApartmentOrderingService $homeApartmentOrderingService,
         private readonly PricingService $pricing,
+        private readonly SeoService $seo,
     ) {}
 
     public function index(Request $request): View|JsonResponse
@@ -91,17 +93,14 @@ class HomeController extends Controller
                 'nextPage' => $data['apartments']->hasMorePages() ? $data['apartments']->currentPage() + 1 : null,
             ]);
         }
-        $seo_title = Config::get('settings.seo_title_'.app()->getLocale()).' | '.__('site.seo_title');
-        $seo_description = Config::get('settings.seo_description_'.app()->getLocale());
         $data['features_1'] = SiteFeature::orderBy('sort', 'asc')->limit(3)->get();
         $data['features_2'] = SiteFeature::orderBy('sort', 'asc')->skip(3)->limit(3)->get();
-        SEOTools::setTitle($seo_title);
-        SEOTools::setDescription($seo_description);
-        SEOTools::opengraph()->setUrl(route('home'));
-        SEOTools::setCanonical(route('home'));
-        SEOTools::opengraph()->addProperty('type', 'website');
 
-        // apartments
+        $this->seo
+            ->page(null, null, route('home'))
+            ->title($this->seo->siteName().' | '.__('site.seo_title'))
+            ->organization();
+
         return view('home.index', $data);
     }
 
@@ -127,51 +126,50 @@ class HomeController extends Controller
 
     }
 
-    public function blog(Request $request, $slug)
+    public function blog(Request $request, $slug): View
     {
         $slug = urldecode($slug);
         $blog = Blog::whereSlug($slug)->first();
         if (! $blog) {
             abort(404);
         }
-        $seo_title = $blog->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = $blog->ml('seo_description');
         $url = route('blog', $blog->slug);
-        $this->generateSeo($seo_title, $seo_description, $url, $blog->image);
+        $blogPage = Page::whereTemplate('blog')->first();
+
+        $this->seo
+            ->page($blog->ml('seo_title') ?: $blog->ml('name'), $blog->ml('seo_description') ?: $blog->ml('info'), $url, $blog->image, 'article')
+            ->breadcrumbs(array_filter([
+                $blogPage ? ['name' => $blogPage->ml('name'), 'url' => route('page', $blogPage->slug)] : null,
+                ['name' => $blog->ml('name'), 'url' => $url],
+            ]))
+            ->blogPost($blog, $url);
 
         $this->data['blog'] = $blog;
         $this->data['blogs'] = Blog::where('id', '!=', $blog->id)->orderBy('id', 'desc')->take(3)->get();
-        $this->data['page'] = Page::whereTemplate('blog')->first();
+        $this->data['page'] = $blogPage;
 
         return view('pages.single_blog', $this->data);
     }
 
-    private function generateSeo($seo_title, $seo_description, $url, $image = null)
-    {
-        SEOTools::setTitle($seo_title);
-        SEOTools::setDescription($seo_description);
-        SEOTools::opengraph()->setUrl($url);
-        SEOTools::setCanonical($url);
-        SEOTools::opengraph()->addProperty('type', 'website');
-
-        if (! empty($image)) {
-            SEOTools::opengraph()->addImage($image);
-            SEOTools::twitter()->addImage($image);
-        }
-    }
-
     // apartments-by-city
-    public function getApartmentsByCity(Request $request, $slug)
+    public function getApartmentsByCity(Request $request, $slug): View|RedirectResponse
     {
         $slug = urldecode($slug);
         $city = City::whereSlug($slug)->first();
         if (! $city) {
-            abort(404);
+            return $this->redirectToRenamedCity($slug);
         }
-        $seo_top_title = $city->ml('seo_title').' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = $city->ml('seo_description');
         $url = route('by-city', $city->slug);
-        $this->generateSeo($seo_top_title, $seo_description, $url);
+
+        // MySQL matches slugs case-insensitively; only the canonical spelling may answer 200.
+        if ($slug !== $city->slug) {
+            return redirect()->to($url, 301);
+        }
+
+        $this->seo
+            ->page($city->ml('seo_title') ?: $city->ml('name'), $city->ml('seo_description'), $url, $city->image ?: null)
+            ->breadcrumbs([['name' => $city->ml('name'), 'url' => $url]]);
+
         $this->data['city'] = $city;
         $this->data['apartments'] = $city->apartments()->bookable()->orderBy('id', 'desc')->paginate(30);
 
@@ -186,5 +184,23 @@ class HomeController extends Controller
         $this->data['buildings'] = City::with('buildings')->orderBy('sort_order', 'asc')->whereHas('buildings')->get();
 
         return view('apartment.by-city', $this->data);
+    }
+
+    /**
+     * A city whose slug was normalised or renamed keeps its old URL alive via a 301 (recorded by
+     * CityObserver / the slug migration); anything else is a genuine 404.
+     */
+    private function redirectToRenamedCity(string $slug): RedirectResponse
+    {
+        $city = SlugRedirect::where('redirectable_type', City::class)
+            ->where('old_slug', $slug)
+            ->first()
+            ?->redirectable;
+
+        if (! $city) {
+            abort(404);
+        }
+
+        return redirect()->route('by-city', $city->slug, 301);
     }
 }

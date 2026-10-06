@@ -103,6 +103,7 @@
         </div>
     </div>
 </section>
+@endsection
 
 @push('js')
 <script>

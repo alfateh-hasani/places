@@ -14,9 +14,8 @@ use App\Models\SlugRedirect;
 use App\Rules\MaxStay;
 use App\Services\OwnerRez\OwnerRezSyncService;
 use App\Services\Pricing\PricingService;
-use Artesaos\SEOTools\Facades\SEOTools;
+use App\Services\Seo\SeoService;
 use Carbon\Carbon;
-use Config;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,11 +29,14 @@ class ApartmentController extends Controller
 
     protected OwnerRezSyncService $ownerRezSync;
 
-    public function __construct(Apartment $apartment, PricingService $pricing, OwnerRezSyncService $ownerRezSync)
+    protected SeoService $seo;
+
+    public function __construct(Apartment $apartment, PricingService $pricing, OwnerRezSyncService $ownerRezSync, SeoService $seo)
     {
         $this->apartment = $apartment;
         $this->pricing = $pricing;
         $this->ownerRezSync = $ownerRezSync;
+        $this->seo = $seo;
     }
 
     public function index(Request $request)
@@ -118,12 +120,24 @@ class ApartmentController extends Controller
             Carbon::tomorrow()
         );
 
-        // إعداد SEO
-        $seo_title = ($apartment->ml('seo_title') ?: $apartment->ml('name')).' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = $apartment->ml('seo_description') ?: Config::get('settings.seo_description_'.app()->getLocale());
         $url = route('apartments.show', $apartment->slug);
-        $this->generateSeo($seo_title, $seo_description, $url, $apartment->image_view);
-        $this->generateJsonLd($apartment, $url, $priceInfo);
+        $building = $apartment->building;
+        $city = $building?->city;
+
+        $this->seo
+            ->page(
+                $apartment->ml('seo_title') ?: $apartment->ml('name'),
+                $apartment->ml('seo_description') ?: $apartment->ml('description'),
+                $url,
+                $apartment->image_view ?: null,
+                'product'
+            )
+            ->breadcrumbs(array_values(array_filter([
+                $city ? ['name' => $city->ml('name'), 'url' => route('by-city', $city->slug)] : null,
+                ($building && $building->is_active) ? ['name' => $building->ml('name'), 'url' => route('building.details', $building->slug)] : null,
+                ['name' => $apartment->ml('name'), 'url' => $url],
+            ])))
+            ->apartment($apartment, $url, $priceInfo);
 
         return view('apartment.show', [
             'apartment' => $apartment,
@@ -182,7 +196,7 @@ class ApartmentController extends Controller
             $query->whereDoesntHave('bookings', function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut->format('Y-m-d'))
                     ->where('check_out', '>', $checkIn->format('Y-m-d'))
-                    ->whereNotIn('status', [\App\Enums\BookingStatus::Canceled->value]);
+                    ->whereNotIn('status', [BookingStatus::Canceled->value]);
             });
         }
 
@@ -283,11 +297,9 @@ class ApartmentController extends Controller
             'filter_keys' => $this->prepareFilterKeys(),
         ];
 
-        $seo_title = __('site.search').' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = Config::get('settings.seo_description_'.app()->getLocale());
-        $url = route('apartments.search');
-        $this->generateSeo($seo_title, $seo_description, $url);
-        SEOTools::metatags()->setRobots('noindex, follow');
+        $this->seo
+            ->page(__('site.search'), null, route('apartments.search'))
+            ->noIndex();
 
         return view('apartment.list', $data);
     }
@@ -336,20 +348,6 @@ class ApartmentController extends Controller
         return $date;
     }
 
-    private function generateSeo($seo_title, $seo_description, $url, $image = null)
-    {
-        SEOTools::setTitle($seo_title);
-        SEOTools::setDescription($seo_description);
-        SEOTools::opengraph()->setUrl($url);
-        SEOTools::setCanonical($url);
-        SEOTools::opengraph()->addProperty('type', 'website');
-
-        if (! empty($image)) {
-            SEOTools::opengraph()->addImage($image);
-            SEOTools::twitter()->addImage($image);
-        }
-    }
-
     /**
      * A listing whose slug was renamed 404s under its old URL unless we forward it here —
      * this is what keeps that old link's ranking/shares alive instead of losing them overnight.
@@ -366,59 +364,6 @@ class ApartmentController extends Controller
         }
 
         return redirect()->route($routeName, $current->slug, 301);
-    }
-
-    /**
-     * Rich-result markup (schema.org) so unit listings are eligible for price/availability cards in search results.
-     */
-    private function generateJsonLd(Apartment $apartment, string $url, array $priceInfo): void
-    {
-        SEOTools::jsonLd()->setType('Product')
-            ->setTitle($apartment->ml('name'))
-            ->setDescription(strip_tags((string) $apartment->ml('description')))
-            ->setUrl($url);
-
-        if (! empty($apartment->image_view)) {
-            SEOTools::jsonLd()->addImage($apartment->image_view);
-        }
-
-        SEOTools::jsonLd()->addValue('offers', [
-            '@type' => 'Offer',
-            'priceCurrency' => 'SAR',
-            'price' => (string) ($priceInfo['one_night_price'] ?? $apartment->price),
-            'availability' => 'https://schema.org/InStock',
-            'url' => $url,
-        ]);
-
-        if ($apartment->building) {
-            SEOTools::jsonLd()->addValue('address', [
-                '@type' => 'PostalAddress',
-                'streetAddress' => $apartment->building->ml('address'),
-                'addressCountry' => 'SA',
-            ]);
-        }
-    }
-
-    /**
-     * Rich-result markup (schema.org) for a building's landing page.
-     */
-    private function generateBuildingJsonLd(Building $building, string $url, int $unitCount): void
-    {
-        SEOTools::jsonLd()->setType('ApartmentComplex')
-            ->setTitle($building->ml('name'))
-            ->setDescription((string) $building->ml('address'))
-            ->setUrl($url);
-
-        if (! empty($building->image)) {
-            SEOTools::jsonLd()->addImage($building->image);
-        }
-
-        SEOTools::jsonLd()->addValue('numberOfAccommodationUnits', $unitCount);
-        SEOTools::jsonLd()->addValue('address', [
-            '@type' => 'PostalAddress',
-            'streetAddress' => $building->ml('address'),
-            'addressCountry' => 'SA',
-        ]);
     }
 
     /**
@@ -539,11 +484,21 @@ class ApartmentController extends Controller
             'cities' => City::orderBy('sort_order')->withCount('apartments')->get(),
         ];
 
-        $seo_title = ($building->ml('seo_title') ?: $building->ml('name')).' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = $building->ml('seo_description') ?: Config::get('settings.seo_description_'.app()->getLocale());
         $url = route('building.details', $building->slug);
-        $this->generateSeo($seo_title, $seo_description, $url, $building->image);
-        $this->generateBuildingJsonLd($building, $url, $apartments->total());
+        $city = $building->city;
+
+        $this->seo
+            ->page(
+                $building->ml('seo_title') ?: $building->ml('name'),
+                $building->ml('seo_description') ?: $building->ml('address'),
+                $url,
+                $building->image ?: null
+            )
+            ->breadcrumbs(array_values(array_filter([
+                $city ? ['name' => $city->ml('name'), 'url' => route('by-city', $city->slug)] : null,
+                ['name' => $building->ml('name'), 'url' => $url],
+            ])))
+            ->building($building, $url, $apartments->total());
 
         return view('building.show', $data);
     }
