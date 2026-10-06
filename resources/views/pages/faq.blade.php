@@ -75,10 +75,14 @@
             <ul>
                 @foreach ($categories as $key => $category)
                     <li>
-                        <a class="@if($key==0) opacity-100 @endif w-full category-tab relative 
-                        font-normal text-base text-white opacity-60 block py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100" data-category="{{ $category->id }}">
+                        <a class="@if($key==0) opacity-100 @endif w-full category-tab relative
+                        font-normal text-base text-white opacity-60 block py-5 border-b border-whiteopacity ease-in-out duration-300 hover:opacity-100 cursor-pointer"
+                        data-category="{{ $category->id }}"
+                        role="button" tabindex="0"
+                        aria-controls="category-{{ $category->id }}"
+                        aria-pressed="{{ $key==0 ? 'true' : 'false' }}">
                             {{ $category->{'name_'.app()->getLocale()} }}
-                            <img class="inline-block absolute ltr:right-0 rtl:left-0 rtl:rotate-180 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" />
+                            <img class="inline-block absolute ltr:right-0 rtl:left-0 rtl:rotate-180 translate-y-1.5" src="{{asset('assets/img/aside-arrow.svg')}}" alt="" />
                         </a>
                     </li>
                 @endforeach
@@ -91,11 +95,14 @@
                 <ul class="faq-category hidden" id="category-{{ $category->id }}">
                     @foreach ($category->questions as $question)
                         <li class="faq-item border border-border rounded-lg shadow-md mb-4 hover:border-price ease-in-out duration-300 cursor-pointer">
-                            <a class="faq-question relative block mx-5 py-5 pr-5 font-normal text-base text-black">
+                            <a class="faq-question relative block mx-5 py-5 pr-5 font-normal text-base text-black cursor-pointer"
+                               role="button" tabindex="0"
+                               aria-expanded="false"
+                               aria-controls="faq-answer-{{ $question->id }}">
                                 {{ $question->{'title_'.app()->getLocale()} }}
-                                <img class="inline-block absolute ltr:right-0 rtl:left-0 top-7" src="{{ asset('assets/img/faq.svg') }}" />
+                                <img class="inline-block absolute ltr:right-0 rtl:left-0 top-7" src="{{ asset('assets/img/faq.svg') }}" alt="" />
                             </a>
-                            <p class="faq-answer p-5 font-normal text-base text-black hidden">{{ $question->{'description_'.app()->getLocale()} }}</p>
+                            <p id="faq-answer-{{ $question->id }}" class="faq-answer p-5 font-normal text-base text-black hidden">{{ $question->{'description_'.app()->getLocale()} }}</p>
                         </li>
                     @endforeach
                 </ul>
@@ -111,19 +118,28 @@
     $(".faq-category").first().show();
 
     $(".category-tab").on("click", function () {
-        
-        $(".category-tab").removeClass("opacity-100");
-        $(this).addClass("opacity-100");
+
+        $(".category-tab").removeClass("opacity-100").attr("aria-pressed", "false");
+        $(this).addClass("opacity-100").attr("aria-pressed", "true");
         $(".faq-category").hide();
 
         const categoryId = $(this).data("category");
-        
+
         $("#category-" + categoryId).fadeIn();
     });
 
     $(".faq-question").on("click", function () {
         $(this).next(".faq-answer").slideToggle();
-        $(this).closest(".faq-item").toggleClass("faq-open");
+        var isOpen = $(this).closest(".faq-item").toggleClass("faq-open").hasClass("faq-open");
+        $(this).attr("aria-expanded", isOpen ? "true" : "false");
+    });
+
+    // Keyboard support: Enter / Space activate the tabs and question toggles.
+    $(".category-tab, .faq-question").on("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar" || e.keyCode === 13 || e.keyCode === 32) {
+            e.preventDefault();
+            $(this).trigger("click");
+        }
     });
 });
 
