@@ -126,14 +126,18 @@ class HomeController extends Controller
 
     }
 
-    public function blog(Request $request, $slug): View
+    public function blog(Request $request, $slug): View|RedirectResponse
     {
         $slug = urldecode($slug);
         $blog = Blog::whereSlug($slug)->first();
         if (! $blog) {
-            abort(404);
+            return $this->redirectToRenamedSlug(Blog::class, $slug, 'blog');
         }
         $url = route('blog', $blog->slug);
+
+        if ($slug !== $blog->slug) {
+            return redirect()->to($url, 301);
+        }
         $blogPage = Page::whereTemplate('blog')->first();
 
         $this->seo
@@ -157,7 +161,7 @@ class HomeController extends Controller
         $slug = urldecode($slug);
         $city = City::whereSlug($slug)->first();
         if (! $city) {
-            return $this->redirectToRenamedCity($slug);
+            return $this->redirectToRenamedSlug(City::class, $slug, 'by-city');
         }
         $url = route('by-city', $city->slug);
 
@@ -187,20 +191,20 @@ class HomeController extends Controller
     }
 
     /**
-     * A city whose slug was normalised or renamed keeps its old URL alive via a 301 (recorded by
-     * CityObserver / the slug migration); anything else is a genuine 404.
+     * A record whose slug was normalised or renamed keeps its old URL alive via a 301 (recorded by
+     * the model observers / slug migrations); anything else is a genuine 404.
      */
-    private function redirectToRenamedCity(string $slug): RedirectResponse
+    private function redirectToRenamedSlug(string $type, string $slug, string $routeName): RedirectResponse
     {
-        $city = SlugRedirect::where('redirectable_type', City::class)
+        $model = SlugRedirect::where('redirectable_type', $type)
             ->where('old_slug', $slug)
             ->first()
             ?->redirectable;
 
-        if (! $city) {
+        if (! $model) {
             abort(404);
         }
 
-        return redirect()->route('by-city', $city->slug, 301);
+        return redirect()->route($routeName, $model->slug, 301);
     }
 }

@@ -24,7 +24,9 @@ Route::post('csp-report', CspReportController::class)
     ->name('csp-report');
 
 Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
-    Route::get('apartments-filter', [ApartmentController::class, 'search'])->name('apartments.search');
+    Route::get('search', [ApartmentController::class, 'search'])->name('apartments.search');
+    // Legacy search URL, kept as a permanent redirect (query string preserved).
+    Route::get('apartments-filter', fn () => redirect()->to(route('apartments.search').(request()->getQueryString() ? '?'.request()->getQueryString() : ''), 301));
 
     // Home Route using HomeController@index
     Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -35,7 +37,9 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
 
     Route::get('{slug}', [PageController::class, 'index'])->name('page');
     Route::get('blog/{slug}', [HomeController::class, 'blog'])->name('blog');
-    Route::get('city/{slug}/apartments', [HomeController::class, 'getApartmentsByCity'])->name('by-city');
+    Route::get('city/{slug}', [HomeController::class, 'getApartmentsByCity'])->name('by-city');
+    // Legacy city URL, kept as a permanent redirect.
+    Route::get('city/{slug}/apartments', fn ($slug) => redirect()->route('by-city', ['slug' => $slug], 301));
     Route::post('contact-us', [HomeController::class, 'contactUs'])->name('home.contact-us');
     Route::get('/apartments/{slug}', [ApartmentController::class, 'show'])->name('apartments.show');
     Route::post('/apartments/{apartmentId}/calculate-price', [ApartmentController::class, 'calculatePrice'])->name('apartments.calculate-price')->middleware('throttle:30,1');
