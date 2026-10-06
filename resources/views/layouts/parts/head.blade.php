@@ -8,11 +8,16 @@
     })(window,document,'script','dataLayer',@json(config('services.google_tag_manager.id')));</script>
     <!-- End Google Tag Manager -->
     @endif
-      {!! SEO::generate() !!}
+    {!! SEO::generate() !!}
+    {{-- hreflang must point at the same clean URL as the canonical (no query string, no session noise),
+         otherwise Google sees conflicting language signals and ignores the cluster. --}}
+    @php
+        $seoBaseUrl = SEOMeta::getCanonical() ?: strtok(url()->current(), '?');
+    @endphp
     @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
-    <link rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode) }}" />
+    <link rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode, $seoBaseUrl) }}" />
     @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ LaravelLocalization::getLocalizedURL(LaravelLocalization::getDefaultLocale()) }}" />
+    <link rel="alternate" hreflang="x-default" href="{{ LaravelLocalization::getLocalizedURL(LaravelLocalization::getDefaultLocale(), $seoBaseUrl) }}" />
     <meta   name="viewport"  content="width=device-width, initial-scale=1, shrink-to-fit=no"   />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="theme-color" content="#f7bb8e" />
@@ -27,9 +32,9 @@
 
     @stack('TopCss')
 
-    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg')}}" />
-    <link rel="icon" type="image/x-www-form ico" href="{{ asset('favicon.ico') }}" />
-    <link rel="apple-touch-icon" href="{{ asset('assets/img/favicon.svg') }}" />
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg') }}" />
+    <link rel="icon" type="image/x-icon" sizes="32x32" href="{{ asset('favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}" />
 
     {{-- Stylesheets (App\Support\CssBundle), in the original cascade order:
          self-hosted fonts, slick, fancybox, aos-lite, style.css, flowbite, select2,

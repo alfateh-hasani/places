@@ -24,7 +24,7 @@ class CustomerAccountController extends Controller
     public function profile()
     {
         $customer = Auth::guard('customer')->user();
-        $seo_title = $customer->first_name.' '.$customer->last_name.' | '.__('site.seo_title');
+        $seo_title = $customer->first_name.' '.$customer->last_name;
         $seo_description = __('customer.account');
         $url = route('customer.account');
         $this->generateSeo($seo_title, $seo_description, $url);
@@ -81,7 +81,7 @@ class CustomerAccountController extends Controller
             'total_bookings' => $allBookings->count(),
         ];
 
-        $seo_title = __('customer.my_reservations').' | '.__('site.seo_title');
+        $seo_title = __('customer.my_reservations');
         $seo_description = __('customer.my_reservations');
         $url = route('customer.booking');
         $this->generateSeo($seo_title, $seo_description, $url);
@@ -140,7 +140,7 @@ class CustomerAccountController extends Controller
         // Get active passcode for this booking
         $data['active_passcode'] = $data['booking']->getActivePasscode();
 
-        $seo_title = __('customer.booking_details').' #'.$number_of_booking.' | '.__('site.seo_title');
+        $seo_title = __('customer.booking_details').' #'.$number_of_booking;
         $seo_description = __('customer.booking_details');
         $url = route('customer.booking.details', $number_of_booking);
         $this->generateSeo($seo_title, $seo_description, $url);
