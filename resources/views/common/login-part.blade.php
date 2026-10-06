@@ -6,10 +6,10 @@
             @lang('site.login')
         </p>
         <div class="px-5 text-left rtl:text-right pt-8">
-            <p class="font-semibold text-xl mb-6">
-                @lang('site.welcome_back') 
+            <h2 class="font-semibold text-xl mb-6">
+                @lang('site.welcome_back')
                 <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="Goodbye" />
-            </p>
+            </h2>
             <form id="login-form" method="post">
                 @csrf
                 <div id="login-result"></div>
@@ -42,10 +42,10 @@
           @lang('site.confirm_your_number')
       </p>
       <div class="px-5 text-left rtl:text-right pt-8">
-          <p class="font-semibold text-xl mb-6">
+          <h2 class="font-semibold text-xl mb-6">
               @lang('site.welcome_back')
               <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="" />
-          </p>
+          </h2>
           <p class="text-sm mb-4">
               @lang('site.enter_code_sms') <span dir="ltr" id="phone-number" style="direction:ltr; unicode-bidi:isolate; display:inline-block;"></span>:
           </p>
@@ -104,10 +104,10 @@
           @lang('site.sign_up')
       </p>
       <div class="px-5 text-left rtl:text-right pt-8">
-          <p class="font-semibold text-xl mb-6 rtl:mb-4">
-              @lang('site.welcome_to_dyafa') 
+          <h2 class="font-semibold text-xl mb-6 rtl:mb-4">
+              @lang('site.welcome_to_dyafa')
               <img class="h-8 inline-block rtl:ml-2" src="{{ asset('assets/img/goodbye.png') }}" alt="" />
-          </p>
+          </h2>
 
           <form>
                 <div id="registration-result"></div>
@@ -196,7 +196,7 @@ div#popup-5 .fancybox-content {
 }
 
 #countriesDropdown {
-        
+
     z-index: 99999;
     position: relative;
     overflow: visible;
@@ -207,8 +207,14 @@ div#popup-5 {
     overflow: visible !important;
 }
 .iti__country-list {
-    
+
     left: 0 !important;
+}
+
+/* Cap the list height so it scrolls inside the dropdown instead of expanding to
+   the full country list — which blew the modal/page height on mobile. */
+#countriesDropdown .iti__country-list {
+    max-height: 220px;
 }
 
 .iti.iti--container {
@@ -272,6 +278,10 @@ const iti = window.intlTelInput(phoneInput, {
     autoFormat: true,
     preferredCountries: ["sa", "ae", "kw", "bh", "om", "qa"],
     dropdownContainer: document.getElementById('countriesDropdown'),
+    // Keep the normal inline dropdown on phones too. Without this, intl-tel-input
+    // switches to its fullscreen-popup mode on touch/narrow screens (a grey
+    // rgba(0,0,0,.5) overlay) that broke the modal layout.
+    useFullscreenPopup: false,
 });
 
 // تحديث التحقق من صحة رقم الهاتف

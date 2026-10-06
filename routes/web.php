@@ -6,6 +6,7 @@ use App\Http\Controllers\Front\Auth\LoginController;
 use App\Http\Controllers\Front\BookingController;
 use App\Http\Controllers\Front\CspReportController;
 use App\Http\Controllers\Front\CustomerAccountController;
+use App\Http\Controllers\Front\CustomerNotificationController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\PageController;
 use App\Http\Controllers\Front\RobotsController;
@@ -69,7 +70,6 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
             Route::post('account-update', 'update')->name('profile-update');
             Route::get('get-booking', 'getBooking')->name('booking');
             Route::get('booking-details/{number_of_booking}', 'BookingDetails')->name('booking.details');
-            Route::get('notifications', 'notifications')->name('notifications');
             Route::post('post-review', 'addReview')->name('post.review');
             Route::get('booking-details/{number_of_booking}/print', 'printBookingDetails')->name('booking.print_details');
 
@@ -79,6 +79,14 @@ Route::group(['prefix' => LaravelLocalization::setLocale()], function () {
         Route::controller(WishlistController::class)->name('customer.')->prefix('customer')->group(function () {
             Route::get('favorite', 'index')->name('favorite');
             Route::post('toggle-favorite', 'toggle')->name('toggle.favorite');
+        });
+
+        // In-app notifications — own controller/service (backed by web_notifications).
+        Route::controller(CustomerNotificationController::class)->name('customer.')->prefix('customer')->group(function () {
+            Route::get('notifications', 'index')->name('notifications');
+            Route::post('notifications/read-all', 'markAllAsRead')->name('notifications.read-all');
+            Route::get('notifications/{id}', 'open')->name('notifications.open')->whereNumber('id');
+            Route::delete('notifications/{id}', 'destroy')->name('notifications.destroy')->whereNumber('id');
         });
         Route::controller(BookingController::class)->name('web-booking.')->prefix('web-booking')->group(function () {
             Route::post('start-booking/{apartment_id}', 'determineBookingStatus')->name('determine')->middleware('throttle:30,1');

@@ -2,7 +2,13 @@
 @push('css')
 <link href="{{ asset('assets/css/slick.css?'.time())}}" rel="stylesheet" />
 <link href="{{ asset('assets/css/slick-theme.css?'.time())}}" rel="stylesheet" />
-
+<style>
+    /* Coupon feedback colors. The compiled Tailwind build doesn't ship
+       text-red-500 / text-green-500, and the dark theme forces text colors with
+       !important, so scope these explicitly (id + !important wins everywhere). */
+    #coupon_message.is-success { color: #16a34a !important; }
+    #coupon_message.is-error { color: #ef4444 !important; }
+</style>
 @endpush
 @section('content')
 
@@ -262,7 +268,7 @@
                         </button>
                     </div>
                     
-                    <div id="coupon_message" class="mt-2 text-green-500"></div>
+                    <div id="coupon_message" class="mt-2 is-success"></div>
                     
                     <button id="book_now_desktop" class="bg-price rounded-lg h-12 w-full font-semibold text-white hidden md:block">
                         {{__('booking.book_now')}}
@@ -280,7 +286,7 @@
         <div class="flex items-center justify-between gap-4">
             <div class="flex flex-col">
                 <span class="text-sm text-gray-600">{{__('booking.total_price')}}</span>
-                <span class="text-lg font-bold text-price">{{ $booking->final_price }}  </span>
+                <span id="total_price_mobile" class="text-lg font-bold text-price">{{ $booking->final_price }}  </span>
             </div>
             <button id="book_now_mobile" class="bg-price rounded-lg h-12 px-8 font-semibold text-white flex-shrink-0">
                 {{__('booking.book_now')}}
@@ -308,7 +314,8 @@
         const couponCode = $('#coupon_code').val().trim();
         
         if (couponCode === "") {
-            $('#coupon_message').text("{{ __('apartment.enter_coupon') }}");
+            $('#coupon_message').removeClass('is-success').addClass('is-error')
+                .text("{{ __('apartment.enter_coupon') }}");
             return;
         }
 
@@ -325,8 +332,11 @@
 
                 let taxValue = response.vat;
 
-                $('#coupon_message').html("{{ __('apartment.coupon_applied') }}: " + discountValue);
+                $('#coupon_message').removeClass('is-error').addClass('is-success')
+                    .html("{{ __('apartment.coupon_applied') }}: " + discountValue);
                 $('#total_price').html(window.formatSAR(response.final_price));
+                // Keep the mobile sticky total in sync with the desktop total.
+                $('#total_price_mobile').html(window.formatSAR(response.final_price));
 
                 // إزالة أي خصم سابق لمنع التكرار
                 $('#discount_row').remove();
@@ -348,7 +358,8 @@
  
             },
             error: function() {
-                $('#coupon_message').text("{{ __('apartment.error_verifying_coupon') }}");
+                $('#coupon_message').removeClass('is-success').addClass('is-error')
+                    .text("{{ __('apartment.error_verifying_coupon') }}");
             }
         });
     });
@@ -363,9 +374,12 @@
             },
             success: function(response) {
                 $('#coupon_code').val(""); // مسح الكود
-                $('#coupon_message').text("{{ __('apartment.coupon_removed') }}");
+                $('#coupon_message').removeClass('is-error').addClass('is-success')
+                    .text("{{ __('apartment.coupon_removed') }}");
                 $('#discount_row').remove(); // إزالة الخصم
                 $('#total_price').html(window.formatSAR(response.final_price));
+                // Keep the mobile sticky total in sync with the desktop total.
+                $('#total_price_mobile').html(window.formatSAR(response.final_price));
 
                 // إخفاء زر حذف الكوبون
                 $('#remove_coupon').hide();
@@ -374,7 +388,8 @@
  
             },
             error: function() {
-                $('#coupon_message').text("{{ __('apartment.error_removing_coupon') }}");
+                $('#coupon_message').removeClass('is-success').addClass('is-error')
+                    .text("{{ __('apartment.error_removing_coupon') }}");
             }
         });
     });

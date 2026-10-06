@@ -24,7 +24,11 @@ return [
     | Supported: true, false
     |
     */
-    'is_service_enabled' => env('RECAPTCHA_V3_ENABLED', true),
+    // Enabled everywhere except the local environment by default: the production
+    // reCAPTCHA keys are registered for the live domain, so they fail on local dev
+    // domains (e.g. *.test) and would block login/OTP/contact. Set
+    // RECAPTCHA_V3_ENABLED explicitly to override this per-environment.
+    'is_service_enabled' => env('RECAPTCHA_V3_ENABLED', env('APP_ENV') !== 'local'),
     /*
     |--------------------------------------------------------------------------
     | Host Name

@@ -37,10 +37,10 @@
       
       <!-- حقل اختيار المدينة -->
       <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none ">
-        <p class="font-normal text-xs text-black">
+        <label for="city_id" class="font-normal text-xs text-black">
             {{ __('site.filters_city_id') }}
-        </p>
-        <select name="city_id" class="select2 w-full border-0 font-semibold text-sm">
+        </label>
+        <select name="city_id" id="city_id" aria-label="{{ __('site.filters_city_id') }}" class="select2 w-full border-0 font-semibold text-sm">
           @foreach ($cities as $item)
             <option value="{{ $item->id }}" {{ old('city_id', request('city_id')) == $item->id ? 'selected' : '' }}>
               {{ $item->ml('name') }}
@@ -111,13 +111,13 @@
             </p>
             <div class="inline-block">
               <div class="relative flex items-center">
-                <button type="button" id="decrement-button" data-input-counter-decrement="counter-input" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <button type="button" id="decrement-button" data-input-counter-decrement="counter-input" aria-label="{{ __('site.filters_adults') }} -" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h16" />
                   </svg>
                 </button>
-                <input type="text" id="counter-input" name="adults" data-input-counter class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1" value="{{ old('adults', request('adults', 1)) }}" required />
-                <button type="button" id="increment-button" data-input-counter-increment="counter-input" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <input type="text" id="counter-input" name="adults" data-input-counter aria-label="{{ __('site.filters_adults') }}" class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1" value="{{ old('adults', request('adults', 1)) }}" required />
+                <button type="button" id="increment-button" data-input-counter-increment="counter-input" aria-label="{{ __('site.filters_adults') }} +" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16" />
                   </svg>
@@ -133,13 +133,13 @@
             </p>
             <div class="inline-block">
               <div class="relative flex items-center">
-                <button type="button" id="decrement-button" data-input-counter-decrement="counter-input1" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <button type="button" id="decrement-button1" data-input-counter-decrement="counter-input1" aria-label="{{ __('site.filters_children') }} -" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h16" />
                   </svg>
                 </button>
-                <input type="text" id="counter-input1" name="children" data-input-counter class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1" value="{{ old('children', request('children', 0)) }}" required />
-                <button type="button" id="increment-button" data-input-counter-increment="counter-input1" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
+                <input type="text" id="counter-input1" name="children" data-input-counter aria-label="{{ __('site.filters_children') }}" class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1" value="{{ old('children', request('children', 0)) }}" required />
+                <button type="button" id="increment-button1" data-input-counter-increment="counter-input1" aria-label="{{ __('site.filters_children') }} +" class="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-8 w-8 lg:h-5 lg:w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none">
                   <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16" />
                   </svg>

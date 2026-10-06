@@ -60,7 +60,7 @@
                     <li class="mb-9">
                         <a href="mailto:{{$email}}">
                             <div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
-                                <img class="inline-block" src="{{asset('assets/img/mail.svg')}}" />
+                                <img class="inline-block" src="{{asset('assets/img/mail.svg')}}" alt="" />
                             </div> 
                             <p class="font-semibold text-lg text-black">{{__('site.send_us_email')}} <br>
                                 {{$email}}     
@@ -71,13 +71,13 @@
                     <li class="mb-9">
                         <a href="tel:{{ $contactPhone }}">
                             <div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
-                                <img class="inline-block" src="{{asset('assets/img/tel.svg')}}" /></div>
+                                <img class="inline-block" src="{{asset('assets/img/tel.svg')}}" alt="" /></div>
                                 <p class="font-semibold text-lg text-black"> {{__('site.send_phone')}} <br> <span dir="ltr" style="direction:ltr; unicode-bidi:isolate; display:inline-block;">{{ $contactPhone }}</span></p></a></li>
-                    <li class="mb-9"><a><div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
-                        <img class="inline-block" src="{{asset('assets/img/address.svg')}}" /></div> <p class="font-semibold text-lg text-black">
-                             {{__('site.address')}} <br> 
+                    <li class="mb-9"><div class="w-12 h-12 rounded-full me-6 bg-[#fae3dd] text-center pt-3 ltr:float-left rtl:float-right translate-y-1">
+                        <img class="inline-block" src="{{asset('assets/img/address.svg')}}" alt="" /></div> <p class="font-semibold text-lg text-black">
+                             {{__('site.address')}} <br>
                             {{$address}}
-                        </p></a></li>
+                        </p></li>
                 </ul>
             </div>
             <div class="bg-white border border-border rounded-2xl p-7 sm:p-12">
@@ -88,19 +88,19 @@
                     @csrf
                     <div class="lg:grid lg:grid-cols-2 lg:gap-4 w-full mx-0">
                         <div>
-                            <input name="name" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="text" placeholder="{{__('site.name')}}" />
+                            <input name="name" aria-label="{{__('site.name')}}" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="text" placeholder="{{__('site.name')}}" />
                         </div>
                         <div>
-                            <input name="phone" class="phone-ltr-value w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="tel" inputmode="tel" placeholder="{{__('site.phone')}}" />
+                            <input name="phone" aria-label="{{__('site.phone')}}" class="phone-ltr-value w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="tel" inputmode="tel" placeholder="{{__('site.phone')}}" />
                         </div>
                     </div>
-                    <input  name="email" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="email" placeholder="{{__('site.email')}}" />
-                    <textarea  name="message" class="w-full mb-4 border border-border bg-footer rounded-lg h-52 px-4 pt-4 resize-none" placeholder="{{__('site.message')}}"></textarea>
+                    <input  name="email" aria-label="{{__('site.email')}}" class="w-full mb-4 border border-border bg-footer rounded-lg h-12 px-4" type="email" placeholder="{{__('site.email')}}" />
+                    <textarea  name="message" aria-label="{{__('site.message')}}" class="w-full mb-4 border border-border bg-footer rounded-lg h-52 px-4 pt-4 resize-none" placeholder="{{__('site.message')}}"></textarea>
                     
                     
                     <button class="bg-price py-4 px-16 font-normal text-sm text-white rounded-full">
                         {{__('site.send')}}
-                        <img class="w-3 inline-block ml-3" src="{{asset('assets/img/slider-right.svg')}}" /></button>
+                        <img class="w-3 inline-block ml-3" src="{{asset('assets/img/slider-right.svg')}}" alt="" /></button>
 
                 </form>
             </div>
@@ -203,7 +203,9 @@
                                 text: "{{__('customer.success_message')}}",
                                 button: true,
                             });
-                            location.reload();
+                            // Clear the form instead of reloading, so the success
+                            // message stays visible and the user can send another.
+                            form.reset();
                         },
                         error: function(xhr) {
                             HoldOn.close();
