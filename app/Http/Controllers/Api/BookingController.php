@@ -255,8 +255,14 @@ class BookingController extends Controller
     // paymentMethodSuccess
     public function paymentMethodSuccess($booking_id)
     {
-        $data['booking_id'] = $booking_id;
-        $data['booking_number'] = $this->booking->find($booking_id)->booking_number;
+        $booking = $this->booking->find($booking_id);
+
+        if (! $booking) {
+            return $this->errorResponse(__('api.booking_not_found'));
+        }
+
+        $data['booking_id'] = $booking->id;
+        $data['booking_number'] = $booking->booking_number;
 
         return $this->successResponse($data);
     }

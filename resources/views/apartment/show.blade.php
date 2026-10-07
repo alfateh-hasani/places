@@ -174,7 +174,7 @@
                         {{__('apartment.description')}}
                     </h2>
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[92px] overflow-hidden desctext">
-                        {!! $apartment->ml('description') !!}
+                        {!! clean_user_html($apartment->ml('description')) !!}
 
                     </div>
                     <button class="showmoreApartment font-normal text-sm text-blue underline">
@@ -297,18 +297,24 @@
                                 $aptMapEmbedSrc = null;
                                 if (is_numeric($bLat) && is_numeric($bLng)) {
                                     $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$bLat.','.$bLng.'&z=16&hl='.app()->getLocale().'&output=embed';
-                                } elseif (! empty($aptMap) && ! str_contains($aptMap, '<iframe') && preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $aptMap, $aptMapCoords)) {
+                                } elseif (! empty($aptMap) && preg_match('/<iframe[^>]*\ssrc=["\']([^"\']+)["\']/i', $aptMap, $aptIframe)) {
+                                    // Never render the admin's raw <iframe> (stored-XSS vector): take its
+                                    // src and only embed it when the host is a trusted maps provider over https.
+                                    $aptMapHost = strtolower((string) parse_url($aptIframe[1], PHP_URL_HOST));
+                                    $aptMapTrusted = ['www.google.com', 'google.com', 'maps.google.com', 'www.openstreetmap.org', 'openstreetmap.org'];
+                                    if (\Illuminate\Support\Str::startsWith($aptIframe[1], 'https://') && in_array($aptMapHost, $aptMapTrusted, true)) {
+                                        $aptMapEmbedSrc = $aptIframe[1];
+                                    }
+                                } elseif (! empty($aptMap) && preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $aptMap, $aptMapCoords)) {
                                     $aptMapEmbedSrc = 'https://www.google.com/maps?q='.$aptMapCoords[1].','.$aptMapCoords[2].'&z=16&hl='.app()->getLocale().'&output=embed';
                                 }
                             @endphp
                             <div class="h-52 lg:h-96 rounded-xl overflow-hidden" id="map" aria-label="{{ __('apartment.where_us') }}">
-                                @if(! empty($aptMap) && str_contains($aptMap, '<iframe'))
-                                    {!! $aptMap !!}
-                                @elseif($aptMapEmbedSrc)
+                                @if($aptMapEmbedSrc)
                                     <iframe src="{{ $aptMapEmbedSrc }}" width="100%" height="100%" style="border:0;"
                                             loading="lazy" referrerpolicy="no-referrer-when-downgrade"
                                             title="{{ __('apartment.where_us') }}"></iframe>
-                                @elseif(! empty($aptMap))
+                                @elseif(! empty($aptMap) && \Illuminate\Support\Str::startsWith($aptMap, ['http://', 'https://']))
                                     <a href="{{ $aptMap }}" target="_blank" rel="noopener noreferrer"
                                        class="inline-flex items-center gap-2 font-semibold text-price hover:underline">
                                         <img class="w-5 h-5" src="{{ asset('assets/img/location-check.svg') }}" alt="" />
@@ -326,7 +332,7 @@
                                 {{$apartment->policy?->{'name_'.app()->getLocale()} }}
                             </h3>
                             <div class="font-light text-white text-base mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
-                                {!! $apartment->policy?->{'description_'.app()->getLocale()} !!}              
+                                {!! clean_user_html($apartment->policy?->{'description_'.app()->getLocale()}) !!}
                             </div>
                          </div>
                     </div>
