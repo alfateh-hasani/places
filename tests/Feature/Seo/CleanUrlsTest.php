@@ -101,6 +101,17 @@ class CleanUrlsTest extends TestCase
         $this->get('/apartments/'.$oldSlug)->assertStatus(301)->assertRedirect(route('apartments.show', $apartment->slug));
     }
 
+    public function test_inactive_listing_with_a_case_only_old_slug_is_not_found_instead_of_looping(): void
+    {
+        $building = $this->createBuilding($this->createCity()->id);
+        $apartment = $this->createApartment($building->id);
+        $apartment->update(['is_active' => false]);
+        SlugRedirect::create(['redirectable_type' => Apartment::class, 'redirectable_id' => $apartment->id, 'old_slug' => strtoupper($apartment->slug)]);
+
+        $this->get('/apartments/'.$apartment->slug)->assertNotFound();
+        $this->get('/apartments/'.strtoupper($apartment->slug))->assertNotFound();
+    }
+
     public function test_blog_slugs_are_normalised_and_renames_redirect(): void
     {
         $blog = $this->createBlog('Why Choose Places & Studios '.uniqid());
