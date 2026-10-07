@@ -89,19 +89,6 @@ class CustomerAccountController extends Controller
         return view('customer.booking', $data);
     }
 
-    public function notifications()
-    {
-        $customer = Auth::guard('customer')->user();
-
-        $data = [
-            'notifications' => 'notifications',
-            'customer' => $customer,
-            'total_notifications' => '56',
-        ];
-
-        return view('customer.notifications', $data);
-    }
-
     // BookingDetails
     public function BookingDetails($number_of_booking)
     {

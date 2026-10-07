@@ -1514,13 +1514,7 @@ select, form button, button, .slick-dots li {
 
 .grid {
   max-width: 1400px;
-  position: relative;
-  margin-left: auto;
-  margin-right: auto; }
-  @media (max-width: 1420px) {
-    .grid {
-      margin-left: 10px;
-      margin-right: 10px; } }
+  position: relative; }
 
 .container {
   max-width: calc(100% - 20px); }

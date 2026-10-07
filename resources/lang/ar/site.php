@@ -68,6 +68,7 @@ return [
     'create_new_account' => 'تسجيل حساب جديد!',
     'hello' => 'هلا ',
     'account' => 'حسابي',
+    'skip_to_content' => 'تخطَّ إلى المحتوى',
     'logout' => 'تسجيل الخروج',
     'profile' => 'الملف الشخصي',
     'my_reservations' => 'حجوزاتي',

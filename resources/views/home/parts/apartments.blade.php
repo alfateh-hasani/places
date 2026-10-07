@@ -32,31 +32,6 @@
 
 <script src="{{ asset('assets/js/infinite-scroll.pkgd.min.js')}}"></script>
 <script>
-    // $(document).ready(function () {
-    //     // Initialize Infinite Scroll
-    //     $('#apartments-container').infiniteScroll({
-    //         path: '#list-links a[aria-label="pagination.next"]',
-    //         append: '.apartment-card',
-    //         history: false,
-    //     }).on('append.infiniteScroll', function (event, response, path, items) {
-    //         // Reinitialize sliders if present in the new content
-    //         $(items).find('.slider').each(function () {
-    //             // Destroy existing Slick instance if initialized
-    //             if ($(this).hasClass('slick-initialized')) {
-    //                 $(this).slick('unslick');
-    //             }
-    //             // Initialize Slick
-    //             $(this).slick({
-    //                 dots: true,
-    //                 @if(config('app.locale') == 'ar')
-    //                 rtl: true,
-    //                 @endif
-    //             });
-    //         });
-    //     });
-    // });
-</script>
-<script>
     $(document).ready(function () {
         var infScroll = $('#apartments-container').infiniteScroll({
             path: '#list-links a[rel="next"]',

@@ -16,7 +16,7 @@
     <form  action="{{ route('apartments.search') }}"
         method="GET"
         class="absolute lg:relative bottom-0 lg:bottom-auto left-0 margin-0 w-full lg:w-auto lg:grid grid-cols-2 lg:grid-cols-5 gap-1 max-w-full py-5 lg:pl-10 pl-5 pr-5 bg-white shadow-xl rounded-xl lg:rounded-full border border-border"
-        id="date-range-picker" date-rangepicker>
+        id="date-range-picker">
         <div class="flex items-center justify-between mb-5 lg:hidden">
             <p class="font-semibold">
                 {{ __('site.search_mobile') }}
@@ -24,8 +24,8 @@
             <button type="button" class="close-button"><img src="{{ asset('assets/img/close.svg') }}" alt="{{ __('site.close') }}" /></button>
         </div>
         <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none ">
-            <p class="font-normal text-xs text-black">{{ __('site.filters_city_id') }}</p>
-            <select name="city_id" class="select2 w-full border-0 font-semibold text-sm">
+            <label for="city_id" class="font-normal text-xs text-black">{{ __('site.filters_city_id') }}</label>
+            <select name="city_id" id="city_id" aria-label="{{ __('site.filters_city_id') }}" class="select2 w-full border-0 font-semibold text-sm">
               @foreach ($cities as $item)
                 <option value="{{ $item->id }}">{{ $item->ml('name') }}</option>
               @endforeach
@@ -34,16 +34,20 @@
         <div
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_check_in') }}</p>
-            <input id="datepicker-range-start" name="check_in" type="text"
+            <input id="datepicker-range-start" name="check_in" type="text" readonly
+                aria-label="{{ __('site.filters_check_in') }}"
                 class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
-                placeholder="{{now()->format('Y-m-d')}}" autocomplete="off" />
+                placeholder="{{now()->format('Y-m-d')}}" autocomplete="off"
+                value="{{ request('check_in') }}" />
         </div>
         <div
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_check_out') }}</p>
-            <input id="datepicker-range-end" name="check_out" type="text"
+            <input id="datepicker-range-end" name="check_out" type="text" readonly
+                aria-label="{{ __('site.filters_check_out') }}"
                 class="cursor-pointer p-0 pt-1 text-black font-semibold text-sm block w-full border-0"
-                placeholder="{{ now()->addDay()->format('Y-m-d') }}"  autocomplete="off"/>
+                placeholder="{{ now()->addDay()->format('Y-m-d') }}"  autocomplete="off"
+                value="{{ request('check_out') }}" />
         </div>
         <div
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer persons relative ">
@@ -57,6 +61,7 @@
                     <div class="inline-block">
                         <div class="relative flex items-center">
                             <button type="button" id="decrement-button" data-input-counter-decrement="counter-input"
+                                aria-label="{{ __('site.filters_adults') }} -"
                                 class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
@@ -64,10 +69,12 @@
                                         stroke-width="2" d="M1 1h16" />
                                 </svg>
                             </button>
-                            <input type="text" id="counter-input" data-input-counter
+                            <input type="text" id="counter-input" name="adults" data-input-counter
+                                aria-label="{{ __('site.filters_adults') }}"
                                 class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1"
-                                placeholder="" value="1" required />
+                                placeholder="" value="{{ request('adults', 1) }}" required />
                             <button type="button" id="increment-button" data-input-counter-increment="counter-input"
+                            aria-label="{{ __('site.filters_adults') }} +"
                             class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
@@ -86,7 +93,8 @@
                     
                     <div class="inline-block">
                         <div class="relative flex items-center">
-                            <button type="button" id="decrement-button" data-input-counter-decrement="counter-input1"
+                            <button type="button" id="decrement-button1" data-input-counter-decrement="counter-input1"
+                            aria-label="{{ __('site.filters_children') }} -"
                             class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 2">
@@ -94,10 +102,12 @@
                                         stroke-width="2" d="M1 1h16" />
                                 </svg>
                             </button>
-                            <input type="text" id="counter-input1" data-input-counter
+                            <input type="text" id="counter-input1" name="children" data-input-counter
+                                aria-label="{{ __('site.filters_children') }}"
                                 class="flex-shrink-0 text-black border-0 bg-transparent text-sm font-normal max-w-[2.5rem] text-center p-1"
-                                placeholder="" value="0" required />
-                            <button type="button" id="increment-button" data-input-counter-increment="counter-input1"
+                                placeholder="" value="{{ request('children', 0) }}" required />
+                            <button type="button" id="increment-button1" data-input-counter-increment="counter-input1"
+                            aria-label="{{ __('site.filters_children') }} +"
                             class="flex-shrink-0 inline-flex items-center justify-center border border-gray-300 rounded-full h-8 w-8 hover:border-title">
                                 <svg class="w-2.5 h-2.5 text-gray-900 dark:text-white" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
@@ -118,3 +128,60 @@
         </div>
     </form>
 </section>
+
+@push('css')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+@endpush
+
+@push('js')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    (function () {
+        // Home search uses flatpickr with Y-m-d — the SAME format the apartments
+        // filter page expects — so the selected city/dates/guests carry over
+        // cleanly. (Previously the Flowbite range picker emitted MM/DD/YYYY, which
+        // the filter page rejected and cleared.)
+        var ciEl = document.getElementById('datepicker-range-start');
+        var coEl = document.getElementById('datepicker-range-end');
+
+        // Drop any value that is not a clean Y-m-d before the picker initialises.
+        [ciEl, coEl].forEach(function (el) {
+            if (el && el.value && !/^20\d{2}-\d{2}-\d{2}$/.test(el.value.trim())) { el.value = ''; }
+        });
+
+        if (window.flatpickr && ciEl && coEl) {
+            var addDay = function (ymd) {
+                var d = new Date(ymd);
+                d.setDate(d.getDate() + 1);
+                return d;
+            };
+            var coMin = /^20\d{2}-\d{2}-\d{2}$/.test(ciEl.value) ? addDay(ciEl.value) : addDay(new Date());
+            var checkoutFp = flatpickr(coEl, { dateFormat: 'Y-m-d', minDate: coMin, disableMobile: true });
+            flatpickr(ciEl, {
+                dateFormat: 'Y-m-d',
+                minDate: 'today',
+                disableMobile: true,
+                onChange: function (sel) {
+                    if (!sel[0]) { return; }
+                    var next = new Date(sel[0]);
+                    next.setDate(next.getDate() + 1);
+                    checkoutFp.set('minDate', next);
+                    if (! checkoutFp.selectedDates[0] || checkoutFp.selectedDates[0] <= sel[0]) {
+                        checkoutFp.setDate(next);
+                    }
+                }
+            });
+        }
+
+        // Only carry the guest counts when the user changed them from the defaults
+        // (adults=1, children=0). A disabled field is not submitted, so an untouched
+        // search keeps a clean URL — unlike dates, which are always sent.
+        document.getElementById('date-range-picker')?.addEventListener('submit', function () {
+            var adultsEl = document.getElementById('counter-input');
+            var childrenEl = document.getElementById('counter-input1');
+            if (adultsEl && adultsEl.value.trim() === '1') { adultsEl.disabled = true; }
+            if (childrenEl && childrenEl.value.trim() === '0') { childrenEl.disabled = true; }
+        });
+    })();
+</script>
+@endpush

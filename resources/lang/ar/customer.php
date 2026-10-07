@@ -47,4 +47,9 @@ return [
     'loading_message' => 'جارٍ المعالجة...',
     'notification_confirm_email' => 'يرجى تأكيد عنوان بريدك الإلكتروني بالنقر على الرابط الذي أرسلناه إليك للتو',
     'notification_sample_date' => '27 فبراير 2019',
+    'notifications_title' => 'الإشعارات',
+    'mark_all_read' => 'تعليم الكل كمقروء',
+    'no_notifications' => 'لا توجد إشعارات بعد',
+    'no_notifications_hint' => 'ستظهر هنا التحديثات المتعلقة بحجوزاتك وحسابك.',
+    'dismiss' => 'إزالة',
 ];

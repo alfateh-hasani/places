@@ -3,7 +3,7 @@
 @section('content')
 
 <section class="breadcrumb py-16 sm:py-32 relative">
-    <img class="object-cover" src="/storage/95/v8ebHZijIoHVx5QExMMBbyzVbiH1RB8RHQtD7jol.jpeg" />
+    <img class="object-cover" src="/storage/95/v8ebHZijIoHVx5QExMMBbyzVbiH1RB8RHQtD7jol.jpeg" alt="" onerror="this.onerror=null;this.style.display='none';" />
     <div class="container z-10 relative text-center text-white">
         <h1 class="font-semibold text-4xl mb-3 sm:mb-6">
             404
@@ -24,13 +24,12 @@
                 <p class="font-normal text-base text-price mb-5">
                     404
                 </p>
-                <p class="font-semibold text-3xl sm:text-5xl mb-6">
+                <h2 class="font-semibold text-3xl sm:text-5xl mb-6">
                    {{ __('site.page_not_found_desc') }}
-                </p>
-                <p class="font-light text-base text-gri mb-12"> 
-                   
-                </p>
-               
+                </h2>
+                <a href="{{ route('home') }}" class="inline-block bg-price py-4 px-16 font-normal text-sm text-white rounded-full ease-in-out duration-300">
+                    {{ __('site.home') }}
+                </a>
             </div>
              
         </div>

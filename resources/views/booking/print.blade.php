@@ -75,8 +75,8 @@
                         <div class="clear-both"></div>
                     </div>
                     <div class="bg-feature border border-feature-border rounded-lg mx-5 my-3 px-4 py-3">
-                        <p class="float-left rtl:float-right text-xs">{{__('booking.check_in_time')}} <span class="block font-semibold text-sm">12:00 PM</span></p>
-                        <p class="float-right rtl:float-left text-xs w-2/4 border-l border-feature-border text-right">{{__('booking.check_out_time')}}  <span class="block font-semibold text-sm">12:00 PM</span></p>
+                        <p class="float-left rtl:float-right text-xs">{{__('booking.check_in_time')}} <span class="block font-semibold text-sm" dir="ltr">{{ Config::get('settings.check_in_time') }}</span></p>
+                        <p class="float-right rtl:float-left text-xs w-2/4 border-l border-feature-border text-right">{{__('booking.check_out_time')}}  <span class="block font-semibold text-sm" dir="ltr">{{ Config::get('settings.check_out_time') }}</span></p>
                         <div class="clear-both"></div>
                     </div>
                

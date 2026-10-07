@@ -146,9 +146,20 @@ document.addEventListener('DOMContentLoaded', function() {
 <header class="fixed w-full py-4  top-0 z-50 border border-blackopacity lg:hidden" data-aos="zoom-in">
   <div class="container">
    
-    <button type="button" aria-label="{{ auth('customer')->check() ? __('site.profile') : __('site.login') }}" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-center font-normal text-xs text-white uppercase flex items-center justify-center login-button">
-      @auth('customer') {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}    @endauth
-    </button>
+    @auth('customer')
+      {{-- Logged in: open the profile side-menu (account / bookings / favorites / logout). --}}
+      <button type="button" aria-label="@lang('site.profile')" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-center font-normal text-xs text-white uppercase flex items-center justify-center login-button">
+        {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}
+      </button>
+    @else
+      {{-- Guest: open the login/sign-up popup directly (same as desktop), instead of a
+           side-menu whose buttons overlapped the close icon. --}}
+      <button type="button" data-src="#popup-5" data-fancybox dont-close-click-outside aria-label="@lang('site.login')" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-white flex items-center justify-center">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3.5-4-6-9-6z"/>
+        </svg>
+      </button>
+    @endauth
     
 
       <div class="logo absolute">

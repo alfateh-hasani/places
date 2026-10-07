@@ -47,4 +47,9 @@ return [
     'loading_message' => 'Processing...',
     'notification_confirm_email' => 'Please confirm your email address by clicking on the link we just emailed you',
     'notification_sample_date' => 'February 27, 2019',
+    'notifications_title' => 'Notifications',
+    'mark_all_read' => 'Mark all as read',
+    'no_notifications' => 'No notifications yet',
+    'no_notifications_hint' => 'Updates about your bookings and account will appear here.',
+    'dismiss' => 'Dismiss',
 ];

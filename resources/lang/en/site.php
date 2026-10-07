@@ -65,6 +65,7 @@ return [
     'create_new_account' => 'Create a New Account!',
     'hello' => 'Hello',
     'account' => 'My Account',
+    'skip_to_content' => 'Skip to content',
     'logout' => 'Logout',
     'profile' => 'Profile',
     'my_reservations' => 'My Reservations',
