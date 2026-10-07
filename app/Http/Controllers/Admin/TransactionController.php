@@ -83,6 +83,37 @@ class TransactionController extends CrudController
             'label' => __('cms.reference').' <i class="la la-hashtag"></i>',
         ]);
 
+        // Gateway order ID (Geidea orderId) — empty until the gateway returns one
+        CRUD::addColumn([
+            'name' => 'order_id',
+            'type' => 'custom_html',
+            'label' => __('cms.order_id').' <i class="la la-receipt"></i>',
+            'value' => function ($entry) {
+                return $entry->order_id
+                    ? '<code>'.e($entry->order_id).'</code>'
+                    : '<span class="text-muted">—</span>';
+            },
+        ]);
+
+        // Bank-transfer reference number (manual / dashboard bookings only)
+        CRUD::addColumn([
+            'name' => 'transfer_number',
+            'type' => 'custom_html',
+            'label' => __('cms.transfer_number').' <i class="la la-university"></i>',
+            'value' => function ($entry) {
+                return $entry->transfer_number
+                    ? e($entry->transfer_number)
+                    : '<span class="text-muted">—</span>';
+            },
+        ]);
+
+        // Platform the transaction originated from
+        CRUD::addColumn([
+            'name' => 'platform',
+            'type' => 'text',
+            'label' => __('cms.platform').' <i class="la la-mobile"></i>',
+        ]);
+
         // Amount with formatted currency
         CRUD::addColumn([
             'name' => 'amount',
@@ -159,6 +190,25 @@ class TransactionController extends CrudController
             'failed' => __('cms.status_failed'),
         ], function ($value) {
             $this->crud->addClause('where', 'status', $value);
+        });
+
+        // Gateway order ID presence — "Missing / empty" surfaces imported/legacy rows
+        // that never got a Geidea orderId; combine with the date range below to scope them.
+        $this->crud->addFilter([
+            'name' => 'order_id_presence',
+            'type' => 'dropdown',
+            'label' => __('cms.order_id'),
+        ], [
+            'missing' => __('cms.order_id_missing'),
+            'present' => __('cms.order_id_present'),
+        ], function ($value) {
+            if ($value === 'missing') {
+                $this->crud->query->where(function ($query) {
+                    $query->whereNull('order_id')->orWhere('order_id', '');
+                });
+            } elseif ($value === 'present') {
+                $this->crud->query->whereNotNull('order_id')->where('order_id', '!=', '');
+            }
         });
 
         $this->crud->addFilter(
