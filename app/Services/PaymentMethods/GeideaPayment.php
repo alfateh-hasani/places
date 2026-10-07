@@ -86,6 +86,37 @@ class GeideaPayment implements PaymentMethodInterface
     }
 
     /**
+     * Read-only: look up the orders Geidea holds for a merchantReferenceId (our
+     * transaction_reference). Used to recover the gateway orderId for records that were
+     * imported without one. Returns the `orders` array (possibly empty), or null on a
+     * transport/auth failure so the caller can distinguish "no match" from "call failed".
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    public function fetchOrdersByReference(string $merchantReferenceId): ?array
+    {
+        $response = Http::withBasicAuth($this->publicKey, $this->apiPassword)
+            ->connectTimeout(15)->timeout(40)
+            ->retry(3, 1500, throw: false)
+            ->acceptJson()
+            ->get($this->apiBase.'/pgw/api/v1/direct/order', ['MerchantReferenceId' => $merchantReferenceId]);
+
+        Log::channel('geidea')->info('Geidea fetchOrdersByReference', [
+            'merchant_reference' => $merchantReferenceId,
+            'status' => $response->status(),
+            'count' => is_array($response->json('orders')) ? count($response->json('orders')) : null,
+        ]);
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $orders = $response->json('orders');
+
+        return is_array($orders) ? $orders : [];
+    }
+
+    /**
      * The fields needed to trace a payment, without the customer's name, email, phone or
      * card details that Geidea echoes back — logs must not become a copy of customer data.
      *
