@@ -15,9 +15,7 @@ class WishlistController extends Controller
 {
     use generateSeoTrait;
 
-    public function __construct(private WishlistService $wishlist)
-    {
-    }
+    public function __construct(private WishlistService $wishlist) {}
 
     public function index(): View
     {
@@ -32,7 +30,7 @@ class WishlistController extends Controller
             ->get();
 
         $this->generateSeo(
-            __('customer.favorite').' | '.__('site.seo_title'),
+            __('customer.favorite'),
             __('customer.favorite'),
             route('customer.favorite')
         );

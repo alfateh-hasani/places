@@ -2,20 +2,24 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
+use LaravelLocalization;
+use Request;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Request ;
-use LaravelLocalization;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
+
 class Page extends Model implements HasMedia
 {
-    use CrudTrait, InteractsWithMedia, LogsActivity;
+    use CrudTrait, HasTranslations, InteractsWithMedia, LogsActivity;
 
     protected $connection = 'mysql';
+
     protected $guarded = ['id'];
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('image')->singleFile();
@@ -25,7 +29,6 @@ class Page extends Model implements HasMedia
     {
         return $this->getFirstMediaUrl('image');
     }
-
 
     // public static function isRequestedPathAPage(): bool
     // {
@@ -44,5 +47,4 @@ class Page extends Model implements HasMedia
             ->logAll()
             ->logOnlyDirty();
     }
-
 }
