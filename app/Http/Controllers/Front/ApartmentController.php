@@ -363,6 +363,8 @@ class ApartmentController extends Controller
     /**
      * A listing whose slug was renamed 404s under its old URL unless we forward it here —
      * this is what keeps that old link's ranking/shares alive instead of losing them overnight.
+     * MySQL matches old_slug case-insensitively, so a case-only rename ("S405" → "s405") would
+     * point a hidden listing back at its own URL; that must 404 rather than redirect forever.
      */
     private function redirectFromOldSlug(string $type, string $oldSlug, string $routeName): ?RedirectResponse
     {
@@ -371,7 +373,7 @@ class ApartmentController extends Controller
             ->first()
             ?->redirectable;
 
-        if (! $current) {
+        if (! $current || Str::lower($current->slug) === Str::lower($oldSlug)) {
             return null;
         }
 
