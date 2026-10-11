@@ -49,8 +49,14 @@
        widget may not add a --separate-dial-code modifier class in this version,
        so target the input inside ANY .iti wrapper. */
     #customerForm .iti input[type="tel"] {
-        padding-left: 5rem !important;
+        padding-left: 6.5rem !important;
         padding-right: 0.75rem !important;
+    }
+    /* Make sure the flag + "+966" selector sits above the input and has room,
+       so the typed number starts cleanly to its right (never under it). */
+    #customerForm .iti__selected-country {
+        z-index: 2;
+        background: transparent;
     }
     /* Vertically center the flag/dial-code button against the h-12 input. */
     #customerForm .iti__selected-country {

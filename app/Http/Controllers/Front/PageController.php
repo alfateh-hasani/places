@@ -3,20 +3,23 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\{Slider,Apartment, Blog, City, FaqCategory, Page}; // Import Slider model
-use Artesaos\SEOTools\Facades\SEOTools;
+use App\Models\Blog;
+use App\Models\FaqCategory;
+use App\Models\Page;
+use App\Services\Seo\SeoService;
 use Config;
+use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
+    public function __construct(private readonly SeoService $seo) {}
 
     public function index(Request $request, $slug)
     {
         $slug = urldecode($slug);
         $page = Page::whereSlug($slug)->first();
 
-        if (!$page) {
+        if (! $page) {
             abort(404);
         }
         $template = $page->template;
@@ -41,24 +44,21 @@ class PageController extends Controller
     {
         $this->generateSeo($page);
         $this->data['page'] = $page;
-        $this->data['email'] =  Config::get('settings.email');
-        $this->data['phone'] =  Config::get('settings.phone');
-        $this->data['map'] =  Config::get('settings.map');
-        $this->data['address'] =  Config::get('settings.address_'.app()->getLocale());
+        $this->data['email'] = Config::get('settings.email');
+        $this->data['phone'] = Config::get('settings.phone');
+        $this->data['map'] = Config::get('settings.map');
+        $this->data['address'] = Config::get('settings.address_'.app()->getLocale());
+
         return view('pages.contact', $this->data);
     }
 
-
-    private function generateSeo($page)
+    private function generateSeo(Page $page): void
     {
-        $seo_title = $page->{'seo_title_'.app()->getLocale()} .' | '.Config::get('settings.seo_title_'.app()->getLocale());
-        $seo_description = $page->{'seo_description_'.app()->getLocale()} ;
-        SEOTools::setTitle($seo_title );
-        SEOTools::setDescription($seo_description);
-        SEOTools::opengraph()->setUrl(route('page',$page->slug));
-        SEOTools::setCanonical(route('page',$page->slug));
-        SEOTools::opengraph()->addProperty('type', 'website');
+        $url = route('page', $page->slug);
 
+        $this->seo
+            ->page($page->ml('seo_title') ?: $page->ml('name'), $page->ml('seo_description'), $url, $page->image ?: null)
+            ->breadcrumbs([['name' => $page->ml('name'), 'url' => $url]]);
     }
 
     private function aboutPage(Page $page)
@@ -73,6 +73,8 @@ class PageController extends Controller
         $this->generateSeo($page);
         $this->data['page'] = $page;
         $this->data['categories'] = FaqCategory::with('questions')->get();
+        $this->seo->faq($this->data['categories']);
+
         return view('pages.faq', $this->data);
     }
 
@@ -80,6 +82,7 @@ class PageController extends Controller
     {
         $this->generateSeo($page);
         $this->data['page'] = $page;
+
         return view('pages.privacy', $this->data);
     }
 
@@ -87,6 +90,7 @@ class PageController extends Controller
     {
         $this->generateSeo($page);
         $this->data['page'] = $page;
+
         return view('pages.terms', $this->data);
     }
 
@@ -95,6 +99,7 @@ class PageController extends Controller
         $this->generateSeo($page);
         $this->data['page'] = $page;
         $this->data['blogs'] = Blog::with('media')->latest()->paginate(30);
+
         return view('pages.blog', $this->data);
     }
 }

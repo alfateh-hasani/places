@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ApiLocaleKeyMiddleware;
 use App\Http\Middleware\ApiSecretKeyMiddleware;
+use App\Http\Middleware\CanonicalizeUrl;
 use App\Http\Middleware\EnsureCustomerNotBlocked;
 use App\Http\Middleware\EnsureStaffCan;
 use App\Http\Middleware\OwnerRezWebhookAuth;
@@ -32,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SecurityHeaders::class,
         ]);
+
+        // One canonical URL per page: /ar/x -> /x, /EN -> /en, trailing slashes dropped (301).
+        $middleware->append(CanonicalizeUrl::class);
 
         $middleware->alias([
             /**** OTHER MIDDLEWARE ALIASES ****/

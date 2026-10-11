@@ -23,21 +23,22 @@ class Customer extends Authenticatable implements HasMedia
 
     protected $connection = 'mysql';
 
+    /**
+     * Sensitive columns (account_verified, blocked_at, block_reason, blocked_by) are
+     * intentionally excluded — they must never be mass-assignable from request input.
+     * They are written only by trusted code via forceFill()/forceCreate().
+     */
     protected $fillable = [
         'first_name',
         'last_name',
         'email',
         'phone',
         'emergency_phone',
-        'account_verified',
         'job_title',
         'fcm_token',
         'id_number',
         'ownerrez_guest_id',
         'source',
-        'blocked_at',
-        'block_reason',
-        'blocked_by',
     ];
 
     /**

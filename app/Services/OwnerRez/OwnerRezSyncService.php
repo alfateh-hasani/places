@@ -1182,7 +1182,7 @@ class OwnerRezSyncService
 
         // Step 5: Create new customer
         try {
-            $customer = Customer::create([
+            $customer = Customer::forceCreate([
                 'first_name' => $mergedData['first_name'] ?? '',
                 'last_name' => $mergedData['last_name'] ?? '',
                 'email' => null,

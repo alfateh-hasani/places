@@ -500,3 +500,19 @@ textarea:focus-visible,
         scroll-behavior: auto !important;
     }
 }
+
+/* RTL slider arrows. The custom slick arrow CSS in style.css pins .slick-prev to
+   the left and .slick-next to the right with no RTL handling, overriding slick's
+   own [dir=rtl] swap — so in Arabic the arrows read/point the wrong way. Restore
+   the correct behavior by swapping both position and icon for RTL: previous on the
+   right pointing right, next on the left pointing left. */
+[dir="rtl"] section.list .slider .slick-arrow.slick-prev {
+    left: auto;
+    right: 15px;
+    background-image: url(../img/list-right.svg);
+}
+[dir="rtl"] section.list .slider .slick-arrow.slick-next {
+    right: auto;
+    left: 15px;
+    background-image: url(../img/list-left.svg);
+}

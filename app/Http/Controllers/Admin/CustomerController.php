@@ -232,11 +232,11 @@ class CustomerController extends CrudController
             'block_reason' => 'required|string|max:1000',
         ], [], ['block_reason' => __('cms.block_reason')]);
 
-        $customer->update([
+        $customer->forceFill([
             'blocked_at' => now(),
             'block_reason' => $validated['block_reason'],
             'blocked_by' => backpack_user()->id,
-        ]);
+        ])->save();
 
         $customer->tokens()->delete();
 
@@ -252,11 +252,11 @@ class CustomerController extends CrudController
     {
         $customer = $this->authorizedCustomer($id);
 
-        $customer->update([
+        $customer->forceFill([
             'blocked_at' => null,
             'block_reason' => null,
             'blocked_by' => null,
-        ]);
+        ])->save();
 
         \Alert::success(__('cms.customer_unblocked_successfully'))->flash();
 
