@@ -2,6 +2,9 @@
 @push('css')
 <!-- SweetAlert2 CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+{{-- HoldOn's JS is loaded via script-form, but its CSS was missing here, so the
+     loading overlay rendered unstyled (invisible). Load it so the spinner shows. --}}
+<link rel="stylesheet" href="{{ asset('assets/plugin/HoldOn.min.css') }}">
 <!-- Flatpickr — نفس تحميلات صفحة الحجز (base + dark theme) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
@@ -519,12 +522,7 @@ $(document).ready(function() {
             buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({
-                    title: "{{ __('booking.processing') }}",
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: function () { Swal.showLoading(); }
-                });
+                HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('booking.processing') }}" });
                 $.ajax({
                     url: "{{ route('web-booking.cancel') }}",
                     type: "POST",
@@ -535,6 +533,7 @@ $(document).ready(function() {
                         booking_id: bookingId
                     },
                     success: function(response) {
+                        HoldOn.close();
                         Swal.fire({
                             icon: 'success',
                             title: "{{__('booking.success')}}",
@@ -547,6 +546,7 @@ $(document).ready(function() {
                         });
                     },
                     error: function(xhr) {
+                        HoldOn.close();
                         let errorMessage = "{{ __('booking.error_message') }}";
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
@@ -577,12 +577,7 @@ $(document).ready(function() {
             buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({
-                    title: "{{ __('booking.processing') }}",
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: function () { Swal.showLoading(); }
-                });
+                HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('booking.processing') }}" });
                 $.ajax({
                     url: "{{ route('web-booking.withdraw-cancellation') }}",
                     type: "POST",
@@ -593,6 +588,7 @@ $(document).ready(function() {
                         booking_id: bookingId
                     },
                     success: function(response) {
+                        HoldOn.close();
                         Swal.fire({
                             icon: 'success',
                             title: "{{__('booking.success')}}",
@@ -605,6 +601,7 @@ $(document).ready(function() {
                         });
                     },
                     error: function(xhr) {
+                        HoldOn.close();
                         let errorMessage = "{{ __('booking.error_message') }}";
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
@@ -824,7 +821,7 @@ $(document).ready(function() {
                     return;
                 }
                 if (!confirm.isConfirmed) { return; }
-                HoldOn.open();
+                HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
                 $.ajax({
                     url: "{{ route('web-booking.date-change.request') }}",
                     type: "POST",
@@ -872,7 +869,7 @@ $(document).ready(function() {
 
         // فتح المودال بقائمة فارغة عند فشل الطلب يُظهر كل التواريخ متاحة (بما فيها المحجوزة)
         // ويسمح باختيار تاريخ سيُرفض لاحقاً — لذا نعيد المحاولة مرة، وإن فشلت نُظهر خطأ بدل تقويم مضلِّل.
-        HoldOn.open();
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
         $.getJSON(blockedUrl)
             .done(function (resp) { dcOpenWith(resp.booked_days || []); })
             .fail(function () {
@@ -905,7 +902,7 @@ $(document).ready(function() {
     // إكمال/إعادة دفع فرق تعديل التواريخ
     $(document).on('click', '.dc-retry-pay-btn', function () {
         var requestId = $(this).data("request-id");
-        HoldOn.open();
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
         $.ajax({
             url: "{{ url('web-booking/date-change') }}/" + requestId + "/retry-payment",
             type: "POST",
@@ -948,7 +945,7 @@ $(document).ready(function() {
             cancelButtonText: "{{ __('booking.no') }}"
         }).then(function (result) {
             if (!result.isConfirmed) { return; }
-            HoldOn.open();
+            HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
             $.ajax({
                 url: "{{ url('web-booking/date-change') }}/" + requestId + "/cancel",
                 type: "POST",
@@ -980,19 +977,14 @@ $(document).ready(function() {
         if (window._utBusy) { return; }
         window._utBusy = true;
 
-        Swal.fire({
-            title: "{{ __('booking.unit_transfer_processing') }}",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            didOpen: function () { Swal.showLoading(); }
-        });
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('booking.unit_transfer_processing') }}" });
 
         $.ajax({
             url: "{{ url('web-booking/unit-transfer') }}/" + transferId + "/" + action,
             type: "POST",
             headers: { "X-CSRF-TOKEN": dcCsrf },
             success: function (res) {
+                HoldOn.close();
                 Swal.fire({
                     icon: 'success',
                     title: "{{ __('booking.success') }}",
@@ -1002,6 +994,7 @@ $(document).ready(function() {
                 }).then(function () { window.location.reload(); });
             },
             error: function (xhr) {
+                HoldOn.close();
                 // Reload on error too: the request state changed (failed/rejected/no longer
                 // pending), so re-sync the page instead of leaving stale buttons.
                 Swal.fire({

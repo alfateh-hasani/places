@@ -553,6 +553,15 @@
     $(window).on('load', function () {
         var $btn = $('#allphotos');
         if (! $btn.length) return;
+
+        // If every image already fits in the collapsed banner, there's nothing to
+        // expand — hide the "show all photos" button (desktop only; it's lg:block).
+        var bc = document.querySelector('.banner-container');
+        if (bc && bc.scrollHeight <= bc.clientHeight + 2) {
+            $btn.closest('.buttons').hide();
+            return;
+        }
+
         $btn.off('click');
         $('.banner-container').css('height', '');
         $btn.on('click', function () {

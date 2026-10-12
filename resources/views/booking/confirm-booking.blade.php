@@ -2,6 +2,7 @@
 @push('css')
 <link href="{{ asset('assets/css/slick.css?'.time())}}" rel="stylesheet" />
 <link href="{{ asset('assets/css/slick-theme.css?'.time())}}" rel="stylesheet" />
+<link rel="stylesheet" href="{{ asset('assets/plugin/HoldOn.min.css') }}" />
 <style>
     /* Coupon feedback colors. The compiled Tailwind build doesn't ship
        text-red-500 / text-green-500, and the dark theme forces text colors with
@@ -308,6 +309,7 @@
 @endsection
 
 @push('js')
+<script src="{{ asset('assets/plugin/HoldOn.min.js') }}"></script>
 <script>
      $(document).ready(function() {
     $('#verify_coupon').on('click', function() {
@@ -398,11 +400,13 @@
 
 $('#book_now_desktop').on('click', function() {
     $(this).prop('disabled', true);
+    HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
     $('#booking_form').submit();
 });
 
 $('#book_now_mobile').on('click', function() {
     $(this).prop('disabled', true);
+    HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
     $('#booking_form').submit();
 });
     </script>

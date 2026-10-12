@@ -68,6 +68,12 @@ label.error {
     width: 35px;
     height: 35px;
     top: 10px !important;
+    /* Place the close (x) on the inline-end with a small inset: top-right in LTR,
+       top-left in RTL — so it no longer overlaps the RTL title (which is on the
+       right) and isn't flush against the edge. */
+    right: auto !important;
+    inset-inline-end: 12px !important;
+    inset-inline-start: auto !important;
 }
 
 #feedback-1:checked~section [for=feedback-1] svg path,
@@ -515,4 +521,12 @@ textarea:focus-visible,
     right: auto;
     left: 15px;
     background-image: url(../img/list-left.svg);
+}
+
+/* Account menu dropdown (header): align to the inline-end of the trigger so it
+   opens inward in both directions — right-aligned in LTR (trigger is top-right),
+   left-aligned in RTL (trigger is top-left) — instead of overflowing the edge. */
+.account-dropdown {
+    inset-inline-end: 0;
+    inset-inline-start: auto;
 }
