@@ -16,6 +16,12 @@ class WarmDailyReportCacheCommand extends Command
 
     public function handle(): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $today = Carbon::today()->toDateString();
 
         $propertyIdsArray = OwnerRezPropertyMapping::pluck('ownerrez_property_id')

@@ -33,6 +33,13 @@ class SendBookingToOwnerRezJob implements ShouldQueue
             return;
         }
 
+        // Master kill switch
+        if (! config('ownerrez.enabled', true)) {
+            Log::info('OwnerRez integration disabled - skipping booking sync', ['booking_id' => $this->bookingId]);
+
+            return;
+        }
+
         // Check if booking should be synced
         if (! config('ownerrez.sync.auto_sync_outbound')) {
             Log::info('OwnerRez outbound sync is disabled', ['booking_id' => $this->bookingId]);

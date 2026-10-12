@@ -53,6 +53,10 @@ class OwnerRezBlockParkingService
         ?int $sourceId,
         string $reason,
     ): bool {
+        if (! config('ownerrez.enabled', true)) {
+            return false;
+        }
+
         if (OwnerRezParkedBooking::query()->where('ownerrez_booking_id', $ownerrezBookingId)->exists()) {
             return true;
         }
@@ -86,7 +90,7 @@ class OwnerRezBlockParkingService
      */
     public function fetchBooking(string $ownerrezBookingId): array|false|null
     {
-        if (! config('ownerrez.enabled', true) && ! config('services.ownerrez.enabled', true)) {
+        if (! config('ownerrez.enabled', true)) {
             return null;
         }
 

@@ -14,6 +14,12 @@ class SetCustomFieldsCommand extends Command
 
     public function handle(OwnerRezSyncService $syncService): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $bookingId = $this->option('booking-id');
 
         $query = Booking::whereNotNull('ownerrez_booking_id')

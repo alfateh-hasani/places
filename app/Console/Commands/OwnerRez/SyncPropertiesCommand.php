@@ -13,6 +13,12 @@ class SyncPropertiesCommand extends Command
 
     public function handle(OwnerRezApiService $apiService): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $this->info('Fetching properties from OwnerRez...');
 
         try {

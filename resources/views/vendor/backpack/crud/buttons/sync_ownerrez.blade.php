@@ -1,5 +1,5 @@
-@if ($crud->hasAccess('update'))
-    <a href="{{ url($crud->route.'/'.$entry->getKey().'/sync') }}" 
+@if (config('ownerrez.enabled', true) && $crud->hasAccess('update'))
+    <a href="{{ url($crud->route.'/'.$entry->getKey().'/sync') }}"
        class="btn btn-sm btn-link" 
        data-toggle="tooltip" 
        title="مزامنة الآن مع OwnerRez"

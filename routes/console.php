@@ -28,8 +28,11 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 
 // Schedule::command('import:airbnb-ics')->cron('*/10 * * * *');
 // Schedule::command('ownerrez:sync-bookings')->everyFiveMinutes();
-Schedule::command('ownerrez:warm-cache')->everyFiveMinutes();
-Schedule::command('ownerrez:warm-daily-report')->everyFifteenMinutes();
+// OwnerRez scheduled tasks only run while the integration is enabled (OWNERREZ_ENABLED).
+Schedule::command('ownerrez:warm-cache')->everyFiveMinutes()
+    ->when(fn () => config('ownerrez.enabled', true));
+Schedule::command('ownerrez:warm-daily-report')->everyFifteenMinutes()
+    ->when(fn () => config('ownerrez.enabled', true));
 
 // إرسال إشعارات الخروج يومياً في الساعة 10 صباحاً
 Schedule::command('notifications:send-checkout-reminders')->dailyAt('10:00');
@@ -56,4 +59,5 @@ Schedule::command('date-changes:expire-unpaid')->everyTenMinutes();
 Schedule::command('unit-transfers:expire-stale')->everyTenMinutes();
 
 // حذف سجلات الحجوزات "المركونة" في OwnerRez بعد حذفها يدوياً من واجهة OwnerRez (عند 404 فقط)
-Schedule::command('ownerrez:purge-parked-bookings')->dailyAt('03:40')->runInBackground()->withoutOverlapping();
+Schedule::command('ownerrez:purge-parked-bookings')->dailyAt('03:40')->runInBackground()->withoutOverlapping()
+    ->when(fn () => config('ownerrez.enabled', true));

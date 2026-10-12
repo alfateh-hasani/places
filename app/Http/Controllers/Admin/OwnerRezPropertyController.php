@@ -14,6 +14,10 @@ class OwnerRezPropertyController
      */
     public static function options(): array
     {
+        if (! config('ownerrez.enabled', true)) {
+            return [];
+        }
+
         try {
             $items = app(OwnerRezApiService::class)
                 ->withoutLogging()

@@ -15,6 +15,12 @@ class FixBookingOwnerRezIdCommand extends Command
 
     public function handle(OwnerRezSyncService $syncService): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $records = OwnerRezBooking::whereNotNull('ownerrez_booking_id')
             ->whereNotNull('local_booking_id')
             ->whereHas('localBooking', function ($query) {

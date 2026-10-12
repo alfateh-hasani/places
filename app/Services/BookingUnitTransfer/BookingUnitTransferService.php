@@ -138,7 +138,7 @@ class BookingUnitTransferService
 
                     // Detach the OLD OwnerRez booking from this booking BEFORE creating the new one,
                     // so a later manual cancel of the old booking (webhook) can't cancel this one.
-                    if ($oldOwnerRezBookingId) {
+                    if (config('ownerrez.enabled', true) && $oldOwnerRezBookingId) {
                         $this->ownerRez->releaseSupersededOwnerRezBooking($oldOwnerRezBookingId);
                     }
 
@@ -169,7 +169,7 @@ class BookingUnitTransferService
 
                     // Destination mapped → create a NEW OwnerRez booking (there is no "move" API).
                     // LAST fallible step: if it throws, everything above rolls back.
-                    if ($this->destinationIsOwnerRezManaged($destination)) {
+                    if (config('ownerrez.enabled', true) && $this->destinationIsOwnerRezManaged($destination)) {
                         $this->ownerRez->sendBookingToOwnerRez($booking->fresh());
                     }
                 }

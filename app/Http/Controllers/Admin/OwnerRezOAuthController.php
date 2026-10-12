@@ -22,6 +22,11 @@ class OwnerRezOAuthController extends Controller
 
     public function authorize()
     {
+        if (! config('ownerrez.enabled', true)) {
+            return redirect()->route('admin.ownerrez.oauth')
+                ->with('error', __('cms.ownerrez_disabled'));
+        }
+
         $clientId = config('ownerrez.oauth.client_id');
         $redirectUri = config('ownerrez.oauth.redirect_uri');
 
@@ -50,7 +55,7 @@ class OwnerRezOAuthController extends Controller
     {
         $accessToken = config('ownerrez.oauth.access_token') ?? Cache::get('ownerrez_access_token');
 
-        if ($accessToken) {
+        if ($accessToken && config('ownerrez.enabled', true)) {
             // Optionally revoke the token via API
             try {
                 $clientId = config('ownerrez.oauth.client_id');
