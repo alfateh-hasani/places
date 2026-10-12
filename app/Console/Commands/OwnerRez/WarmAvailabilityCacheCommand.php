@@ -15,6 +15,12 @@ class WarmAvailabilityCacheCommand extends Command
 
     public function handle(OwnerRezSyncService $syncService): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $apartmentId = $this->option('apartment-id');
 
         $query = OwnerRezPropertyMapping::where('sync_enabled', true);

@@ -43,6 +43,12 @@ class OwnerRezSyncService
      */
     public function checkAvailability(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null, bool $liveCheck = false): bool
     {
+        // Master kill switch: with OwnerRez disabled there is no external calendar to
+        // consult, so treat the unit as available (local overlap checks still apply).
+        if (! config('ownerrez.enabled', true)) {
+            return true;
+        }
+
         try {
             $bookings = $this->getActiveBookings($propertyId, $from, $to, $excludeOwnerRezBookingId, $liveCheck);
 
@@ -71,6 +77,10 @@ class OwnerRezSyncService
      */
     public function getCalendarBookings(int|string $propertyId): Collection
     {
+        if (! config('ownerrez.enabled', true)) {
+            return collect();
+        }
+
         $cacheKey = "ownerrez:calendar:v1:{$propertyId}";
         $cached = Cache::get($cacheKey);
 
@@ -91,6 +101,10 @@ class OwnerRezSyncService
      */
     public function refreshCalendarCache(int|string $propertyId): bool
     {
+        if (! config('ownerrez.enabled', true)) {
+            return false;
+        }
+
         $from = now()->format('Y-m-d');
         $to = now()->addYear()->format('Y-m-d');
         $cacheKey = "ownerrez:calendar:v1:{$propertyId}";
@@ -143,6 +157,10 @@ class OwnerRezSyncService
      */
     public function getActiveBookings(int|string $propertyId, string $from, string $to, int|string|null $excludeOwnerRezBookingId = null, bool $liveCheck = false): Collection
     {
+        if (! config('ownerrez.enabled', true)) {
+            return collect();
+        }
+
         $cacheKey = "ownerrez:availability:v3:{$propertyId}:{$from}:{$to}";
         $cacheTtl = config('ownerrez.availability.cache_ttl', 300);
 
@@ -805,7 +823,28 @@ class OwnerRezSyncService
         // OwnerRez cannot delete a booking once created, so anything after it must be
         // best-effort — otherwise a later failure would roll back the local record and
         // orphan an OwnerRez booking we can never remove.
-        $response = $this->apiService->createBooking($ownerrezData);
+        try {
+            $response = $this->apiService->createBooking($ownerrezData);
+        } catch (OwnerRezApiException $e) {
+            // A cached ownerrez_guest_id can point to a guest that was since deleted in
+            // OwnerRez; it then rejects the booking with "...this guest was deleted."
+            // Drop the stale id, recreate the guest, and retry once so staff aren't
+            // blocked by a dead reference.
+            if (! $booking->customer || ! $this->isDeletedGuestError($e)) {
+                throw $e;
+            }
+
+            Log::warning('OwnerRez booking rejected for deleted guest - recreating guest and retrying', [
+                'local_booking_id' => $booking->id,
+                'customer_id' => $booking->customer->id,
+                'stale_guest_id' => $booking->customer->ownerrez_guest_id,
+            ]);
+
+            $booking->customer->update(['ownerrez_guest_id' => null]);
+            $ownerrezData['guest_id'] = $this->createOwnerRezGuest($booking->customer->refresh());
+
+            $response = $this->apiService->createBooking($ownerrezData);
+        }
 
         // Set custom field to identify this booking as from our platform (best-effort:
         // a custom-field failure must not undo the successful booking creation above).
@@ -1267,6 +1306,17 @@ class OwnerRezSyncService
     /**
      * Map local booking data to OwnerRez format
      */
+    /**
+     * Whether an OwnerRez booking-create failure was caused by a guest_id that references
+     * a guest already deleted in OwnerRez (so recreating the guest and retrying can recover).
+     */
+    protected function isDeletedGuestError(OwnerRezApiException $e): bool
+    {
+        $message = strtolower($e->getMessage());
+
+        return str_contains($message, 'guest') && str_contains($message, 'deleted');
+    }
+
     protected function mapLocalToOwnerRez(Booking $booking): array
     {
         $mapping = $booking->apartment->ownerrezMapping;

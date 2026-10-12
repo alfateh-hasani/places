@@ -17,6 +17,12 @@ class SyncBookingsCommand extends Command
 
     public function handle(OwnerRezApiService $apiService, OwnerRezSyncService $syncService): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $propertyId = $this->option('property-id');
         $apartmentId = $this->option('apartment-id');
 

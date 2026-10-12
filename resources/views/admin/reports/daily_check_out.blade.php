@@ -49,6 +49,7 @@
                 حجوزات النظام
             </a>
         </li>
+        @if (config('ownerrez.enabled', true))
         <li class="nav-item">
             <a class="nav-link" id="ownerrez-tab" data-toggle="tab" href="#ownerrez" role="tab">
                 حجوزات OwnerRez
@@ -59,6 +60,7 @@
                 الصيانة
             </a>
         </li>
+        @endif
     </ul>
 
     <div class="tab-content" id="checkoutTabsContent">

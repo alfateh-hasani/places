@@ -19,6 +19,12 @@ class PurgeDeletedParkedBookings extends Command
 
     public function handle(OwnerRezBlockParkingService $parking): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $isDryRun = (bool) $this->option('dry-run');
 
         if (OwnerRezParkedBooking::query()->count() === 0) {

@@ -12,6 +12,11 @@ class SyncBookingToOwnerRez
     {
         $booking = $event->booking;
 
+        // Master kill switch — bypass all OwnerRez outbound sync when disabled
+        if (! config('ownerrez.enabled', true)) {
+            return;
+        }
+
         // Check if auto sync is enabled
         if (! config('ownerrez.sync.auto_sync_outbound')) {
             Log::info('OwnerRez outbound sync is disabled', ['booking_id' => $booking->id]);

@@ -6,8 +6,8 @@
 @if ($booking->status === \App\Enums\BookingStatus::CancellationRequested->value && $booking->refund_status === 'pending')
     <button type="button" class="btn btn-xs btn-warning js-manage-cancel-btn"
             data-number="{{ $booking->number_of_booking }}"
-            data-mapped="{{ $booking->isLinkedToOwnerRez() ? 1 : 0 }}"
-            data-ownerrez-url="{{ $booking->isLinkedToOwnerRez() ? rtrim(config('ownerrez.app_url'), '/').'/bookings/'.$booking->ownerrez_booking_id : '' }}"
+            data-mapped="{{ $booking->requiresOwnerRezCancellation() ? 1 : 0 }}"
+            data-ownerrez-url="{{ $booking->requiresOwnerRezCancellation() ? rtrim(config('ownerrez.app_url'), '/').'/bookings/'.$booking->ownerrez_booking_id : '' }}"
             data-cancel-local-url="{{ url($prefix.'/booking/'.$booking->getKey().'/cancel-local') }}"
             data-reject-url="{{ url($prefix.'/booking/'.$booking->getKey().'/reject-cancellation') }}">
         <i class="la la-cog"></i> {{ __('cms.manage_cancellation') }}

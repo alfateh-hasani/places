@@ -30,6 +30,15 @@ class SyncPropertyBookingsJob implements ShouldQueue
     public function handle(OwnerRezApiService $apiService, OwnerRezSyncService $syncService): void
     {
         $logger = Log::channel('ownerrez');
+
+        if (! config('ownerrez.enabled', true)) {
+            $logger->info('OwnerRez integration disabled - skipping property bookings sync', [
+                'mapping_id' => $this->propertyMappingId,
+            ]);
+
+            return;
+        }
+
         $mapping = OwnerRezPropertyMapping::find($this->propertyMappingId);
 
         if (! $mapping || ! $mapping->sync_enabled) {

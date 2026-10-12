@@ -6,7 +6,7 @@
      unit locally (network/credentials/etc). Always available while a request is pending
      on an OwnerRez-linked booking — staff cancel it in OwnerRez by hand and use this to
      free the unit locally. Unmapped units use the modal's "Cancel locally" instead. --}}
-@php($showForceCancel = $isRequest && $booking->isLinkedToOwnerRez())
+@php($showForceCancel = $isRequest && $booking->requiresOwnerRezCancellation())
 @if (
     ($isRequest || $booking->status === \App\Enums\BookingStatus::Canceled->value)
     && $booking->refund_status === 'pending'

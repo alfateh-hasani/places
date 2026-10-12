@@ -2,7 +2,7 @@
     $hasMapping = $entry->ownerrezMapping()->exists();
 @endphp
 
-@if ($crud->hasAccess('update'))
+@if (config('ownerrez.enabled', true) && $crud->hasAccess('update'))
     @if($hasMapping)
         <a href="{{ url(config('backpack.base.route_prefix').'/ownerrez-property-mapping/'.$entry->ownerrezMapping->id.'/edit') }}" 
            class="btn btn-sm btn-success" 

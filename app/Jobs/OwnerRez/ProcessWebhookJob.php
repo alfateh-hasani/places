@@ -34,6 +34,12 @@ class ProcessWebhookJob implements ShouldQueue
 
     public function handle(OwnerRezSyncService $syncService): void
     {
+        if (! config('ownerrez.enabled', true)) {
+            Log::info('OwnerRez integration disabled - skipping webhook processing');
+
+            return;
+        }
+
         try {
             Log::info('Processing OwnerRez webhook', [
                 'event' => $this->webhookData['event'] ?? null,

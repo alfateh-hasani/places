@@ -33,6 +33,13 @@ class SyncCustomerToOwnerRezJob implements ShouldQueue
             return;
         }
 
+        // Master kill switch
+        if (! config('ownerrez.enabled', true)) {
+            Log::info('OwnerRez integration disabled - skipping customer sync', ['customer_id' => $this->customerId]);
+
+            return;
+        }
+
         // Check if sync is enabled
         if (! config('ownerrez.sync.sync_guest_data')) {
             Log::info('OwnerRez guest sync is disabled', ['customer_id' => $this->customerId]);

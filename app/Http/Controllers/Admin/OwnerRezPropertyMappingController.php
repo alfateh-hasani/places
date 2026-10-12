@@ -29,6 +29,12 @@ class OwnerRezPropertyMappingController extends CrudController
         if (! backpack_user()->can('apartment.list')) {
             abort(403, 'Unauthorized Access');
         }
+
+        // Master kill switch: the whole OwnerRez property-mapping screen is unavailable
+        // while the integration is disabled.
+        if (! config('ownerrez.enabled', true)) {
+            abort(404, __('cms.ownerrez_disabled'));
+        }
     }
 
     protected function setupListOperation()
@@ -220,6 +226,10 @@ class OwnerRezPropertyMappingController extends CrudController
 
     protected function syncOwnerRezPropertyName(): void
     {
+        if (! config('ownerrez.enabled', true)) {
+            return;
+        }
+
         $request = $this->crud->getRequest();
         $propertyId = $request->input('ownerrez_property_id');
 

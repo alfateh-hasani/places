@@ -42,7 +42,10 @@ class BookingCancellationService
 
         $this->openRequest($booking, CancelSource::Staff);
 
-        if ($booking->isLinkedToOwnerRez()) {
+        // When OwnerRez is enabled, a linked booking can only be cancelled in OwnerRez
+        // (no cancel API) so we hold the unit and await the inbound webhook. With the
+        // integration disabled that webhook will never arrive, so cancel locally now.
+        if ($booking->requiresOwnerRezCancellation()) {
             return 'requested_ownerrez';
         }
 
@@ -83,7 +86,7 @@ class BookingCancellationService
             return;
         }
 
-        if ($booking->isLinkedToOwnerRez()) {
+        if ($booking->requiresOwnerRezCancellation()) {
             Log::warning('Booking force-cancelled locally while still linked to OwnerRez', [
                 'booking_id' => $booking->id,
                 'ownerrez_booking_id' => $booking->ownerrez_booking_id,
@@ -95,7 +98,9 @@ class BookingCancellationService
 
         // حرّرت الوحدة — امسح كاش تقويم OwnerRez وأعد تسخينه ليظهر التوفّر مباشرةً
         // (لا شيء لغير المربوطة بـ OwnerRez؛ تقويمها يُقرأ محلياً مباشرةً).
-        app(\App\Services\OwnerRez\OwnerRezSyncService::class)->invalidateCacheForBooking($booking);
+        if (config('ownerrez.enabled', true)) {
+            app(\App\Services\OwnerRez\OwnerRezSyncService::class)->invalidateCacheForBooking($booking);
+        }
     }
 
     /**

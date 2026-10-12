@@ -152,6 +152,7 @@ return [
     'status_cancellation_requested_customer' => 'Cancellation request (customer)',
     'status_cancellation_requested_staff' => 'Cancellation request (staff)',
     'cancel_started_ownerrez' => 'Unit is linked to OwnerRez — cancel the booking in OwnerRez to finalize automatically, or use "Force cancel locally".',
+    'ownerrez_disabled' => 'OwnerRez integration is currently disabled.',
     'booking_already_canceled' => 'Booking is already canceled.',
     'cancel_source_customer' => 'Customer',
     'cancel_source_staff' => 'Staff',

@@ -14,6 +14,12 @@ class TestAvailabilityCommand extends Command
 
     public function handle(OwnerRezSyncService $syncService): int
     {
+        if (! config('ownerrez.enabled', true)) {
+            $this->warn('OwnerRez integration is disabled (OWNERREZ_ENABLED=false). Nothing to do.');
+
+            return self::SUCCESS;
+        }
+
         $apartmentId = $this->argument('apartment_id');
         $checkIn = $this->argument('check_in');
         $checkOut = $this->argument('check_out');
