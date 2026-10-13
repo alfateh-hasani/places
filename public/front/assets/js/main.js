@@ -470,9 +470,6 @@ $(document).ready(function () {
         $('[dir="ltr"] section.cities .slider').slick({
             centerMode: true
         });
-        $('[dir="ltr"]  section.detail .photos').slick({
-            arrows: false
-        });
     }
 
     if ($(window).width() < 640) {
@@ -480,11 +477,11 @@ $(document).ready(function () {
             centerMode: true,
             rtl: true
         });
-        $('[dir="rtl"] section.detail .photos').slick({
-            arrows: false,
-            rtl: true
-        });
     }
+
+    // The apartment-detail mobile gallery (section.detail .photos) is intentionally
+    // NOT turned into a slick slider — the images stack one under another so all of
+    // them are visible by scrolling the page (previous behavior).
 
     let isRtl = $("html").attr("dir") === "rtl";
    

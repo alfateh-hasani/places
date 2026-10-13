@@ -83,11 +83,15 @@
                  
             </div>
 
+            {{-- The collapsed banner shows 5 images (1 big + 4 small). Only offer
+                 "show all photos" when there are more than that to reveal. --}}
+            @if($apartment->getMedia('image')->count() > 5)
             <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
-                <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" /> 
+                <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" />
                     <span>{{__('apartment.show_all_photos')}}</span>
                 </button>
             </div>
+            @endif
         </div>
         
     </div>
@@ -551,16 +555,10 @@
     // expand (reliable with lazy images). Runs on window load so it supersedes
     // main.js's document-ready handler.
     $(window).on('load', function () {
+        // The button is only rendered when there are more than 5 images (see the
+        // Blade count check on the banner); if it's absent, there's nothing to wire up.
         var $btn = $('#allphotos');
         if (! $btn.length) return;
-
-        // If every image already fits in the collapsed banner, there's nothing to
-        // expand — hide the "show all photos" button (desktop only; it's lg:block).
-        var bc = document.querySelector('.banner-container');
-        if (bc && bc.scrollHeight <= bc.clientHeight + 2) {
-            $btn.closest('.buttons').hide();
-            return;
-        }
 
         $btn.off('click');
         $('.banner-container').css('height', '');
