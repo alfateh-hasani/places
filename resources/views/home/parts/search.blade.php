@@ -1,4 +1,4 @@
-<section class="container py-8 lg:hidden cursor-pointer search-button -translate-y-[50%]">
+<section data-tour="search-trigger" class="container py-8 lg:hidden cursor-pointer search-button -translate-y-[50%]">
     <div class="flex items-center px-6 py-3 bg-white shadow-xl rounded-full border border-border">
         <img src="{{ asset('assets/img/search-black.svg') }}" class="w-4 me-5 py-2" alt="" width="16" height="16" />
         <div>
@@ -23,7 +23,7 @@
             </p>
             <button type="button" class="close-button"><img src="{{ asset('assets/img/close.svg') }}" alt="{{ __('site.close') }}" /></button>
         </div>
-        <div class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none ">
+        <div data-tour="search-city" class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none ">
             <label for="city_id" class="font-normal text-xs text-black">{{ __('site.filters_city_id') }}</label>
             <select name="city_id" id="city_id" aria-label="{{ __('site.filters_city_id') }}" class="select2 w-full border-0 font-semibold text-sm">
               @foreach ($cities as $item)
@@ -31,7 +31,7 @@
               @endforeach
             </select>
         </div>
-        <div
+        <div data-tour="search-dates"
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_check_in') }}</p>
             <input id="datepicker-range-start" name="check_in" type="text" readonly
@@ -49,7 +49,7 @@
                 placeholder="{{ now()->addDay()->format('Y-m-d') }}"  autocomplete="off"
                 value="{{ request('check_out') }}" />
         </div>
-        <div
+        <div data-tour="search-guests"
             class="shadow-xl lg:shadow-none p-4 lg:p-0 rounded-lg mb-3 lg:mb-0 lg:rounded-none lg:px-4 lg:border-s border-blackopacity cursor-pointer persons relative ">
             <p class="font-normal text-xs text-black">{{ __('site.filters_guests') }}</p>
             <p class="font-semibold text-sm text-black py-1 content">{{ __('site.add_guests') }}</p>
@@ -120,7 +120,7 @@
                 </li>
             </ul>
         </div>
-        <div class="lg:col-span-1 col-span-2">
+        <div data-tour="search-submit" class="lg:col-span-1 col-span-2">
             <button
                 class="bg-price  w-full h-11 text-center rounded-lg lg:rounded-full hover:bg-black ease-in-out duration-200">
                 <img class="inline-block -translate-y-0.5 me-2" src="{{ asset('assets/img/search2.svg') }}" alt="" />{{ __('site.search') }}

@@ -219,6 +219,10 @@ $(document).ready(function() {
         enableTime: false,
         noCalendar: false,
         inline: false,
+        // Keep the styled flatpickr calendar on phones too (consistent with the
+        // home search / by-city pickers). Without this, flatpickr falls back to
+        // the browser's unstyled native date picker on touch devices.
+        disableMobile: true,
     };
 
     var checkinPicker = flatpickr("#checkin", {

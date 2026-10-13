@@ -86,7 +86,7 @@
                 </div>
             </div>
             <div class=" xl:block xl:basis-4/12 xl:pl-5 rtl:xl:pr-5">
-                <div class="border border border-filterborder rounded-xl px-5 py-6">
+                <div class="border border border-filterborder rounded-xl px-5 py-6" data-tour="booking-summary">
                     <div class="">
                         <div class="relative">
                             <div class="slider slider-checkout" style="max-width: 450px">
@@ -250,7 +250,7 @@
                         
                          
                     </ul>
-                    <div class="flex flex-row flex-wrap items-center gap-2">
+                    <div class="flex flex-row flex-wrap items-center gap-2" data-tour="booking-coupon">
                         <input type="text" id="coupon_code" name="coupon_code"
                         @if($booking->coupon_code)
                             value="{{ $booking->coupon_code }}"
@@ -271,7 +271,7 @@
                     
                     <div id="coupon_message" class="mt-2 is-success"></div>
                     
-                    <button id="book_now_desktop" class="bg-price rounded-lg h-12 w-full font-semibold text-white hidden md:block">
+                    <button id="book_now_desktop" data-tour="booking-pay" class="bg-price rounded-lg h-12 w-full font-semibold text-white hidden md:block">
                         {{__('booking.book_now')}}
                     </button>
                 </form>
@@ -289,7 +289,7 @@
                 <span class="text-sm text-gray-600">{{__('booking.total_price')}}</span>
                 <span id="total_price_mobile" class="text-lg font-bold text-price">{{ $booking->final_price }}  </span>
             </div>
-            <button id="book_now_mobile" class="bg-price rounded-lg h-12 px-8 font-semibold text-white flex-shrink-0">
+            <button id="book_now_mobile" data-tour="booking-pay" class="bg-price rounded-lg h-12 px-8 font-semibold text-white flex-shrink-0">
                 {{__('booking.book_now')}}
             </button>
         </div>

@@ -40,6 +40,8 @@
 
   @include('partials.wishlist')
 
+  @include('common.parts.tour')
+
   @stack('js')
 
   @include('partials.web-push')
