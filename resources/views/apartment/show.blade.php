@@ -447,6 +447,11 @@
                                 <span class="float-right rtl:float-left" id="totalNights">1 {{ __('apartment.nights') }}</span>
                                 <div class="clear-both"></div>
                             </li>
+                            {{-- Price before discount + long-stay discount: filled (display-only)
+                                 by the price calculator (apartment/js) when a multi-night discount
+                                 applies; both collapse (empty:hidden) when there's no discount. --}}
+                            <li id="priceBeforeDiscount" class="mb-4 font-semibold text-sm text-title empty:hidden"></li>
+                            <li id="discountedCost" class="mb-4 font-semibold text-sm text-title empty:hidden"></li>
                             <li class="mb-4 font-semibold text-sm text-title">
                                 <span>{{ __('apartment.total_cost')}}</span>
                                 <span class="font-normal text-base text-reviews">

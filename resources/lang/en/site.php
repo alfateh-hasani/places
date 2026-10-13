@@ -6,6 +6,7 @@ return [
     'readable_content' => 'Readable Content',
     'popular_cities' => 'Popular Cities We Offer',
     'apartments' => 'Apartment',
+    'phone' => 'Phone',
     'explore_buildings' => 'Explore Our Buildings',
     'explore_more_properties' => 'Explore More Properties',
     'properties' => 'Properties',

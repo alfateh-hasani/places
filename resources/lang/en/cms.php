@@ -361,4 +361,7 @@ return [
     'select' => 'Select',
     'cancel' => 'Cancel',
     'booking_number' => 'Booking number',
+    'refund_status_pending' => 'Awaiting refund',
+    'refund_status_approved' => 'Refunded',
+    'refund_status_rejected' => 'Rejected',
 ];

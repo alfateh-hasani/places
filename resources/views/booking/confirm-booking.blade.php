@@ -82,7 +82,7 @@
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                         {!!$policy_description!!}
                     </div>
-                    <button class="showmore font-normal text-sm text-blue underline"> </button>
+                    <button type="button" class="showmore-policy font-semibold text-sm text-price underline cursor-pointer mt-1 inline-block">@lang('apartment.show_more')</button>
                 </div>
             </div>
             <div class=" xl:block xl:basis-4/12 xl:pl-5 rtl:xl:pr-5">
@@ -310,6 +310,27 @@
 
 @push('js')
 <script src="{{ asset('assets/plugin/HoldOn.min.js') }}"></script>
+<script>
+    // Policy "show more/less": the shared main.js .showmore handler targeted
+    // $(this).prev("p"), but the policy text is a <div>, so it never expanded.
+    // Self-contained, localized handler bound to .showmore-policy instead.
+    $(function () {
+        var $policyBtn = $('.showmore-policy');
+        var $policyText = $policyBtn.prev('div');
+        if (! $policyBtn.length || ! $policyText.length) { return; }
+        // Hide the toggle when the policy isn't actually truncated.
+        if ($policyText[0].scrollHeight <= $policyText[0].clientHeight + 2) {
+            $policyBtn.hide();
+            $policyText.css('maxHeight', 'none');
+            return;
+        }
+        $policyBtn.on('click', function () {
+            var expanded = $(this).toggleClass('active').hasClass('active');
+            $policyText.css('maxHeight', expanded ? '10000px' : '72px');
+            $(this).text(expanded ? @json(__('apartment.show_less')) : @json(__('apartment.show_more')));
+        });
+    });
+</script>
 <script>
      $(document).ready(function() {
     $('#verify_coupon').on('click', function() {

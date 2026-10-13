@@ -1,5 +1,8 @@
 @php
-    $sliderLocale = app()->getLocale();
+    // The hero artwork has the slogan + CTA baked into the image and is only
+    // produced in Arabic, so use the Arabic slide for BOTH site languages.
+    // (The localized link and alt text below still follow the active locale.)
+    $sliderLocale = 'ar';
     $firstSlider = $sliders->first();
     $firstMobileUrl = $firstSlider ? $firstSlider->displayImageUrl('image_mobile_'.$sliderLocale, 'hero_mobile') : '';
 @endphp
