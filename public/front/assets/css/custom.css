@@ -68,6 +68,12 @@ label.error {
     width: 35px;
     height: 35px;
     top: 10px !important;
+    /* Place the close (x) on the inline-end with a small inset: top-right in LTR,
+       top-left in RTL — so it no longer overlaps the RTL title (which is on the
+       right) and isn't flush against the edge. */
+    right: auto !important;
+    inset-inline-end: 12px !important;
+    inset-inline-start: auto !important;
 }
 
 #feedback-1:checked~section [for=feedback-1] svg path,
@@ -515,4 +521,204 @@ textarea:focus-visible,
     right: auto;
     left: 15px;
     background-image: url(../img/list-left.svg);
+}
+
+/* Same RTL swap (position + icon) for the other carousels whose arrows are pinned
+   left/right in style.css with no [dir=rtl] handling — hero/blog, cities,
+   properties listing, profile — so the arrows read correctly in Arabic. */
+[dir="rtl"] section.slider .slick-arrow.slick-prev,
+[dir="rtl"] section .blogslider .slick-arrow.slick-prev {
+    left: auto; right: 50px;
+    background-image: url(../img/slider-right.svg);
+}
+[dir="rtl"] section.slider .slick-arrow.slick-next,
+[dir="rtl"] section .blogslider .slick-arrow.slick-next {
+    right: auto; left: 50px;
+    background-image: url(../img/slider-left.svg);
+}
+[dir="rtl"] section.cities .slider .slick-arrow.slick-prev {
+    left: auto; right: 30px;
+    background-image: url(../img/list-right.svg);
+}
+[dir="rtl"] section.cities .slider .slick-arrow.slick-next {
+    right: auto; left: 30px;
+    background-image: url(../img/list-left.svg);
+}
+[dir="rtl"] section.properitirs .slider .slick-arrow.slick-prev {
+    left: auto; right: 30px;
+    background-image: url(../img/list-right.svg);
+}
+[dir="rtl"] section.properitirs .slider .slick-arrow.slick-next {
+    right: auto; left: 30px;
+    background-image: url(../img/list-left.svg);
+}
+[dir="rtl"] section.profile .slider .slick-arrow.slick-prev {
+    left: auto; right: 15px;
+    background-image: url(../img/list-right.svg);
+}
+[dir="rtl"] section.profile .slider .slick-arrow.slick-next {
+    right: auto; left: 15px;
+    background-image: url(../img/list-left.svg);
+}
+
+/* Account menu dropdown (header): align to the inline-end of the trigger so it
+   opens inward in both directions — right-aligned in LTR (trigger is top-right),
+   left-aligned in RTL (trigger is top-left) — instead of overflowing the edge. */
+.account-dropdown {
+    inset-inline-end: 0;
+    inset-inline-start: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   Product tour (driver.js) — Dyafa brand skin.
+
+   Scoped to .dyafa-theme (the popoverClass set in tour.js) so it never touches
+   other popovers. Colors are forced with !important on purpose: the customer
+   site ships a dark theme (dark.css sets body/#fff text overrides) plus a
+   Tailwind preflight, and either can bleed into driver.js's generic children
+   (that's what turned the title row into a black bar). Pinning every surface
+   here makes the popover render identically in light and dark, EN and AR.
+   Accent #f7bb8e is the same brand peach used on the search / login buttons.
+   --------------------------------------------------------------------------- */
+.driver-popover.dyafa-theme {
+    background: #ffffff !important;
+    color: #2d2d2d !important;
+    border-radius: 14px !important;
+    padding: 20px 20px 16px !important;
+    min-width: 260px !important;
+    max-width: 340px !important;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* Title: brand-dark text on the white card (no inherited background). Reserve
+   space on the inline-end side so long titles never slide under the Skip button. */
+.driver-popover.dyafa-theme .driver-popover-title {
+    display: block !important;
+    background: transparent !important;
+    color: #1f2430 !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    line-height: 1.5 !important;
+    margin: 0 0 6px !important;
+    padding-inline-end: 56px !important;
+}
+
+.driver-popover.dyafa-theme .driver-popover-description {
+    background: transparent !important;
+    color: #5c6270 !important;
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+}
+
+/* Footer: progress on one side, Back/Next on the other. */
+.driver-popover.dyafa-theme .driver-popover-footer {
+    margin-top: 18px !important;
+    gap: 8px !important;
+}
+.driver-popover.dyafa-theme .driver-popover-progress-text {
+    color: #9aa0ac !important;
+    font-size: 0.78rem !important;
+}
+.driver-popover.dyafa-theme .driver-popover-footer button {
+    text-shadow: none !important;
+    border-radius: 9px !important;
+    padding: 7px 16px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease !important;
+}
+
+/* Secondary (Back): quiet outline. */
+.driver-popover.dyafa-theme .driver-popover-prev-btn {
+    background: #ffffff !important;
+    color: #5c6270 !important;
+    border: 1px solid #e4e4e7 !important;
+}
+.driver-popover.dyafa-theme .driver-popover-prev-btn:hover {
+    background: #f4f4f5 !important;
+    color: #1f2430 !important;
+}
+
+/* Primary (Next / Done): brand peach, dark readable text; black on hover to
+   mirror the site's own bg-price→bg-black button behaviour. */
+.driver-popover.dyafa-theme .driver-popover-next-btn {
+    background: #f7bb8e !important;
+    color: #2d2117 !important;
+    border: 1px solid #f7bb8e !important;
+}
+.driver-popover.dyafa-theme .driver-popover-next-btn:hover,
+.driver-popover.dyafa-theme .driver-popover-next-btn:focus {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border-color: #111111 !important;
+}
+
+/* Close button rendered as a "Skip" text button (tour.js sets its label) instead
+   of the default "×" icon. Auto-sized, sits in the top inline-end corner. */
+.driver-popover.dyafa-theme .driver-popover-close-btn {
+    width: auto !important;
+    height: auto !important;
+    top: 14px !important;
+    right: 16px !important;
+    left: auto !important;
+    padding: 2px 4px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    color: #9aa0ac !important;
+    text-decoration: none !important;
+}
+.driver-popover.dyafa-theme .driver-popover-close-btn:hover {
+    color: #1f2430 !important;
+    text-decoration: underline !important;
+}
+/* driver.js auto-focuses the close button on open; Chrome paints a focus square
+   there (it treats the programmatic focus as focus-visible). The X is a close
+   affordance with other dismissals (Esc, overlay click), so drop its ring
+   entirely — that's the square the user sees. */
+.driver-popover.dyafa-theme .driver-popover-close-btn:focus,
+.driver-popover.dyafa-theme .driver-popover-close-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+/* Keep a clean brand ring on Back/Next for keyboard users (accessibility);
+   suppress it for pointer/programmatic focus. */
+.driver-popover.dyafa-theme .driver-popover-footer button:focus:not(:focus-visible) {
+    outline: none !important;
+}
+.driver-popover.dyafa-theme .driver-popover-footer button:focus-visible {
+    outline: 2px solid #f7bb8e !important;
+    outline-offset: 2px !important;
+}
+
+/* (Arrow is left at driver.js's default white — it already matches the card;
+   overriding all four borders would square off the triangle.) */
+
+/* RTL: right-align copy, mirror the footer button row, and move the close X to
+   the natural top-left corner. */
+html[dir="rtl"] .driver-popover.dyafa-theme {
+    text-align: right !important;
+}
+html[dir="rtl"] .driver-popover.dyafa-theme .driver-popover-navigation-btns {
+    flex-direction: row-reverse !important;
+}
+html[dir="rtl"] .driver-popover.dyafa-theme .driver-popover-close-btn {
+    right: auto !important;
+    left: 16px !important;
+}
+
+/* Phones: let the card use almost the full width (minus a gutter) so long
+   Arabic copy isn't cramped, and never overflow a narrow viewport. */
+@media (max-width: 480px) {
+    .driver-popover.dyafa-theme {
+        max-width: calc(100vw - 24px) !important;
+        min-width: 0 !important;
+        padding: 16px !important;
+    }
+    .driver-popover.dyafa-theme .driver-popover-title {
+        font-size: 1.02rem !important;
+    }
+    .driver-popover.dyafa-theme .driver-popover-description {
+        font-size: 0.86rem !important;
+    }
 }

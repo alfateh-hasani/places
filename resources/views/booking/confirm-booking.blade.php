@@ -2,6 +2,7 @@
 @push('css')
 <link href="{{ asset('assets/css/slick.css?'.time())}}" rel="stylesheet" />
 <link href="{{ asset('assets/css/slick-theme.css?'.time())}}" rel="stylesheet" />
+<link rel="stylesheet" href="{{ asset('assets/plugin/HoldOn.min.css') }}" />
 <style>
     /* Coupon feedback colors. The compiled Tailwind build doesn't ship
        text-red-500 / text-green-500, and the dark theme forces text colors with
@@ -14,12 +15,13 @@
 
 
 <section class="container py-10">
-    <a>
-        <img class="inline-block me-4 rtl:rotate-180" src="{{asset('assets/img/back.svg')}}" />
-        <span class="font-semibold text-2xl text-title translate-y-1 inline-block">
-            {{__('booking.review_payment')}}
-        </span>
-    </a>
+    <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '{{ route('apartments.index') }}'; }"
+            aria-label="{{ __('site.back') }}" class="inline-block align-middle cursor-pointer">
+        <img class="inline-block me-4 rtl:rotate-180" src="{{asset('assets/img/back.svg')}}" alt="" />
+    </button>
+    <span class="font-semibold text-2xl text-title translate-y-1 inline-block">
+        {{__('booking.review_payment')}}
+    </span>
 </section>
 
 <section class="descriptions pb-24">
@@ -81,11 +83,11 @@
                     <div class="font-light text-base text-gri mt-3 mb-2 ease-in-out duration-900 max-h-[72px] overflow-hidden">
                         {!!$policy_description!!}
                     </div>
-                    <button class="showmore font-normal text-sm text-blue underline"> </button>
+                    <button type="button" class="showmore-policy font-semibold text-sm text-price underline cursor-pointer mt-1 inline-block">@lang('apartment.show_more')</button>
                 </div>
             </div>
             <div class=" xl:block xl:basis-4/12 xl:pl-5 rtl:xl:pr-5">
-                <div class="border border border-filterborder rounded-xl px-5 py-6">
+                <div class="border border border-filterborder rounded-xl px-5 py-6" data-tour="booking-summary">
                     <div class="">
                         <div class="relative">
                             <div class="slider slider-checkout" style="max-width: 450px">
@@ -240,16 +242,15 @@
                     <ul>
                         @foreach ($payment_details as $item)
                             <li>
-                                <a class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
-                                    <img class="inline-block" src="{{$item['icon']}}" height="50" />
-                                      
-                                </a>
+                                <div class="block border border-filterborder py-3 px-4 rounded-lg mb-2">
+                                    <img class="inline-block" src="{{$item['icon']}}" height="50" alt="" />
+                                </div>
                             </li>
                         @endforeach
                         
                          
                     </ul>
-                    <div class="flex flex-row flex-wrap items-center gap-2">
+                    <div class="flex flex-row flex-wrap items-center gap-2" data-tour="booking-coupon">
                         <input type="text" id="coupon_code" name="coupon_code"
                         @if($booking->coupon_code)
                             value="{{ $booking->coupon_code }}"
@@ -270,7 +271,7 @@
                     
                     <div id="coupon_message" class="mt-2 is-success"></div>
                     
-                    <button id="book_now_desktop" class="bg-price rounded-lg h-12 w-full font-semibold text-white hidden md:block">
+                    <button id="book_now_desktop" data-tour="booking-pay" class="bg-price rounded-lg h-12 w-full font-semibold text-white hidden md:block">
                         {{__('booking.book_now')}}
                     </button>
                 </form>
@@ -288,7 +289,7 @@
                 <span class="text-sm text-gray-600">{{__('booking.total_price')}}</span>
                 <span id="total_price_mobile" class="text-lg font-bold text-price">{{ $booking->final_price }}  </span>
             </div>
-            <button id="book_now_mobile" class="bg-price rounded-lg h-12 px-8 font-semibold text-white flex-shrink-0">
+            <button id="book_now_mobile" data-tour="booking-pay" class="bg-price rounded-lg h-12 px-8 font-semibold text-white flex-shrink-0">
                 {{__('booking.book_now')}}
             </button>
         </div>
@@ -308,6 +309,28 @@
 @endsection
 
 @push('js')
+<script src="{{ asset('assets/plugin/HoldOn.min.js') }}"></script>
+<script>
+    // Policy "show more/less": the shared main.js .showmore handler targeted
+    // $(this).prev("p"), but the policy text is a <div>, so it never expanded.
+    // Self-contained, localized handler bound to .showmore-policy instead.
+    $(function () {
+        var $policyBtn = $('.showmore-policy');
+        var $policyText = $policyBtn.prev('div');
+        if (! $policyBtn.length || ! $policyText.length) { return; }
+        // Hide the toggle when the policy isn't actually truncated.
+        if ($policyText[0].scrollHeight <= $policyText[0].clientHeight + 2) {
+            $policyBtn.hide();
+            $policyText.css('maxHeight', 'none');
+            return;
+        }
+        $policyBtn.on('click', function () {
+            var expanded = $(this).toggleClass('active').hasClass('active');
+            $policyText.css('maxHeight', expanded ? '10000px' : '72px');
+            $(this).text(expanded ? @json(__('apartment.show_less')) : @json(__('apartment.show_more')));
+        });
+    });
+</script>
 <script>
      $(document).ready(function() {
     $('#verify_coupon').on('click', function() {
@@ -398,11 +421,13 @@
 
 $('#book_now_desktop').on('click', function() {
     $(this).prop('disabled', true);
+    HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
     $('#booking_form').submit();
 });
 
 $('#book_now_mobile').on('click', function() {
     $(this).prop('disabled', true);
+    HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
     $('#booking_form').submit();
 });
     </script>

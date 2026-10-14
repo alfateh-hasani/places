@@ -100,7 +100,7 @@
                     
                     <button class="bg-price py-4 px-16 font-normal text-sm text-white rounded-full">
                         {{__('site.send')}}
-                        <img class="w-3 inline-block ml-3" src="{{asset('assets/img/slider-right.svg')}}" alt="" /></button>
+                        <img class="w-3 inline-block ms-3 rtl:rotate-180" src="{{asset('assets/img/slider-right.svg')}}" alt="" /></button>
 
                 </form>
             </div>

@@ -348,9 +348,9 @@ $(document).ready(function () {
         dots: true
     });
 
-    $("section.list .favorite").click(function () {
-        $(this).toggleClass("favorite-active");
-    });
+    // (Removed) section.list .favorite click toggle: the delegated wishlist handler
+    // (partials/wishlist) owns the favorite state; this extra toggle flipped the
+    // class first and made the heart flash the wrong way before the server reconciled.
 
     $('[dir="ltr"] section.properitirs .slider').slick({
         slidesToShow: 4,
@@ -470,9 +470,6 @@ $(document).ready(function () {
         $('[dir="ltr"] section.cities .slider').slick({
             centerMode: true
         });
-        $('[dir="ltr"]  section.detail .photos').slick({
-            arrows: false
-        });
     }
 
     if ($(window).width() < 640) {
@@ -480,11 +477,11 @@ $(document).ready(function () {
             centerMode: true,
             rtl: true
         });
-        $('[dir="rtl"] section.detail .photos').slick({
-            arrows: false,
-            rtl: true
-        });
     }
+
+    // The apartment-detail mobile gallery (section.detail .photos) is intentionally
+    // NOT turned into a slick slider — the images stack one under another so all of
+    // them are visible by scrolling the page (previous behavior).
 
     let isRtl = $("html").attr("dir") === "rtl";
    

@@ -44,6 +44,7 @@
             </button>
             
             <button type="button"
+                data-tour="pdp-favorite"
                 data-wishlist-toggle
                 data-apartment-id="{{ $apartment->id }}"
                 aria-pressed="{{ $apartment->is_favorite ? 'true' : 'false' }}"
@@ -72,7 +73,7 @@
         <div class="clear-both"></div>
     </div>
     <div class="container relative hidden sm:block">
-        <div class="banner-container">
+        <div class="banner-container" data-tour="pdp-gallery">
             <div class="new-detail-banner">
                 @foreach ($apartment->getMedia('image') as $key=> $photo)
                     <a data-fancybox="banner" href="{{ $photo->getUrl() }}"><img src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
@@ -83,18 +84,22 @@
                  
             </div>
 
-            <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
-                <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" /> 
+            {{-- The collapsed banner shows 5 images (1 big + 4 small). Only offer
+                 "show all photos" when there are more than that to reveal. --}}
+            @if($apartment->getMedia('image')->count() > 5)
+            <div class="buttons absolute z-10 right-4 rtl:left-4 rtl:right-auto bottom-4 hidden lg:block">
+                <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" />
                     <span>{{__('apartment.show_all_photos')}}</span>
                 </button>
             </div>
+            @endif
         </div>
         
     </div>
 
  
     <div class="relative">
-        <div class="block sm:hidden photos banner-side ease-in-out duration-300">
+        <div class="block sm:hidden photos banner-side ease-in-out duration-300" data-tour="pdp-gallery">
             @foreach ($apartment->getMedia('image') as $key=> $photo)
                 <div>
                     <a data-fancybox="telbanner" href="{{ $photo->getUrl() }}"><img class="h-[256px] w-full object-cover" src="{{ $photo->getUrl() }}" @if ($key > 0) loading="lazy" @endif /></a>
@@ -118,7 +123,7 @@
                 {{ $apartment->building->city->ml('name') }}
             </p>
         </div>
-        <div class="float-left rtl:float-right mr-5 w-full lg:w-auto mb-3 lg:mb-0">
+        <div class="float-left rtl:float-right rtl:ml-5 mr-5 w-full lg:w-auto mb-3 lg:mb-0">
             <img class="inline-block mr-2 rtl:ml-2 -translate-y-0.5" src="{{asset('assets/img/start-new-2.svg')}}" style="height: 20px;" />
             <p class="inline-block font-normal text-base text-reviews">
                 {{ $apartment->total_ratings }} ({{ $apartment->reviews->count() }})
@@ -194,7 +199,7 @@
                                 </span>
                             </a>
                         </li>
-                        <li class="inline-block">
+                        <li class="inline-block" data-tour="pdp-reviews">
                             <a class="px-4 py-2 xl:px-5 xl:py-3 rounded-lg me-3 block" href="#tabs-2">
                                 <svg class="hidden -translate-y-0.5 xl:inline-block" xmlns="http://www.w3.org/2000/svg" width="20.671" height="19.707" viewBox="0 0 20.671 19.707">
                                     <path id="Icon_feather-star" data-name="Icon feather-star" d="M12.836,3l3.039,6.157,6.8.993-4.918,4.79,1.161,6.767-6.078-3.2-6.078,3.2L7.918,14.94,3,10.151l6.8-.993Z" transform="translate(-2.5 -2.5)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
@@ -340,7 +345,7 @@
             </div>
             <div class="mt-8 xl:mt-0 xl:block xl:basis-4/12 xl:ps-5">
                 <div class="border border border-filterborder rounded-xl px-5 py-6">
-                    <p class="font-normal text-base text-reviews">
+                    <p class="font-normal text-base text-reviews" data-tour="pdp-price">
                         <span class="font-bold text-2xl text-black translate-y-0.5 inline-block" id="mainPrice">
                             {{ $priceInfo['total'] }}
                         </span>
@@ -352,7 +357,7 @@
                         @csrf
 
                
-                        <div class="flex flex-wrap -mx-2">
+                        <div class="flex flex-wrap -mx-2" data-tour="pdp-datepicker">
                             <div class="flex flex-col w-1/2 px-2">
                                 <label for="checkin" class="mb-1 font-semibold">@lang('apartment.checkin_date')</label>
                                 <input type="date" id="checkin" name="checkin" 
@@ -442,6 +447,11 @@
                                 <span class="float-right rtl:float-left" id="totalNights">1 {{ __('apartment.nights') }}</span>
                                 <div class="clear-both"></div>
                             </li>
+                            {{-- Price before discount + long-stay discount: filled (display-only)
+                                 by the price calculator (apartment/js) when a multi-night discount
+                                 applies; both collapse (empty:hidden) when there's no discount. --}}
+                            <li id="priceBeforeDiscount" class="mb-4 font-semibold text-sm text-title empty:hidden"></li>
+                            <li id="discountedCost" class="mb-4 font-semibold text-sm text-title empty:hidden"></li>
                             <li class="mb-4 font-semibold text-sm text-title">
                                 <span>{{ __('apartment.total_cost')}}</span>
                                 <span class="font-normal text-base text-reviews">
@@ -469,9 +479,9 @@
                         @endif
                         
                         @auth('customer')
-                            <button type="submit" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
+                            <button type="submit" data-tour="pdp-book" class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
                         @else
-                            <button data-src="#popup-5" data-fancybox dont-close-click-outside class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
+                            <button data-tour="pdp-book" data-src="#popup-5" data-fancybox dont-close-click-outside class="bg-price rounded-lg h-12 w-full font-semibold text-white">@lang('apartment.book_now')</button>
                         @endauth
                     </form>
                     
@@ -551,8 +561,11 @@
     // expand (reliable with lazy images). Runs on window load so it supersedes
     // main.js's document-ready handler.
     $(window).on('load', function () {
+        // The button is only rendered when there are more than 5 images (see the
+        // Blade count check on the banner); if it's absent, there's nothing to wire up.
         var $btn = $('#allphotos');
         if (! $btn.length) return;
+
         $btn.off('click');
         $('.banner-container').css('height', '');
         $btn.on('click', function () {

@@ -2,6 +2,9 @@
 @push('css')
 <!-- SweetAlert2 CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+{{-- HoldOn's JS is loaded via script-form, but its CSS was missing here, so the
+     loading overlay rendered unstyled (invisible). Load it so the spinner shows. --}}
+<link rel="stylesheet" href="{{ asset('assets/plugin/HoldOn.min.css') }}">
 <!-- Flatpickr — نفس تحميلات صفحة الحجز (base + dark theme) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
@@ -149,7 +152,7 @@ span.flatpickr-day.selected{
                     </h2>
                </a>
                 <div class="grid grid-cols-2 gap-2 w-full sm:flex-1 sm:flex sm:flex-wrap sm:justify-end">
-                    <a class="py-3 px-4 rounded-md bg-gri text-white flex items-center justify-center gap-2 text-sm" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
+                    <a data-tour="bd-print" class="py-3 px-4 rounded-md bg-gri text-white flex items-center justify-center gap-2 text-sm" href="{{ route('customer.booking.print_details', $booking->number_of_booking) }}">
                         <svg class="inline-block" id="fi_2891455" enable-background="new 0 0 24 24" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                             <path d="m21.5 18h-3c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h3c.827 0 1.5-.673 1.5-1.5v-7c0-.827-.673-1.5-1.5-1.5h-19c-.827 0-1.5.673-1.5 1.5v7c0 .827.673 1.5 1.5 1.5h3c.276 0 .5.224.5.5s-.224.5-.5.5h-3c-1.379 0-2.5-1.122-2.5-2.5v-7c0-1.378 1.121-2.5 2.5-2.5h19c1.379 0 2.5 1.122 2.5 2.5v7c0 1.378-1.121 2.5-2.5 2.5z"></path>
                             <path d="m14.5 21h-6c-.276 0-.5-.224-.5-.5s.224-.5.5-.5h6c.276 0 .5.224.5.5s-.224.5-.5.5z"></path>
@@ -161,9 +164,13 @@ span.flatpickr-day.selected{
                         <span>{{__('booking.print')}}</span>
                     </a>
 
-                    @if($booking->status !== 'customer_canceled' && $booking->status !== 'canceled')
+                    {{-- A pending booking isn't confirmed/paid yet, so cancel / change-dates
+                         don't apply — hide them (otherwise they show disabled with a misleading
+                         "X hours before check-in" tooltip even when check-in is far away). --}}
+                    @if($booking->status !== 'customer_canceled' && $booking->status !== 'canceled' && $booking->status !== 'pending')
                     <div class="relative group">
                         <button {{ $can_cancel ? '' : 'disabled' }}
+                            data-tour="bd-cancel"
                             class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#fdeee9] text-price text-sm cancel-booking-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
                             data-booking-id="{{ $booking->id }}">
                             <span>{{ __('booking.cancel') }}</span>
@@ -180,6 +187,7 @@ span.flatpickr-day.selected{
 
                     <div class="relative group">
                         <button {{ $can_cancel ? '' : 'disabled' }}
+                            data-tour="bd-dates"
                             class="py-3 px-4 w-full sm:w-auto rounded-md bg-[#eaf3ff] text-price text-sm edit-dates-btn {{ !$can_cancel ? 'cursor-not-allowed opacity-50' : '' }}"
                             data-booking-id="{{ $booking->id }}"
                             data-check-in="{{ $booking->check_in->format('Y-m-d') }}"
@@ -228,7 +236,7 @@ span.flatpickr-day.selected{
                 
 
                     
-                     <a href="{{ route('page','contact') }}" title="{{ __('site.contact') }}" class="py-3 px-4 w-full sm:w-auto rounded-md border border-price flex items-center justify-center gap-2 text-price text-sm">
+                     <a data-tour="bd-contact" href="{{ route('page','contact') }}" title="{{ __('site.contact') }}" class="py-3 px-4 w-full sm:w-auto rounded-md border border-price flex items-center justify-center gap-2 text-price text-sm">
                          <svg class="inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="fi_5728913" data-name="Layer 1" viewBox="0 0 512 512" width="20" height="20"><path d="M489.417,279v-1.182c0-62.1-24.349-120.646-68.56-164.857S318.1,44.4,256,44.4,135.354,68.749,91.143,112.96s-68.56,102.758-68.56,164.856V279A27.578,27.578,0,0,0,0,306.081V397.1a27.571,27.571,0,0,0,27.538,27.539H44.556v3.934A39.075,39.075,0,0,0,83.586,467.6H98.705a23.94,23.94,0,0,0,23.912-23.913v-184.2a23.94,23.94,0,0,0-23.912-23.913H83.586a39.074,39.074,0,0,0-39.03,39.03v3.935H38.583v-.727C38.583,157.933,136.116,60.4,256,60.4s217.417,97.533,217.417,217.416v.727h-5.973v-3.935a39.074,39.074,0,0,0-39.03-39.03H413.3a23.94,23.94,0,0,0-23.912,23.913v184.2A23.94,23.94,0,0,0,413.3,467.6h15.119a39.075,39.075,0,0,0,39.03-39.031v-3.934h17.018A27.571,27.571,0,0,0,512,397.1V306.081A27.578,27.578,0,0,0,489.417,279Zm-428.861-4.39a23.056,23.056,0,0,1,23.03-23.03H98.705a7.921,7.921,0,0,1,7.912,7.913v184.2a7.921,7.921,0,0,1-7.912,7.913H83.586a23.056,23.056,0,0,1-23.03-23.031Zm-16,134.027H27.538A11.552,11.552,0,0,1,16,397.1V306.081a11.551,11.551,0,0,1,11.538-11.538H44.556Zm406.888,19.934a23.056,23.056,0,0,1-23.03,23.031H413.3a7.921,7.921,0,0,1-7.912-7.913v-184.2a7.921,7.921,0,0,1,7.912-7.913h15.119a23.056,23.056,0,0,1,23.03,23.03ZM496,397.1a11.552,11.552,0,0,1-11.538,11.539H467.444V294.543h17.018A11.551,11.551,0,0,1,496,306.081Z"></path></svg>
                          <span>{{ __('site.contact') }}</span>
                      </a>
@@ -296,7 +304,7 @@ span.flatpickr-day.selected{
                         <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
                             <p class="text-gri float-left rtl:float-right">{{__('booking.number_of_booking')}} :</p>
                             <p class="float-right rtl:float-left">#{{$booking->number_of_booking }}</p><div class="clear-both"></div></li>
-                        <li class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
+                        <li data-tour="bd-status" class="bg-feature border border-feature-border mb-4 rounded-lg p-4">
                             <p class="text-gri float-left rtl:float-right">{{__('booking.status')}} :</p>
                             <p class="float-right rtl:float-left {{ $booking->status === 'customer_canceled' ? 'text-red-600' : ($booking->status === 'approved' ? 'text-[#10C13F]' : 'text-gray-600') }}">
                                 @if($booking->status === 'customer_canceled')
@@ -365,7 +373,7 @@ span.flatpickr-day.selected{
                         </div>
                     </div>
                     @if($booking->status == 'approved')
-                    <div class="border border-price bg-[#fdeee9] rounded-lg mx-5 px-3 py-5 relative pin text-price">
+                    <div data-tour="bd-passcode" class="border border-price bg-[#fdeee9] rounded-lg mx-5 px-3 py-5 relative pin text-price">
                         <svg class="float-left rtl:float-right" fill="currentColor" id="fi_16916738" height="32" viewBox="0 0 24 24" width="32" xmlns="http://www.w3.org/2000/svg">
                             <path d="m10.5 5.5c0 .27612-.22388.5-.5.5s-.5-.22388-.5-.5c0-.27618.22388-.5.5-.5s.5.22382.5.5zm2.5-.5c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm-6 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 3c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm-6 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 3c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm3 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm-6 0c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm13.75 5v2c0 .96484-.78516 1.75-1.75 1.75h-8.89307c-1.39453 0-2.60693-.98633-2.81982-2.29395-.13086-.80566.09424-1.62207.61768-2.2373.52393-.61523 1.2876-.96875 2.09521-.96875h9c.96484 0 1.75.78516 1.75 1.75zm-1.5 0c0-.1377-.1123-.25-.25-.25h-9c-.36719 0-.71436.16113-.95264.44043-.2417.28418-.34082.64844-.27979 1.02539.09619.58984.67188 1.03418 1.33936 1.03418h8.89307c.1377 0 .25-.1123.25-.25zm-9.25.5c-.27612 0-.5.22382-.5.5 0 .27612.22388.5.5.5s.5-.22388.5-.5c0-.27618-.22388-.5-.5-.5zm4 4.75h-8c-.68945 0-1.25-.56055-1.25-1.25v-16c0-.68945.56055-1.25 1.25-1.25h8c.68945 0 1.25.56055 1.25 1.25v9h1.5v-9c0-1.5166-1.2334-2.75-2.75-2.75h-8c-1.5166 0-2.75 1.2334-2.75 2.75v16c0 1.5166 1.2334 2.75 2.75 2.75h8c1.16302 0 2.15375-.72784 2.55518-1.75h-1.84424c-.20447.14587-.4411.25-.71094.25z"></path>
                         </svg>
@@ -519,12 +527,7 @@ $(document).ready(function() {
             buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({
-                    title: "{{ __('booking.processing') }}",
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: function () { Swal.showLoading(); }
-                });
+                HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('booking.processing') }}" });
                 $.ajax({
                     url: "{{ route('web-booking.cancel') }}",
                     type: "POST",
@@ -535,6 +538,7 @@ $(document).ready(function() {
                         booking_id: bookingId
                     },
                     success: function(response) {
+                        HoldOn.close();
                         Swal.fire({
                             icon: 'success',
                             title: "{{__('booking.success')}}",
@@ -547,6 +551,7 @@ $(document).ready(function() {
                         });
                     },
                     error: function(xhr) {
+                        HoldOn.close();
                         let errorMessage = "{{ __('booking.error_message') }}";
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
@@ -577,12 +582,7 @@ $(document).ready(function() {
             buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({
-                    title: "{{ __('booking.processing') }}",
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: function () { Swal.showLoading(); }
-                });
+                HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('booking.processing') }}" });
                 $.ajax({
                     url: "{{ route('web-booking.withdraw-cancellation') }}",
                     type: "POST",
@@ -593,6 +593,7 @@ $(document).ready(function() {
                         booking_id: bookingId
                     },
                     success: function(response) {
+                        HoldOn.close();
                         Swal.fire({
                             icon: 'success',
                             title: "{{__('booking.success')}}",
@@ -605,6 +606,7 @@ $(document).ready(function() {
                         });
                     },
                     error: function(xhr) {
+                        HoldOn.close();
                         let errorMessage = "{{ __('booking.error_message') }}";
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
@@ -824,7 +826,7 @@ $(document).ready(function() {
                     return;
                 }
                 if (!confirm.isConfirmed) { return; }
-                HoldOn.open();
+                HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
                 $.ajax({
                     url: "{{ route('web-booking.date-change.request') }}",
                     type: "POST",
@@ -872,7 +874,7 @@ $(document).ready(function() {
 
         // فتح المودال بقائمة فارغة عند فشل الطلب يُظهر كل التواريخ متاحة (بما فيها المحجوزة)
         // ويسمح باختيار تاريخ سيُرفض لاحقاً — لذا نعيد المحاولة مرة، وإن فشلت نُظهر خطأ بدل تقويم مضلِّل.
-        HoldOn.open();
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
         $.getJSON(blockedUrl)
             .done(function (resp) { dcOpenWith(resp.booked_days || []); })
             .fail(function () {
@@ -905,7 +907,7 @@ $(document).ready(function() {
     // إكمال/إعادة دفع فرق تعديل التواريخ
     $(document).on('click', '.dc-retry-pay-btn', function () {
         var requestId = $(this).data("request-id");
-        HoldOn.open();
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
         $.ajax({
             url: "{{ url('web-booking/date-change') }}/" + requestId + "/retry-payment",
             type: "POST",
@@ -948,7 +950,7 @@ $(document).ready(function() {
             cancelButtonText: "{{ __('booking.no') }}"
         }).then(function (result) {
             if (!result.isConfirmed) { return; }
-            HoldOn.open();
+            HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('apartment.loading_message') }}" });
             $.ajax({
                 url: "{{ url('web-booking/date-change') }}/" + requestId + "/cancel",
                 type: "POST",
@@ -980,19 +982,14 @@ $(document).ready(function() {
         if (window._utBusy) { return; }
         window._utBusy = true;
 
-        Swal.fire({
-            title: "{{ __('booking.unit_transfer_processing') }}",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            didOpen: function () { Swal.showLoading(); }
-        });
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('booking.unit_transfer_processing') }}" });
 
         $.ajax({
             url: "{{ url('web-booking/unit-transfer') }}/" + transferId + "/" + action,
             type: "POST",
             headers: { "X-CSRF-TOKEN": dcCsrf },
             success: function (res) {
+                HoldOn.close();
                 Swal.fire({
                     icon: 'success',
                     title: "{{ __('booking.success') }}",
@@ -1002,6 +999,7 @@ $(document).ready(function() {
                 }).then(function () { window.location.reload(); });
             },
             error: function (xhr) {
+                HoldOn.close();
                 // Reload on error too: the request state changed (failed/rejected/no longer
                 // pending), so re-sync the page instead of leaving stale buttons.
                 Swal.fire({

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\SliderAppRequest;
-use App\Http\Requests\SliderRequest;
 use App\Models\Apartment;
 use App\Models\City;
 use App\Models\Page;
@@ -12,7 +11,7 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
 
 /**
- * Class FeatureController
+ * Class SliderAppController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
