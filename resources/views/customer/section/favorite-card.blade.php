@@ -63,25 +63,28 @@
         <ul class="my-2.5 flex gap-2 flex-wrap">
             <li 
                 class="bg-feature border border-feature-border py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/feature-1.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/apartment.svg') }}"
+                    alt=""
                 />
-                {{ $apartment->num_rooms }}  
+                {{ $apartment->num_rooms }}
             </li>
             <li 
                 class="bg-feature border border-feature-border py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/feature-2.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/bed-new.svg') }}"
+                    alt=""
                 />
-                {{ $apartment->num_beds }}  
+                {{ $apartment->num_beds }}
             </li>
             <li 
                 class="bg-feature border border-feature-border py-1 px-4 rounded-xl font-normal text-xs text-title hover:bg-feature-border ease-in-out duration-300 flex items-center">
-                <img 
-                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0" 
-                    src="{{ asset('assets/img/feature-3.svg') }}" 
+                <img
+                    class="h-[14px] mr-2 rtl:ml-2 rtl:mr-0"
+                    src="{{ asset('assets/img/space-new.svg') }}"
+                    alt=""
                 />
                 {{ $apartment->area }} @lang('apartment.area')
             </li>

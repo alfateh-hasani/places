@@ -15,12 +15,13 @@
 
 
 <section class="container py-10">
-    <a>
-        <img class="inline-block me-4 rtl:rotate-180" src="{{asset('assets/img/back.svg')}}" />
-        <span class="font-semibold text-2xl text-title translate-y-1 inline-block">
-            {{__('booking.review_payment')}}
-        </span>
-    </a>
+    <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '{{ route('apartments.index') }}'; }"
+            aria-label="{{ __('site.back') }}" class="inline-block align-middle cursor-pointer">
+        <img class="inline-block me-4 rtl:rotate-180" src="{{asset('assets/img/back.svg')}}" alt="" />
+    </button>
+    <span class="font-semibold text-2xl text-title translate-y-1 inline-block">
+        {{__('booking.review_payment')}}
+    </span>
 </section>
 
 <section class="descriptions pb-24">
@@ -241,10 +242,9 @@
                     <ul>
                         @foreach ($payment_details as $item)
                             <li>
-                                <a class="block border border-filterborder py-3 px-4 rounded-lg mb-2 hover:bg-filterborder ease-in-out duration-300">
-                                    <img class="inline-block" src="{{$item['icon']}}" height="50" />
-                                      
-                                </a>
+                                <div class="block border border-filterborder py-3 px-4 rounded-lg mb-2">
+                                    <img class="inline-block" src="{{$item['icon']}}" height="50" alt="" />
+                                </div>
                             </li>
                         @endforeach
                         

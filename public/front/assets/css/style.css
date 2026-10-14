@@ -1797,10 +1797,10 @@ section.properitirs .slider {
     font-size: 0;
     background-size: 7px; }
     section.properitirs .slider .slick-arrow.slick-prev {
-      left: 3px;
+      left: 30px;
       background-image: url(../img/list-left.svg); }
     section.properitirs .slider .slick-arrow.slick-next {
-      right: 3px;
+      right: 30px;
       background-image: url(../img/list-right.svg); }
   section.properitirs .slider a {
     -webkit-transition: all 0.6s ease;
@@ -2147,9 +2147,9 @@ section.properitirs .slider a ul li + li {
       bottom: 16px; }
      
     section.properitirs .slider .slick-arrow.slick-prev {
-      left: 20px; }
+      left: 30px; }
     section.properitirs .slider .slick-arrow.slick-next {
-      right: 20px; }
+      right: 30px; }
   section.comments .comment-list .comment-slider {
     width: 100vw;
     margin-left: 0 !important; } }

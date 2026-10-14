@@ -121,10 +121,10 @@ document.addEventListener('DOMContentLoaded', function() {
               </a>
             </li>
             <li>
-              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block p-2 font-normal text-base text-black">
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-desktop').submit();" class="block p-2 font-normal text-base text-black">
                 @lang('site.logout')
               </a>
-              <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
+              <form id="logout-form-desktop" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
                 @csrf
               </form>
             </li>
@@ -229,8 +229,8 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="login text-center relative">
           <ul class="w-full">
             @auth('customer')
-              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block py-2 px-4 mt-1 rounded-md border border-price text-white font-normal text-base"><svg class="w-5 h-5 inline-block" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="m12 12.75c-3.17 0-5.75-2.58-5.75-5.75s2.58-5.75 5.75-5.75 5.75 2.58 5.75 5.75-2.58 5.75-5.75 5.75zm0-10c-2.34 0-4.25 1.91-4.25 4.25s1.91 4.25 4.25 4.25 4.25-1.91 4.25-4.25-1.91-4.25-4.25-4.25z"/><path d="m20.5901 22.75c-.41 0-.75-.34-.75-.75 0-3.45-3.5199-6.25-7.8399-6.25-4.32005 0-7.84004 2.8-7.84004 6.25 0 .41-.34.75-.75.75s-.75-.34-.75-.75c0-4.27 4.18999-7.75 9.34004-7.75 5.15 0 9.3399 3.48 9.3399 7.75 0 .41-.34.75-.75.75z"/></svg> @lang('site.logout')</a></li>
-              <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
+              <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();" class="block py-2 px-4 mt-1 rounded-md border border-price text-white font-normal text-base"><svg class="w-5 h-5 inline-block" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="m12 12.75c-3.17 0-5.75-2.58-5.75-5.75s2.58-5.75 5.75-5.75 5.75 2.58 5.75 5.75-2.58 5.75-5.75 5.75zm0-10c-2.34 0-4.25 1.91-4.25 4.25s1.91 4.25 4.25 4.25 4.25-1.91 4.25-4.25-1.91-4.25-4.25-4.25z"/><path d="m20.5901 22.75c-.41 0-.75-.34-.75-.75 0-3.45-3.5199-6.25-7.8399-6.25-4.32005 0-7.84004 2.8-7.84004 6.25 0 .41-.34.75-.75.75s-.75-.34-.75-.75c0-4.27 4.18999-7.75 9.34004-7.75 5.15 0 9.3399 3.48 9.3399 7.75 0 .41-.34.75-.75.75z"/></svg> @lang('site.logout')</a></li>
+              <form id="logout-form-mobile" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
                 @csrf
               </form>
             @else

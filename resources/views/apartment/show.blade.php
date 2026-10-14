@@ -87,7 +87,7 @@
             {{-- The collapsed banner shows 5 images (1 big + 4 small). Only offer
                  "show all photos" when there are more than that to reveal. --}}
             @if($apartment->getMedia('image')->count() > 5)
-            <div class="buttons absolute z-10 right-4 bottom-4 hidden lg:block">
+            <div class="buttons absolute z-10 right-4 rtl:left-4 rtl:right-auto bottom-4 hidden lg:block">
                 <button id="allphotos" class="bg-white rounded-md py-2 px-3 shadow-lg ml-2 cursor-pointer photo-button"><img class="inline-block me-2" src="{{asset('assets/img/photo.svg')}}" />
                     <span>{{__('apartment.show_all_photos')}}</span>
                 </button>
@@ -123,7 +123,7 @@
                 {{ $apartment->building->city->ml('name') }}
             </p>
         </div>
-        <div class="float-left rtl:float-right mr-5 w-full lg:w-auto mb-3 lg:mb-0">
+        <div class="float-left rtl:float-right rtl:ml-5 mr-5 w-full lg:w-auto mb-3 lg:mb-0">
             <img class="inline-block mr-2 rtl:ml-2 -translate-y-0.5" src="{{asset('assets/img/start-new-2.svg')}}" style="height: 20px;" />
             <p class="inline-block font-normal text-base text-reviews">
                 {{ $apartment->total_ratings }} ({{ $apartment->reviews->count() }})

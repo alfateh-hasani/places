@@ -8,7 +8,7 @@
         <div class="px-5 text-left rtl:text-right pt-8">
             <h2 class="font-semibold text-xl mb-6">
                 @lang('site.welcome_back')
-                <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="Goodbye" />
+                <img class="h-8 inline-block" src="{{ asset('assets/img/goodbye.png') }}" alt="" />
             </h2>
             <form id="login-form" method="post">
                 @csrf

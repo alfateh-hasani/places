@@ -348,9 +348,9 @@ $(document).ready(function () {
         dots: true
     });
 
-    $("section.list .favorite").click(function () {
-        $(this).toggleClass("favorite-active");
-    });
+    // (Removed) section.list .favorite click toggle: the delegated wishlist handler
+    // (partials/wishlist) owns the favorite state; this extra toggle flipped the
+    // class first and made the heart flash the wrong way before the server reconciled.
 
     $('[dir="ltr"] section.properitirs .slider').slick({
         slidesToShow: 4,

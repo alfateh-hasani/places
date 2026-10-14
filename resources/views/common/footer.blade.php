@@ -56,7 +56,7 @@
       <p class="inline-block font-normal text-base text-black">
         {{__('site.all_rights')}} © {{ date('Y') }}
       </p>
-      <a class="inline-block font-normal text-base text-price" href="#">
+      <a class="inline-block font-normal text-base text-price" href="{{ route('home') }}">
         {{ Config::get('settings.seo_title_'.app()->getLocale()) }}
       </a>
     </div>

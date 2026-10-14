@@ -523,6 +523,44 @@ textarea:focus-visible,
     background-image: url(../img/list-left.svg);
 }
 
+/* Same RTL swap (position + icon) for the other carousels whose arrows are pinned
+   left/right in style.css with no [dir=rtl] handling — hero/blog, cities,
+   properties listing, profile — so the arrows read correctly in Arabic. */
+[dir="rtl"] section.slider .slick-arrow.slick-prev,
+[dir="rtl"] section .blogslider .slick-arrow.slick-prev {
+    left: auto; right: 50px;
+    background-image: url(../img/slider-right.svg);
+}
+[dir="rtl"] section.slider .slick-arrow.slick-next,
+[dir="rtl"] section .blogslider .slick-arrow.slick-next {
+    right: auto; left: 50px;
+    background-image: url(../img/slider-left.svg);
+}
+[dir="rtl"] section.cities .slider .slick-arrow.slick-prev {
+    left: auto; right: 30px;
+    background-image: url(../img/list-right.svg);
+}
+[dir="rtl"] section.cities .slider .slick-arrow.slick-next {
+    right: auto; left: 30px;
+    background-image: url(../img/list-left.svg);
+}
+[dir="rtl"] section.properitirs .slider .slick-arrow.slick-prev {
+    left: auto; right: 30px;
+    background-image: url(../img/list-right.svg);
+}
+[dir="rtl"] section.properitirs .slider .slick-arrow.slick-next {
+    right: auto; left: 30px;
+    background-image: url(../img/list-left.svg);
+}
+[dir="rtl"] section.profile .slider .slick-arrow.slick-prev {
+    left: auto; right: 15px;
+    background-image: url(../img/list-right.svg);
+}
+[dir="rtl"] section.profile .slider .slick-arrow.slick-next {
+    right: auto; left: 15px;
+    background-image: url(../img/list-left.svg);
+}
+
 /* Account menu dropdown (header): align to the inline-end of the trigger so it
    opens inward in both directions — right-aligned in LTR (trigger is top-right),
    left-aligned in RTL (trigger is top-left) — instead of overflowing the edge. */

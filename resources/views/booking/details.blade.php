@@ -164,7 +164,10 @@ span.flatpickr-day.selected{
                         <span>{{__('booking.print')}}</span>
                     </a>
 
-                    @if($booking->status !== 'customer_canceled' && $booking->status !== 'canceled')
+                    {{-- A pending booking isn't confirmed/paid yet, so cancel / change-dates
+                         don't apply — hide them (otherwise they show disabled with a misleading
+                         "X hours before check-in" tooltip even when check-in is far away). --}}
+                    @if($booking->status !== 'customer_canceled' && $booking->status !== 'canceled' && $booking->status !== 'pending')
                     <div class="relative group">
                         <button {{ $can_cancel ? '' : 'disabled' }}
                             data-tour="bd-cancel"

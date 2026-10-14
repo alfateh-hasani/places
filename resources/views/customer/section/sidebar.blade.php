@@ -103,7 +103,7 @@
             </a>
         </li>
         <li>
-            <form id="logout-form" action="{{ route('customer.logout') }}" method="POST">
+            <form id="logout-form-sidebar" action="{{ route('customer.logout') }}" method="POST">
                 @csrf
                 <button type="submit" class="w-full block py-3 bg-[#fdede9] hover:bg-[#fbdbd1] text-center rounded-lg text-[#ef552c] font-medium ease-in-out duration-300 mt-20">
                     <span class="inline-block w-6">
