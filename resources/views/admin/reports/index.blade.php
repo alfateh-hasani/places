@@ -47,14 +47,14 @@
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <!-- فلتر المستخدم -->
+                    <!-- فلتر العميل (bookings.customer_id يشير إلى جدول customers وليس users) -->
                     <div class="col-md-3">
-                        <label for="user_id">المستخدم:</label>
+                        <label for="user_id">العميل:</label>
                         <select name="user_id" id="user_id" class="form-control">
-                            <option value="">-- اختر المستخدم --</option>
-                            @foreach(\App\Models\User::all() as $user)
-                                <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
-                                    {{ $user->name }}
+                            <option value="">-- اختر العميل --</option>
+                            @foreach(\App\Models\Customer::all() as $customer)
+                                <option value="{{ $customer->id }}" {{ request('user_id') == $customer->id ? 'selected' : '' }}>
+                                    {{ trim($customer->full_name) ?: ($customer->phone ?? ('#'.$customer->id)) }}
                                 </option>
                             @endforeach
                         </select>
