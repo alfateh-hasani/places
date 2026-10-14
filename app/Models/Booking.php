@@ -410,6 +410,17 @@ class Booking extends Model
         return ! empty($this->ownerrez_booking_id);
     }
 
+    /**
+     * Whether cancelling this booking must be driven through OwnerRez (cancel there,
+     * webhook finalizes locally). Only true while the integration is enabled — with
+     * OwnerRez off, no webhook will ever arrive, so a linked booking is cancelled
+     * locally like any other. Single source of truth for both the service and the UI.
+     */
+    public function requiresOwnerRezCancellation(): bool
+    {
+        return config('ownerrez.enabled', true) && $this->isLinkedToOwnerRez();
+    }
+
     /** Whether a staff member (not the customer) started the cancellation. */
     public function cancellationStartedByStaff(): bool
     {

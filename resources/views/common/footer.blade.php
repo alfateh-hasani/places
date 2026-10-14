@@ -41,7 +41,7 @@
             </a>
           </li>
           <li>
-            <a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300" href="#">
+            <a class="block font-light text-black mb-5 hover:text-price ease-in-out duration-300" href="https://www.google.com/maps/search/?api=1&query={{ urlencode(Config::get('settings.address_'.app()->getLocale())) }}" target="_blank" rel="noopener noreferrer">
               <img class="inline-block me-3" src="{{ asset('assets/img/address.svg') }}" alt="{{ __('site.address_icon') }}" />
               {{Config::get('settings.address_'.app()->getLocale())}}
             </a>

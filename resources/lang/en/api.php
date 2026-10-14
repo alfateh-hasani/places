@@ -67,6 +67,7 @@ return [
     'unit_transfer_cannot_cancel' => 'This transfer can no longer be cancelled.',
     'unit_transfer_cannot_retry' => 'Only a failed transfer can be retried.',
     'unit_transfer_no_refund_due' => 'No refund is due for this transfer.',
+    'booking_canceled_successfully' => 'Your booking has been canceled successfully; the amount will be refunded in the coming days.',
     'unit_transfer_confirmed' => 'Your booking has been moved to the new unit.',
     'unit_transfer_declined' => 'The transfer request has been declined.',
 ];

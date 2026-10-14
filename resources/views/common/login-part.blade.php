@@ -224,7 +224,9 @@ div#popup-5 {
 }
 input#phoneNumber {
     padding-right: 10px !important;
-    padding-left: 86px !important;
+    /* Extra left padding gives breathing room between the "+966" dial code and
+       the typed number / placeholder (previously they sat flush together). */
+    padding-left: 96px !important;
     direction: ltr;
 }
 
@@ -331,7 +333,7 @@ function displayInputErrors(errors) {
 // Registration Form Submission
 $('#popup-7 form').validate({
     submitHandler: function(form) {
-        HoldOn.open({ theme: "sk-rect" });
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('site.creating_account') }}" });
         let formData = new FormData(form);
 
         $.ajax({
@@ -445,7 +447,7 @@ $('#login-form').validate({
         const formData = new FormData(form);
         formData.set('phone', phoneNumber);
 
-        HoldOn.open({ theme: "sk-rect" });
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('site.sending_code') }}" });
 
         window.recaptchaToken('login').then(function(token) {
             formData.set('g-recaptcha-response', token);
@@ -496,7 +498,7 @@ $('#otp-form').on('submit', function (e) {
             return;
         }
 
-        HoldOn.open({ theme: "sk-rect" });
+        HoldOn.open({ theme: "sk-cube-grid", message: "{{ __('site.logging_in') }}" });
 
         $.ajax({
             url: "{{ route('login.step2') }}",

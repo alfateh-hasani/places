@@ -4,7 +4,7 @@
                  @lang('site.explor_title')
         </h1>
 
-        <div id="apartments-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full">
+        <div id="apartments-container" data-tour="featured-apartments" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full">
             @foreach($apartments as $apartment)
                 @include('apartment.card', ['apartment' => $apartment])
             @endforeach

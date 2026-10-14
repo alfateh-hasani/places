@@ -3,6 +3,7 @@
 namespace App\Services\OwnerRez;
 
 use App\Exceptions\OwnerRez\OwnerRezApiException;
+use App\Exceptions\OwnerRez\OwnerRezDisabledException;
 use App\Models\OwnerRezApiLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -336,6 +337,8 @@ class OwnerRezApiService
      */
     protected function makeRequest(string $method, string $endpoint, array $data = []): array
     {
+        $this->guardEnabled($endpoint);
+
         $startTime = microtime(true);
         $url = $this->baseUrl.$endpoint;
 
@@ -379,7 +382,7 @@ class OwnerRezApiService
             // Handle other errors
             if (! $response->successful()) {
                 throw new OwnerRezApiException(
-                    'OwnerRez API request failed: '.($responseData['message'] ?? $responseData['Message'] ?? 'Unknown error'),
+                    'OwnerRez API request failed: '.$this->extractErrorMessage($responseData),
                     $endpoint,
                     $responseData ?? [],
                     $statusCode
@@ -404,10 +407,36 @@ class OwnerRezApiService
     }
 
     /**
+     * Pull a human-readable reason out of an OwnerRez error body. OwnerRez's v2 API
+     * returns validation/availability failures as a `messages` array (plural), e.g.
+     * {"code":"...","messages":["Booking overlaps an existing booking"],"status":"..."},
+     * so reading only `message`/`Message` collapsed every real reason to "Unknown error".
+     *
+     * @param  array<string, mixed>|null  $responseData
+     */
+    protected function extractErrorMessage(?array $responseData): string
+    {
+        if (empty($responseData)) {
+            return 'Unknown error';
+        }
+
+        if (! empty($responseData['messages']) && is_array($responseData['messages'])) {
+            return implode('; ', $responseData['messages']);
+        }
+
+        return $responseData['message']
+            ?? $responseData['Message']
+            ?? $responseData['error']
+            ?? 'Unknown error';
+    }
+
+    /**
      * Make HTTP request using cURL (for properties list)
      */
     protected function makeCurlRequest(string $endpoint): array
     {
+        $this->guardEnabled($endpoint);
+
         if ($this->username === '' || $this->password === '') {
             throw new OwnerRezApiException('OwnerRez API credentials are missing.', $endpoint, [], 401);
         }
@@ -456,6 +485,19 @@ class OwnerRezApiService
         }
 
         return $decoded ?? [];
+    }
+
+    /**
+     * Hard backstop for the global kill switch: no OwnerRez HTTP request may leave
+     * the app while the integration is disabled. Every caller should short-circuit
+     * earlier, so reaching this with the switch off means a gate was missed — fail
+     * loudly rather than silently returning fake data a write caller might misread.
+     */
+    protected function guardEnabled(string $endpoint): void
+    {
+        if (! config('ownerrez.enabled', true)) {
+            throw new OwnerRezDisabledException($endpoint);
+        }
     }
 
     /**

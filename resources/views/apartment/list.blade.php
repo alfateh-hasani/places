@@ -313,6 +313,26 @@ $('.grid-container .grid-items').infiniteScroll({
             controls.classList.add('w-full');
             slot.appendChild(controls);
 
+            // The moved controls now submit with the SEARCH form, so the filter
+            // form's own submit cleanup (filter.blade.php) never runs on mobile.
+            // Replicate it here, scoped to the moved controls, so untouched range
+            // sliders / unchecked checkboxes / empty inputs don't pollute the query
+            // or mark price/area/rooms filters "active" when the user didn't set them.
+            var searchForm = slot.closest('form');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function () {
+                    controls.querySelectorAll('input').forEach(function (input) {
+                        if (input.type === 'range') {
+                            if (!input.dataset.touched) { input.disabled = true; }
+                        } else if (input.type === 'checkbox') {
+                            if (!input.checked) { input.disabled = true; }
+                        } else if (!input.value.trim()) {
+                            input.disabled = true;
+                        }
+                    });
+                });
+            }
+
             // Hide the now-empty standalone filter bar (incl. its apply button); the
             // drawer's search button submits everything.
             var filterSection = filterForm.closest('section.filter');

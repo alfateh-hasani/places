@@ -12,6 +12,26 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Master Switch
+    |--------------------------------------------------------------------------
+    |
+    | Global on/off toggle for the entire OwnerRez integration. When false,
+    | the app makes no OwnerRez API calls, processes no inbound webhooks, runs
+    | no OwnerRez scheduled jobs/commands, performs no outbound sync, and hides
+    | the OwnerRez admin UI — every OwnerRez code path is bypassed. Defaults to
+    | true so existing installations keep working until explicitly disabled.
+    |
+    | Backed by the OWNERREZ_ENABLED env var. Staff can flip it from the admin
+    | Settings page (الإعدادات): the toggle there rewrites this line in .env and
+    | clears the config cache so the change takes effect without a deploy (see
+    | App\Http\Controllers\Admin\SettingCrudController::toggleOwnerRez).
+    |
+    */
+
+    'enabled' => (bool) env('OWNERREZ_ENABLED', true),
+
     'api_url' => env('OWNERREZ_API_URL', 'https://api.ownerrez.com'),
 
     // Base URL of the OwnerRez web app (used to deep-link staff to a booking to cancel it).

@@ -106,13 +106,15 @@ document.addEventListener('DOMContentLoaded', function() {
         @endforeach
 
       </div>
+      <button type="button" data-tour-start aria-label="@lang('tour.help')" title="@lang('tour.help')"
+              class="ltr:ml-5 rtl:mr-5 w-8 h-8 shrink-0 rounded-full border border-border text-black font-semibold hover:bg-gri ease-in-out duration-200">?</button>
       <div class="login ltr:ml-5 rtl:mr-5 relative">
         @auth('customer')
           {{-- Show customer name and account links if logged in --}}
-          <span class="font-normal text-base text-black inline-block py-1.5">
+          <span data-tour="nav-account" class="font-normal text-base text-black inline-block py-1.5">
             @lang('site.hello'), {{ Auth::guard('customer')->user()->first_name }}
           </span>
-          <ul class="absolute top-full left-0 z-30 p-3 min-w-[200px] bg-[#fff] shadow-lg border border-border rounded-lg">
+          <ul class="account-dropdown absolute top-full z-30 p-3 min-w-[200px] bg-[#fff] shadow-lg border border-border rounded-lg">
             <li>
               <a href="{{ route('customer.account') }}" class="block p-2 font-normal text-base text-black border-b border-border">
                 @lang('site.account')
@@ -132,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
           {{-- Not logged in: a single button opening the phone-input modal, which
                then decides login vs. sign-up. No hover dropdown (it only repeated
                the same modal and overflowed the viewport). --}}
-          <button type="button" data-src="#popup-5" data-fancybox dont-close-click-outside class="rounded-lg py-1.5 px-4 bg-gri font-normal text-base">
+          <button type="button" data-tour="nav-login" data-src="#popup-5" data-fancybox dont-close-click-outside class="rounded-lg py-1.5 px-4 bg-gri font-normal text-base">
             <img src="{{ asset('assets/img/login-header3.svg') }}" class="inline-block" alt="" />
             @lang('site.login_or_signup')
           </button>
@@ -148,13 +150,13 @@ document.addEventListener('DOMContentLoaded', function() {
    
     @auth('customer')
       {{-- Logged in: open the profile side-menu (account / bookings / favorites / logout). --}}
-      <button type="button" aria-label="@lang('site.profile')" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-center font-normal text-xs text-white uppercase flex items-center justify-center login-button">
+      <button type="button" data-tour="nav-account" aria-label="@lang('site.profile')" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-center font-normal text-xs text-white uppercase flex items-center justify-center login-button">
         {{ substr(Auth::guard('customer')->user()->first_name, 0, 2) }}
       </button>
     @else
       {{-- Guest: open the login/sign-up popup directly (same as desktop), instead of a
            side-menu whose buttons overlapped the close icon. --}}
-      <button type="button" data-src="#popup-5" data-fancybox dont-close-click-outside aria-label="@lang('site.login')" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-white flex items-center justify-center">
+      <button type="button" data-tour="nav-login" data-src="#popup-5" data-fancybox dont-close-click-outside aria-label="@lang('site.login')" class="cursor-pointer float-left w-9 h-9 bg-gri rounded-full text-white flex items-center justify-center">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3.5-4-6-9-6z"/>
         </svg>
@@ -170,6 +172,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <button type="button" class="cursor-pointer float-right p-2 menu-button">
           <img class="w-6 h-6" src="{{ asset('assets/img/menu.svg') }}" alt="{{ __('site.menu') }}" width="28" height="19" />
       </button>
+      {{-- Mobile tour replay trigger — mirrors the desktop "?" so phone users can
+           re-run the tour (sits just before the hamburger). --}}
+      <button type="button" data-tour-start aria-label="@lang('tour.help')" title="@lang('tour.help')"
+              class="cursor-pointer float-right mt-1 mr-2 w-9 h-9 rounded-full border border-blackopacity text-black font-semibold flex items-center justify-center">?</button>
       <div class="clear-both"></div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 pb-20 overflow-y-auto right-menu">

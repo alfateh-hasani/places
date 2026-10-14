@@ -270,6 +270,9 @@ return [
     'step_needs_cancel' => 'بحاجة إلى إلغاء',
     'step_needs_refund' => 'بحاجة إلى استرداد',
     'use_ownerrez_to_cancel' => 'هذه الوحدة مربوطة بـ OwnerRez — ألغِ الحجز من OwnerRez.',
+    'ownerrez_disabled' => 'تكامل OwnerRez معطّل حالياً.',
+    'ownerrez_toggle_enabled' => 'تم تفعيل تكامل OwnerRez.',
+    'ownerrez_toggle_disabled' => 'تم إيقاف تكامل OwnerRez.',
     'booking_canceled_now_refund' => 'تم إلغاء الحجز محلياً. اضغط "استرداد المبلغ" لإتمام الاسترداد.',
 
     // Cancellation management (surfaced on the booking list + detail page)

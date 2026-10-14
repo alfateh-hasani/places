@@ -345,8 +345,29 @@ class ReportsController extends Controller
         return view('admin.reports.daily_check_out', compact('reports', 'source', 'site', 'availableSites', 'availableBuildings'));
     }
 
+    /**
+     * Empty, successful payload returned by every OwnerRez report endpoint while the
+     * integration is disabled, so the report UI renders cleanly instead of erroring.
+     */
+    private function ownerRezDisabledResponse(): \Illuminate\Http\JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'bookings' => [],
+            'has_more' => false,
+            'next_offset' => null,
+            'date' => Carbon::today()->toDateString(),
+            'property_name_map' => [],
+            'warning' => __('cms.ownerrez_disabled'),
+        ]);
+    }
+
     public function ownerRezCheckoutToday(Request $request)
     {
+        if (! config('ownerrez.enabled', true)) {
+            return $this->ownerRezDisabledResponse();
+        }
+
         $today = Carbon::today()->toDateString();
         $bust = $request->boolean('bust');
         $offset = max(0, (int) $request->input('offset', 0));
@@ -439,6 +460,10 @@ class ReportsController extends Controller
 
     public function ownerRezMaintenanceToday(Request $request): \Illuminate\Http\JsonResponse
     {
+        if (! config('ownerrez.enabled', true)) {
+            return $this->ownerRezDisabledResponse();
+        }
+
         $today = Carbon::today()->toDateString();
         $bust = $request->boolean('bust');
         $offset = max(0, (int) $request->input('offset', 0));
@@ -568,6 +593,10 @@ class ReportsController extends Controller
 
     public function ownerRezCheckinToday(Request $request): \Illuminate\Http\JsonResponse
     {
+        if (! config('ownerrez.enabled', true)) {
+            return $this->ownerRezDisabledResponse();
+        }
+
         $today = Carbon::today()->toDateString();
         $bust = $request->boolean('bust');
         $offset = max(0, (int) $request->input('offset', 0));
@@ -658,6 +687,10 @@ class ReportsController extends Controller
 
     public function ownerRezMaintenanceCheckinToday(Request $request): \Illuminate\Http\JsonResponse
     {
+        if (! config('ownerrez.enabled', true)) {
+            return $this->ownerRezDisabledResponse();
+        }
+
         $today = Carbon::today()->toDateString();
         $bust = $request->boolean('bust');
         $offset = max(0, (int) $request->input('offset', 0));

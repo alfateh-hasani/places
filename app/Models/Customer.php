@@ -23,21 +23,22 @@ class Customer extends Authenticatable implements HasMedia
 
     protected $connection = 'mysql';
 
+    /**
+     * Sensitive columns (account_verified, blocked_at, block_reason, blocked_by) are
+     * intentionally excluded — they must never be mass-assignable from request input.
+     * They are written only by trusted code via forceFill()/forceCreate().
+     */
     protected $fillable = [
         'first_name',
         'last_name',
         'email',
         'phone',
         'emergency_phone',
-        'account_verified',
         'job_title',
         'fcm_token',
         'id_number',
         'ownerrez_guest_id',
         'source',
-        'blocked_at',
-        'block_reason',
-        'blocked_by',
     ];
 
     /**
@@ -161,14 +162,14 @@ class Customer extends Authenticatable implements HasMedia
             SendWelcomeNotification::dispatch($customer);
 
             // مزامنة Guest مع OwnerRez إذا كانت المزامنة مفعلة
-            if (config('ownerrez.sync.sync_guest_data')) {
+            if (config('ownerrez.enabled', true) && config('ownerrez.sync.sync_guest_data')) {
                 \App\Jobs\OwnerRez\SyncCustomerToOwnerRezJob::dispatch($customer->id);
             }
         });
 
         // مزامنة Guest مع OwnerRez عند تحديث البيانات
         static::updated(function ($customer) {
-            if (config('ownerrez.sync.sync_guest_data')) {
+            if (config('ownerrez.enabled', true) && config('ownerrez.sync.sync_guest_data')) {
                 // فقط إذا تم تغيير البيانات المهمة
                 if ($customer->isDirty(['first_name', 'last_name', 'email', 'phone'])) {
                     \App\Jobs\OwnerRez\SyncCustomerToOwnerRezJob::dispatch($customer->id);

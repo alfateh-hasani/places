@@ -58,14 +58,21 @@ $(document).ready(function() {
                     $('#mainPrice').text(response.total.toFixed(2));
                     $('#nightlyPrice').html(window.formatSAR(response.one_night_price));
                     
-                    // عرض معلومات الخصم إذا وجد
+                    // عرض السعر قبل الخصم والخصم إذا وجد (عرض فقط — يُحسب من الاستجابة ولا يُخزَّن)
                     if (response.discount > 0) {
+                        $('#priceBeforeDiscount').html(
+                            '<span>' + "{{ __('apartment.price_before_discount') }}" + '</span>' +
+                            '<span class="float-right rtl:float-left">' +
+                            window.formatSAR(response.total + response.discount) + '</span>' +
+                            '<div class="clear-both"></div>'
+                        );
                         $('#discountedCost').html(
                             '<span class="text-green-600"><i class="la la-tag"></i> ' +
                             "{{ __('apartment.long_stay_discount') }}: " +
                             response.discount.toFixed(2) + ' ' + window.SAR_SYMBOL + '</span>'
                         );
                     } else {
+                        $('#priceBeforeDiscount').text('');
                         $('#discountedCost').text('');
                     }
                 }
@@ -219,6 +226,10 @@ $(document).ready(function() {
         enableTime: false,
         noCalendar: false,
         inline: false,
+        // Keep the styled flatpickr calendar on phones too (consistent with the
+        // home search / by-city pickers). Without this, flatpickr falls back to
+        // the browser's unstyled native date picker on touch devices.
+        disableMobile: true,
     };
 
     var checkinPicker = flatpickr("#checkin", {

@@ -78,7 +78,7 @@ class DirectBookingService
                 // rolls back this transaction (booking + transaction), leaving no local
                 // record — exactly what the retry UX expects.
                 $mapping = $apartment->ownerrezMapping;
-                if ($mapping && $mapping->sync_enabled) {
+                if (config('ownerrez.enabled', true) && $mapping && $mapping->sync_enabled) {
                     $this->ownerRezSyncService->sendBookingToOwnerRez($booking);
                 }
 
@@ -154,7 +154,7 @@ class DirectBookingService
         // 2) Bank transfer. For a mapped unit push to OwnerRez synchronously first so a
         // failure aborts before we mark paid (mirrors createManualBooking).
         $mapping = $booking->apartment?->ownerrezMapping;
-        if ($mapping && $mapping->sync_enabled && ! $booking->ownerrez_booking_id) {
+        if (config('ownerrez.enabled', true) && $mapping && $mapping->sync_enabled && ! $booking->ownerrez_booking_id) {
             $this->ownerRezSyncService->sendBookingToOwnerRez($booking);
             $booking->refresh();
         }

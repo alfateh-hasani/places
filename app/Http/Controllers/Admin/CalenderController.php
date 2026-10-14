@@ -127,7 +127,7 @@ class CalenderController extends CrudController
             ->where('sync_enabled', true)
             ->first();
 
-        if (! $mapping || ! config('ownerrez.availability.enabled')) {
+        if (! $mapping || ! config('ownerrez.enabled', true) || ! config('ownerrez.availability.enabled')) {
             return response()->json(['ok' => true, 'events' => []]);
         }
 

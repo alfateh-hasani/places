@@ -20,6 +20,15 @@ class OwnerRezWebhookController extends Controller
 
     public function handle(Request $request): JsonResponse
     {
+        // Master kill switch: ack and drop without authenticating or processing so
+        // OwnerRez stops retrying while the integration is disabled.
+        if (! config('ownerrez.enabled', true)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'OwnerRez integration is disabled.',
+            ]);
+        }
+
         $this->guardWebhook($request);
 
         // Validate Content-Type
@@ -180,6 +189,13 @@ class OwnerRezWebhookController extends Controller
 
     public function oauthCallback(Request $request)
     {
+        if (! config('ownerrez.enabled', true)) {
+            return view('ownerrez.oauth-error', [
+                'error' => __('cms.ownerrez_disabled'),
+                'description' => __('cms.ownerrez_disabled'),
+            ]);
+        }
+
         $code = $request->query('code');
         $state = $request->query('state');
         $error = $request->query('error');

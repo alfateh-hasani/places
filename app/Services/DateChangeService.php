@@ -385,6 +385,10 @@ class DateChangeService
 
     private function syncOwnerRez(Booking $booking): void
     {
+        if (! config('ownerrez.enabled', true)) {
+            return;
+        }
+
         if (empty($booking->ownerrez_booking_id)) {
             return;
         }
