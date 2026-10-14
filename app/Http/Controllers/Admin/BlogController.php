@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\ApartmentRequest;
 use App\Http\Requests\BlogRequest;
-use App\Http\Requests\PageRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Backpack\CRUD\app\Library\Widget;
 use Spatie\MediaLibrary\Support\PathGenerator\PathGeneratorFactory;
 
 /**
- * Class ApartmentController
+ * Class BlogController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */

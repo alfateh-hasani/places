@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\SaveCustomPriceRequest;
 use App\Models\Apartment;
 use App\Models\Booking;
 use App\Models\OwnerRezBooking;
@@ -203,12 +204,9 @@ class CalenderController extends CrudController
     /**
      * حفظ أو تحديث سعر مخصص ليوم معين
      */
-    public function saveCustomPrice($apartmentId)
+    public function saveCustomPrice(SaveCustomPriceRequest $request, $apartmentId)
     {
-        $validated = request()->validate([
-            'date' => 'required|date',
-            'custom_price' => 'required|numeric|min:0',
-        ]);
+        $validated = $request->validated();
 
         $price = \App\Models\ApartmentPriceCalendar::updateOrCreate(
             [

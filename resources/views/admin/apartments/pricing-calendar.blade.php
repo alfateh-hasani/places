@@ -82,11 +82,13 @@
                         <div class="mb-3">
                             <label class="form-label"><strong><i class="la la-calendar"></i> التاريخ:</strong></label>
                             <input type="text" class="form-control" id="selectedDateDisplay" readonly>
+                            <div class="text-danger small mt-1" id="dateError" style="display:none;"></div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label"><strong><i class="la la-money"></i> السعر المخصص (<x-riyal-svg />):</strong></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-lg" id="customPrice" required placeholder="أدخل السعر">
                             <small class="text-muted">هذا السعر سيُستخدم بدلاً من السعر الأساسي لهذا اليوم</small>
+                            <div class="text-danger small mt-1" id="customPriceError" style="display:none;"></div>
                         </div>
                         <div class="alert alert-warning" id="weekendNotice" style="display:none;">
                             <i class="la la-exclamation-triangle"></i> هذا اليوم نهاية أسبوع
@@ -133,7 +135,28 @@
                     calendar.render();
                 });
 
+            const FIELD_ERROR_MAP = { custom_price: 'customPriceError', date: 'dateError' };
+
+            function clearFormErrors() {
+                Object.values(FIELD_ERROR_MAP).forEach(function (id) {
+                    let el = document.getElementById(id);
+                    el.textContent = '';
+                    el.style.display = 'none';
+                });
+                document.getElementById('customPrice').classList.remove('is-invalid');
+            }
+
+            function showFieldError(field, message) {
+                let el = document.getElementById(FIELD_ERROR_MAP[field] || FIELD_ERROR_MAP.custom_price);
+                el.textContent = message;
+                el.style.display = 'block';
+                if (field === 'custom_price') {
+                    document.getElementById('customPrice').classList.add('is-invalid');
+                }
+            }
+
             function openPriceModal(date, price, priceId) {
+                clearFormErrors();
                 document.getElementById('selectedDate').value = date;
                 document.getElementById('selectedDateDisplay').value = date;
                 document.getElementById('customPrice').value = price || '';
@@ -148,17 +171,41 @@
             }
 
             document.getElementById('savePriceBtn').addEventListener('click', function() {
+                clearFormErrors();
                 let price = document.getElementById('customPrice').value;
-                if (!price || price <= 0) { alert('الرجاء إدخال سعر صحيح'); return; }
-                
+                if (!price || parseFloat(price) <= 0) {
+                    showFieldError('custom_price', 'الرجاء إدخال سعر صحيح أكبر من صفر');
+                    return;
+                }
+
                 fetch(`/admin/apartment/${apartmentId}/custom-price`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
                     body: JSON.stringify({ date: document.getElementById('selectedDate').value, custom_price: price })
                 })
-                .then(response => response.json())
-                .then(data => data.success ? location.reload() : alert('حدث خطأ'))
-                .catch(() => alert('حدث خطأ'));
+                .then(async function(response) {
+                    let data = await response.json().catch(() => ({}));
+
+                    if (response.ok && data.success) {
+                        location.reload();
+                        return;
+                    }
+
+                    // Laravel validation failure (422) → show each message under its field.
+                    if (response.status === 422 && data.errors) {
+                        Object.keys(data.errors).forEach(function(field) {
+                            showFieldError(field, data.errors[field][0]);
+                        });
+                        return;
+                    }
+
+                    showFieldError('custom_price', data.message || 'حدث خطأ أثناء الحفظ');
+                })
+                .catch(() => showFieldError('custom_price', 'تعذّر الاتصال بالخادم'));
             });
 
             document.getElementById('deletePriceBtn').addEventListener('click', function() {

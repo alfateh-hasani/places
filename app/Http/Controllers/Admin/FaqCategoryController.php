@@ -3,16 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\FaqCategoryRequest;
-use App\Http\Requests\FaqRequest;
-use App\Models\Apartment;
-use App\Models\City;
-use App\Models\Page;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use Illuminate\Http\Request;
 
 /**
- * Class FeatureController
+ * Class FaqCategoryController
  * @package App\Http\Controllers\Admin
  * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
  */
@@ -165,19 +160,6 @@ class FaqCategoryController extends CrudController
     protected function setupShowOperation()
     {
         $this->setupListOperation();
-    }
-
-
-    public function getRelatedEntities(Request $request)
-    {
-        $relatedType = $request->input('related_type');
-        $entities = match ($relatedType) {
-            'city' => City::all(['id', 'name_ar']),
-            'apartment' => Apartment::all(['id', 'name_ar']),
-            'page' => Page::all(['id', 'name_ar']),
-            default => [],
-        };
-        return response()->json($entities);
     }
 
 }
