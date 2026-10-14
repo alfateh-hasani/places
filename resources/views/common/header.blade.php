@@ -106,8 +106,10 @@ document.addEventListener('DOMContentLoaded', function() {
         @endforeach
 
       </div>
+      @if(\App\Support\ProductTour::existsForCurrentRequest())
       <button type="button" data-tour-start aria-label="@lang('tour.help')" title="@lang('tour.help')"
               class="ltr:ml-5 rtl:mr-5 w-8 h-8 shrink-0 rounded-full border border-border text-black font-semibold hover:bg-gri ease-in-out duration-200">?</button>
+      @endif
       <div class="login ltr:ml-5 rtl:mr-5 relative">
         @auth('customer')
           {{-- Show customer name and account links if logged in --}}
@@ -173,9 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
           <img class="w-6 h-6" src="{{ asset('assets/img/menu.svg') }}" alt="{{ __('site.menu') }}" width="28" height="19" />
       </button>
       {{-- Mobile tour replay trigger — mirrors the desktop "?" so phone users can
-           re-run the tour (sits just before the hamburger). --}}
+           re-run the tour (sits just before the hamburger). Only shown on pages
+           that actually have a tour. --}}
+      @if(\App\Support\ProductTour::existsForCurrentRequest())
       <button type="button" data-tour-start aria-label="@lang('tour.help')" title="@lang('tour.help')"
               class="cursor-pointer float-right mt-1 mr-2 w-9 h-9 rounded-full border border-blackopacity text-black font-semibold flex items-center justify-center">?</button>
+      @endif
       <div class="clear-both"></div>
   </div>
   <div class="fixed w-[95vw]  h-[100vh] top-0 p-5 pb-20 overflow-y-auto right-menu">

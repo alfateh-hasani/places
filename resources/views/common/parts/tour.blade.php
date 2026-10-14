@@ -2,21 +2,10 @@
      Included once near the end of layouts/parts/js.blade.php (after jQuery/main.js). --}}
 
 @php
-    // Decide which tour belongs to the current page from the route name.
-    // NOTE: all page tours are currently disabled except the account-area tour.
-    // To re-enable one, uncomment its line below (keep 'customer.booking.details'
-    // above the account arm so it isn't swallowed by the 'customer.booking' match).
-    $tourKey = match (true) {
-        // request()->routeIs('home')                          => 'home',
-        // request()->routeIs('apartments.show')               => 'details',
-        // request()->routeIs('web-booking.confirm-booking')   => 'booking',
-        // request()->routeIs('customer.booking.details')      => 'booking-details',
-        request()->routeIs('customer.account'),
-        request()->routeIs('customer.booking'),
-        request()->routeIs('customer.favorite'),
-        request()->routeIs('customer.notifications')        => 'account',
-        default                                             => null,
-    };
+    // Which tour belongs to the current page (null = none). The route→key map and
+    // the enable/disable toggles live in App\Support\ProductTour so the header "?"
+    // trigger and this loader always agree.
+    $tourKey = \App\Support\ProductTour::currentKey();
 @endphp
 
 @if ($tourKey)

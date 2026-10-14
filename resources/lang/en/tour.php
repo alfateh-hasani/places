@@ -4,7 +4,7 @@ return [
     'next'     => 'Next',
     'prev'     => 'Back',
     'done'     => 'Done',
-    'skip'     => 'Skip tour',
+    'skip'     => 'Skip',
     'progress' => '{{current}} of {{total}}',
     'help'     => 'Take a tour',
 

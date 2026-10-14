@@ -192,6 +192,17 @@
             doneBtnText: cfg.i18n.done,
             progressText: cfg.i18n.progress,
             steps: steps,
+            onPopoverRender: function (popover) {
+                // Replace driver.js's "×" close icon with a readable "Skip" text
+                // button (styled in custom.css). driver re-renders the popover per
+                // step, so this runs each time.
+                var closeBtn = (popover && popover.closeButton)
+                    || document.querySelector('.driver-popover-close-btn');
+                if (closeBtn && cfg.i18n.skip) {
+                    closeBtn.textContent = cfg.i18n.skip;
+                    closeBtn.setAttribute('aria-label', cfg.i18n.skip);
+                }
+            },
             onHighlighted: function () {
                 // driver.js can position the popover against a stale rect when a
                 // step scrolls the page (most visibly upward) or when a step opens

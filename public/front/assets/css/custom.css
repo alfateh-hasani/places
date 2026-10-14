@@ -591,7 +591,7 @@ textarea:focus-visible,
 }
 
 /* Title: brand-dark text on the white card (no inherited background). Reserve
-   space on the inline-end side so long titles never slide under the close X. */
+   space on the inline-end side so long titles never slide under the Skip button. */
 .driver-popover.dyafa-theme .driver-popover-title {
     display: block !important;
     background: transparent !important;
@@ -600,7 +600,7 @@ textarea:focus-visible,
     font-size: 1.1rem !important;
     line-height: 1.5 !important;
     margin: 0 0 6px !important;
-    padding-inline-end: 26px !important;
+    padding-inline-end: 56px !important;
 }
 
 .driver-popover.dyafa-theme .driver-popover-description {
@@ -653,13 +653,24 @@ textarea:focus-visible,
     border-color: #111111 !important;
 }
 
-/* Close button: visible on white, lands top-inline-end in both directions. */
+/* Close button rendered as a "Skip" text button (tour.js sets its label) instead
+   of the default "×" icon. Auto-sized, sits in the top inline-end corner. */
 .driver-popover.dyafa-theme .driver-popover-close-btn {
-    color: #b4b4bb !important;
-    font-size: 20px !important;
+    width: auto !important;
+    height: auto !important;
+    top: 14px !important;
+    right: 16px !important;
+    left: auto !important;
+    padding: 2px 4px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    color: #9aa0ac !important;
+    text-decoration: none !important;
 }
 .driver-popover.dyafa-theme .driver-popover-close-btn:hover {
     color: #1f2430 !important;
+    text-decoration: underline !important;
 }
 /* driver.js auto-focuses the close button on open; Chrome paints a focus square
    there (it treats the programmatic focus as focus-visible). The X is a close
@@ -693,7 +704,7 @@ html[dir="rtl"] .driver-popover.dyafa-theme .driver-popover-navigation-btns {
 }
 html[dir="rtl"] .driver-popover.dyafa-theme .driver-popover-close-btn {
     right: auto !important;
-    left: 0 !important;
+    left: 16px !important;
 }
 
 /* Phones: let the card use almost the full width (minus a gutter) so long
