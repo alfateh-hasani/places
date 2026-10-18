@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Charts;
 
+use App\Enums\BookingStatus;
 use Backpack\CRUD\app\Http\Controllers\ChartController;
 use ConsoleTVs\Charts\Classes\Chartjs\Chart;
 use Carbon\Carbon;
@@ -18,8 +19,11 @@ class OngoingBookingsChartController extends ChartController
     public function data()
     {
         $current_date = Carbon::today();
-        $ongoing_bookings = Booking::where('check_in', '=', $current_date)
-            // ->where('check_out', '>=', $current_date)
+        // الحجوزات الجارية فعلاً اليوم: بدأت في أو قبل اليوم ولم تنتهِ بعد،
+        // مع استبعاد الحالات التي لا تشغل الوحدة (ملغاة/مرفوضة).
+        $ongoing_bookings = Booking::where('check_in', '<=', $current_date)
+            ->where('check_out', '>=', $current_date)
+            ->whereIn('status', BookingStatus::occupying())
             ->count();
 
         // في هذه الحالة مجرد قيمة واحدة (مثلاً يعرض عدد الحجوزات الجارية كرقم)

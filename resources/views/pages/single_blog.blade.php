@@ -11,9 +11,10 @@
     <h2 class="font-bold text-3xl text-black mb-8">
         {{$blog->{'name_'.app()->getLocale()} }}
     </h2>
-    <p class="font-normal text-base text-black mb-20">
-        {!! $blog->{'content_'.app()->getLocale()} !!}
-    </p>
+    <div class="cms-content text-base mb-20">
+        {!! clean_user_html($blog->{'content_'.app()->getLocale()}) !!}
+    </div>
+    @include('pages.partials.cms-content-styles')
     @php
         $shareUrl = urlencode(route('blog', $blog->slug));
         $shareTitle = urlencode($blog->{'name_'.app()->getLocale()});
